@@ -34,6 +34,13 @@ cd docs && python3 -m http.server 8000   # http://localhost:8000
 Neden React/Three.js/Unity değil? Hedef "basit, anlaşılır, hızlı üretilen" 2D üstten görünüş animasyonları.
 Framework bağımlılığı yok; ileride gerekirse SVG katmanı olduğu gibi React'e taşınabilir.
 
+## Kullanım
+
+- Üst çubuk: senaryo seçimi, **Bilgi** kartı aç/kapat, **Katmanlar** (rüzgar çizgileri, merdiven basamağı, isimler, izler), tam ekran.
+- Alt çubuk: oynat/duraklat, başa al, hız, zaman çubuğu, tekne ekle/çıkar.
+- Bilgi kartı: **Canlı takip** açıkken animasyonla birlikte adım adım ilerler. Önceki/Sonraki ile kendiniz gezerseniz canlı takip kapanır; **Bu ana git** animasyonu o adımın anına götürür.
+- Klavye: Boşluk oynat/duraklat, ← → adımlar arasında gezinme, `i` bilgi kartı.
+
 ## Dosya yapısı
 
 ```
