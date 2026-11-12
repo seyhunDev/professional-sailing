@@ -178,6 +178,7 @@ body.drawing #course { cursor: crosshair; }
 body.gust-editing .cg[aria-label="Sağanak"] .cg-lbl { color: #38bdf8; }
 body.gust-editing .cg[aria-label="Sağanak"] .seg { border-color: rgba(56,189,248,.6); box-shadow: 0 0 0 3px rgba(56,189,248,.12); }
 .course-box.sea-box .sel-row .lbl { width: 64px; flex: 0 0 64px; }
+.boat-box .seg button { padding: 0 8px; }
 /* sayfa sabit: iPad Safari'de sayfa esneyip kaymasın */
 body.sim { position: fixed; inset: 0; overscroll-behavior: none; }
 .panel-scroll { overscroll-behavior: contain; }

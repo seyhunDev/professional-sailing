@@ -145,6 +145,21 @@
             <button id="btnRemoveBoat" class="tb">Çıkar</button>
           </div>
         </section>
+        <section id="boatBox" class="sel-box course-box sea-box boat-box">
+          <div class="box-head"><span>Tekne ve rüzgar <small id="boatState"></small></span><button class="tb sm" id="btnBoatReset" title="Optimist, 8 knot rüzgar, 30 sn kala hızlanma">Varsayılan</button></div>
+          <div class="sel-row wrap">
+            <span class="lbl">Sınıf</span>
+            <div class="seg" id="boatCls" title="Tekne hızı sınıfın bilinen ortalama orsa hızından gelir"></div>
+          </div>
+          <div class="sel-row wrap">
+            <span class="lbl">Rüzgar</span>
+            <div class="seg" id="boatWind" title="Rüzgar hızı (knot): tekne hızı buna göre değişir"></div>
+          </div>
+          <div class="sel-row wrap">
+            <span class="lbl">Hızlanma</span>
+            <div class="seg" id="boatAccel" title="Start'a kaç saniye kala yelkenler doldurulup hızlanılır"></div>
+          </div>
+        </section>
         <section id="courseBox" class="sel-box course-box">
           <div class="box-head"><span>Parkur <small id="courseState"></small></span><button class="tb sm" id="btnCourseReset" title="Varsayılan parkura dön">Varsayılan</button></div>
           <div class="sel-row">
@@ -181,6 +196,7 @@
             <li><b>Rota:</b> alttaki <b>Rota</b> düğmesine bas; üstte rota çubuğu açılır. <b>Açılı</b> (varsayılan): teknenden başlayarak sürükle; her sürükleme düz bir bacaktır ve orsadan darsa orsa açısına (rüzgara 45°) oturur. <b>Serbest</b>: parmağınla istediğin gibi çiz (hatalı gidişleri göstermek için). <b>Geri al</b> son bacağı siler; bitince yeşil <b>Tamam</b>. Yarışta da rotayı düzenleyebilirsin.</li>
             <li><b>Yakınlaştır / kaydır:</b> parkurda iki parmakla (ya da fare tekerleğiyle) yakınlaştır, boş yeri sürükleyerek şamandıraya ya da start hattına kaydır. Sol alttaki <b>Tümü</b> bütün parkuru gösterir, <b>Takip</b> kamerayı senin teknene kilitler.</li>
             <li><b>Taktik ve isim:</b> bir tekneye dokun; <b>Sporcu</b> kutusuna sporcunun adını yaz, <b>Taktik</b>ten <b>Sol</b> (pin tarafı), <b>Orta</b>, <b>Sağ</b> (hakem botu tarafı) ya da <b>Sağanak</b> seç. Yarış sırasında da bir tekneye dokunup taktiğini değiştirebilirsin. İsimler ve kurulum bu cihazda (tarayıcıda) saklanır; sayfayı yeniden açınca aynen gelir.</li>
+            <li><b>Tekne ve rüzgar:</b> panelin <b>Tekne ve rüzgar</b> kutusundan sınıfı (Optimist, ILCA 4 / 6 / 7) ve rüzgar hızını (knot) seç; tekne hızı sınıfın o rüzgardaki ortalama orsa hızından hesaplanır (ör. Optimist 8 knot rüzgarda ≈3.5 kn, ILCA 7 15 knot rüzgarda ≈5.5 kn). <b>Hızlanma</b> start'a kaç saniye kala yelkenlerin doldurulacağıdır: tekneler o ana kadar yelken boş, hattın gerisinde yavaşça yer tutar, sonra hızlanır. Geç hızlanan hatta yavaş varır; erken hızlanan yavaşlamak zorunda kalır.</li>
             <li><b>Akıntı ve dalga:</b> panelin <b>Deniz</b> kutusundan akıntıyı (hafif / orta / güçlü) ve dalgayı (küçük / büyük) seç; tekneler rüzgaraltına kayar, orsada yavaş yükselir, layline'lar açılır. Yalpalayan, köre düşen bir sporcuyu göstermek için tekneye dokunup <b>Kayma</b>yı <b>Az</b> ya da <b>Çok</b> yap. Yarışta da değiştirebilirsin.</li>
             <li><b>Manuel:</b> alttaki <b>Manuel</b> açıkken senin teknen start'tan sonra kendi kendine hiç tramola atmaz; ne zaman dönüleceğine sen <b>Tramola</b> (ya da T tuşu) ile karar verirsin. Start'a yaklaşma ve şamandırayı dönme yine otomatiktir. Kapalıyken tekne taktiğine göre kendisi karar verir.</li>
             <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>

@@ -41,11 +41,15 @@ for (let k = 0; k < N; k++) {
   // her 3 yarıştan birinde akıntı / dalga ve sürüklenen bir tekne (ayrı üreteç)
   const sea = k % 3 === 1 ? { current: (k * 7) % 4, waves: (k * 5) % 3 } : null;
   if (sea) fleet[(k * 3) % n].drift = 1 + (k % 2);
-  const s = S.newRace(fleet, { wind, gusts, course, sea });
+  // tekne sınıfı, rüzgar hızı ve hızlanma anı (ayrı üreteç; her 2 yarıştan birinde varsayılan dışı)
+  let qb = k * 6151 + 3; const rb = () => (qb = (qb * 48271) % 2147483647) / 2147483647;
+  const clsKeys = Object.keys(S.CLASSES);
+  const boat = k % 2 ? { cls: clsKeys[Math.floor(rb() * clsKeys.length)], windKn: S.WIND_KN[Math.floor(rb() * S.WIND_KN.length)], accelAt: S.ACCEL_AT[Math.floor(rb() * S.ACCEL_AT.length)] } : null;
+  const s = S.newRace(fleet, { wind, gusts, course, sea, boat });
   const shiftAt = rnd() < 0.5 ? 15 + rnd() * 20 : -1, shiftTo = wind + Math.round((rnd() - 0.5) * 30);
   const tr = {};
   for (const b of s.boats) tr[b.id] = { maxAbove: -1e9, wrong: 0, minMark: 1e9, prog: [], out: false, flagged: {} };
-  const tag = `#${k} n=${n} rüzgar=${wind}${shiftAt > 0 ? '→' + shiftTo : ''}${gusts.length ? ' sağanak' : ''}`;
+  const tag = `#${k} n=${n}${boat ? ` ${boat.cls} ${boat.windKn}kn hızlan ${boat.accelAt}sn` : ''} rüzgar=${wind}${shiftAt > 0 ? '→' + shiftTo : ''}${gusts.length ? ' sağanak' : ''}`;
   while (s.t < 150 && s.boats.some(b => !b.finish)) {
     if (shiftAt > 0 && Math.abs(s.t - shiftAt) < 0.026) s.wind = shiftTo;
     const before = new Map(s.boats.map(b => [b.id, b.phase]));

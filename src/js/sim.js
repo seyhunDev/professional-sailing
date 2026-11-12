@@ -21,7 +21,7 @@
     show: { speed: true, shadow: true },   // pis rüzgar konileri varsayılan açık
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
     cam: { z: 1, x: null, y: null, follow: false }, base: null, pinch: null, pts: new Map(),
-    course: { ...S.COURSE_DEFAULT }, sea: { ...S.SEA_DEFAULT }, gsel: null, drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
+    course: { ...S.COURSE_DEFAULT }, sea: { ...S.SEA_DEFAULT }, boat: { ...S.BOAT_DEFAULT }, gsel: null, drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
   };
 
   // ---------- görünüm ----------
@@ -312,6 +312,12 @@
     el('rect', { x: px, y: py, width: pw, height: ph, rx: 14, fill: 'rgba(7,18,30,0.78)', stroke: col, 'stroke-opacity': .55, 'stroke-width': 1.5 }, hg);
     el('text', { x: px + 14, y: py + 17, fill: 'rgba(255,255,255,.6)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': 1 }, hg).textContent = on ? "START'A" : 'YARIŞ SÜRESİ';
     el('text', { x: px + 14, y: py + 42, fill: col, 'font-size': 22, 'font-weight': 800, 'font-variant-numeric': 'tabular-nums' }, hg).textContent = on ? S.fmt(rem / S.CLOCK_SCALE) : S.fmt(-rem / S.CLOCK_SCALE);
+    // sınıf · rüzgar hızı · hızlanma anı (geri sayımda); hızlanma anı gelince "Yelken doldur, hızlan!"
+    const bc = v.boat || st.boat, acc = on && rem <= bc.accelAt;
+    const btxt = acc ? 'Yelken doldur, hızlan!' : `${S.CLASSES[bc.cls].name} · ${bc.windKn} kn rüzgar` + (on ? ` · hızlan ${bc.accelAt} sn` : '');
+    const bw = Math.max(pw, btxt.length * 5.9 + 18);
+    el('rect', { x: px, y: py + ph + 5, width: bw, height: 18, rx: 9, fill: acc ? 'rgba(251,191,36,.92)' : 'rgba(7,18,30,0.72)', stroke: acc ? 'none' : 'rgba(255,255,255,.18)' }, hg);
+    el('text', { x: px + bw / 2, y: py + ph + 18, 'text-anchor': 'middle', fill: acc ? '#1c1300' : 'rgba(255,255,255,.82)', 'font-size': 10.5, 'font-weight': 700 }, hg).textContent = btxt;
   }
 
   function render() {
@@ -378,6 +384,7 @@
     [...$('seaWaves').children].forEach(x => x.classList.toggle('on', +x.dataset.v === sea.waves));
     $('seaState').textContent = sea.current || sea.waves ? 'tekneler rüzgaraltına kayar' : 'sakin';
     $('seaState').classList.toggle('changed', !!(sea.current || sea.waves));
+    boatUpdate();
     saveSetup();
   }
   const nameOf = b => b.sailor || (b.mine ? 'Sen' : b.name);
@@ -386,7 +393,7 @@
   const BOAT_KEYS = ['id', 'x', 'y', 'tack', 'persona', 'speedK', 'drift', 'manual', 'ignoresRules', 'mine', 'sailor', 'route'];
   function saveSetup() {
     if (st.mode !== 'setup') return;
-    const data = { v: 1, wind: st.wind, sea: st.sea, course: st.course, gusts: st.gusts, fleet: st.fleet.map(b => Object.fromEntries(BOAT_KEYS.map(k => [k, b[k]]))) };
+    const data = { v: 1, wind: st.wind, sea: st.sea, boat: st.boat, course: st.course, gusts: st.gusts, fleet: st.fleet.map(b => Object.fromEntries(BOAT_KEYS.map(k => [k, b[k]]))) };
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) { /* özel pencere vb. */ }
   }
   function loadSetup() {
@@ -395,6 +402,7 @@
     if (!d || d.v !== 1 || !Array.isArray(d.fleet) || d.fleet.length < 2) return false;
     st.course = { ...S.COURSE_DEFAULT, ...(d.course || {}) }; S.setCourse(st.course);
     if (d.sea) st.sea = { current: Math.max(0, Math.min(3, d.sea.current | 0)), waves: Math.max(0, Math.min(2, d.sea.waves | 0)) };
+    if (d.boat) setBoatCfg({ ...d.boat });
     st.wind = +d.wind || 0; st.gusts = Array.isArray(d.gusts) ? d.gusts : [];
     const n = Math.min(16, d.fleet.length), mineIdx = Math.max(0, d.fleet.findIndex(b => b.mine));
     st.fleet = d.fleet.slice(0, n).map((o, i) => {
@@ -418,7 +426,7 @@
     clearArm = 0;
     try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* yok say */ }
     st.course = { ...S.COURSE_DEFAULT }; S.setCourse(st.course);
-    st.wind = 0; st.sea = { ...S.SEA_DEFAULT }; st.gusts = []; st.gsel = null; st.sel = null; st.fleet = S.defaultFleet(12);
+    st.wind = 0; st.sea = { ...S.SEA_DEFAULT }; setBoatCfg({ ...S.BOAT_DEFAULT }); st.gusts = []; st.gsel = null; st.sel = null; st.fleet = S.defaultFleet(12);
     $('btnClearSaved').textContent = 'Kaydı sil'; $('btnClearSaved').classList.remove('warn');
     fitViewBox(); updatePanel(true); toast('Kayıt silindi: isimler, taktikler ve parkur varsayılana döndü');
   }
@@ -513,7 +521,7 @@
   }
   function lastT() { return st.frames.length ? st.frames[st.frames.length - 1].t : 0; }
   function startRace() {
-    st.frames = S.runToEnd(S.newRace(st.fleet, { wind: st.wind, gusts: st.gusts, course: st.course, sea: st.sea }));
+    st.frames = S.runToEnd(S.newRace(st.fleet, { wind: st.wind, gusts: st.gusts, course: st.course, sea: st.sea, boat: st.boat }));
     st.playT = 0; st.sim = viewAt(0); st.mode = 'run'; st.sel = null; st.ended = false;
   }
   // Şu anki kareden başlayarak değişikliği uygula ve yarışı ileriye yeniden hesapla
@@ -912,6 +920,35 @@
   });
   $('selSpeed').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('speedK', +x.dataset.v, 'speed'); });
   $('selDrift').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('drift', +x.dataset.v, 'drift'); });
+  // ---------- Tekne sınıfı, rüzgar hızı, hızlanma anı (yalnız kurulumda) ----------
+  function setBoatCfg(c) {
+    const cls = S.CLASSES[c.cls] ? c.cls : S.BOAT_DEFAULT.cls;
+    const windKn = Math.max(2, Math.min(30, +c.windKn || S.BOAT_DEFAULT.windKn)), accelAt = Math.max(5, Math.min(120, +c.accelAt || S.BOAT_DEFAULT.accelAt));
+    st.boat = { cls, windKn, accelAt }; S.setBoat(st.boat);   // zaman ölçeği ve geri sayım buna göre
+  }
+  const segHtml = (vals, txt) => vals.map(v => `<button data-v="${v}">${txt(v)}</button>`).join('');
+  $('boatCls').innerHTML = segHtml(Object.keys(S.CLASSES), k => S.CLASSES[k].name);
+  $('boatWind').innerHTML = segHtml(S.WIND_KN, v => `${v} kn`);
+  $('boatAccel').innerHTML = segHtml(S.ACCEL_AT, v => `${v} sn`);
+  function boatUpdate() {
+    const b = st.boat, setup = st.mode === 'setup', D = S.BOAT_DEFAULT;
+    [['boatCls', b.cls], ['boatWind', b.windKn], ['boatAccel', b.accelAt]].forEach(([id, val]) =>
+      [...$(id).children].forEach(x => { x.classList.toggle('on', x.dataset.v === String(val)); x.disabled = !setup; }));
+    const def = b.cls === D.cls && b.windKn === D.windKn && b.accelAt === D.accelAt;
+    $('boatState').textContent = `orsada ≈${S.upwindKn(b.cls, b.windKn).toFixed(1).replace('.', ',')} kn`;
+    $('boatState').classList.toggle('changed', !def);
+    $('btnBoatReset').disabled = !setup || def;
+    $('boatBox').classList.toggle('hidden', !setup);
+  }
+  function changeBoat(key, val) {
+    if (st.mode !== 'setup') return;
+    setBoatCfg({ ...st.boat, [key]: val }); updatePanel(true);
+    toast(key === 'accelAt' ? `Tekneler start'a ${val} sn kala yelken doldurup hızlanacak` : `${S.CLASSES[st.boat.cls].name}, ${st.boat.windKn} knot rüzgar: orsada ≈${S.upwindKn(st.boat.cls, st.boat.windKn).toFixed(1).replace('.', ',')} kn`);
+  }
+  $('boatCls').addEventListener('click', e => { const x = e.target.closest('button'); if (x) changeBoat('cls', x.dataset.v); });
+  $('boatWind').addEventListener('click', e => { const x = e.target.closest('button'); if (x) changeBoat('windKn', +x.dataset.v); });
+  $('boatAccel').addEventListener('click', e => { const x = e.target.closest('button'); if (x) changeBoat('accelAt', +x.dataset.v); });
+  $('btnBoatReset').addEventListener('click', () => { if (st.mode !== 'setup') return; setBoatCfg({ ...S.BOAT_DEFAULT }); updatePanel(true); toast('Varsayılan: Optimist, 8 knot rüzgar, 30 sn kala hızlanma'); });
   function setSea(key, val) {
     if (st.mode === 'setup') { st.sea = { ...st.sea, [key]: val }; updatePanel(true); return; }
     applyChange(r => { r.sea = { ...(r.sea || S.SEA_DEFAULT), [key]: val }; r.events.push({ t: r.t, text: key === 'current' ? `Akıntı: ${SEA_TXT.current[val]}` : `Dalga: ${SEA_TXT.waves[val]}`, kind: 'wind' }); });
