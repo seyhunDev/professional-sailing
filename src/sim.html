@@ -101,6 +101,10 @@
             <div class="stepper"><button id="btnMarkMinus" title="Şamandırayı yaklaştır">−</button><span class="val" id="markVal"></span><button id="btnMarkPlus" title="Şamandırayı uzaklaştır">+</button></div>
           </div>
         </section>
+        <section id="saveBox" class="save-box">
+          <span id="saveTxt">Kurulum bu cihazda saklanır</span>
+          <button class="tb sm" id="btnClearSaved" title="İsimler, taktikler, parkur ve sağanaklar silinir">Kaydı sil</button>
+        </section>
         <section id="howto" class="howto">
           <ol>
             <li><b>Sürükle:</b> tekneleri hattın dibine yerleştir. Turuncu tekne <b>senin teknen</b>; bir boşluğa koy.</li>
@@ -109,6 +113,7 @@
             <li><b>Parkur:</b> panelin üstündeki <b>Parkur</b> kutusundan start hattının uzunluğunu ve orsa şamandırasının uzaklığını değiştir; hız, rüzgar gölgesi ve kurallar yeni parkura göre hesaplanır. <b>Varsayılan</b> ile tek dokunuşla geri dönersin.</li>
             <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
             <li><b>Rota:</b> alttaki <b>Rota</b> düğmesine bas; üstte rota çubuğu açılır. <b>Açılı</b> (varsayılan): teknenden başlayarak sürükle; her sürükleme düz bir bacaktır ve orsadan darsa orsa açısına (rüzgara 45°) oturur. <b>Serbest</b>: parmağınla istediğin gibi çiz (hatalı gidişleri göstermek için). <b>Geri al</b> son bacağı siler; bitince yeşil <b>Tamam</b>. Yarışta da rotayı düzenleyebilirsin.</li>
+            <li><b>Taktik ve isim:</b> bir tekneye dokun; <b>Sporcu</b> kutusuna sporcunun adını yaz, <b>Taktik</b>ten <b>Sol</b> (pin tarafı), <b>Orta</b>, <b>Sağ</b> (hakem botu tarafı) ya da <b>Sağanak</b> seç. Yarış sırasında da bir tekneye dokunup taktiğini değiştirebilirsin. İsimler ve kurulum bu cihazda (tarayıcıda) saklanır; sayfayı yeniden açınca aynen gelir.</li>
             <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>
             <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
             <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
@@ -117,12 +122,16 @@
         <section id="selBox" class="sel-box hidden">
           <div class="box-head"><span id="selTitle">Seçili tekne</span><button id="btnSelClose" class="icon sm" title="Seçimi kaldır"><svg><use href="#i-close"/></svg></button></div>
           <div class="sel-row">
+            <span class="lbl">Sporcu</span>
+            <input id="selName" class="name-in" type="text" maxlength="18" autocomplete="off" spellcheck="false" placeholder="İsim yaz (ör. Ali)">
+          </div>
+          <div class="sel-row" id="selTackRow">
             <span class="lbl">Kontra</span>
             <div class="seg" id="selTack"><button data-v="starboard">Sancak</button><button data-v="port">İskele</button></div>
           </div>
           <div class="sel-row wrap">
             <span class="lbl">Taktik</span>
-            <div class="seg" id="selPersona"><button data-v="sol">Sol</button><button data-v="orta">Orta</button><button data-v="sag">Sağ</button><button data-v="saganak">Sağanak</button></div>
+            <div class="seg" id="selPersona"><button data-v="sol" title="Start'tan sonra sol tarafa (pin tarafı) gider">Sol</button><button data-v="orta" title="Ortada kalır, rüzgar dönüşlerini kollar">Orta</button><button data-v="sag" title="Start'tan sonra sağ tarafa (hakem botu tarafı) gider">Sağ</button><button data-v="saganak" title="Sağanağa yönelir">Sağanak</button></div>
           </div>
           <div class="sel-row wrap">
             <span class="lbl">Hız</span>
@@ -132,7 +141,7 @@
             <span class="lbl">Davranış</span>
             <div class="seg" id="selRules"><button data-v="uyar">Kurallara uyar</button><button data-v="vermez">Yol vermez</button></div>
           </div>
-          <div class="sel-row">
+          <div class="sel-row" id="selSetupRow">
             <button id="btnMakeMine" class="tb grow">Bu benim teknem</button>
             <button id="btnRemoveBoat" class="tb">Çıkar</button>
           </div>

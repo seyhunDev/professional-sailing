@@ -219,8 +219,8 @@
   }
 
   // ---------- Komutlar (senin teknen) ----------
-  function command(s, cmd, arg) {
-    const b = s.boats.find(x => x.mine); if (!b) return;
+  function command(s, cmd, arg, id) {           // id verilmezse senin teknen
+    const b = s.boats.find(x => (id ? x.id === id : x.mine)); if (!b) return;
     if (cmd === 'tack') {
       if (b.phase === 'race' && s.t - b.lastTack > 1) { doTack(b, s, 'Tramola!'); b.persona = 'manuel'; log(s, `${b.id}: tramola (senin kararın)`); }
       else if (b.phase === 'wait') { b.tack = b.tack === 'starboard' ? 'port' : 'starboard'; }

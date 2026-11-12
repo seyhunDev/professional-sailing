@@ -127,6 +127,12 @@
 
 ## Oturum günlüğü (en yeni üstte)
 
+### 2026-11-12 · Simülatör: sporcu isimleri, tekne başına taktik, kalıcı kurulum
+- Seçili tekne kutusunda **Sporcu** isim alanı (`b.sailor`, en fazla 18 harf); isim teknenin altında, sıralamada ve başlıkta görünür.
+- Taktik (Sol / Orta / Sağ / Sağanak), hız ve "yol vermez" artık **yarışta da** her tekne için değişir: yarışta tekneye dokun → `S.command(r, cmd, arg, id)` (id yoksa senin teknen), o andan itibaren yeniden hesaplanır.
+- **Kalıcı kurulum:** filo (konum, kontra, taktik, hız, isim, rota), rüzgar, sağanaklar ve parkur `localStorage` → `ps.sim.setup.v1` anahtarında; sayfa açılınca yüklenir. "Kaydı sil" (iki dokunuş) her şeyi varsayılana döndürür. "Diz" ve filo sayısı değişimi diğer teknelerin isim/taktiğini sırayla korur.
+- Sonraki adım (kullanıcı planı): Firebase'e geçince aynı veri yapısı (`saveSetup`/`loadSetup`) Firestore'a taşınacak.
+
 ### 2026-11-12 · Simülatör parkur ayarı ve sağanak düzenleme
 - **Parkur** kutusu (panelin üstü, yalnız kurulumda): start hattı 4-20 boy, orsa şamandırası uzaklığı 8-30 boy (50 px adım), "Varsayılan" (8 boy hat, 13 boy şamandıra) ve "Değiştirildi" uyarısı. `sim-core.js` → `setCourse({lineLen, markDist})` WORLD/LINE/MARK/engel dizilerini yerinde günceller; `newRace({course})` durumda tutar, `step` her karede uygular (hesaplar yeni parkura göre). Hat değişince tekneler hat boyunca orantılı kayar, rotalar silinir, sağanaklar parkurla taşınır; görüş alanı yeni boyuta uyar.
 - **Sağanak düzenleme:** sağanağa dokun → üstte mavi çubuk: Küçült / Büyüt (%40-250), Sıfırla (ilk boyut), Sil, ×. Birden çok sağanak "Sağanak 1, 2…" diye numaralanır; seçili olan mavi çizgili. Yarışta da çalışır (o andan itibaren yeniden hesaplanır, olaylara yazılır).

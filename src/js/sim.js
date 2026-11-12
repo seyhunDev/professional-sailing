@@ -140,18 +140,21 @@
     // etiket
     const tk = sail.tack === 'starboard' ? 'S' : 'İ';
     const lab = el('g', { transform: `translate(${b.x.toFixed(1)},${(b.y + 36).toFixed(1)})` }, wrap);
-    const wTxt = 7.4 * b.id.length + 26 + (b.ignoresRules ? 12 : 0);
+    const idTxt = b.id;
+    const wTxt = 7.1 * idTxt.length + 26 + (b.ignoresRules ? 12 : 0);
     el('rect', { x: -wTxt / 2, y: -10, width: wTxt, height: 19, rx: 9, fill: b.mine ? 'rgba(124,45,18,.9)' : 'rgba(7,18,30,.78)', stroke: b.ignoresRules ? '#f87171' : b.mine ? '#fb923c' : 'rgba(255,255,255,.25)' }, lab);
-    el('text', { x: -wTxt / 2 + 7, y: 4, fill: '#fff', 'font-size': 11.5, 'font-weight': 700 }, lab).textContent = b.id;
-    if (b.ignoresRules) el('text', { x: -wTxt / 2 + 9 + 7.4 * b.id.length, y: 4, fill: '#f87171', 'font-size': 12, 'font-weight': 900 }, lab).textContent = '!';
+    el('text', { x: -wTxt / 2 + 7, y: 4, fill: '#fff', 'font-size': 11.5, 'font-weight': 700 }, lab).textContent = idTxt;
+    if (b.ignoresRules) el('text', { x: -wTxt / 2 + 9 + 7.1 * idTxt.length, y: 4, fill: '#f87171', 'font-size': 12, 'font-weight': 900 }, lab).textContent = '!';
     el('rect', { x: wTxt / 2 - 17, y: -7, width: 13, height: 13, rx: 3.5, fill: tk === 'S' ? '#22c55e' : '#ef4444' }, lab);
     el('text', { x: wTxt / 2 - 10.5, y: 3.5, 'text-anchor': 'middle', fill: '#fff', 'font-size': 9.5, 'font-weight': 800 }, lab).textContent = tk;
+    if (b.sailor) el('text', { x: 0, y: 21, 'text-anchor': 'middle', fill: b.mine ? '#fed7aa' : '#e2e8f0', 'font-size': 10.5, 'font-weight': 700,
+      'paint-order': 'stroke', stroke: 'rgba(2,12,22,.9)', 'stroke-width': 3 }, lab).textContent = b.sailor;
     // hız: sağanakta yeşil ↑, pis rüzgarda kırmızı ↓
     if (st.show.speed && (b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs' || b.phase === 'penalty')) {
       const up = b.inGust > 0.25, down = b.shadow > 0.15;
       const col = down ? '#f87171' : up ? '#4ade80' : 'rgba(226,232,240,.85)';
       const txt = `${S.knots(b.v).toFixed(1)} kn${down ? ' ↓' : up ? ' ↑' : ''}`;
-      el('text', { x: 0, y: 22, 'text-anchor': 'middle', fill: col, 'font-size': 10.5, 'font-weight': down || up ? 800 : 600,
+      el('text', { x: 0, y: b.sailor ? 33 : 22, 'text-anchor': 'middle', fill: col, 'font-size': 10.5, 'font-weight': down || up ? 800 : 600,
         'paint-order': 'stroke', stroke: 'rgba(2,12,22,.85)', 'stroke-width': 3, 'font-variant-numeric': 'tabular-nums' }, lab).textContent = txt;
     }
   }
@@ -240,7 +243,7 @@
   let lastPanelKey = '';
   function updatePanel(force) {
     const v = view();
-    const key = st.mode + '|' + st.course.lineLen + 'x' + st.course.markDist + '|' + st.gsel + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + v.boats.map(b => b.id + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
+    const key = st.mode + '|' + st.course.lineLen + 'x' + st.course.markDist + '|' + st.gsel + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + v.boats.map(b => b.id + (b.sailor || '') + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
     if (!force && key === lastPanelKey) return;
     lastPanelKey = key;
     courseUpdate(); gustBarUpdate();
@@ -253,10 +256,15 @@
           return pm && pm.finish ? `Tahmin: senin teknen ${pm.finish}. olacak · ${S.PERSONAS[mine.persona]}` : `Senin teknen: ${S.PERSONAS[mine.persona]}`; })()) : '';
     $('howto').classList.toggle('hidden', st.mode !== 'setup' || !!st.sel);   // tekne seçiliyse ayarları üstte göster
     // seçili tekne
-    const sb = st.sel && st.fleet.find(b => b.id === st.sel);
-    $('selBox').classList.toggle('hidden', !(sb && st.mode === 'setup'));
-    if (sb && st.mode === 'setup') {
-      $('selTitle').textContent = sb.mine ? 'Senin teknen' : `Tekne ${sb.id}`;
+    const sb = st.sel && (st.mode === 'setup' ? st.fleet : v.boats).find(b => b.id === st.sel);
+    const setupSel = st.mode === 'setup';
+    $('selBox').classList.toggle('hidden', !sb);
+    if (sb) {
+      $('selTitle').textContent = (sb.mine ? 'Senin teknen' : `Tekne ${sb.id}`) + (sb.sailor ? ` · ${sb.sailor}` : '');
+      if (document.activeElement !== $('selName')) $('selName').value = sb.sailor || '';
+      $('selTackRow').classList.toggle('hidden', !setupSel); $('selSetupRow').classList.toggle('hidden', !setupSel);
+      const over = !setupSel && (sb.finish || sb.phase === 'done');
+      [...$('selPersona').children, ...$('selSpeed').children, ...$('selRules').children].forEach(x => { x.disabled = !!over; });
       [...$('selTack').children].forEach(x => x.classList.toggle('on', x.dataset.v === sb.tack));
       [...$('selPersona').children].forEach(x => x.classList.toggle('on', x.dataset.v === sb.persona));
       [...$('selSpeed').children].forEach(x => x.classList.toggle('on', Math.abs(+x.dataset.v - (sb.speedK || 1)) < 1e-6));
@@ -266,11 +274,54 @@
     // sıralama
     const rows = st.mode === 'setup' ? st.fleet.map(b => ({ b, status: S.PERSONAS[b.persona] + ' · ' + (b.tack === 'starboard' ? 'sancak' : 'iskele') + (b.ignoresRules ? ' · yol vermez' : '') + speedTxt(b) })) : S.standings(v).map(r => ({ ...r, status: r.status + speedTxt(r.b) }));
     $('standings').innerHTML = rows.map((r, i) => `<li class="${r.b.mine ? 'me' : ''} ${r.b.finish ? 'fin' : ''} ${r.b.phase === 'penalty' ? 'pen' : ''}"><span class="pos">${st.mode === 'setup' ? '' : i + 1}</span>` +
-      `<span class="boat-id" style="background:${r.b.color}">${esc(r.b.id)}</span><span class="nm">${esc(r.b.mine ? 'Sen' : r.b.name)}</span><span class="stt">${esc(r.status)}</span></li>`).join('');
+      `<span class="boat-id" style="background:${r.b.color}">${esc(r.b.id)}</span><span class="nm">${esc(nameOf(r.b))}</span><span class="stt">${esc(r.status)}</span></li>`).join('');
     // olaylar
     const evs = v.events.filter(e => !st.mineOnly || /(^|\s)SEN\b/.test(e.text)).slice(-40).reverse();
     $('events').innerHTML = evs.length ? evs.map(e => `<li class="${e.kind}"><span class="et">${S.fmt(Math.max(0, e.t - v.startAt))}</span>${esc(e.text)}</li>`).join('')
       : `<li class="empty">${st.mode === 'setup' ? 'Start verilince kural olayları burada görünür.' : 'Henüz olay yok.'}</li>`;
+    $('btnClearSaved').disabled = st.mode !== 'setup';
+    saveSetup();
+  }
+  const nameOf = b => b.sailor || (b.mine ? 'Sen' : b.name);
+  // ---------- Kurulumu bu cihazda sakla (ileride Firebase'e taşınacak) ----------
+  const SAVE_KEY = 'ps.sim.setup.v1';
+  const BOAT_KEYS = ['id', 'x', 'y', 'tack', 'persona', 'speedK', 'ignoresRules', 'mine', 'sailor', 'route'];
+  function saveSetup() {
+    if (st.mode !== 'setup') return;
+    const data = { v: 1, wind: st.wind, course: st.course, gusts: st.gusts, fleet: st.fleet.map(b => Object.fromEntries(BOAT_KEYS.map(k => [k, b[k]]))) };
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) { /* özel pencere vb. */ }
+  }
+  function loadSetup() {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { d = null; }
+    if (!d || d.v !== 1 || !Array.isArray(d.fleet) || d.fleet.length < 2) return false;
+    st.course = { ...S.COURSE_DEFAULT, ...(d.course || {}) }; S.setCourse(st.course);
+    st.wind = +d.wind || 0; st.gusts = Array.isArray(d.gusts) ? d.gusts : [];
+    const n = Math.min(16, d.fleet.length), mineIdx = Math.max(0, d.fleet.findIndex(b => b.mine));
+    st.fleet = d.fleet.slice(0, n).map((o, i) => {
+      const b = S.makeBoat(i, { x: +o.x, y: +o.y }, i === mineIdx ? { mine: true, id: 'SEN', name: 'Senin teknen' } : null);
+      if (i !== mineIdx) { b.mine = false; b.color = '#c9d6e3'; }
+      b.tack = o.tack === 'port' ? 'port' : 'starboard';
+      if (S.PERSONAS[o.persona]) b.persona = o.persona;
+      b.speedK = +o.speedK || 1; b.ignoresRules = !!o.ignoresRules;
+      if (o.sailor) b.sailor = String(o.sailor).slice(0, 18);
+      if (Array.isArray(o.route) && o.route.length) b.route = o.route;
+      return b;
+    });
+    renumber();
+    return true;
+  }
+  let clearArm = 0;
+  function clearSaved() {
+    if (st.mode !== 'setup') return;
+    if (Date.now() - clearArm > 3000) { clearArm = Date.now(); $('btnClearSaved').textContent = 'Emin misin?'; $('btnClearSaved').classList.add('warn');
+      setTimeout(() => { $('btnClearSaved').textContent = 'Kaydı sil'; $('btnClearSaved').classList.remove('warn'); }, 3000); return; }
+    clearArm = 0;
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* yok say */ }
+    st.course = { ...S.COURSE_DEFAULT }; S.setCourse(st.course);
+    st.wind = 0; st.gusts = []; st.gsel = null; st.sel = null; st.fleet = S.defaultFleet(12);
+    $('btnClearSaved').textContent = 'Kaydı sil'; $('btnClearSaved').classList.remove('warn');
+    fitViewBox(); updatePanel(true); toast('Kayıt silindi: isimler, taktikler ve parkur varsayılana döndü');
   }
 
   function updateBar(v) {
@@ -439,6 +490,10 @@
     const fresh = S.defaultFleet(n);
     // senin teknenin yerini koru
     if (mineAt) { const m = fresh.find(b => b.mine); m.x = mineAt.x; m.y = mineAt.y; m.tack = mineAt.tack; m.persona = mineAt.persona; m.ignoresRules = mineAt.ignoresRules; m.route = mineAt.route; m.speedK = mineAt.speedK; }
+    // diğer teknelerin isim ve ayarları sırasıyla korunur
+    const olds = st.fleet.filter(b => !b.mine), news = fresh.filter(b => !b.mine);
+    news.forEach((b, i) => { const o = olds[i]; if (o) { b.persona = o.persona; b.speedK = o.speedK; b.ignoresRules = o.ignoresRules; b.tack = o.tack; if (o.sailor) b.sailor = o.sailor; } });
+    if (mineAt && mineAt.sailor) fresh.find(b => b.mine).sailor = mineAt.sailor;
     st.fleet = fresh; st.sel = null;
   }
   function addOne() {
@@ -488,14 +543,15 @@
     const p = toWorld(ev);
     if (st.drawMode && st.routeMode === 'acili') { legAim(p); $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); return; }
     if (st.drawMode) { st.drawPts = [p]; $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); return; }
-    const b = st.mode === 'setup' ? hitBoat(p) : null;
-    if (b) {
+    const b = hitBoat(p);
+    if (b && st.mode !== 'setup') st.drag = { kind: 'pick', obj: b, moved: false, x0: ev.clientX, y0: ev.clientY };
+    else if (b) {
       const fb = st.fleet.find(x => x.id === b.id);
       st.drag = { kind: 'boat', obj: fb, dx: fb.x - p.x, dy: fb.y - p.y, moved: false, x0: ev.clientX, y0: ev.clientY };
     } else {
       const g = hitGust(p);
       if (g) st.drag = { kind: 'gust', obj: g, x1: g.x, y1: g.y, dx: g.x - p.x, dy: g.y - p.y, moved: false, x0: ev.clientX, y0: ev.clientY };
-      else { if (st.mode === 'setup' && st.sel) st.sel = null; if (st.gsel != null) st.gsel = null; gustBarUpdate(); updatePanel(true); }
+      else { if (st.sel) st.sel = null; if (st.gsel != null) st.gsel = null; gustBarUpdate(); updatePanel(true); }
     }
     if (st.drag) { $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); }
   }
@@ -503,9 +559,9 @@
     if (st.legPrev) { legAim(toWorld(ev)); return; }
     if (st.drawPts) { const p = toWorld(ev), q = st.drawPts[st.drawPts.length - 1]; if (Math.hypot(p.x - q.x, p.y - q.y) > 8) st.drawPts.push(p); return; }
     const d = st.drag;
-    if (!d) { const p = toWorld(ev); $('course').style.cursor = (st.mode === 'setup' && hitBoat(p)) || hitGust(p) ? 'grab' : ''; return; }
+    if (!d) { const p = toWorld(ev); $('course').style.cursor = hitBoat(p) ? (st.mode === 'setup' ? 'grab' : 'pointer') : hitGust(p) ? 'grab' : ''; return; }
     if (Math.hypot(ev.clientX - d.x0, ev.clientY - d.y0) > 4) d.moved = true;
-    if (!d.moved) return;
+    if (!d.moved || d.kind === 'pick') return;
     const p = toWorld(ev);
     d.obj.x = Math.max(20, Math.min(W.w - 20, p.x + d.dx));
     d.obj.y = Math.max(20, Math.min(W.h - 10, p.y + d.dy));
@@ -522,6 +578,7 @@
       if (idx >= 0) applyChange(r => { Object.assign(r.gusts[idx], pos); r.events.push({ t: r.t, text: 'Sağanak taşındı', kind: 'wind' }); });
     }
     if (d.kind === 'gust' && (!d.moved || st.mode === 'setup')) { const i = gustList().indexOf(d.obj); if (i >= 0) { st.gsel = i; st.sel = null; } }
+    if (d.kind === 'pick') { if (!d.moved) { st.sel = st.sel === d.obj.id ? null : d.obj.id; st.gsel = null; if (phoneMq.matches) setPanelOpen(true); } $('course').style.cursor = ''; updatePanel(true); return; }
     if (d.kind === 'boat' && !d.moved) { st.sel = st.sel === d.obj.id ? null : d.obj.id; if (phoneMq.matches) setPanelOpen(true); }
     if (d.kind === 'boat' && d.moved) settleBoat(d.obj);
     if (d.kind === 'boat' && d.moved && S.lineSide(d.obj) === -1) toast('Bu tekne hattın üstünde: start\'ta erken (OCS) sayılır, geri dönmek zorunda kalır.');
@@ -677,8 +734,8 @@
     if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.speedK = v; updatePanel(true); }
     else applyChange(r => S.command(r, 'speed', v));
   });
-  $('selSpeed').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.speedK = +x.dataset.v; updatePanel(true); } });
-  $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.ignoresRules = x.dataset.v === 'vermez'; updatePanel(true); } });
+  $('selSpeed').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('speedK', +x.dataset.v, 'speed'); });
+  $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('ignoresRules', x.dataset.v === 'vermez', 'rules'); });
   $('btnMineRules').addEventListener('click', () => {
     const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
     const on = !mine.ignoresRules;
@@ -686,7 +743,22 @@
     else applyChange(r => S.command(r, 'rules', on));
     toast(on ? 'Senin teknen artık yol vermiyor: hak sahibi kaçmak zorunda kalırsa protesto edilirsin' : 'Senin teknen yine kurallara uyuyor');
   });
-  $('selPersona').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.persona = x.dataset.v; updatePanel(true); } });
+  // seçili tekne: kurulumda doğrudan, yarışta o andan itibaren yeniden hesaplanır
+  function selEdit(prop, val, cmd) {
+    if (!st.sel) return;
+    if (st.mode === 'setup') { const b = st.fleet.find(q => q.id === st.sel); if (b) { b[prop] = val; updatePanel(true); } }
+    else { const id = st.sel; applyChange(r => S.command(r, cmd, val, id)); }
+  }
+  $('selPersona').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('persona', x.dataset.v, 'persona'); });
+  $('selName').addEventListener('input', e => {
+    const id = st.sel; if (!id) return;
+    const nm = e.target.value.replace(/\s+/g, ' ').trimStart().slice(0, 18);
+    const set = b => { if (b.id === id) { if (nm.trim()) b.sailor = nm.trim(); else delete b.sailor; } };
+    st.fleet.forEach(set); for (const f of st.frames) f.boats.forEach(set); if (st.sim) st.sim.boats.forEach(set);
+    updatePanel(true);
+  });
+  $('selName').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+  $('btnClearSaved').addEventListener('click', clearSaved);
   $('btnMakeMine').addEventListener('click', () => { if (st.sel) { makeMine(st.sel); updatePanel(true); } });
   $('btnRemoveBoat').addEventListener('click', () => { if (st.sel) { removeOne(st.sel); updatePanel(true); } });
   $('btnSelClose').addEventListener('click', () => { st.sel = null; updatePanel(true); });
@@ -716,6 +788,7 @@
   window.addEventListener('resize', fitViewBox);
   phoneMq.addEventListener('change', fitViewBox);
 
+  if (loadSetup()) toast('Son kurulumun yüklendi (isimler, taktikler, parkur)');
   fitViewBox();
   if (phoneMq.matches) $('panel').classList.add('collapsed');
   updatePanel(true);
