@@ -73,7 +73,8 @@
             <li><b>Sürükle:</b> tekneleri hattın dibine yerleştir. Turuncu tekne <b>senin teknen</b>; bir boşluğa koy.</li>
             <li><b>Dokun:</b> bir tekneyi seç; kontrasını ve taktiğini değiştir, ya da onu senin teknen yap.</li>
             <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin).</li>
-            <li><b>▶ Start:</b> 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver.</li>
+            <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
+            <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
           </ol>
         </section>
         <section id="selBox" class="sel-box hidden">
@@ -134,6 +135,11 @@
         <select class="tb" id="selMinePersona" title="Taktik">
           <option value="orta">Orta</option><option value="sol">Sol taraf</option><option value="sag">Sağ taraf</option><option value="saganak">Sağanağa git</option><option value="manuel">Yalnız komutla</option>
         </select>
+      </div>
+      <div class="ctl">
+        <span class="ctl-lbl">Göster</span>
+        <button class="tb tgl on" id="btnShowSpeed" title="Teknelerin hızı (knot): sağanakta ↑, pis rüzgarda ↓">Hız</button>
+        <button class="tb tgl" id="btnShowShadow" title="Rüzgar gölgesi (pis rüzgar): teknelerin rüzgaraltındaki yavaşlatan bölge">Pis rüzgar</button>
       </div>
       <div class="ctl fleet-ctl">
         <span class="ctl-lbl"><svg class="ci"><use href="#i-boat"/></svg>Filo</span>

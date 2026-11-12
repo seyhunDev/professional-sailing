@@ -83,3 +83,4 @@ a.brand, a.tool { color: inherit; text-decoration: none; }
   .ctl { flex: 0 0 auto; }
   .sim-panel { max-height: 46%; }
 }
+.tb.tgl.on { background: var(--accent-soft); border-color: rgba(56,189,248,.45); color: var(--accent); }
