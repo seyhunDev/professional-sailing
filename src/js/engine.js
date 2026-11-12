@@ -51,6 +51,30 @@
     return base * 0.8;                            // tam pupa
   }
 
+  // ---------- Engel kaçınma ----------
+  // Senaryodaki şamandıralar, pin ve hakem botu: [{x,y,r}]
+  function obstaclesOf(scn) {
+    const o = [];
+    for (const m of scn.marks || []) o.push({ x: m.x, y: m.y, r: 14 });
+    if (scn.line) { o.push({ x: scn.line.pin.x, y: scn.line.pin.y, r: 14 }); o.push({ x: scn.line.boat.x, y: scn.line.boat.y - 4, r: 38 }); }
+    return o;
+  }
+  // Önümüzde engel varsa kaçınma yönü: +1 sağa dön, -1 sola dön, 0 yok
+  function avoidDir(x, y, h, obstacles, v) {
+    const f = fwd(h), r = { x: Math.cos(h * DEG), y: Math.sin(h * DEG) };   // sağ yön
+    const look = 40 + Math.max(0, v || 0) * 1.2;                              // ileri bakış (px)
+    let best = 0, bestAlong = 1e9;
+    for (const o of obstacles || []) {
+      const dx = o.x - x, dy = o.y - y;
+      const along = dx * f.x + dy * f.y, across = dx * r.x + dy * r.y;
+      const margin = o.r + 16;
+      if (along > -10 && along < look && Math.abs(across) < margin && along < bestAlong) {
+        bestAlong = along; best = across >= 0 ? -1 : 1;                      // engel sağdaysa sola dön
+      }
+    }
+    return best;
+  }
+
   // ---------- Rota üretici ----------
   // segs: [{mode:'closehauled'|'run'|'heading'|'hold', tack, h, dur, turn, speed, angle}]
   // Örnekleme adımı DT ile konum/heading entegre edilir; sonuç: [{t,x,y,h}]
@@ -62,6 +86,8 @@
     let x = start.x, y = start.y, h = start.h, t = 0;
     let v = opts.v0 || 0;                 // mevcut hız (ivme için)
     const TAU = opts.tau || 1.5;          // hızlanma zaman sabiti (s)
+    const obstacles = opts.obstacles || obstaclesOf(scn);
+    let avoid = 0;                        // engel kaçınma açısı (derece), zamanla sıfıra döner
     const t0 = opts.t0 || 0;
     // t0'dan önce yerinde bekle
     samples.push({ t: 0, x, y, h });
@@ -86,10 +112,15 @@
         let vt = speedFor(twa, base) * (seg.speed == null ? 1 : seg.speed);
         if (seg.mode === 'hold') vt = base * (seg.speed == null ? 0.1 : seg.speed);
         v += (vt - v) * Math.min(1, DT / TAU);
-        const f = fwd(h);
+        // engel kaçınma: önümüzde şamandıra/hakem botu varsa yana kaç, sonra rotaya dön
+        const dir = avoidDir(x, y, h + avoid, obstacles, v);
+        if (dir !== 0) avoid = Math.max(-45, Math.min(45, avoid + dir * 160 * DT));
+        else avoid += (0 - avoid) * Math.min(1, DT / 0.5);
+        const hUsed = h + avoid;
+        const f = fwd(hUsed);
         x += f.x * v * DT; y += f.y * v * DT;
         t += DT;
-        samples.push({ t, x, y, h, v, note: seg.note || '' });
+        samples.push({ t, x, y, h: hUsed, v, note: seg.note || '' });
       }
     }
     return samples;
@@ -123,7 +154,7 @@
 
   global.SailEngine = {
     DEG, norm180, norm360, lerp, lerpAngle, fwd,
-    windAt, tackHeading, runHeading, buildTrack, sampleTrack, sailState, speedFor,
+    windAt, tackHeading, runHeading, buildTrack, sampleTrack, sailState, speedFor, obstaclesOf, avoidDir,
     CLOSE_HAULED, RUN
   };
 })(typeof window !== 'undefined' ? window : globalThis);

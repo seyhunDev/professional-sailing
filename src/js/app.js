@@ -51,7 +51,7 @@
   function buildSideOptions() {
     const sel = $('selSide'); sel.innerHTML = '';
     const lab = state.scn.addBoatLabels || (state.scn.line
-      ? { pin: 'Orsa şamandırası ucu', middle: 'Orta', committee: 'Hakem botu ucu' }
+      ? { pin: 'Pin ucu', middle: 'Orta', committee: 'Hakem botu ucu' }
       : { pin: 'Sol', middle: 'Orta', committee: 'Sağ' });
     for (const k of Object.keys(state.scn.addBoat || {})) {
       const o = document.createElement('option'); o.value = k; o.textContent = lab[k] || k; sel.appendChild(o);
@@ -110,7 +110,7 @@
       const { pin, boat } = scn.line;
       el('line', { x1: pin.x, y1: pin.y, x2: boat.x, y2: boat.y, stroke: '#ffd166', 'stroke-width': 2, 'stroke-dasharray': '10 8', opacity: .9 }, g);
       el('circle', { cx: pin.x, cy: pin.y, r: 7, fill: '#ff8c42', stroke: '#fff', 'stroke-width': 1.5 }, g);
-      el('text', { x: pin.x, y: pin.y + 24, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12 }, g).textContent = 'Orsa şamandırası (pin)';
+      el('text', { x: pin.x, y: pin.y + 24, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12 }, g).textContent = 'Pin';
       const cb = el('g', { transform: `translate(${boat.x},${boat.y})` }, g);
       el('path', { d: 'M-12,-30 C 2,-26 12,-12 12,0 L 12,28 L -12,28 Z', fill: '#e9ecef', stroke: '#6c757d', 'stroke-width': 1.5 }, cb);
       el('rect', { x: -7, y: -4, width: 14, height: 18, fill: '#adb5bd' }, cb);

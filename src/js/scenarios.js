@@ -19,14 +19,14 @@
     startAt: 0,
     rungs: { boat: 'B', from: 1.5 },
     boats: [
-      { id: 'A', name: 'A – Orsa şamandırası ucu', color: '#e4572e',
-        start: { x: 300, y: 612, h: 330 },
+      { id: 'A', name: 'A – Pin ucu', color: '#e4572e',
+        start: { x: 336, y: 614, h: 330 },
         segs: [
           { mode: 'closehauled', tack: 'starboard', dur: 5, turn: 0 },
           { mode: 'closehauled', tack: 'port', dur: 8, turn: 1.5 }
         ], v0: 48 },
       { id: 'B', name: 'B – Hakem botu ucu', color: '#1f77b4',
-        start: { x: 700, y: 612, h: 330 },
+        start: { x: 644, y: 614, h: 330 },
         segs: [{ mode: 'closehauled', tack: 'starboard', dur: 13, turn: 0 }], v0: 48 }
     ],
     steps: [
@@ -100,7 +100,7 @@
           { mode: 'closehauled', tack: 'starboard', dur: 6.4, turn: 1.6 }
         ] },
       { id: 'G', name: 'Geç kalan', color: '#8d99ae',
-        start: { x: 330, y: 620, h: 340 }, v0: 5,
+        start: { x: 385, y: 620, h: 340 }, v0: 5,
         segs: [
           { mode: 'hold', h: 340, dur: 19.5, speed: 0.1, turn: 0 },
           { mode: 'closehauled', tack: 'starboard', dur: 10.5, turn: 1.0 }
@@ -116,6 +116,7 @@
       { t: 25, title: 'Sonuç', text: 'İyi start için formül: zaman–mesafe hissi (kaç saniyede kaç tekne boyu?), çizginin gerisinde güvenli bekleme, ve sinyalden ~5 sn önce tam hıza çıkma. Antrenmanda 1 dakikalık "box start" ve "kaç saniyede çizgiye varırım" egzersizleri yapın.' }
     ],
     addBoat: { pin: { x: 290, y: 560 }, middle: { x: 390, y: 640 }, committee: { x: 720, y: 560 } },
+    expectEarly: ['E'],
     // hat üstünde boş geçiş noktaları (0 = pin, 1 = hakem botu); scripted tekneler ~0.16 / 0.42 / 0.78'de
     startSlots: { pin: [0.28], middle: [0.54], committee: [0.86] }
   });
@@ -124,43 +125,48 @@
   S.push({
     id: 'a3-pin-favored',
     category: 'Taktik', topic: 'Start',
-    title: 'A3 · Pin ucu avantajlıysa: pin\'e yetiş, pin\'e sıkışma',
-    summary: 'Pin ucu avantajlıysa en iyi start pin\'in hemen yanından, sancak kontra, tam zamanında. Tek şart: pin\'e giden layline\'ın ÜSTÜNDE olmak. Layline\'ın altında kalan tekne pin\'i dönemez; dışarıdan geçer ve geri dönmek zorunda kalır.',
-    duration: 17,
+    title: 'A3 · Pin ucu avantajlıysa: pin\'e yetiş, hemen tramola, pin\'e sıkışma',
+    summary: 'Pin ucu avantajlıysa en iyi start pin\'in hemen yanından, sancak kontra, tam zamanında; sonra hemen iskele kontraya tramola atıp filoyu ÖNDEN kesmek. Tek şart: pin\'e giden layline\'ın ÜSTÜNDE olmak. Layline\'ın altında kalan tekne pin\'i dönemez; dışarıdan geçer ve geri dönmek zorunda kalır.',
+    duration: 19,
     baseSpeed: 48,
-    wind: 345,
+    wind: 340,
     line: { pin: { x: 380, y: 480 }, boat: { x: 780, y: 480 } },
     startAt: 6,
     rungs: { boat: 'P1', from: 8 },
     laylines: [{ x: 380, y: 480, tack: 'starboard', len: 400, from: 2, label: 'Pin layline\'ı (sancak)' }],
     boats: [
       { id: 'P1', name: 'P1 – Pin\'de tam zamanında', color: '#2a9d8f',
-        start: { x: 669, y: 624, h: 300 }, v0: 48,
-        segs: [{ mode: 'closehauled', tack: 'starboard', dur: 17, turn: 0 }] },
+        start: { x: 690, y: 608, h: 295 }, v0: 48,
+        segs: [
+          { mode: 'closehauled', tack: 'starboard', dur: 7.5, turn: 0 },
+          { mode: 'closehauled', tack: 'port', dur: 11.5, turn: 1.4, note: 'Tramola → filoyu önden kes' }
+        ] },
       { id: 'P2', name: 'P2 – Layline\'ın altında (sıkışan)', color: '#e76f51',
-        start: { x: 600, y: 660, h: 300 }, v0: 48,
+        start: { x: 640, y: 650, h: 295 }, v0: 48,
         segs: [
           { mode: 'closehauled', tack: 'starboard', dur: 4, turn: 0 },
-          { mode: 'closehauled', tack: 'starboard', dur: 4.5, turn: 0, note: 'Pin\'e yetişemiyor!' },
+          { mode: 'closehauled', tack: 'starboard', dur: 5.5, turn: 0, note: 'Pin\'e yetişemiyor!' },
           { mode: 'heading', h: 108, dur: 5, turn: 1.4, note: 'Çizgi dışı → geri dönüyor' },
-          { mode: 'closehauled', tack: 'starboard', dur: 3.5, turn: 1.4 }
+          { mode: 'closehauled', tack: 'starboard', dur: 4.5, turn: 1.4 }
         ] },
       { id: 'P3', name: 'P3 – Ortadan güvenli', color: '#1f77b4',
-        start: { x: 829, y: 624, h: 300 }, v0: 48,
-        segs: [{ mode: 'closehauled', tack: 'starboard', dur: 17, turn: 0 }] }
+        start: { x: 901, y: 602, h: 295 }, v0: 48,
+        segs: [{ mode: 'closehauled', tack: 'starboard', dur: 19, turn: 0 }] }
     ],
     steps: [
-      { t: 0, title: 'Pin ucu avantajlı', text: 'Rüzgar 345°\'den, yani pin (sol) tarafından geliyor. Pin ucu hakem botundan ~2 tekne boyu "önde". Üç tekne de sancak kontra, start\'a 6 saniye var.' },
+      { t: 0, title: 'Pin ucu avantajlı', text: 'Rüzgar 340°\'den, yani pin (sol) tarafından geliyor. Pin ucu hakem botundan ~3 tekne boyu "önde". Üç tekne de sancak kontra, start\'a 6 saniye var.' },
       { t: 2, title: 'Pin layline\'ı', text: 'Mavi kesikli çizgi: pin\'den geriye, sancak orsa rotası boyunca çizilen layline. Bu çizginin ÜSTÜNDE (sağında) olan tekne pin\'e yetişir; altında kalan yetişemez. Yeşil P1 tam layline\'da, turuncu P2 altında.' },
       { t: 4, title: 'P2 pin\'e yetişemiyor', text: 'P2 orsa gittiği hâlde burnu pin\'in soluna düşüyor. Seçenekleri: tramola atıp iskele kontrada filoya girmek (tehlikeli, Kural 10) ya da pin\'in dışından geçip geri dönmek. İkisi de pahalı.' },
-      { t: 6, title: 'START: P1 pin\'de', text: 'P1 start anında pin\'in hemen yanında, tam hızda. Avantajlı uçtan, temiz havada, rüzgaraltında kimse yok: mükemmel start.' },
-      { t: 7.6, title: 'P2 çizgi dışından geçti', text: 'P2 hattı pin\'in dışından geçti: start almış sayılmaz. Geri dönüp hattı uçlar arasından yeniden geçmek zorunda.' },
-      { t: 10, title: 'Basamak: P1 önde', text: 'Kesikli basamak çizgisi P1\'den geçiyor. P3 ortadan temiz start aldı ama pin avantajı kadar (≈2 boy) geride. Yine de P2\'den çok iyi durumda: güvenli seçenek kötü seçenek değildir.' },
-      { t: 13.5, title: 'P2 geri dönüyor', text: 'P2 hattın altına inip yeniden start alıyor: 8-10 saniye ve filonun arkasında kirli hava. Pin\'e sıkışmanın maliyeti bu.' },
-      { t: 15, title: 'Sonuç', text: 'Pin avantajlıysa: layline\'ı son 30 saniyede gözle kontrol edin (pin\'e orsa rotayla bakın), layline\'ın biraz ÜSTÜNDE gelin, son 5 saniyede hızlanın. Emin değilseniz pin\'den 2-3 boy sağda start alın: küçük kayıp, sıfır risk.' }
+      { t: 6, title: 'START: P1 pin\'de', text: 'P1 start anında pin\'in hemen yanında, tam hızda. Avantajlı uçtan, temiz havada, rüzgaraltında kimse yok.' },
+      { t: 7.5, title: 'P1 hemen tramola', text: 'Pin\'den çıkan tekne sancakta uzun gitmez: pin\'i temizler temizlemez iskele kontraya döner. Neden? Pin avantajı onu filonun ÖNÜNE koydu; iskele kontrada herkesin önünden geçip istediği tarafa gidebilir. Sancakta kalsa sol kenara sıkışır.' },
+      { t: 8.6, title: 'P2 çizgi dışından geçti', text: 'P2 hattı pin\'in dışından geçti: start almış sayılmaz. Geri dönüp hattı uçlar arasından yeniden geçmek zorunda.' },
+      { t: 11, title: 'P1 P3\'ün önünden geçiyor', text: 'İskele kontradaki P1, sancak kontradaki P3\'ün önünden rahatça geçiyor. Normalde iskele yol verirdi (Kural 10) ama P1 yeterince önde. Basamak çizgisi farkı gösteriyor: ~1.5 boy.' },
+      { t: 14, title: 'P2 geri dönüyor', text: 'P2 hattın altına inip yeniden start alıyor: 8-10 saniye ve filonun arkasında kirli hava. Pin\'e sıkışmanın maliyeti bu.' },
+      { t: 16.5, title: 'Sonuç', text: 'Pin avantajlıysa: layline\'ı son 30 saniyede gözle kontrol edin, layline\'ın biraz ÜSTÜNDE gelin, son 5 saniyede hızlanın, pin\'i temizleyince tramola atın. Emin değilseniz pin\'den 2-3 boy sağda start alın: küçük kayıp, sıfır risk.' }
     ],
     addBoat: { pin: { x: 400, y: 650 }, middle: { x: 560, y: 660 }, committee: { x: 660, y: 650 } },
-    startSlots: { pin: [0.25], middle: [0.72], committee: [0.92] }
+    startSlots: { pin: [0.3], middle: [0.5], committee: [0.9] },
+    expectOutside: ['P2']
   });
 
   // ---------- A4: Hakem botu ucu avantajlı ----------
@@ -178,7 +184,7 @@
     laylines: [{ x: 612, y: 400, tack: 'starboard', len: 330, from: 1, label: 'Hakem botu layline\'ı' }],
     boats: [
       { id: 'L', name: 'L – Rüzgaraltı, layline\'da (hak sahibi)', color: '#2a9d8f',
-        start: { x: 722, y: 612, h: 330 }, v0: 40,
+        start: { x: 706, y: 612, h: 330 }, v0: 40,
         segs: [
           { mode: 'closehauled', tack: 'starboard', dur: 2.5, turn: 0 },
           { mode: 'hold', h: 355, dur: 1.3, speed: 0.15, turn: 0.8, note: 'Orsa ediyor: "Yer yok!"' },

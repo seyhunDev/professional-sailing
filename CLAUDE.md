@@ -22,7 +22,7 @@ Canlı site: https://seyhundev.github.io/professional-sailing/ (main'e push → 
 
 ## Teknik kurallar
 - Dil: arayüz ve açıklamalar **Türkçe**; yelken terimleri yerleşik Türkçe (sancak/iskele kontra, orsa,
-  pupa, tramola, kavança, bordalamak, hakem botu, orsa şamandırası). İngilizce karşılığı ilk geçişte
+  pupa, tramola, kavança, bordalamak, hakem botu). Start hattının şamandıra ucu **"pin"**dir ("orsa şamandırası" DEĞİL; orsa şamandırası = parkurun rüzgarüstü şamandırası). İngilizce karşılığı ilk geçişte
   parantezle verilir (ör. "kapatma (header)").
 - Yığın: HTML + CSS + vanilla JS, derleme adımı yalnızca `scripts/build.mjs` (hash'li dosya adları).
   Framework eklenmez (karar: NOTLAR.md → Kararlar). Bağımlılık eklemeden önce kullanıcıya sor.
@@ -33,7 +33,8 @@ Canlı site: https://seyhundev.github.io/professional-sailing/ (main'e push → 
 - Senaryo eklemek: `src/js/scenarios.js` içine `S.push({...})`. Format README'de. Yeni senaryo
   eklenince `KONULAR.md` tablosunda durum ✅ yapılır ve rota `node`'da simüle edilip ekran dışına
   çıkmadığı / teknelerin çakışmadığı kontrol edilir (bkz. NOTLAR.md → "Senaryo kontrol listesi").
-- Her görsel değişiklikten sonra Playwright ile ekran görüntüsü al ve kontrol et (masaüstü 1400×800).
+- Her senaryo değişikliğinden sonra `npm run check` (sıfır uyarı) ve Playwright ekran görüntüsü (masaüstü 1400×800).
+- Kullanıcının isteği farklı bir çalışma alanına giriyorsa (motor / senaryo içeriği / arayüz / yayın altyapısı) bunu söyle ve büyükse yeni sohbet öner; küçükse yap ve NOTLAR'a yaz.
 - Commit mesajları Türkçe, kısa başlık + madde listesi. Doğrudan `main`'e push edilir.
 - Eski depo `seyhunDev/python_deneme` kullanılmaz.
 

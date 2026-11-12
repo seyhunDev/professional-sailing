@@ -116,6 +116,7 @@
     const goAt = isStart ? Math.max(0, scn.startAt - 4.5) : 0;
     const w0 = E.windAt(scn.wind, 0);
     const HOLD_V = base * 0.04;
+    const obstacles = E.obstaclesOf(scn);
     const boats = specs.map(s => {
       const h0 = E.tackHeading(w0, s.tack);
       let pos = s.pos;
@@ -126,7 +127,7 @@
         pos = { x: s.slot.x - f.x * sAcc - fh.x * HOLD_V * goAt, y: s.slot.y - f.y * sAcc - fh.y * HOLD_V * goAt };
       }
       return { x: pos.x, y: pos.y, h: h0, v: isStart ? HOLD_V : 0, tack: s.tack,
-        man: null, manUntil: -1, noteUntil: -1, note: '', crossed: false,
+        man: null, manUntil: -1, noteUntil: -1, note: '', crossed: false, avoid: 0,
         side: scn.line ? lineSide(scn.line, pos) : 0, out: [{ t: 0, x: pos.x, y: pos.y, h: h0 }] };
     });
     let t = 0;
@@ -162,6 +163,8 @@
         let target = holding ? baseTarget : E.tackHeading(w, b.tack);
         if (b.man && !holding) { const m = maneuverTarget(b.man, w, b.tack, target); target = m.h; speed *= m.speed; }
         b.h = E.lerpAngle(b.h, target, Math.min(1, DT / 0.6));
+        const dir = E.avoidDir(b.x, b.y, b.h, obstacles, b.v);
+        if (dir !== 0) b.h += dir * 160 * DT;                       // engelden yana kaç (rota hedefi sonra geri çeker)
         const vt = holding ? HOLD_V : E.speedFor(Math.abs(E.norm180(b.h - w)), base) * (b.man ? speed : 1);
         b.v += (vt - b.v) * Math.min(1, DT / TAU);
       });

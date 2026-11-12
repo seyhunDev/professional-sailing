@@ -7,6 +7,8 @@
 - Canlı: https://seyhundev.github.io/professional-sailing/ — main'e push ile otomatik yayın (GitHub Actions, hash'li dosya adları, sağ altta sürüm damgası).
 - Hazır senaryolar (8): A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
 - Arayüz: tam ekran sahne, üst çubuk (senaryo seçimi, Bilgi, Katmanlar, tam ekran), alt çubuk (oynat, hız, zaman çubuğu, tekne ekle/çıkar), sağda canlı takipli bilgi kartı.
+- **Engel kaçınma** (`engine.avoidDir`): şamandıra, pin ve hakem botu engeldir; önünde engel olan tekne (scripted ya da eklenen) kendiliğinden yana kaçıp rotaya döner. `npm run check` (`scripts/check-scenarios.mjs`) her senaryoda alan dışı, çarpışma, engele yaklaşma ve start hattı geçişini denetler; `expectOutside` / `expectEarly` ile bilinçli istisnalar.
+- Terim: start hattının şamandıra ucu **pin**; "orsa şamandırası" yalnızca parkurun rüzgarüstü şamandırası için.
 - Senaryo katmanları: `rungs {boat, from, to}`, `laylines [{x,y,tack,len,from,to,label}]`, `readouts [{boat,from,to}]` (rota + rüzgar açısı), segment `note` (scripted tekne üstünde yazı).
 - Motor: segment tabanlı rota üretici (closehauled / run / heading / hold), ivme modeli, rüzgar keyframe'leri, yelken/bumba geometrisi, boş yelken sallanması.
 - Ek tekneler start senaryolarında **hat üstünde slot** alır (`scn.startSlots`, 0=pin 1=hakem botu; slotlar dolunca 2. sıra 70 px geride). Hızlanma mesafesi hesaplanıp bekleme konumu geriye yerleştirilir; sinyalde hattı uçlar arasından geçerler. Erken geçen "ERKEN · OCS", uçların dışından geçen "Çizgi dışından geçti!" notu alır. Beklerken kural manevrası yapılmaz.
@@ -47,13 +49,17 @@
 - (boş) — Başka bir sohbeti ilgilendiren şeyleri buraya tarih ve konu ile yazın; ilgili sohbet okuyunca satırı siler.
 
 ## Senaryo kontrol listesi (her yeni senaryo için)
-1. `node` ile rotayı simüle et: tekneler 1000×680 dışına çıkmasın, çakışmasın, şamandıraya 40 px'den fazla yaklaşmasın. (Örnek betik: engine + scenarios'u `require` edip `buildTrack` / `sampleTrack` ile her saniye konum yazdır.)
+1. `npm run check` çalıştır: alan dışı, tekne çakışması (<30 px), engele yaklaşma (<10 px), start hattı geçişi. Uyarı sıfır olmalı; bilinçli istisnaları `expectOutside` / `expectEarly` ile işaretle.
 2. Adım zamanları (`steps[].t`) animasyondaki olaylarla eşleşsin.
 3. `addBoat` konumları scripted teknelerle çakışmasın.
 4. Playwright ekran görüntüsü (en az 2 kritik an).
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 · Start paketi 1 – düzeltmeler (kullanıcı geri bildirimi)
+- "Orsa şamandırası (pin)" → "Pin" (her yerde). A1'de tekne pin'in üstünden geçiyordu: geometri düzeltildi + motora genel engel kaçınma eklendi. A3: pin'den çıkan P1 artık 1.5 s sonra iskeleye tramola atıp P3'ün önünden geçiyor (rüzgar 340°, P3 u=0.64). `npm run check` eklendi; tüm senaryolar temiz.
+- Kullanıcı isteği: istekler alanlara bölünsün; farklı çalışma alanı gerektiren konu çıkınca yeni sohbet önerilsin.
+
 ### 2026-11-12 · Start paketi 1
 - Yapılanlar: A1b (3 ölçüm yöntemi: rüzgara karşı durma + basamak, hat boyunca iki yöne seyir + rüzgar açısı okuması, pusula), A3 (pin layline'ı, pin'e sıkışıp çizgi dışından geçen tekne ve geri dönüşü, ortadan güvenli start), A4 (hakem botu layline'ı, barging, rüzgaraltı teknenin orsa edip kapıyı kapatması, 4 boy aşağıda güvenli yer). Yeni katmanlar: laylines, readouts, segment notu, rungs.to.
 - Yarım kalan: A4'te L hakem botu gövdesine çok yakın geçiyor (u=0.94); görsel olarak kabul edilebilir ama istenirse 0.92'ye çekilebilir.
@@ -63,7 +69,7 @@
 - Yapılanlar: `src/js/rules.js` (K10/11/12/14, birlikte simülasyon, bordala-veya-tramola seçimi, histerezis), kategoriler Kurallar/Taktik/Teknik, KONULAR.md üç bölüm + Teknik (G) tablosu, A2'de OCS teknesinin dönüş rotası düzeltildi.
 - Start düzeltmesi: slot mantığı + OCS / çizgi dışı tespiti; kural eşikleri sıkılaştırıldı (risk dmin<58 px, yakınlık <42 px, K14 dmin<40).
 - Yarım kalan: A1'de scripted iskele tekne ile eklenen sancak tekne 25 px'e kadar yaklaşabiliyor (scripted tekne yol vermiyor). Kalabalık senaryolarda etiketler üst üste binebiliyor (ek teknelerde basamak farkı artık gösterilmiyor; yeterli değilse etiket yerleşimi gerekir).
-- Sonraki sohbete not: `scripts/check-scenarios.mjs` yazılırken ek tekne karışımıyla (2 iskele + 2 sancak) minimum mesafe testi de eklensin; bu sohbette geçici betikle ölçüldü (min ~40 px).
+- Sonraki sohbete not: `scripts/check-scenarios.mjs` yazıldı (yalnızca scripted tekneler); ek tekne karışımı (2 iskele + 2 sancak) testi henüz eklenmedi.
 
 ### 2026-11-12 · Kuruluş sohbeti
 - Yapılanlar: müfredat araştırması (KONULAR.md, 40 konu), motor + 5 senaryo, arayüz v1 → v2 (tam ekran, bilgi kartı), yeni depo, otomatik yayın altyapısı, CLAUDE.md + NOTLAR.md protokolü.
