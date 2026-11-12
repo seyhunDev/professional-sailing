@@ -20,7 +20,7 @@
 - Ek tekneler start senaryolarında **hat üstünde slot** alır (`scn.startSlots`, 0=pin 1=hakem botu; slotlar dolunca 2. sıra 70 px geride). Hızlanma mesafesi hesaplanıp bekleme konumu geriye yerleştirilir; sinyalde hattı uçlar arasından geçerler. Erken geçen "ERKEN · OCS", uçların dışından geçen "Çizgi dışından geçti!" notu alır. Beklerken kural manevrası yapılmaz.
 - Ek tekneler: kullanıcı ekler; `rules.js` tüm ek tekneleri birlikte simüle eder. Karşılaşmalarda RRS 10 (bordalama ya da yetmezse tramola), 11 (rüzgarüstü orsalar), 12 (arkadaki yavaşlar), 14 (hak sahibi de temas önler) uygulanır; manevra notu teknenin üstünde 2.5 s görünür. Scripted tekneler rotalarını değiştirmez (ders onlar).
 - Kategoriler: Kurallar / Taktik / Teknik; KONULAR.md de bu üç bölüme ayrıldı (Teknik = G1-G7, Aşama 1 ile).
-- **Yarış simülatörü** (`src/sim.html`, ana sayfada üst çubukta "Simülatör"): kullanıcı tekneleri sürükleyip yerleştirir, rüzgarı ±5° döndürür, sol/sağ sağanak ekler, start verir; tekneler orsa şamandırasına gidip iskeleden döner, sıralanır. Çekirdek `js/sim-core.js` (canlı adım, DOM yok), arayüz `js/sim.js`. Kurallar kendi "kaçış seçici"siyle (aday rotalar arasında en güvenlisi): K10/11/12/13/14/18/22. Kişilikler: sol/orta/sağ/sağanak avcısı/manuel. Geri sarma: 0.1 s kareler. Denetim: `scripts/check-sim.mjs` (5 durum, herkes bitirmeli, temas ≤6).
+- **Yarış simülatörü** (`src/sim.html`, ana sayfada üst çubukta "Simülatör"): kullanıcı tekneleri sürükleyip yerleştirir, rüzgarı ±5° döndürür, sol/sağ sağanak ekler, start verir; tekneler orsa şamandırasına gidip iskeleden döner, sıralanır. Çekirdek `js/sim-core.js` (canlı adım, DOM yok), arayüz `js/sim.js`. Kurallar kendi "kaçış seçici"siyle (aday rotalar arasında en güvenlisi): K10/11/12/13/14/18/22. Kişilikler: sol/orta/sağ/sağanak avcısı/manuel. Geri sarma: 0.1 s kareler. Denetim: `scripts/check-sim.mjs` (5 durum, herkes bitirmeli, temas ≤6). **Protesto ve ceza (2b):** yol vermeyen tekne yüzünden hak sahibi K14 kaçışı yapmak zorunda kalırsa ya da temas olursa yol vermesi gereken tekne protesto edilir ve iki tur (720°) ceza atar (şamandıradan 140 px, hattan 40 px uzakta; şamandırayı cezasız dönemez, önce uzaklaşıp cezayı atar sonra bitirir). "Yol vermez" (`ignoresRules`) tekne seçeneği (kurulumda tekne seçince "Davranış"; senin teknen için alt çubukta, yarışta da). Fuzz `CEZA_TAKILDI` / `CEZA_ATILMADI` denetler, protesto sayısını yazar (`--protesto` gerekçe dağılımı).
 
 ## Sıradaki işler (öncelik sırasıyla, her biri bir sohbete uygun)
 > Karar (2026-11-12): **Önce Taktik → Start (A) bitirilecek, sonra Kurallar, sonra Teknik.** Liste: KONULAR.md → A1–A15.
@@ -34,7 +34,7 @@
   - Teslim: 3 senaryo (A16, A17, A8) + KONULAR.md ✅ + `npm run check` temiz + ekran görüntüleri.
 - [x] **Yarış simülatörü – 1. aşama** (2026-11-12): sayfa, sürükle-bırak, rüzgar, sağanak, start/OCS, layline tramolası, şamandıra dönüşü, sıralama, olay listesi, Tramola komutu, geri sarma.
 - [x] **Simülatör 2a** (2026-11-12, yapıldı): start'ta yarışın tamamını önceden hesapla, değişiklikte (sağanak/rüzgar/rota) o andan ileri yeniden hesapla; ileri sarma ve "tahmini sıra". Her teknede hız ("4.2 kn"), sağanakta yeşil ↑, pis rüzgarda kırmızı ↓; pis rüzgar gölgesi (rüzgaraltında 3-4 boy, katman).
-- [ ] **Simülatör 2b:** "ne oldu / kim haklı" ayrımı: yol vermeyen tekne → protesto + iki tur ceza (720°) animasyonu; temasta hak sahibi kaçınabilecekken kaçınmadıysa o da ceza (K14); "kural bilmeyen" tekne özelliği (kendi teknene de).
+- [x] **Simülatör 2b:** "ne oldu / kim haklı" ayrımı: yol vermeyen tekne → protesto + iki tur ceza (720°) animasyonu; temasta hak sahibi kaçınabilecekken kaçınmadıysa o da ceza (K14); "kural bilmeyen" tekne özelliği (kendi teknene de).
 - [ ] **Simülatör 2c:** kendi teknene rota çizme (parmakla çizgi; rüzgara karşı kısımda otomatik zikzak; bitince şamandıraya).
 - [ ] **Yarış simülatörü – 2. aşama (eski liste):** rüzgar gölgesi (dirty air) etkisi, salınımlı rüzgar (otomatik kayma), sağanağın rüzgarla sürüklenmesi, şamandırada tam K18 (zone, iç tekneye yer), pupa ayağı ve bitiş hattı, senaryoyu linkle paylaşma, tekne döndürerek yerleştirme. Şamandırada 12 teknede 3-6 temas oluyor; zone mantığıyla azaltılabilir.
 - [ ] **Uygulama adı (ayrı sohbet):** "Professional Sailing" muhtemelen kullanımda. Yeni isim kriterleri: kısa, akılda kalıcı, Türkçe sporcuya da uluslararası kitleye de uyan, alan adı / GitHub adı boş, "taktik + yelken + öğrenme" çağrışımı. 10-15 aday üret, 3'e indir, kullanıcıya sun. Seçilince: GitHub depo adı, site adresi, `index.html` başlığı, README, CLAUDE.md, NOTLAR.md güncellenir (yayın adresi değişeceği için kullanıcıya haber verilir).
@@ -111,6 +111,13 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · Simülatör 2b: protesto ve iki tur ceza
+- `sim-core.js`: `classify` (kim yol verir), `protest`, `penalty` evresi (sola 720°, %55 hız, herkese yol verir K22), `ignoresRules`. Protesto koşulu: hak sahibi K14 kaçışı yaptı, kendisi yol vermekle yükümlü değil, son 2.5 s'de tramola atmadı; karşı taraf "yol vermez" ya da tramolayla çok yakına girdi (dmin<14, tc<1). Temasta yol vermesi gereken + (kural bilmeyen hak sahibi K14) ceza alır.
+- Düzeltmeler: ceza start etmeden/hat yakınında başlamaz (OCS hali kayboluyordu); ceza bekleyen tekne şamandırayı dönünce önce uzaklaşır, cezayı atar, sonra bitirir.
+- Arayüz: seçili tekne "Davranış: Kurallara uyar / Yol vermez", alt çubukta "Yol vermez" (senin teknen), etikette kırmızı "!", ceza turunda kırmızı kesikli halka, olaylarda kırmızı protesto satırı, sıralamada "Ceza turu" / "N ceza".
+- Bilinen: kurala uyan yapay tekneler de yarış başına ~2-3 protesto alıyor (kalabalıkta geç tramola); gerekirse eşik `dmin < 14` sıkılaştırılır. Fuzz 150'de birkaç TAKILDI (şamandıra kalabalığı, eskiden de vardı).
+- Sıradaki: 2c rota çizme.
 
 ### 2026-11-12 · İA2: yay eğrisi, pis rüzgar, İA2b
 - Yapılanlar: Yeni senaryo katmanları `sag` (filo burunlarından Catmull-Rom eğri + taralı alan + "ortada N boy geride" etiketi) ve `shadows` (filo teknelerinin 4 boyluk rüzgar gölgesi konisi, sim.js ile aynı geometri; koniye giren senaryo teknesine "Pis rüzgar" notu). İA2'ye eklendi. Yeni senaryo İA2b `ia2b-no-sag`: yay yok, S boşluğa herkesle aynı hizada. README'ye katman formatı yazıldı. `npm run check` temiz.
