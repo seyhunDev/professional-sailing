@@ -6,6 +6,8 @@
   const el = (tag, attrs, parent) => {
     const n = document.createElementNS(SVG_NS, tag);
     for (const k in attrs) n.setAttribute(k, attrs[k]);
+    // sahne yazıları yakın görünümde --ls ile büyür (style.css: tekne ve gösterge katmanında --ls = 1)
+    if (tag === 'text' && attrs['font-size']) n.style.fontSize = `calc(${attrs['font-size']}px * var(--ls, 1))`;
     if (parent) parent.appendChild(n);
     return n;
   };
@@ -36,7 +38,7 @@
     scn: null, boats: [], extras: [], t: 0, playing: false, speed: 1, lastTs: 0,
     show: { wind: true, rungs: true, labels: true, trails: false, shadows: true },
     vb: { x: 0, y: 0, w: COURSE.w, h: COURSE.h },      // ekranı dolduran görünüm alanı
-    follow: true, stepIdx: 0, infoOpen: true
+    follow: true, stepIdx: 0, infoOpen: true, zoom: null, rungNotes: [], ls: 1
   };
 
   const phoneMq = window.matchMedia('(max-width: 640px), (max-height: 460px)');
@@ -62,6 +64,79 @@
     svg.setAttribute('viewBox', `${state.vb.x} ${state.vb.y} ${w} ${h}`);
   }
 
+  // ---------- Yakın görünüm (odak kamerası) ----------
+  // Telefonda parkurun tamamı sığdırılınca tekneler çok küçük kalıyor. Bunun yerine olayın geçtiği
+  // kutu (teknelerin rotaları + start hattı) bilgi kartının üstünde kalan alana sığdırılır.
+  // Senaryonun tamamı yeterince büyük sığıyorsa görünüm sabit; sığmıyorsa kamera teknelerin
+  // o anki çevresini (t-2 … t+4 sn) yumuşakça izler. İzlerken yakınlık SABİT (minScale: tekne ≈ 38 px),
+  // yalnız kaydırma yapılır: zoom oynayıp göz yormasın.
+  const CAM = { dt: 0.5, floor: 0.5, minScale: 0.85, maxScale: 1.3, pad: 64, padTop: 70, minBox: 340, back: 2, ahead: 4 };
+  let camCur = null, camFull = null, camWins = [];
+  function camOn() { return state.zoom == null ? phoneMq.matches : state.zoom; }
+  function boxOf(t0, t1, full) {
+    const scn = state.scn, b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    const add = (x, y) => { if (x < b.x0) b.x0 = x; if (x > b.x1) b.x1 = x; if (y < b.y0) b.y0 = y; if (y > b.y1) b.y1 = y; };
+    // izleme penceresinde yalnız dersin tekneleri (filo görünümün dışında kalabilir); tam kutuda herkes.
+    // Yazı boyları bilinmediğinden tekne yazıları için kenarlarda CAM.pad payı bırakılır.
+    for (const bt of full ? [...state.boats, ...state.extras] : state.boats) for (let t = t0; t <= t1 + 1e-6; t += 0.5) { const q = E.sampleTrack(bt.track, t); add(q.x, q.y); }
+    // sabit nesneler (pin, hakem botu + yazısı, şamandıra + yazısı): tam kutuda hepsi; izlemede yalnız teknelere
+    // yakın olanlar (ders o uçta geçiyorsa uç görünsün). Hazırlık bayrağı gösterilen senaryoda hat hep görünür.
+    const fixed = [];
+    if (scn.line) {
+      const { pin, boat: cb } = scn.line;
+      fixed.push([{ x: pin.x, y: pin.y }, { x: pin.x, y: pin.y + 28 }], [{ x: cb.x - 20, y: cb.y - 50 }, { x: cb.x + 70, y: cb.y + 64 }]);
+      if (scn.prepFlag) fixed.push([{ x: cb.x + 70 + textW(`Hazırlık bayrağı: ${scn.prepFlag}`, 11), y: cb.y - 46 }]);
+    }
+    for (const m of scn.marks || []) fixed.push([{ x: m.x, y: m.y - 28 }, { x: m.x + 16 + textW(m.label || '', 12) , y: m.y + 6 }]);
+    const near = 170, b0 = { ...b };
+    for (const f of fixed) {
+      const keep = full || (scn.prepFlag && scn.line) || f.some(p => p.x > b0.x0 - near && p.x < b0.x1 + near && p.y > b0.y0 - near && p.y < b0.y1 + near);
+      if (keep) f.forEach(p => add(p.x, p.y));
+    }
+    return b;
+  }
+  // görünür alan (SVG öğesinin pikselleri): bilgi kartının ve sol üst göstergenin kapladığı yer çıkarılır
+  function camArea() {
+    const svg = $('course'), W = svg.clientWidth || 1, H = svg.clientHeight || 1;
+    const a = { x: 0, y: 0, w: W, h: H };
+    const card = $('infoCard');
+    if (state.infoOpen && card) {
+      const sr = svg.getBoundingClientRect(), cr = card.getBoundingClientRect();
+      if (cr.width > W * 0.7) a.h = Math.max(120, cr.top - sr.top - 6);           // alttan açılan kart
+      else if (cr.left > sr.left + W * 0.4) a.w = Math.max(160, cr.left - sr.left - 6);   // sağdaki kart
+    }
+    if (H > W) { a.y = 80; a.h = Math.max(100, a.h - 80); }                       // dikey ekran: pusula/sayaç için üstte pay
+    return a;
+  }
+  function camTarget(box, a, kFix) {
+    const bw = Math.max(CAM.minBox, box.x1 - box.x0 + 2 * CAM.pad), bh = Math.max(CAM.minBox * 0.6, box.y1 - box.y0 + CAM.pad + CAM.padTop);
+    const k = kFix || Math.min(CAM.maxScale, a.w / bw, a.h / bh);
+    const cx = (box.x0 + box.x1) / 2, cy = (box.y0 - CAM.padTop + box.y1 + CAM.pad) / 2;
+    return { k, cx, cy };
+  }
+  function camView(snap, dt) {
+    const svg = $('course'), W = svg.clientWidth || 1, H = svg.clientHeight || 1, a = camArea();
+    let tg = camTarget(camFull, a);
+    if (tg.k < CAM.minScale && camWins.length) {
+      // yakınlık: ±3 sn içindeki pencerelerin hepsini sığdıracak kadar (yavaş değişir), en az tüm senaryo kadar;
+      // merkez dersin teknelerinin o anki çevresi; senaryo kutusunun dışına boşuna taşmasın
+      const i0 = Math.max(0, Math.floor((state.t - 3) / CAM.dt)), i1 = Math.min(camWins.length - 1, Math.ceil((state.t + 3) / CAM.dt));
+      let k = CAM.maxScale;
+      for (let i = i0; i <= i1; i++) k = Math.min(k, camTarget(camWins[i], a).k);
+      k = Math.max(tg.k, k, CAM.floor);                     // alt sınır: tekne en az ~25 px (kenardaki nesne taşabilir)
+      const win = camTarget(boxOf(Math.max(0, state.t - CAM.back), Math.min(state.scn.duration, state.t + CAM.ahead)), a, k);
+      const hw = a.w / 2 / k, hh = a.h / 2 / k, F = camFull;
+      const clampC = (c, lo, hi, half) => hi - lo <= 2 * half ? (lo + hi) / 2 : Math.max(lo + half, Math.min(hi - half, c));
+      tg = { k, cx: clampC(win.cx, F.x0 - CAM.pad, F.x1 + CAM.pad, hw), cy: clampC(win.cy, F.y0 - CAM.padTop, F.y1 + CAM.pad, hh) };
+    }
+    if (snap || !camCur) camCur = { ...tg };
+    else { const f = 1 - Math.exp(-(dt || 0.016) * 2.5); for (const key of ['k', 'cx', 'cy']) camCur[key] += (tg[key] - camCur[key]) * f; }
+    const { k, cx, cy } = camCur, w = W / k, h = H / k;
+    state.vb = { x: cx - (a.x + a.w / 2) / k, y: cy - (a.y + a.h / 2) / k, w, h };
+    svg.setAttribute('viewBox', `${state.vb.x.toFixed(1)} ${state.vb.y.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`);
+  }
+  function updateView(snap, dt) { if (state.scn && camOn()) camView(snap, dt); else fitViewBox(); }
+
   // ---------- Senaryo yükleme ----------
   function loadScenario(scn) {
     state.scn = scn; state.t = 0; state.playing = false; state.stepIdx = 0;
@@ -75,6 +150,9 @@
       return b;
     });
     simulateExtras();
+    camFull = boxOf(0, scn.duration, true); camCur = null;
+    camWins = [];
+    for (let t = 0; t <= scn.duration + 1e-6; t += CAM.dt) camWins.push(boxOf(Math.max(0, t - CAM.back), Math.min(scn.duration, t + CAM.ahead)));
     $('scrub').max = scn.duration;
     $('scnTitle').textContent = scn.title;
     $('scnSummary').textContent = scn.summary;
@@ -139,13 +217,14 @@
     $('stepIdx').textContent = `Adım ${i + 1} / ${steps.length}`;
     $('stepTime').textContent = `${s.t.toFixed(1)} sn`;
     [...$('stepBar').children].forEach((b, k) => { b.classList.toggle('cur', k === i); b.classList.toggle('done', k < i); });
-    $('stepTitle').textContent = s.title; $('stepText').textContent = s.text;
+    $('stepTitle').textContent = s.title; $('stepText').textContent = s.text; $('stepMini').textContent = s.title;
     $('btnPrev').disabled = i === 0; $('btnNext').disabled = i === steps.length - 1;
     if (flash && changed) { const c = $('infoCard'); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
   }
   function setInfoOpen(open) {
     state.infoOpen = open; $('infoCard').classList.toggle('hidden', !open); $('btnInfo').classList.toggle('on', open);
-    fitViewBox(); if (state.scn) render();
+    // kart açılıp kapanınca (ve telefonda daraltılınca) görünür alan değişir
+    requestAnimationFrame(() => { camCur = null; updateView(true); if (state.scn) render(); });
   }
 
   // ---------- Ek tekneler: kural motoruyla birlikte simüle edilir ----------
@@ -229,21 +308,22 @@
   // Tekne notları: kutulu rozet, tekne üstünde. Üst üste binerse yukarı (sonra aşağı) kaydırılır, ince çizgiyle tekneye bağlanır.
   let frameNotes = [];
   function drawNotes(parent) {
-    const placed = [], H = 22, pad = 10;
+    const ls = state.ls, placed = [], H = 22 * ls, pad = 10 * ls, fs = 12 * ls;
     const boats = [...state.boats, ...state.extras].map(b => E.sampleTrack(b.track, state.t));
     // engeller: tekne gövdeleri, tekne etiketleri, hakem botu (+ yazısı), pin, şamandıralar
     const obst = [];
-    for (const p of boats) { obst.push({ x: p.x - 16, y: p.y - 26, w: 32, h: 52 }); if (state.show.labels) obst.push({ x: p.x - 28, y: p.y + 26, w: 56, h: 20 }); }
+    for (const p of boats) { obst.push({ x: p.x - 16, y: p.y - 26, w: 32, h: 52 }); if (state.show.labels) obst.push({ x: p.x - 28 * ls, y: p.y + 26, w: 56 * ls, h: 20 * ls }); }
     const scn = state.scn;
     if (scn.line) { const { pin, boat: cb } = scn.line; obst.push({ x: cb.x - 40, y: cb.y - 54, w: 80, h: 122 }, { x: pin.x - 16, y: pin.y - 10, w: 32, h: 40 }); }
     for (const m of scn.marks || []) obst.push({ x: m.x - 12, y: m.y - 28, w: 24, h: 38 });
+    obst.push(hudBox());
     const ov = (r, q, m) => r.x < q.x + q.w + m && q.x < r.x + r.w + m && r.y < q.y + q.h + m && q.y < r.y + r.h + m;
     const hit = (r) => placed.some(q => ov(r, q, 4)) || obst.some(q => ov(r, q, 0));
     // önce teknesi üstte olanlar yerleşsin (yukarı kaydırma tutarlı olsun)
     for (const n of [...frameNotes].sort((a, b) => a.y - b.y)) {
-      const fault = /^HATA/.test(n.text), col = n.kind === 'shadow' ? '#c4b5fd' : fault ? '#f87171' : '#fbbf24';
-      const w = Math.ceil(textW(n.text, 12, 700)) + pad * 2;
-      const offs = [-50, -74, -98, -122, 52, 76];
+      const fault = /^HATA/.test(n.text), col = n.kind === 'shadow' ? '#c4b5fd' : n.kind === 'rung' ? n.color : fault ? '#f87171' : '#fbbf24';
+      const w = Math.ceil(textW(n.text, fs, 700)) + pad * 2;
+      const offs = [-50, -74, -98, -122, 52, 76].map(o => o < 0 ? -28 - (-o - 28) * ls : 28 + (o - 28) * ls);
       let r = null, off = offs[0];
       for (const o of offs) { const c = { x: n.x - w / 2, y: n.y + o, w, h: H }; if (!hit(c)) { r = c; off = o; break; } }
       if (!r) r = { x: n.x - w / 2, y: n.y + offs[0], w, h: H };
@@ -253,22 +333,22 @@
         const ey = off < 0 ? r.y + H : r.y;
         el('line', { x1: n.x, y1: n.y + (off < 0 ? -22 : 22), x2: n.x, y2: ey, stroke: col, 'stroke-width': 1, opacity: .6 }, g);
       }
-      el('rect', { x: r.x, y: r.y, width: w, height: H, rx: 11, fill: 'rgba(7,18,30,.86)', stroke: col, 'stroke-width': 1.2 }, g);
-      el('text', { x: n.x, y: r.y + H / 2 + 4.2, 'text-anchor': 'middle', fill: col, 'font-size': 12, 'font-weight': 700 }, g).textContent = n.text;
+      el('rect', { x: r.x, y: r.y, width: w, height: H, rx: H / 2, fill: 'rgba(7,18,30,.86)', stroke: col, 'stroke-width': 1.2 }, g);
+      el('text', { x: n.x, y: r.y + H / 2 + 4.2 * ls, 'text-anchor': 'middle', fill: col, 'font-size': fs.toFixed(1), 'font-weight': 700 }, g).textContent = n.text;
     }
   }
 
   // Etiket: tekne altında küçük rozet. [rol simgesi] KİMLİK | S/İ (kontra). Kenar rengi rolü gösterir.
   function drawLabel(parent, b, s, sail) {
-    const x = s.x, y = s.y + 36;
+    const ls = state.ls, x = s.x, y = s.y + 26 + 10 * ls;
     if (b.crowd) {
-      el('text', { x: x.toFixed(1), y: y.toFixed(1), 'text-anchor': 'middle', fill: 'rgba(255,255,255,.75)', 'font-size': 10,
+      el('text', { x: x.toFixed(1), y: y.toFixed(1), 'text-anchor': 'middle', fill: 'rgba(255,255,255,.75)', 'font-size': (10 * ls).toFixed(1),
         'paint-order': 'stroke', stroke: 'rgba(0,0,0,.55)', 'stroke-width': 3 }, parent).textContent = b.id;
       return;
     }
     const r = ROLES[b.role], tack = sail.tack === 'starboard' ? 'S' : 'İ';
     const idW = Math.ceil(textW(b.id, 12, 700)), gW = r ? 15 : 0, w = 8 + gW + idW + 5 + 14 + 3, h = 20;
-    const g = el('g', { transform: `translate(${(x - w / 2).toFixed(1)},${(y - h / 2).toFixed(1)})` }, parent);
+    const g = el('g', { transform: `translate(${(x - w * ls / 2).toFixed(1)},${(y - h * ls / 2).toFixed(1)}) scale(${ls.toFixed(3)})` }, parent);
     el('rect', { width: w, height: h, rx: 9, fill: 'rgba(7,18,30,.82)', stroke: r ? r.color : 'rgba(255,255,255,.35)', 'stroke-width': r ? 1.5 : 1 }, g);
     let cx = 8;
     if (r) {
@@ -302,7 +382,7 @@
 
   function drawOverlays(w) {
     const g = $('overlayLayer'); g.innerHTML = '';
-    const scn = state.scn;
+    const scn = state.scn; state.rungNotes = [];
     if (state.show.rungs && scn.rungs && state.t >= scn.rungs.from && (scn.rungs.to == null || state.t <= scn.rungs.to)) {
       const b = state.boats.find(x => x.id === scn.rungs.boat);
       const s = E.sampleTrack(b.track, state.t);
@@ -314,10 +394,8 @@
         const so = E.sampleTrack(o.track, state.t);
         const up = E.fwd(w);
         const gain = ((so.x - s.x) * up.x + (so.y - s.y) * up.y) / HULL;
-        if (Math.abs(gain) > 0.3) {
-          const txt = el('text', { x: so.x, y: so.y + 54, 'text-anchor': 'middle', fill: o.color, 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 3 }, g);
-          txt.textContent = `${gain > 0 ? '+' : ''}${gain.toFixed(1)} tekne boyu`;
-        }
+        // kutulu rozet olarak not sistemine (drawNotes) gider: tekne etiketi, pin ve diğer notlarla çakışmaz
+        if (Math.abs(gain) > 0.3) state.rungNotes.push({ x: so.x, y: so.y, kind: 'rung', color: o.color, text: `${gain > 0 ? '+' : ''}${gain.toFixed(1)} tekne boyu` });
       }
     }
     // layline'lar: şamandıradan/uçtan geriye, orsa rotası boyunca
@@ -409,13 +487,23 @@
     }
   }
 
+  // sol üst gösterge ölçeği (SVG birimi / gösterge birimi); notlar göstergenin altına girmesin diye kutusu da burada
+  function hudScale() {
+    const upp = state.vb.w / ($('course').clientWidth || state.vb.w);
+    const ph = camOn() && phoneMq.matches;                  // telefonda gösterge biraz küçük (sahneye yer kalsın)
+    return Math.max(ph ? 0.55 : 0.8, Math.min(1.6, upp * (ph ? 0.68 : 0.95)));
+  }
+  function hudBox() {
+    const k = hudScale(), wide = state.scn.startAt != null && state.scn.startAt > 0;
+    return { x: state.vb.x, y: state.vb.y, w: (wide ? 270 : 120) * k, h: 146 * k };
+  }
   function drawHud(w) {
     const g = $('hudLayer'); g.innerHTML = '';
     const scn = state.scn, vb = state.vb;
     // sol üst gösterge (pusula + sayaç): ekranda hep aynı boyda görünsün diye ölçeklenir
     const svg = $('course'), upp = vb.w / (svg.clientWidth || vb.w);       // ekran pikseli başına SVG birimi
-    const k = Math.max(0.8, Math.min(1.6, upp * 0.95));
-    const hg = el('g', { transform: `translate(${vb.x.toFixed(1)},${vb.y.toFixed(1)}) scale(${k.toFixed(3)})` }, g);
+    const k = hudScale();
+    const hg = el('g', { transform: `translate(${vb.x.toFixed(1)},${vb.y.toFixed(1)}) scale(${k.toFixed(3)})`, style: '--ls: 1' }, g);
     const cx = 64, cy = 64;
     el('circle', { cx, cy, r: 44, fill: 'rgba(7,18,30,0.72)', stroke: 'rgba(255,255,255,0.18)', 'stroke-width': 1 }, hg);
     for (let a = 0; a < 360; a += 30) {                           // pusula çentikleri
@@ -452,13 +540,18 @@
     }
   }
 
-  function render() {
+  function render(opts = {}) {
     const scn = state.scn; if (!scn) return;
+    if (camOn()) camView(!state.playing || opts.snap, opts.dt);
+    // yakın görünümde sahne küçük ölçekle sığdıysa tekne etiketleri ve notlar biraz büyür (okunabilsin)
+    const upp = state.vb.w / ($('course').clientWidth || state.vb.w);
+    state.ls = camOn() ? Math.max(1, Math.min(1.45, upp * 0.9)) : 1;
+    $('course').style.setProperty('--ls', state.ls.toFixed(3));
     const w = E.windAt(scn.wind, state.t);
     if (cbNode) cbNode.setAttribute('transform', E.committeeBoatTransform(scn.line.boat.x, scn.line.boat.y, w));
     drawWind(w); drawOverlays(w);
     const bl = $('boatLayer'); bl.innerHTML = '';
-    frameNotes = [];
+    frameNotes = [...state.rungNotes];
     for (const b of [...state.boats, ...state.extras]) drawBoat(bl, b, E.sampleTrack(b.track, state.t), w);
     drawNotes(el('g', {}, bl));
     drawHud(w);
@@ -471,9 +564,10 @@
   // ---------- Zaman döngüsü ----------
   function tick(ts) {
     if (state.playing) {
-      state.t += Math.min(0.1, (ts - state.lastTs) / 1000) * state.speed;
+      const dt = Math.min(0.1, (ts - state.lastTs) / 1000);
+      state.t += dt * state.speed;
       if (state.t >= state.scn.duration) { state.t = state.scn.duration; state.playing = false; updatePlayButton(); }
-      render();
+      render({ dt });
     }
     state.lastTs = ts; requestAnimationFrame(tick);
   }
@@ -500,6 +594,7 @@
   $('chkLabels').onchange = e => { state.show.labels = e.target.checked; buildLegend(); render(); };
   $('chkShadows').onchange = e => { state.show.shadows = e.target.checked; render(); };
   $('chkTrails').onchange = e => { state.show.trails = e.target.checked; render(); };
+  $('chkZoom').onchange = e => { state.zoom = e.target.checked; camCur = null; updateView(true); render({ snap: true }); };
   $('btnLayers').onclick = () => { const m = $('layersMenu'); m.classList.toggle('hidden'); $('btnLayers').classList.toggle('on', !m.classList.contains('hidden')); };
   // tam ekran: iPad'de sistemin X düğmesi sol üste biner → üst çubukta yer aç
   const fsSync = () => document.documentElement.classList.toggle('is-fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
@@ -525,7 +620,7 @@
     if (!e.target.closest('#layersMenu') && !e.target.closest('#btnLayers')) { $('layersMenu').classList.add('hidden'); $('btnLayers').classList.remove('on'); }
     if (phoneMq.matches && !e.target.closest('#addMenu') && !e.target.closest('#btnAddMenu')) $('addMenu').classList.add('hidden');
   });
-  window.addEventListener('resize', () => { fitViewBox(); render(); });
+  window.addEventListener('resize', () => { camCur = null; updateView(true); render({ snap: true }); });
 
   // ---------- Senaryo seçici (kategori sekmeleri + kartlar) ----------
   const CATS = ['Taktik', 'İleri Taktik', 'Kurallar', 'Teknik'];
@@ -602,13 +697,24 @@
   // Tekne ekle/çıkar şimdilik kapalı (karar: NOTLAR.md); kalabalık senaryo tanımından gelir
   ['addRow', 'addMenu', 'btnAddMenu'].forEach(id => $(id).style.display = 'none');
   $('btnAddMenu').onclick = () => $('addMenu').classList.toggle('hidden');
-  $('btnCollapse').onclick = () => $('infoCard').classList.toggle('collapsed');
-  $('infoHead').addEventListener('click', e => { if (phoneMq.matches && e.target.closest('.info-title-wrap')) $('infoCard').classList.toggle('collapsed'); });
+  // telefonda alttan çekmece: tutamağa ya da başlığa dokun → daralt/genişlet; aşağı/yukarı kaydır → aynısı
+  function setCollapsed(c) { $('infoCard').classList.toggle('collapsed', c); setInfoOpen(state.infoOpen); }
+  $('btnCollapse').onclick = () => setCollapsed(!$('infoCard').classList.contains('collapsed'));
+  $('infoHead').addEventListener('click', e => { if (phoneMq.matches && e.target.closest('.info-title-wrap')) setCollapsed(!$('infoCard').classList.contains('collapsed')); });
+  let swipeY = null;
+  $('infoHead').addEventListener('touchstart', e => { swipeY = e.touches[0].clientY; }, { passive: true });
+  $('infoHead').addEventListener('touchend', e => {
+    if (swipeY == null || !phoneMq.matches) return;
+    const dy = e.changedTouches[0].clientY - swipeY; swipeY = null;
+    if (dy > 30) setCollapsed(true); else if (dy < -30) setCollapsed(false);
+  }, { passive: true });
+  $('chkZoom').checked = camOn();
+  phoneMq.addEventListener('change', () => { if (state.zoom == null) $('chkZoom').checked = camOn(); });
 
   const fromHash = () => SCENARIOS.find(s => s.id === location.hash.slice(1)) || SCENARIOS[0];
   window.addEventListener('hashchange', () => { const s = fromHash(); if (s !== state.scn) loadScenario(s); });
   const ds = document.body.dataset;
   $('versionLabel').textContent = ds.version ? `Sürüm ${ds.ver || ds.version} · ${ds.version} · ${ds.built}` : 'Geliştirme sürümü';
-  fitViewBox(); setInfoOpen(true); loadScenario(fromHash());
+  fitViewBox(); loadScenario(fromHash()); setInfoOpen(true);
   requestAnimationFrame(ts => { state.lastTs = ts; requestAnimationFrame(tick); });
 })();

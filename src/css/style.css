@@ -75,6 +75,7 @@ button.icon:hover { color: var(--text); background: var(--hover); }
 
 /* --- sahne --- */
 .stage { position: relative; flex: 1 1 auto; min-height: 0; background: radial-gradient(120% 90% at 50% 40%, #0d3456 0%, var(--water) 70%); }
+#boatLayer { --ls: 1; }      /* tekne etiketi ve notları kendi ölçeğini kullanır (app.js → state.ls) */
 svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: block; font-family: inherit; }
 
 /* --- bilgi kartı --- */
@@ -88,6 +89,7 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
 .step-meta { font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--accent); font-variant-numeric: tabular-nums; }
 .step-meta .dot { margin: 0 6px; color: var(--muted); }
 .step-meta #stepTime { color: var(--muted); font-weight: 600; text-transform: none; letter-spacing: 0; }
+.step-mini { display: none; }
 .info-scn { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 .step-bar { display: flex; gap: 4px; padding: 4px 16px 0; }
 .step-bar button { flex: 1; height: 14px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; }
@@ -236,9 +238,12 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
 @media (max-width: 640px) {
   .topbar { gap: 6px; padding-left: 8px; padding-right: 6px; }
   .brand { display: none; }
+  .pg-index .topbar .spacer { display: none; }
   #btnFull { display: none; }
-  .scn-btn { max-width: none; flex: 1; height: 44px; padding: 0 8px; gap: 8px; }
+  .scn-btn { max-width: none; flex: 1; height: 48px; padding: 0 8px; gap: 8px; }
   .scn-cat { display: none; }
+  /* başlık "St…" diye kesilmesin: iki satıra kadar */
+  .scn-title { white-space: normal; font-size: 13px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .tool-group { gap: 0; }
   .info-card { top: auto; bottom: 8px; left: 8px; right: 8px; width: auto; max-height: 50%; border-radius: 16px; }
   .info-card.hidden { transform: translateY(20px); }
@@ -253,6 +258,27 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .info-body h3 { font-size: 16px; }
   .info-body p { font-size: 14px; }
   .info-foot { padding: 8px 10px; }
+  /* ana sayfa (pg-index; simülatör de .info-card kullanır, etkilenmesin): */
+  /* bilgi kartı = alttan çekmece (bottom sheet): sabit yükseklik (sahne odağı zıplamasın), metin içinde kayar.
+     Daraltınca yalnız adım başlığı + gezinti kalır; sahne kalan alana sığdırılır (app.js → camArea) */
+  .pg-index .info-card { top: auto; bottom: 0; left: 0; right: 0; width: auto; height: min(36%, 300px); max-height: none;
+    border-radius: 18px 18px 0 0; border-width: 1px 0 0; box-shadow: 0 -10px 28px rgba(0,0,0,.4); }
+  .pg-index .info-card.collapsed { height: auto; }
+  .pg-index .info-card.hidden { transform: translateY(24px); }
+  .pg-index .info-head { position: relative; padding: 14px 4px 2px 14px; gap: 4px; }
+  .pg-index .handle { display: flex; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 96px; height: 18px; align-items: center; justify-content: center; background: transparent; border: 0; padding: 0; }
+  .pg-index .handle span { width: 40px; height: 5px; border-radius: 3px; background: var(--border-strong); display: block; }
+  .pg-index .info-scn { display: none; }
+  .pg-index .step-mini { display: block; font-size: 15px; font-weight: 700; line-height: 1.3; margin-top: 2px; color: var(--text);
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .pg-index .info-body h3 { display: none; }
+  .pg-index .info-card.collapsed .info-scroll, .pg-index .info-card.collapsed .step-bar { display: none; }
+  .pg-index .info-card.collapsed .info-head { padding-bottom: 4px; }
+  .pg-index .info-card.collapsed .info-foot { display: flex; }
+  .pg-index .step-bar { padding: 6px 14px 0; }
+  .pg-index .info-body { padding: 8px 14px 10px; }
+  .pg-index .info-body p { font-size: 15px; line-height: 1.5; }
+  .pg-index .info-foot { padding: 6px 10px; }
   .nav-btn { height: var(--tap); }
   .nav-btn.goto span { display: none; }
   .nav-btn.goto { flex: 0 0 var(--tap); }
@@ -264,7 +290,10 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .boat-row .boat-name { display: none; }
   .crowd-row { display: none; }
   .summary-box { padding: 2px 14px 10px; }
+  /* alt boşluk: sürüm etiketi düğmelerin altına sığsın (iPhone'da ev çizgisi payı içinde) */
   .bottombar { padding-left: 8px; padding-right: 8px; }
+  .pg-index .bottombar { padding-bottom: max(18px, var(--sab)); }
+  .pg-index .ver-badge { bottom: 3px; }
   .main-row { gap: 6px; }
   .play { width: 46px; height: 46px; }
   .time { font-size: 12px; }
@@ -318,7 +347,7 @@ a.sim-link { text-decoration: none; color: #fed7aa; background: rgba(251,146,60,
 a.sim-link svg { color: #fb923c; }
 a.sim-link:hover { background: rgba(251,146,60,.26); border-color: #fb923c; color: #fff; }
 @media (max-width: 1100px) { a.sim-link.tool { width: auto; padding: 0 12px 0 10px; } a.sim-link .lbl { display: inline; } }
-@media (max-width: 420px) { a.sim-link.tool { width: var(--tap); padding: 0; } a.sim-link .lbl { display: none; } }
+@media (max-width: 640px) { a.sim-link.tool { width: var(--tap); padding: 0; } a.sim-link .lbl { display: none; } }
 /* Tam ekranda (iPad Safari) sol üstte sistemin kapatma (X) düğmesi çıkar: üst çubuğun solunu boş bırak */
 html.is-fs .topbar { padding-left: 76px; }
 
