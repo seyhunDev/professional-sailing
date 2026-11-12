@@ -27,14 +27,16 @@ for (const file of walk(DIST)) {
   hashed.set(rel.replaceAll('\\', '/'), relative(DIST, newName).replaceAll('\\', '/'));
 }
 
-// 3) index.html içindeki bağlantıları değiştir, sürüm damgası ekle
-let html = readFileSync(join(DIST, 'index.html'), 'utf8');
-for (const [from, to] of hashed) html = html.replaceAll(`"${from}"`, `"${to}"`);
+// 3) HTML sayfalarındaki (index.html, sim.html …) bağlantıları değiştir, sürüm damgası ekle
 let commit = 'local';
 try { commit = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
 const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
-html = html.replace('<body>', `<body data-version="${commit}" data-built="${stamp}">`);
-writeFileSync(join(DIST, 'index.html'), html);
+for (const page of readdirSync(DIST).filter(f => f.endsWith('.html'))) {
+  let html = readFileSync(join(DIST, page), 'utf8');
+  for (const [from, to] of hashed) html = html.replaceAll(`"${from}"`, `"${to}"`);
+  html = html.replace(/<body([^>]*)>/, `<body$1 data-version="${commit}" data-built="${stamp}">`);
+  writeFileSync(join(DIST, page), html);
+}
 // Jekyll'ı kapat (GitHub Pages dosyaları olduğu gibi sunsun)
 writeFileSync(join(DIST, '.nojekyll'), '');
 

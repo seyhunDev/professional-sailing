@@ -309,3 +309,7 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .play { width: 42px; height: 42px; }
   .picker { padding: 8px; }
 }
+
+/* simülatör bağlantısı (üst çubuk) */
+a.sim-link { color: #fdba74; text-decoration: none; }
+a.sim-link:hover { color: #fed7aa; }
