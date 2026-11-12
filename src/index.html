@@ -81,24 +81,26 @@
         <button id="btnInfoClose" class="icon" title="Kapat"><svg><use href="#i-close"/></svg></button>
       </div>
       <div class="step-bar" id="stepBar"></div>
-      <div class="info-body">
-        <h3 id="stepTitle"></h3>
-        <p id="stepText"></p>
+      <div class="info-scroll" id="infoScroll">
+        <div class="info-body">
+          <h3 id="stepTitle"></h3>
+          <p id="stepText"></p>
+        </div>
+        <div class="boats-box">
+          <div class="box-head">Tekneler</div>
+          <div class="legend" id="legend"></div>
+          <div class="key" id="roleKey"></div>
+        </div>
+        <details class="summary-box">
+          <summary>Senaryo özeti</summary>
+          <p id="scnSummary"></p>
+        </details>
       </div>
       <div class="info-foot">
         <button id="btnPrev" class="nav-btn" title="Önceki adım (←)"><svg><use href="#i-prev"/></svg><span>Önceki</span></button>
         <button id="btnGoto" class="nav-btn goto" title="Animasyonu bu adımın anına götür"><svg><use href="#i-target"/></svg><span>Bu ana git</span></button>
         <button id="btnNext" class="nav-btn" title="Sonraki adım (→)"><span>Sonraki</span><svg><use href="#i-next"/></svg></button>
       </div>
-      <div class="boats-box">
-        <div class="box-head">Tekneler</div>
-        <div class="legend" id="legend"></div>
-        <div class="key" id="roleKey"></div>
-      </div>
-      <details class="summary-box">
-        <summary>Senaryo özeti</summary>
-        <p id="scnSummary"></p>
-      </details>
     </aside>
 
     <!-- KATMANLAR -->

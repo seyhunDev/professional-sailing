@@ -95,12 +95,13 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
 .step-bar button.done::before { background: color-mix(in srgb, var(--accent) 45%, var(--raised2)); }
 .step-bar button.cur::before { background: var(--accent); }
 .step-bar button:hover::before { background: var(--text2); }
-.info-body { padding: 8px 16px 14px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.info-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--raised2) transparent; }
+.info-body { padding: 8px 16px 14px; overflow-wrap: anywhere; }
 .info-body h3 { margin: 4px 0 6px; font-size: 17px; line-height: 1.3; font-weight: 700; }
 .info-body p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2); }
 .info-card.flash .info-body { animation: flash .6s ease-out; }
 @keyframes flash { from { background: rgba(56,189,248,.12); } to { background: transparent; } }
-.info-foot { display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.info-foot { display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--border); flex: 0 0 auto; background: var(--panel-solid); }
 .nav-btn { display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex: 1; height: 40px; padding: 0 8px;
   background: var(--raised); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; }
 .nav-btn svg { width: 18px; height: 18px; }
@@ -124,9 +125,9 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
 .key span { display: inline-flex; align-items: center; gap: 5px; }
 .key .k { display: inline-grid; place-items: center; width: 14px; height: 14px; border-radius: 4px; font-size: 10px; font-weight: 800; color: #fff; }
 .key .k.s { background: #22c55e; } .key .k.i { background: #ef4444; }
-.summary-box { border-top: 1px solid var(--border); padding: 4px 16px 10px; font-size: 13px; color: var(--muted); }
+.summary-box { border-top: 1px solid var(--border); padding: 4px 16px 12px; font-size: 13px; color: var(--muted); }
 .summary-box summary { cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; padding: 8px 0; list-style-position: inside; }
-.summary-box p { margin: 4px 0; line-height: 1.5; color: var(--text2); }
+.summary-box p { margin: 4px 0 2px; line-height: 1.55; color: var(--text2); overflow-wrap: anywhere; }
 
 /* --- popover'lar --- */
 .popover { position: absolute; top: 10px; right: 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
@@ -244,7 +245,7 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .info-head { padding-left: 4px; padding-top: 6px; }
   .handle { display: flex; align-items: center; justify-content: center; width: 32px; height: var(--tap); background: transparent; border: 0; flex: 0 0 auto; }
   .handle span { width: 20px; height: 4px; border-radius: 2px; background: var(--muted); display: block; }
-  .info-card.collapsed .info-body, .info-card.collapsed .info-foot, .info-card.collapsed .boats-box, .info-card.collapsed .summary-box, .info-card.collapsed .step-bar { display: none; }
+  .info-card.collapsed .info-scroll, .info-card.collapsed .info-foot, .info-card.collapsed .step-bar { display: none; }
   .info-card.collapsed .info-scn { color: var(--text); }
   .switch .sw-lbl { display: none; }
   .row-sw .sw-lbl { display: inline; }
@@ -257,13 +258,12 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .nav-btn.goto { flex: 0 0 var(--tap); }
   .boats-box { padding: 8px 14px 10px; }
   .boats-box .box-head, .key { display: none; }
-  .info-body { flex: 1 1 auto; min-height: 72px; }
   .legend { flex-direction: row; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; }
   .legend::-webkit-scrollbar { display: none; }
   .boat-row { flex: 0 0 auto; background: var(--raised); border: 1px solid var(--border); border-radius: 14px; padding: 3px 8px 3px 3px; }
   .boat-row .boat-name { display: none; }
   .crowd-row { display: none; }
-  .summary-box { display: none; }
+  .summary-box { padding: 2px 14px 10px; }
   .bottombar { padding-left: 8px; padding-right: 8px; }
   .main-row { gap: 6px; }
   .play { width: 46px; height: 46px; }
@@ -302,7 +302,9 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .nav-btn { height: 36px; }
   .nav-btn.goto span { display: none; }
   .nav-btn.goto { flex: 0 0 40px; }
-  .boats-box, .summary-box { display: none; }
+  .boats-box .box-head, .key { display: none; }
+  .boats-box { padding: 6px 14px 8px; }
+  .summary-box { padding: 2px 14px 8px; }
   .switch .sw-lbl { display: none; }
   .row-sw .sw-lbl { display: inline; }
   .bottombar { padding-top: 6px; padding-bottom: calc(6px + var(--sab)); }

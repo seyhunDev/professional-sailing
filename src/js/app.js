@@ -21,6 +21,13 @@
     hata:  { label: 'Hata',       glyph: '✕', color: '#f87171' }
   };
   const splitTitle = t => { const m = t.match(/^(\S+?\d+[a-z]?)\s*·\s*(.*)$/); return m ? [m[1], m[2]] : ['', t]; };
+  // SVG içi kutuların genişliği metne göre: tahmini değil ölçülmüş genişlik (taşma olmasın)
+  const measureCtx = document.createElement('canvas').getContext('2d');
+  const FONT = getComputedStyle(document.body).fontFamily || 'system-ui, sans-serif';
+  const textW = (str, size, weight = 400, spacing = 0) => {
+    measureCtx.font = `${weight} ${size}px ${FONT}`;
+    return measureCtx.measureText(str).width + spacing * str.length;
+  };
   const fmtClock = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const CROWD_COLORS = ['#c9d6e3', '#b8c7d6', '#aab9c9', '#d5dde6', '#bfcbd8', '#a3b3c4', '#cdd7e1', '#b0bfcf', '#dbe3ea', '#9fb0c3'];
@@ -43,7 +50,15 @@
     if (aspect > ca) w = COURSE.h * aspect; else h = COURSE.w / aspect;
     // dikey ekranda fazla yükseklik: tablette parkur aşağıda (üst boşluk bilgi kartına), telefonda yukarıda (kart altta)
     const topShare = (typeof phoneMq !== 'undefined' && phoneMq.matches) ? 0.22 : 0.68;
-    state.vb = { x: -(w - COURSE.w) / 2, y: -(h - COURSE.h) * topShare, w, h };
+    // geniş ekranda bilgi kartı sağda: yatay fazlalığı sağa ver ki parkur kartın altında kalmasın
+    let x = -(w - COURSE.w) / 2;
+    const card = $('infoCard');
+    if (!phoneMq.matches && state.infoOpen && card && aspect > ca && !matchMedia('(max-width: 1100px) and (orientation: portrait)').matches) {
+      const upp = w / W, need = (card.offsetWidth + 28) * upp;      // kartın kapladığı genişlik (SVG birimi)
+      const extra = w - COURSE.w, right = Math.min(extra, need);
+      x = -(extra - right) / 2;
+    }
+    state.vb = { x, y: -(h - COURSE.h) * topShare, w, h };
     svg.setAttribute('viewBox', `${state.vb.x} ${state.vb.y} ${w} ${h}`);
   }
 
@@ -128,7 +143,10 @@
     $('btnPrev').disabled = i === 0; $('btnNext').disabled = i === steps.length - 1;
     if (flash && changed) { const c = $('infoCard'); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
   }
-  function setInfoOpen(open) { state.infoOpen = open; $('infoCard').classList.toggle('hidden', !open); $('btnInfo').classList.toggle('on', open); }
+  function setInfoOpen(open) {
+    state.infoOpen = open; $('infoCard').classList.toggle('hidden', !open); $('btnInfo').classList.toggle('on', open);
+    fitViewBox(); if (state.scn) render();
+  }
 
   // ---------- Ek tekneler: kural motoruyla birlikte simüle edilir ----------
   function simulateExtras() {
@@ -218,7 +236,7 @@
       return;
     }
     const r = ROLES[b.role], tack = sail.tack === 'starboard' ? 'S' : 'İ';
-    const idW = 7.6 * b.id.length, gW = r ? 15 : 0, w = 8 + gW + idW + 5 + 14 + 3, h = 20;
+    const idW = Math.ceil(textW(b.id, 12, 700)), gW = r ? 15 : 0, w = 8 + gW + idW + 5 + 14 + 3, h = 20;
     const g = el('g', { transform: `translate(${(x - w / 2).toFixed(1)},${(y - h / 2).toFixed(1)})` }, parent);
     el('rect', { width: w, height: h, rx: 9, fill: 'rgba(7,18,30,.82)', stroke: r ? r.color : 'rgba(255,255,255,.35)', 'stroke-width': r ? 1.5 : 1 }, g);
     let cx = 8;
@@ -324,10 +342,13 @@
       const rem = (scn.startAt - state.t) * (scn.clockScale || 1);
       const fmt = r => scn.clockScale ? fmtClock(r) : `${r.toFixed(1)} sn`;
       const on = rem > 0, col = on ? (rem <= 5 * (scn.clockScale || 1) ? '#f87171' : '#fbbf24') : '#34d399';
-      const px = cx + 58, py = cy - 26, pw = on ? 132 : 176, ph = 52;
+      const big = on ? fmt(rem) : '✔ Yarış başladı', small = on ? "START'A" : 'START VERİLDİ';
+      const minBig = on ? textW(fmt(scn.startAt * (scn.clockScale || 1)), 22, 800) : 0;   // geri sayarken kutu daralıp genişlemesin
+      const px = cx + 58, py = cy - 26, ph = 52;
+      const pw = Math.ceil(Math.max(textW(big, 22, 800), minBig, textW(small, 10, 700, 1), on ? 104 : 0)) + 30;
       el('rect', { x: px, y: py, width: pw, height: ph, rx: 14, fill: 'rgba(7,18,30,0.78)', stroke: col, 'stroke-opacity': .55, 'stroke-width': 1.5 }, hg);
-      el('text', { x: px + 14, y: py + 17, fill: 'rgba(255,255,255,.6)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': 1 }, hg).textContent = on ? "START'A" : 'START VERİLDİ';
-      el('text', { x: px + 14, y: py + 42, fill: col, 'font-size': 22, 'font-weight': 800, 'font-variant-numeric': 'tabular-nums' }, hg).textContent = on ? fmt(rem) : '✔ Yarış başladı';
+      el('text', { x: px + 14, y: py + 17, fill: 'rgba(255,255,255,.6)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': 1 }, hg).textContent = small;
+      el('text', { x: px + 14, y: py + 42, fill: col, 'font-size': 22, 'font-weight': 800, 'font-variant-numeric': 'tabular-nums' }, hg).textContent = big;
       // hazırlık bayrağı: son 1 dakikada indirilir
       if (scn.prepFlag && scn.line) {
         const up = state.t < (scn.flagDownAt != null ? scn.flagDownAt : scn.startAt);
@@ -338,7 +359,7 @@
           el('rect', { x: bx, y: by - 6, width: 30, height: 20, fill: col, stroke: '#fff', 'stroke-width': 1 }, g);
           el('text', { x: bx + 15, y: by + 9, 'text-anchor': 'middle', fill: scn.prepFlag === 'Siyah' ? '#fff' : '#fff', 'font-size': 13, 'font-weight': 700 }, g).textContent = scn.prepFlag === 'Siyah' ? '■' : scn.prepFlag;
         }
-        el('text', { x: bx + 36, y: by + 8, fill: '#ffd166', 'font-size': 11 }, g).textContent = up ? `Hazırlık bayrağı: ${scn.prepFlag}` : 'Bayrak indi: son 1 dk';
+        el('text', { x: bx + 36, y: by + 8, fill: '#ffd166', 'font-size': 11, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 3 }, g).textContent = up ? `Hazırlık bayrağı: ${scn.prepFlag}` : 'Bayrak indi: son 1 dk';
       }
     }
   }
