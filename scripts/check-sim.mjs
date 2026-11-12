@@ -36,8 +36,8 @@ for (const c of cases) {
   if (verbose) for (const e of s.events) console.log(`    ${e.t.toFixed(1)} ${e.text}`);
   if (unfinished.length) { problems++; console.log('  ⚠ bitiremeyen:', unfinished.join(', ')); }
   if (out) { problems++; console.log('  ⚠ alan dışı örnek:', out); }
-  // rota: start'tan sonraki her noktanın yakınından (zikzak koridoru + nokta yarıçapı) geçmeli
-  const missed = c.route ? c.route.map((p, i) => [i, near[i]]).filter(([i, d]) => S.lineSide(c.route[i]) === -1 && d > 80) : [];
+  // rota: start'tan sonraki her noktanın yakınından geçmeli (kalabalıkta tramola için açık beklerken koridor 3 katına kadar taşabilir)
+  const missed = c.route ? c.route.map((p, i) => [i, near[i]]).filter(([i, d]) => S.lineSide(c.route[i]) === -1 && d > 140) : [];
   if (missed.length) { problems++; console.log('  ⚠ rota noktası kaçtı:', missed.map(([i, d]) => `#${i} ${d.toFixed(0)} px`).join(', ')); }
   if (contacts > 6) { problems++; console.log('  ⚠ temas çok:', contacts); }   // kalabalık şamandıra dönüşünde birkaç temas gerçekçi; fazlası hata
 }

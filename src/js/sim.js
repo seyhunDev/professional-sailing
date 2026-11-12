@@ -20,7 +20,7 @@
     sim: null, frames: [], speed: 1, lastTs: 0, acc: 0,
     show: { speed: true, shadow: false },
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
-    drawMode: false, drawPts: null
+    drawMode: false, drawPts: null, routeMode: 'acili', legs: null, legPrev: null
   };
 
   // ---------- görünüm ----------
@@ -163,6 +163,14 @@
       el('polyline', { points: pts2(all), fill: 'none', stroke: 'rgba(251,146,60,.85)', 'stroke-width': 2.5, 'stroke-dasharray': '8 6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, parent);
       const end = rest[rest.length - 1];
       el('circle', { cx: end.x.toFixed(1), cy: end.y.toFixed(1), r: 6, fill: '#fb923c', stroke: '#fff', 'stroke-width': 1.5 }, parent);
+    }
+    if (st.legs && st.legs.length > 1) el('polyline', { points: pts2(st.legs), fill: 'none', stroke: '#fdba74', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, parent);
+    if (st.legs) { const o = st.legs[st.legs.length - 1]; el('circle', { cx: o.x.toFixed(1), cy: o.y.toFixed(1), r: 5, fill: '#fdba74' }, parent); }
+    if (st.legPrev) {
+      const { from: a, to: b, label } = st.legPrev;
+      el('line', { x1: a.x.toFixed(1), y1: a.y.toFixed(1), x2: b.x.toFixed(1), y2: b.y.toFixed(1), stroke: '#fdba74', 'stroke-width': 3, 'stroke-dasharray': '10 6', 'marker-end': 'url(#routeHead)' }, parent);
+      el('text', { x: ((a.x + b.x) / 2 + 12).toFixed(1), y: ((a.y + b.y) / 2).toFixed(1), fill: '#fdba74', 'font-size': 12, 'font-weight': 700,
+        'paint-order': 'stroke', stroke: 'rgba(0,0,0,.75)', 'stroke-width': 3.5 }, parent).textContent = label;
     }
     if (st.drawPts && st.drawPts.length > 1) el('polyline', { points: pts2(st.drawPts), fill: 'none', stroke: '#fdba74', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, parent);
   }
@@ -416,6 +424,7 @@
   }
   function onDown(ev) {
     const p = toWorld(ev);
+    if (st.drawMode && st.routeMode === 'acili') { legAim(p); $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); return; }
     if (st.drawMode) { st.drawPts = [p]; $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); return; }
     const b = st.mode === 'setup' ? hitBoat(p) : null;
     if (b) {
@@ -429,6 +438,7 @@
     if (st.drag) { $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); }
   }
   function onMove(ev) {
+    if (st.legPrev) { legAim(toWorld(ev)); return; }
     if (st.drawPts) { const p = toWorld(ev), q = st.drawPts[st.drawPts.length - 1]; if (Math.hypot(p.x - q.x, p.y - q.y) > 8) st.drawPts.push(p); return; }
     const d = st.drag;
     if (!d) { const p = toWorld(ev); $('course').style.cursor = (st.mode === 'setup' && hitBoat(p)) || hitGust(p) ? 'grab' : ''; return; }
@@ -440,6 +450,7 @@
     $('course').style.cursor = 'grabbing';
   }
   function onUp() {
+    if (st.legPrev) { legCommit(); return; }
     if (st.drawPts) { finishRoute(st.drawPts); st.drawPts = null; return; }
     const d = st.drag; st.drag = null;
     if (!d) return;
@@ -468,16 +479,49 @@
     const clean = pts.map(p => ({ x: Math.max(20, Math.min(W.w - 20, p.x)), y: Math.max(20, Math.min(W.h - 10, p.y)) }));
     let len = 0; for (let i = 1; i < clean.length; i++) len += Math.hypot(clean[i].x - clean[i - 1].x, clean[i].y - clean[i - 1].y);
     if (len < 60) { toast('Rota çok kısa; teknenin gideceği yolu biraz daha uzun çiz.'); return; }
-    if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.route = clean; }
-    else applyChange(r => S.command(r, 'route', clean));
-    toast('Rota hazır: teknen çizgiyi izler, rüzgara karşı kısımlarda zikzak (tramola) atar, sonra şamandıraya gider.');
+    applyRoute(clean);
+  }
+  // Açılı rota: her sürükleme bir bacak. Yön orsadan darsa orsa açısına (rüzgara 45°) oturur,
+  // değilse 5°'lik adımlara; bacak bir öncekinin bittiği yerden (ilk bacak teknenden) başlar.
+  function legOrigin() {
+    if (st.legs && st.legs.length) return st.legs[st.legs.length - 1];
+    const m = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine);
+    return m ? { x: m.x, y: m.y } : null;
+  }
+  function legAim(p) {
+    const a = legOrigin(); if (!a) return;
+    const w = view().wind, dx = p.x - a.x, dy = p.y - a.y;
+    if (Math.hypot(dx, dy) < 4) { st.legPrev = { from: a, to: a, label: '' }; return; }
+    const brg = E.norm360(Math.atan2(dx, -dy) * 180 / Math.PI), rel = E.norm180(brg - w);
+    let h, label;
+    if (Math.abs(rel) < 45) { const tack = rel < 0 ? 'starboard' : 'port'; h = E.tackHeading(w, tack); label = `orsa · ${tack === 'starboard' ? 'sancak' : 'iskele'} kontra`; }
+    else { h = Math.round(brg / 5) * 5; const r = Math.abs(E.norm180(h - w)); label = r > 150 ? 'pupa' : r > 100 ? 'geniş apaz' : r > 70 ? 'apaz' : 'dar apaz'; }
+    const f = E.fwd(h), len = Math.max(0, dx * f.x + dy * f.y);
+    const to = { x: Math.max(20, Math.min(W.w - 20, a.x + f.x * len)), y: Math.max(20, Math.min(W.h - 10, a.y + f.y * len)) };
+    st.legPrev = { from: a, to, label };
+  }
+  function legCommit() {
+    const { from: a, to } = st.legPrev; st.legPrev = null;
+    if (Math.hypot(to.x - a.x, to.y - a.y) < 25) return;
+    if (!st.legs) st.legs = [a];
+    st.legs.push(to);
+    applyRoute(st.legs.slice(1), true);
+  }
+  function applyRoute(pts, quiet) {
+    if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.route = pts; }
+    else applyChange(r => S.command(r, 'route', pts));
+    if (!quiet) toast('Rota hazır: teknen çizgiyi izler, rüzgara karşı kısımlarda zikzak (tramola) atar, sonra şamandıraya gider.');
     updatePanel(true);
   }
   function setDrawMode(on) {
     st.drawMode = on; $('btnRoute').classList.toggle('on', on);
+    $('btnRoute').lastChild.textContent = on ? 'Bitti' : 'Rota çiz';
     $('course').style.cursor = on ? 'crosshair' : '';
     if (on && st.mode === 'run') st.mode = 'pause';
-    if (on) toast('Parmağınla (ya da fareyle) teknenin gideceği yolu çiz.');
+    if (!on) { if (st.legs && st.legs.length > 1) toast('Rota hazır: teknen bacakları izler, sonra şamandıraya gider.'); st.legs = null; st.legPrev = null; }
+    if (on) toast(st.routeMode === 'acili'
+      ? 'Teknenden başlayarak sürükle: her sürükleme bir bacak, orsadan darsa orsa açısına oturur. Bitince “Bitti”.'
+      : 'Parmağınla (ya da fareyle) teknenin gideceği yolu serbestçe çiz.');
   }
   function clearRoute() {
     if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.route = null; }
@@ -526,7 +570,8 @@
   $('btnFleetLine').addEventListener('click', () => { setFleetSize(st.fleet.length); updatePanel(true); toast('Tekneler hattın dibine yeniden dizildi'); });
   $('selTack').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.tack = x.dataset.v; updatePanel(true); } });
   $('btnRoute').addEventListener('click', () => setDrawMode(!st.drawMode));
-  $('btnRouteClear').addEventListener('click', clearRoute);
+  $('btnRouteClear').addEventListener('click', () => { if (st.drawMode) setDrawMode(false); clearRoute(); });
+  $('selRouteMode').addEventListener('change', e => { st.routeMode = e.target.value; if (st.drawMode) { setDrawMode(false); setDrawMode(true); } });
   $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.ignoresRules = x.dataset.v === 'vermez'; updatePanel(true); } });
   $('btnMineRules').addEventListener('click', () => {
     const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
@@ -553,7 +598,7 @@
     if (e.target.closest('input, select, textarea')) return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (e.key === 't' || e.key === 'T') $('btnTack').click();
-    else if (e.key === 'Escape' && st.drawMode) { st.drawPts = null; setDrawMode(false); }
+    else if (e.key === 'Escape' && st.drawMode) { st.drawPts = null; st.legPrev = null; setDrawMode(false); }
     else if (e.key === 'ArrowLeft') setWind(-5);
     else if (e.key === 'ArrowRight') setWind(5);
   });

@@ -18,6 +18,9 @@
   const SHADOW_LEN = E.SHADOW.len;   // rüzgar gölgesi (pis rüzgar): engine.SHADOW ile ortak (~1 boy kıçtan)
   const SHADOW_LOSS = E.SHADOW.loss; // gölgenin tam ortasında hız kaybı
   const KNOTS = 3.5 / BASE;       // px/s → knot (orsada 55 px/s ≈ 3.5 kn, Optimist)
+  // Yol verme mesafeleri (merkezler arası px; tekne boyu 50). Optimist'ler yakın geçer:
+  // GW_DETECT: bu kadar yakından geçecekse yol veren önlem alır · GW_SAFE: kaçışta hedeflenen en yakın geçiş
+  const GW_DETECT = 34, GW_SAFE = 34;
   const MIN_TACK_GAP = 3;         // iki tramola arası en az (sn)
   const OBSTACLES = E.obstaclesOf({ marks: [MARK], line: LINE });
   const LINE_OBS = E.obstaclesOf({ line: LINE });           // pin + hakem botu
@@ -253,10 +256,12 @@
     const vb = Math.max(b.v, 22);
     for (const O of others) {
       const c = closest(b, b.h, vb, O, 4);
-      if (c.d > 200 || c.dmin > 44) continue;
+      if (c.d > 200 || c.dmin > GW_DETECT) continue;
       if (c.dmin > c.d - 4 && c.d > 34) continue;                       // uzaklaşıyor / paralel
       let rule = classify(b, O.ref, w, t);
-      if (!rule && c.dmin < 28 && c.tc < 1.5) rule = 14;               // hak sahibi de teması önler
+      // hak sahibi rotasında kalır; yalnızca karşıdaki yol vermiyorsa (kural bilmeyen) ya da temas
+      // kaçınılmazsa son anda kaçar (K14)
+      if (!rule && ((O.ref.ignoresRules && c.dmin < 24 && c.tc < 1.4) || (c.dmin < 14 && c.tc < 0.9))) rule = 14;
       if (!rule) continue;
       const urg = c.tc - c.dmin / 40;
       if (!best || urg < best.urg) best = { O, rule, dmin: c.dmin, tc: c.tc, urg, mine: b.mine };
@@ -281,7 +286,7 @@
       let m = 1e9;
       for (const O of others) { const r = closest(b, h, v, O, 4); if (r.d < 220) m = Math.min(m, r.dmin); }
       const rm = closest(b, h, v, { x: MARK.x, y: MARK.y, h: 0, v: 0 }, 3); m = Math.min(m, rm.dmin + 14);   // şamandıraya da çarpma
-      const score = Math.min(m, 50) - c.cost;
+      const score = Math.min(m, GW_SAFE) - c.cost;
       if (!best || score > best.score) best = { ...c, score };
     }
     return best;
@@ -309,14 +314,21 @@
     }
     return null;
   }
-  function followRoute(b, s, w, t) {
+  function followRoute(b, s, w, t, others) {
     if (!b.routeFrom) b.routeFrom = { x: b.x, y: b.y };
     const nx = routeNext(b);
     if (!nx) { note(b, s, 'Rota bitti, şamandıraya', 'good', 2); log(s, `${b.id}: çizdiğin rota bitti, şamandıraya gidiyor`); return E.tackHeading(w, b.tack); }
     const { P, A } = nx, brg = bearing(b, P), r = E.norm180(brg - w);
+    const clearFor = tk => { const nh = E.tackHeading(w, tk); let m = 1e9;
+      for (const o of others) { const c = closest(b, nh, 30, o, 4); if (c.d < 220) m = Math.min(m, c.dmin); }
+      return m > 24; };
     if (Math.abs(r) >= 47) {                           // açık seyir: doğrudan noktaya
       const want = r > 0 ? 'port' : 'starboard';
-      if (want !== b.tack) { b.tack = want; b.lastTack = t; }
+      if (want !== b.tack) {
+        // kontra değişecek (tramola ya da kavança): orsadaysa önce açık olmasını bekle
+        if (Math.abs(r) > 100 || clearFor(want)) { b.tack = want; b.lastTack = t; }
+        else return E.tackHeading(w, b.tack);
+      }
       return brg;
     }
     // orsa: zikzak. Çizgiye göre yanal sapma (+ sağ)
@@ -326,7 +338,10 @@
     if (b.tack === 'starboard' && (lat < -ROUTE_CORR || r >= 44)) want = 'port';
     if (b.tack === 'port' && (lat > ROUTE_CORR || r <= -44)) want = 'starboard';
     if (b.x < 60) want = 'port'; if (b.x > WORLD.w - 60) want = 'starboard';
-    if (want !== b.tack && t - b.lastTack > 2.2) doTack(b, s, '');
+    if (want !== b.tack && t - b.lastTack > 2.2) {
+      // K13 bilinci: tramoladan sonra biriyle çakışacaksa açık olana kadar bekle (koridordan çok taşmadıkça)
+      if (clearFor(want) || Math.abs(lat) > ROUTE_CORR * 3 || b.x < 40 || b.x > WORLD.w - 40) doTack(b, s, '');
+    }
     if ((b.tack === 'starboard' && r <= -44) || (b.tack === 'port' && r >= 44)) return brg;   // noktayı tutuyor
     return E.tackHeading(w, b.tack);
   }
@@ -379,7 +394,7 @@
           const must = (b.tack === 'starboard' && relWp >= 46) || (b.tack === 'port' && relWp <= -46) || b.x < 70 || b.x > WORLD.w - 70;
           let m = 1e9;
           for (const o of others) { const c = closest(b, nh, 30, o, 4); if (c.d < 220) m = Math.min(m, c.dmin); }
-          if (m > (must ? 26 : 32) || edge || t - Math.max(b.lastTack, s.startAt) > 9) doTack(b, s, '');
+          if (m > (must ? 22 : 26) || edge || t - Math.max(b.lastTack, s.startAt) > 9) doTack(b, s, '');
         }
         const wp = waypoint(w), dWp = Math.hypot(wp.x - b.x, wp.y - b.y);
         const brg = bearing(b, wp), rel = E.norm180(brg - w);
@@ -389,7 +404,7 @@
         else if (!b.started) { /* hattın içinde: orsa rotasında devam */ }
         else if ((b.tack === 'starboard' && rel <= -45) || (b.tack === 'port' && rel >= 45)) target = brg;
         else if (!lineAim && Math.abs(rel) >= 55) { target = brg; b.tack = rel > 0 ? 'port' : 'starboard'; }   // şamandıra rüzgarüstünde değil (aşmış): doğrudan git
-        if (routing) target = followRoute(b, s, w, t);
+        if (routing) target = followRoute(b, s, w, t, snap.filter(o => o.ref !== b));
         // dönüşe başla: giriş noktasına geldi ya da şamandıranın rüzgarüstü tarafında, çembere yakın.
         // Şamandıranın altından (rüzgaraltı yarısından) dönüşe başlanmaz.
         const dM = Math.hypot(b.x - MARK.x, b.y - MARK.y), phi = markAngle(b, w);
