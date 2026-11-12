@@ -46,5 +46,20 @@ for (const c of cases) {
   if (missed.length) { problems++; console.log('  ⚠ rota noktası kaçtı:', missed.map(([i, d]) => `#${i} ${d.toFixed(0)} px`).join(', ')); }
   if (contacts > 6) { problems++; console.log('  ⚠ temas çok:', contacts); }   // kalabalık şamandıra dönüşünde birkaç temas gerçekçi; fazlası hata
 }
+// manuel mod: tekne tramolayı yalnız komutla atar (parkurdan MAN_MARGIN kadar uzaklaşınca zorunlu dönüş hariç)
+for (const wind of [-12, 0, 12]) {
+  S.setCourse(S.COURSE_DEFAULT);
+  const fleet = S.defaultFleet(12); fleet.forEach((b, i) => { if (b.mine || i % 3 === 0) b.manual = true; });
+  const s = S.newRace(fleet, { wind }); const prev = new Map(s.boats.map(b => [b.id, b.tack])); let self = 0, n0;
+  while (s.t < 120 && s.boats.some(b => !b.finish)) {
+    n0 = s.events.length; S.step(s);
+    for (const b of s.boats) {
+      if (b.manual && b.started && b.phase === 'race' && prev.get(b.id) !== b.tack && !s.events.slice(n0).some(e => e.text.startsWith(`${b.id}: parkurdan çok uzaklaştı`))) self++;
+      prev.set(b.id, b.tack);
+    }
+  }
+  console.log(`• manuel mod, rüzgar ${wind}°: kendiliğinden tramola ${self}`);
+  if (self) { problems++; console.log('  ⚠ manuel tekne kendiliğinden tramola attı'); }
+}
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);

@@ -136,6 +136,12 @@
 - **+ Sol / + Sağ** ile eklenen sağanak kendiliğinden seçilir (`gustSelect`), kart açılırken iki kez mavi parlar. Seçili sağanak haritada dışa yayılan mavi halka + "SEÇİLİ · AYARLAR ALTTA" yazısıyla, alttaki Sağanak grubu da maviyle (`body.gust-editing`) vurgulanır. Eski "eklendi" toast'u kalktı.
 - Yarım kalan yok. Aynı mesajdaki hız (1× yavaşlatma), manuel tramola ve seçim vurgusu işleri başka sohbetlerde.
 
+### 2026-11-12 · Simülatör: gerçek zaman ölçeği ve manuel tekne kenarda dönmüyor
+- **Zaman:** `CLOCK_SCALE = 300 / START_AT` (START_AT 8,4 sim-sn = 5:00 geri sayım). Varsayılan parkurda start → orsa şamandırası ortanca ~14 dk. `sim.js` oynatırken CLOCK_SCALE'e böler: 1× = gerçek zaman. Hız düğmeleri 1× / 5× / 15× / 40× (40× ≈ eski 1×). Fizik değişmedi; parkur sıkıştırılmış olduğu için 1×'te tramolalar ağır çekim gibi görünür.
+- **Manuel:** v1.50'de manuel tekne "kendiliğinden" yalnız parkurun yan kenarında (x<25) dönüyordu; start'tan ~7-10 sim-sn sonra oluyordu, kullanıcı bunu istemsiz tramola sandı. Artık manuel tekne parkur kenarını `MAN_MARGIN` (320 px) kadar aşabilir, kenarı geçince uyarır ("Parkurun dışına çıkıyorsun: tramola?"), yalnız o sınırda zorunlu döner. Kamera da yakınlaştırınca bu kadar dışarı kaydırılabilir / takip eder.
+- `check-sim.mjs`: manuel modda kendiliğinden tramola sayan denetim eklendi (3 rüzgar, 0 olmalı).
+- Seçim durumları ve sağanak paneli ayrı sohbetlerde ("Simülatörde seçim durumlarını belirginleştir", "Sağanak ayarlarını görünür yap").
+
 ### 2026-11-12 · Sürüm etiketi (tüm site) ve ceza turunda uzaklaşma
 - **Sürüm:** `build.mjs` her HTML sayfasına sağ alt köşede `.ver-badge` (`v1.<main commit sayısı>`) ekler; stil `style.css`. deploy.yml checkout `fetch-depth: 0`. Kural CLAUDE.md'de: her main gönderiminden sonra yeni numara kullanıcıya söylenir.
 - **Ceza turu (K44.2):** tekne önce diğer teknelerden uzaklaşır: gitmek istediği (avantajlı) tarafa doğru rüzgara ~100° açılır; o taraf kalabalıksa ya da kenardaysa öbür tarafa. 85 px açıklık bulunca (en az 1,2 s, en çok 5 s) iki turu atar. Dönmeye başladığı anda en yakın tekne: ortanca 26 px → 84 px.
