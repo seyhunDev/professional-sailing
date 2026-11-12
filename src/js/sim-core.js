@@ -15,8 +15,8 @@
   const CLOCK_SCALE = 5;
   const TURN_RATE = 110;          // derece/sn
   const GUST_GAIN = 0.25;         // sağanakta hız artışı
-  const SHADOW_LEN = 4 * HULL;    // rüzgar gölgesi (pis rüzgar) boyu: 4 tekne boyu
-  const SHADOW_LOSS = 0.3;        // gölgenin tam ortasında hız kaybı
+  const SHADOW_LEN = E.SHADOW.len;   // rüzgar gölgesi (pis rüzgar): engine.SHADOW ile ortak (~1 boy kıçtan)
+  const SHADOW_LOSS = E.SHADOW.loss; // gölgenin tam ortasında hız kaybı
   const KNOTS = 3.5 / BASE;       // px/s → knot (orsada 55 px/s ≈ 3.5 kn, Optimist)
   const MIN_TACK_GAP = 3;         // iki tramola arası en az (sn)
   const OBSTACLES = E.obstaclesOf({ marks: [MARK], line: LINE });
@@ -77,18 +77,8 @@
 
   // Rüzgar gölgesi: b, başka bir teknenin rüzgaraltındaki konide mi? {k: 0..1, by}
   function shadowAt(b, snap, w) {
-    const down = E.fwd(w + 180), right = E.fwd(w + 90);
-    let best = { k: 0, by: null };
-    for (const o of snap) {
-      if (o.ref === b || o.ref.phase === 'wait' || o.ref.phase === 'done') continue;
-      const dx = b.x - o.x, dy = b.y - o.y, along = dx * down.x + dy * down.y;
-      if (along < 12 || along > SHADOW_LEN) continue;
-      const half = 16 + along * 0.22, lat = Math.abs(dx * right.x + dy * right.y);
-      if (lat > half) continue;
-      const k = (1 - along / SHADOW_LEN) * (1 - lat / half) * 1.6;
-      if (k > best.k) best = { k: Math.min(1, k), by: o.ref };
-    }
-    return best;
+    const casters = snap.filter(o => o.ref !== b && o.ref.phase !== 'wait' && o.ref.phase !== 'done').map(o => ({ x: o.x, y: o.y, v: o.v, ref: o.ref }));
+    return E.shadowK({ x: b.x, y: b.y, ref: b }, casters, w, BASE);
   }
   const knots = v => v * KNOTS;
 

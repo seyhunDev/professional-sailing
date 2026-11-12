@@ -118,6 +118,7 @@
     const w0 = E.windAt(scn.wind, 0);
     const HOLD_V = base * 0.04;
     const obstacles = E.obstaclesOf(scn);
+    const shadowsOn = scn.shadows !== false;
     const boats = specs.map(s => {
       const h0 = E.tackHeading(w0, s.tack);
       let pos = s.pos;
@@ -134,7 +135,8 @@
     let t = 0;
     while (t < scn.duration) {
       const w = E.windAt(scn.wind, t);
-      const scriptedNow = scripted.map(b => { const s = E.sampleTrack(b.track, t); return { x: s.x, y: s.y, h: s.h, v: s.v != null ? s.v : base }; });
+      const scriptedNow = scripted.map((b, i) => { const s = E.sampleTrack(b.track, t); return { x: s.x, y: s.y, h: s.h, v: s.v != null ? s.v : base, ref: 's' + i }; });
+      const casters = shadowsOn ? [...scriptedNow, ...boats.map(o => ({ x: o.x, y: o.y, v: o.v, ref: o }))] : [];
       const othersOf = b => [...scriptedNow, ...boats.filter(o => o !== b).map(o => ({ x: o.x, y: o.y, h: o.h, v: o.v }))];
       const decisions = boats.map(b => (t < rulesFrom ? null : decide(b, othersOf(b), w)));   // start patlamasında kural manevrası yok (yalnızca engel kaçınma)
       boats.forEach((b, i) => {
@@ -166,7 +168,8 @@
         b.h = E.lerpAngle(b.h, target, Math.min(1, DT / 0.6));
         const dir = E.avoidDir(b.x, b.y, b.h, obstacles, b.v);
         if (dir !== 0) b.h += dir * 160 * DT;                       // engelden yana kaç (rota hedefi sonra geri çeker)
-        const vt = holding ? HOLD_V : E.speedFor(Math.abs(E.norm180(b.h - w)), base) * (b.man ? speed : 1);
+        let vt = holding ? HOLD_V : E.speedFor(Math.abs(E.norm180(b.h - w)), base) * (b.man ? speed : 1);
+        if (!holding && shadowsOn) vt *= 1 - E.SHADOW.loss * E.shadowK({ x: b.x, y: b.y, ref: b }, casters, w, base).k;   // pis rüzgar
         b.v += (vt - b.v) * Math.min(1, DT / TAU);
       });
       t += DT;
@@ -189,5 +192,41 @@
     return boats.map(b => b.out);
   }
 
-  global.SailRules = { simulate, decide, clearAstern, approach, lineSide, lineParam };
+  /* Senaryo tekneleri pis rüzgarda yavaşlasın: önceden hesaplanmış rotayı zamanda esnet.
+     Gölgedeyken rota üzerinde (1 − loss·k) hızla ilerler; biriken gecikme tekne beklerken (yavaşken)
+     hızlı geçilerek kapanır, böylece start zamanlaması bozulmaz. fixed: hareketi sabit diğer tekneler. */
+  function warpForShadows(scn, scripted, fixed) {
+    const base = scn.baseSpeed || 55, dur = scn.duration + 0.5;
+    const tau = scripted.map(() => 0), out = scripted.map(() => []);
+    for (let t = 0; t <= dur + 1e-9; t += DT) {
+      const w = E.windAt(scn.wind, t);
+      const cur = scripted.map((b, i) => ({ ...E.sampleTrack(b.track, tau[i]), ref: 's' + i }));
+      const casters = [...cur, ...fixed.map((f, j) => ({ ...E.sampleTrack(f, t), ref: 'f' + j }))];
+      cur.forEach((p, i) => {
+        out[i].push({ ...p, t, ref: undefined });
+        const rel = (p.v || 0) / base, lag = t - tau[i];
+        let rate = 1;
+        if (scripted[i].noShadow) rate = 1;
+        else if (rel < 0.2) rate = 1 + Math.min(2, lag * 2);                  // beklerken gecikmeyi kapat
+        else rate = 1 - E.SHADOW.loss * E.shadowK(p, casters, w, base).k;
+        tau[i] = Math.min(t + DT, tau[i] + rate * DT);
+      });
+    }
+    return out;
+  }
+
+  /* Bir senaryonun tüm rotaları: senaryo tekneleri + kalabalık filo (+ ek tekneler), pis rüzgar dahil.
+     extraSpecs: simulate() spec listesi (kalabalık + kullanıcı eklemeleri). Dönen: { scripted: [track], extras: [track] } */
+  function buildScene(scn, extraSpecs) {
+    let scripted = scn.boats.map(b => ({ track: E.buildTrack(scn, b.start, b.segs, { v0: b.v0, t0: b.t0 }), noShadow: b.noShadow }));
+    let extras = extraSpecs.length ? simulate(scn, extraSpecs, scripted) : [];
+    if (scn.shadows !== false) {
+      const warped = warpForShadows(scn, scripted, extras);
+      scripted = warped.map((tr, i) => ({ track: tr, noShadow: scripted[i].noShadow }));
+      if (extraSpecs.length) extras = simulate(scn, extraSpecs, scripted);   // filo esnetilmiş rotalara göre yeniden
+    }
+    return { scripted: scripted.map(s => s.track), extras };
+  }
+
+  global.SailRules = { simulate, buildScene, warpForShadows, decide, clearAstern, approach, lineSide, lineParam };
 })(typeof window !== 'undefined' ? window : globalThis);

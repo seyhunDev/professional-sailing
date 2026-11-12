@@ -34,7 +34,7 @@
 
   const state = {
     scn: null, boats: [], extras: [], t: 0, playing: false, speed: 1, lastTs: 0,
-    show: { wind: true, rungs: true, labels: true, trails: false },
+    show: { wind: true, rungs: true, labels: true, trails: false, shadows: true },
     vb: { x: 0, y: 0, w: COURSE.w, h: COURSE.h },      // ekranı dolduran görünüm alanı
     follow: true, stepIdx: 0, infoOpen: true
   };
@@ -65,7 +65,7 @@
   // ---------- Senaryo yükleme ----------
   function loadScenario(scn) {
     state.scn = scn; state.t = 0; state.playing = false; state.stepIdx = 0;
-    state.boats = scn.boats.map(b => ({ ...b, track: E.buildTrack(scn, b.start, b.segs, { v0: b.v0, t0: b.t0 }) }));
+    state.boats = scn.boats.map(b => ({ ...b }));
     // kalabalık filo: senaryoda tanımlı, kural motoruyla birlikte simüle edilen tekneler
     state.extras = (scn.crowd || []).map((c, i) => {
       const b = { id: c.id || String(i + 1), name: c.name || `Filo ${i + 1}`, color: c.color || CROWD_COLORS[i % CROWD_COLORS.length], tack: c.tack || 'starboard', extra: true, crowd: true };
@@ -151,8 +151,10 @@
   // ---------- Ek tekneler: kural motoruyla birlikte simüle edilir ----------
   function simulateExtras() {
     const scn = state.scn;
-    const tracks = SailRules.simulate(scn, state.extras.map(b => ({ pos: b.pos, slot: b.slot, row: b.row, back: b.back, tack: b.tack, v0: b.v0 })), state.boats);
-    state.extras.forEach((b, i) => b.track = tracks[i]);
+    // senaryo tekneleri + filo + ek tekneler birlikte; pis rüzgar yavaşlaması dahil (SailRules.buildScene)
+    const sc = SailRules.buildScene(scn, state.extras.map(b => ({ pos: b.pos, slot: b.slot, row: b.row, back: b.back, tack: b.tack, v0: b.v0 })));
+    state.boats.forEach((b, i) => b.track = sc.scripted[i]);
+    state.extras.forEach((b, i) => b.track = sc.extras[i]);
   }
   function addBoat() {
     const scn = state.scn; if (!scn.addBoat) return;
@@ -219,8 +221,9 @@
     el('line', { x1: 0, y1: my, x2: sh.tip.x.toFixed(1), y2: sh.tip.y.toFixed(1), stroke: '#222', 'stroke-width': 1.5 }, g);
     el('circle', { cx: 0, cy: my, r: 1.8, fill: '#222' }, g);
     if (state.show.labels) drawLabel(parent, b, s, sail);
-    const note = state.shadowed && state.shadowed.has(b.id) && !b.extra ? (state.scn.shadows.note || 'Pis rüzgar: hız düşüyor') : s.note;
-    if (note) frameNotes.push({ x: s.x, y: s.y, text: note, color: b.color });
+    if (s.note) frameNotes.push({ x: s.x, y: s.y, text: s.note, color: b.color });
+    const shk = state.shadowed && state.shadowed.get(b.id);
+    if (shk) frameNotes.push({ x: s.x, y: s.y, kind: 'shadow', text: `Pis rüzgar · hız −${Math.round(E.SHADOW.loss * shk * 100)}%` });
   }
 
   // Tekne notları: kutulu rozet, tekne üstünde. Üst üste binerse yukarı (sonra aşağı) kaydırılır, ince çizgiyle tekneye bağlanır.
@@ -238,7 +241,7 @@
     const hit = (r) => placed.some(q => ov(r, q, 4)) || obst.some(q => ov(r, q, 0));
     // önce teknesi üstte olanlar yerleşsin (yukarı kaydırma tutarlı olsun)
     for (const n of [...frameNotes].sort((a, b) => a.y - b.y)) {
-      const fault = /^HATA/.test(n.text), col = fault ? '#f87171' : '#fbbf24';
+      const fault = /^HATA/.test(n.text), col = n.kind === 'shadow' ? '#c4b5fd' : fault ? '#f87171' : '#fbbf24';
       const w = Math.ceil(textW(n.text, 12, 700)) + pad * 2;
       const offs = [-50, -74, -98, -122, 52, 76];
       let r = null, off = offs[0];
@@ -358,21 +361,21 @@
         tx.textContent = (scn.sag.label || 'Hat yayı (line sag): ortada {d} boy geride').replace('{d}', (deep.dep / HULL).toFixed(1));
       }
     }
-    // rüzgar gölgesi (pis rüzgar): filo teknelerinin rüzgaraltında 4 boyluk koni; içine giren senaryo teknesine not
-    state.shadowed = new Set();
-    if (scn.shadows && inWin(scn.shadows)) {
-      const down = E.fwd(w + 180), right = E.fwd(w + 90), SL = 4 * HULL;
-      const src = crowdNow();
-      for (const b of src) {
-        const p = (a, l) => `${(b.x + down.x * a + right.x * l).toFixed(1)},${(b.y + down.y * a + right.y * l).toFixed(1)}`;
-        el('polygon', { points: [p(12, -16), p(12, 16), p(SL, 16 + SL * 0.22), p(SL, -16 - SL * 0.22)].join(' '), fill: 'rgba(2,10,20,.28)', stroke: 'rgba(248,113,113,.3)', 'stroke-dasharray': '3 5' }, g);
+    // rüzgar gölgesi (pis rüzgar): HER teknenin rüzgaraltında ~1 boyluk koni (engine.SHADOW).
+    // Yavaşlama rotalarda hesaplı (SailRules.buildScene); burada yalnızca çizim ve senaryo teknesine not.
+    state.shadowed = new Map();
+    if (scn.shadows !== false) {
+      const base = scn.baseSpeed || 55;
+      const all = [...state.boats, ...state.extras].map(b => ({ ...E.sampleTrack(b.track, state.t), ref: b }));
+      all.forEach(c => c.str = E.shadowStrength(c.v, base));
+      if (state.show.shadows && inWin(scn.shadows === true || !scn.shadows ? {} : scn.shadows)) {
+        for (const c of all) el('polygon', { points: E.shadowPolygon(c, w), fill: `rgba(2,10,20,${(0.3 * c.str).toFixed(2)})`,
+          stroke: `rgba(248,113,113,${(0.4 * c.str).toFixed(2)})`, 'stroke-dasharray': '3 4' }, g);
       }
-      for (const sb of state.boats) {
-        const s = E.sampleTrack(sb.track, state.t);
-        for (const b of src) {
-          const dx = s.x - b.x, dy = s.y - b.y, along = dx * down.x + dy * down.y, lat = Math.abs(dx * right.x + dy * right.y);
-          if (along > 12 && along < SL && lat < 16 + along * 0.22) { state.shadowed.add(sb.id); break; }
-        }
+      for (const p of all) {
+        if (p.ref.crowd || p.ref.extra || (p.v || 0) < base * 0.25) continue;          // yalnızca seyreden senaryo teknelerine not
+        const sh = E.shadowK(p, all, w, base);
+        if (sh.k > 0.15) state.shadowed.set(p.ref.id, sh.k);
       }
     }
     // okumalar: teknenin rüzgar açısı
@@ -480,6 +483,7 @@
   $('chkWind').onchange = e => { state.show.wind = e.target.checked; render(); };
   $('chkRungs').onchange = e => { state.show.rungs = e.target.checked; render(); };
   $('chkLabels').onchange = e => { state.show.labels = e.target.checked; buildLegend(); render(); };
+  $('chkShadows').onchange = e => { state.show.shadows = e.target.checked; render(); };
   $('chkTrails').onchange = e => { state.show.trails = e.target.checked; render(); };
   $('btnLayers').onclick = () => { const m = $('layersMenu'); m.classList.toggle('hidden'); $('btnLayers').classList.toggle('on', !m.classList.contains('hidden')); };
   $('btnFull').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); };

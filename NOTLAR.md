@@ -14,6 +14,7 @@
 - **Duyarlı düzen** (3 sınıf): bilgisayar (>1100 px: kart sağ üstte, tekne ekle alt çubukta), tablet (≤1100: ikon düğmeler; dikeyde kart SAĞ ÜSTTE geniş (64vw, maks %44 yükseklik), parkur ekranın alt kısmına kaydırılır: `fitViewBox` dikey fazlalığın %68'ini üste verir; telefonda tersi %22), telefon (≤640 px ya da yükseklik ≤460: kart alttan açılır sayfa + daraltma tutamacı, tekne ekle popover'da, seçici tam ekran). Dokunma hedefleri ≥44 px, iOS güvenli alan payları.
 - **Engel kaçınma** (`engine.avoidDir`): şamandıra, pin ve hakem botu engeldir; önünde engel olan tekne (scripted ya da eklenen) kendiliğinden yana kaçıp rotaya döner. `npm run check` (`scripts/check-scenarios.mjs`) her senaryoda alan dışı, çarpışma, engele yaklaşma ve start hattı geçişini denetler; `expectOutside` / `expectEarly` ile bilinçli istisnalar.
 - Terim: start hattının şamandıra ucu **pin**; "orsa şamandırası" yalnızca parkurun rüzgarüstü şamandırası için.
+- **Pis rüzgar (rüzgar gölgesi) ortak** (2026-11-12): `engine.js` → `SHADOW` (kıçtan ~1 boy, en fazla %30 hız kaybı), `shadowK`, `shadowPolygon`. Senaryolar, kural motoru ve simülatör aynı hesabı kullanır. Her senaryoda otomatik: tüm teknelerin konisi çizilir (yelkeni boş bekleyen tekne daha zayıf/soluk gölge, `shadowStrength`), filo (`rules.simulate`) gölgede yavaşlar, senaryo tekneleri `SailRules.buildScene` → `warpForShadows` ile zamanda esnetilir (gölgede yavaş ilerler, gecikme beklerken kapanır; start zamanlaması bozulmaz). Seyreden senaryo teknesinde mor "Pis rüzgar · hız −N%" rozeti. Katmanlar → "Pis rüzgar (gölge)". Kapatma: `shadows: false`, tekne bazında `noShadow`.
 - Senaryo katmanları: `rungs {boat, from, to}`, `laylines [{x,y,tack,len,from,to,label}]`, `readouts [{boat,from,to}]` (rota + rüzgar açısı), segment `note` (scripted tekne üstünde yazı).
 - Motor: segment tabanlı rota üretici (closehauled / run / heading / hold), ivme modeli, rüzgar keyframe'leri, yelken/bumba geometrisi, boş yelken sallanması. **Yelken pırpırlaması** (`engine.sailPose` + `sailShape`, senaryolar ve simülatör ortak): yavaş tekne (v ≤ %15 temel hız) yelkeni boşaltmış sayılır; rüzgara tam dönükse bumba ortada iki yana sallanır, baş rüzgardan açıksa bumba rüzgar yönünde uzanır ve yelken dalgalanır; hızlandıkça (≥ %45) kademeli olarak trimlenir.
 - **Kalabalık filo** (`scn.crowd`): start senaryolarına senaryo tanımından gelen gri tekneler; `slot` (0=pin, 1=hakem botu), `row` (2. sıra 60 px geride), ya da `pos`+`v0`. Hat geçiş noktası bir slot ise hattın 1-1.5 boy dibinde rüzgara baş verip (`w±25°`, hız %4) bekler; `goBefore` (2.5 s) kala yelkeni doldurur, `tau` (1.0) ile küçük tekne gibi hızlanır; kural manevraları sinyalden 0.5 s sonra başlar (start patlamasında yalnızca engel kaçınma). Yan yana boşluk: hat yönü ile orsa rotası arasındaki açı küçükse (büyük bias) slotları daha seyrek koy (A3: 600 px hat, Δu≥0.2).
@@ -33,7 +34,7 @@
   - **Motor gereksinimleri:** scripted teknelere bekleme (`hold`) var; eklenecekler: `backing` (yelken geri basılı, tekne geri gidiyor; yelken karnı ters), rüzgara baş vermişken yelkenin tamamen boş çizilmesi (var), 8-10 tekne için etiket seyrekleştirme (yalnızca manevra yapanın notu), kırmızı "hatalı hareket" rozeti (`note` için `kind:'fault'`), daha geniş hat için `addBoat` slotları, Kural 13 ve 22 kural motoruna (ek tekneler) eklenmeli.
   - Teslim: 3 senaryo (A16, A17, A8) + KONULAR.md ✅ + `npm run check` temiz + ekran görüntüleri.
 - [x] **Yarış simülatörü – 1. aşama** (2026-11-12): sayfa, sürükle-bırak, rüzgar, sağanak, start/OCS, layline tramolası, şamandıra dönüşü, sıralama, olay listesi, Tramola komutu, geri sarma.
-- [x] **Simülatör 2a** (2026-11-12, yapıldı): start'ta yarışın tamamını önceden hesapla, değişiklikte (sağanak/rüzgar/rota) o andan ileri yeniden hesapla; ileri sarma ve "tahmini sıra". Her teknede hız ("4.2 kn"), sağanakta yeşil ↑, pis rüzgarda kırmızı ↓; pis rüzgar gölgesi (rüzgaraltında 3-4 boy, katman).
+- [x] **Simülatör 2a** (2026-11-12, yapıldı): start'ta yarışın tamamını önceden hesapla, değişiklikte (sağanak/rüzgar/rota) o andan ileri yeniden hesapla; ileri sarma ve "tahmini sıra". Her teknede hız ("4.2 kn"), sağanakta yeşil ↑, pis rüzgarda kırmızı ↓; pis rüzgar gölgesi (katman; 2026-11-12'den beri engine.SHADOW ile ortak, ~1 boy).
 - [x] **Simülatör 2b:** "ne oldu / kim haklı" ayrımı: yol vermeyen tekne → protesto + iki tur ceza (720°) animasyonu; temasta hak sahibi kaçınabilecekken kaçınmadıysa o da ceza (K14); "kural bilmeyen" tekne özelliği (kendi teknene de).
 - [x] **Simülatör 2c:** kendi teknene rota çizme (parmakla çizgi; rüzgara karşı kısımda otomatik zikzak; bitince şamandıraya).
 - [ ] **Yarış simülatörü – 2. aşama (eski liste):** rüzgar gölgesi (dirty air) etkisi, salınımlı rüzgar (otomatik kayma), sağanağın rüzgarla sürüklenmesi, şamandırada tam K18 (zone, iç tekneye yer), pupa ayağı ve bitiş hattı, senaryoyu linkle paylaşma, tekne döndürerek yerleştirme. Şamandırada 12 teknede 3-6 temas oluyor; zone mantığıyla azaltılabilir.
@@ -44,7 +45,7 @@
 - [ ] **Senaryo paketi 2:** B2 Kural 11 (rüzgaraltı/rüzgarüstü), C3 layline & overstand, E1 geniş gir – dar çık. (KONULAR.md'de 🔜 olanlar)
 - [ ] **Senaryo paketi 3:** C2 kalıcı dönüş, A3 barging, B4 Kural 13 (tramola atarken), D2 pupada kavança.
 - [ ] **Kural motoru iyileştirme:** Kural 13 (tramola atarken yol ver), Kural 18 (zone içinde şamandıra yeri), Kural 16 (rota değiştirirken yer ver), start öncesi bekleyen teknelerin çizgi üstünde dizilmesi; tekne eklerken konumu sürükleyerek seçme.
-- [ ] **Görsel katmanlar:** rüzgar gölgesi (dirty air) konisi, layline çizgileri, tekne üstünde "hak sahibi / yol ver" rozetleri.
+- [ ] **Görsel katmanlar:** ~~rüzgar gölgesi (dirty air) konisi~~ (yapıldı, ortak), layline çizgileri, tekne üstünde "hak sahibi / yol ver" rozetleri.
 - [x] **Mobil düzen** (2026-11-12): duyarlı düzen yapıldı. Kalan: dikey telefonda parkur küçük (yatay 1000×680 alan); istenirse dikey ekran için parkuru döndürme/yakınlaştırma.
 - [ ] **Paylaşılabilir durum:** URL'de senaryo + zaman + eklenen tekneler (ör. `#b1-rule10?t=5&boats=pin:port,middle:starboard`).
 - [ ] **Dil:** TR/EN geçişi (önce metinleri ayrı dosyaya taşı).
@@ -66,6 +67,8 @@
 - 2026-11-12 · **Üç sabit kategori: Kurallar / Taktik / Teknik**, alt konu `topic` alanı ile.
 - 2026-11-12 · **Bilgi kartı tek adım gösterir**, canlı takip açık/kapalı; kullanıcı Önceki/Sonraki ile gezince takip kapanır.
 
+- 2026-11-12 · **Pis rüzgar tek yerden:** gölge geometrisi ve hız kaybı `engine.js` → `SHADOW`'da; senaryo/kural motoru/simülatör aynı fonksiyonları çağırır. Boy 4 tekne boyundan ~1 boya indirildi (kullanıcı: "çok uzun"). Senaryo teknelerinin rotası değişmez, yalnızca zamanda esnetilir (ders rotası korunur). Uygulama ve `check-scenarios` rotaları aynı `SailRules.buildScene` ile üretir.
+
 ## Açık sorular (kullanıcıya)
 - Uygulama adı: karar bekliyor (ayrı sohbette adaylar üretilecek).
 - Hedef sınıf: Optimist mi, ILCA 4/6 mı, karışık mı? (Hız/dönüş oranları ve "tekne boyu" ölçeği buna göre ayarlanabilir.)
@@ -85,14 +88,15 @@
 | A4 | `a4-committee-favored` | ✅ | Barging; L hakem botuna yakın (u=0.9). Fikir: hakem botunun kıçından "çit" vurgusu. | A17 |
 | A12 | `a12-flags` | ✅ | Yalnızca U bayrağı canlı; P/I/siyah varyantları ve 5-4-1-0 sırası eksik. | A2, A13 |
 | İA1 | `ia1-port-approach-pin` | ✅ | Solda bekle, apaz gel, layline üstünde tramola; X en alttaki teknenin ~1 boy altına girer (rüzgaraltında boşluk kalır), sinyalde onunla yan yana çıkar; Z (layline altı) ve Y (geç) hataları. Fikir: K13/K15 ihlali yapan 3. hata teknesi (ceza turu). | A3, A16 |
-| İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. S hattın uzantısında (pin dışı, hat hizası) bakar, sonra hattın altından ortaya gider. Yay eğrisi (`sag`) ve pis rüzgar konileri (`shadows`) çiziliyor. Eksik: S'nin hızı gölgede gerçekten düşmüyor (yalnızca not). | A5, A6, H5 |
+| İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. S hattın uzantısında (pin dışı, hat hizası) bakar, sonra hattın altından ortaya gider. Yay eğrisi (`sag`) çiziliyor; pis rüzgar artık ortak motor özelliği (S gölgede gerçekten yavaşlar, ama filonun 2-3 boy altından geçtiği için etkisi küçük). | A5, A6, H5 |
 | İA2b | `ia2b-no-sag` | ✅ | İA2'nin "yay yok" eşi: 8 tekne hattın dibinde, S 0.28-0.50 arasındaki boşluğa herkesle aynı hizada girer, aynı anda çıkar. | A5, H5 |
 | B1 | `b1-rule10` | ✅ | Tek tekne bordalama. Fikir: lee-bow varyantı. | B2 |
 | B8 | `b8-rule18` | ✅ | Zone + bindirme. Fikir: 18.3 zone içinde tramola varyantı. | B9 |
 | C1 | `c1-header-tack` | ✅ | Salınımlı rüzgar. Fikir: pusula okuması katmanı. | C2, C3 |
 
 ## Sohbetler arası mesajlar
-- (boş) — Başka bir sohbeti ilgilendiren şeyleri buraya tarih ve konu ile yazın; ilgili sohbet okuyunca satırı siler.
+- 2026-11-12 · Pis rüzgar sohbetinden **simülatör sohbetine:** `sim-core.shadowAt` ve `sim.drawShadows` artık `engine.SHADOW`/`shadowK`/`shadowPolygon` kullanıyor; gölge ~1 boy (eskiden 4), yelkeni boş tekne zayıf gölge yapar. `SHADOW_LEN` dışa aktarımı duruyor. fuzz 60 temiz; 150'de 2 TAKILDI (önce 1, şamandıra kalabalığı, gürültü düzeyinde).
+- 2026-11-12 · Pis rüzgar sohbetinden **tüm senaryo sohbetlerine:** senaryo teknelerinin rotası artık `SailRules.buildScene` ile kuruluyor (gölgede yavaşlama dahil). Yeni senaryoda zamanlama birkaç px kayabilir; `npm run check` bunu da denetliyor. İstemezsen `noShadow: true`.
 
 ## Arayüz kontrol listesi: boşluk ve taşma (her arayüz değişikliğinde)
 1. **Metin kutudan taşmasın:** SVG içindeki kutulu metinlerde (sayaç, tekne etiketi) genişlik tahmin edilmez, `textW()` ile ölçülür. Kutu iç boşluğu en az 12-14 px (sağ ve sol eşit).
@@ -111,6 +115,12 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · Pis rüzgarı tüm animasyonlarda ortak yönet
+- Kullanıcı isteği: İA2'deki pis rüzgar (ve rozetler) tüm animasyonlarda olsun, tek yerden yönetilsin, boyu ~1 tekne boyu olsun.
+- Yapılanlar: `engine.SHADOW` + `shadowStrength/shadowOf/shadowK/shadowPolygon`; `rules.simulate` filoyu gölgede yavaşlatır; `SailRules.buildScene/warpForShadows` senaryo teknelerini esnetir; app.js tek koni çizimi + mor "Pis rüzgar · hız −%" rozeti + Katmanlar anahtarı; sim-core/sim.js ortak hesaba geçti; check-scenarios uygulamayla aynı rotaları denetliyor. İA2/İA2b'deki `shadows: {from,to}` kaldırıldı (her an açık). Kural rozetleri (K10/11/12/14, HATA) zaten tüm senaryolarda ortak `drawNotes` ile çiziliyordu; `sag` İA2'ye özgü bırakıldı.
+- Sonuç: `npm run check` temiz. En büyük kayma A2'de G (34 px), diğerlerinde ≤9 px.
+- Sonraki sohbete not: istenirse `sag` da Katmanlar'dan her start senaryosunda açılabilir hale getirilebilir.
 
 ### 2026-11-12 · Simülatör 2c: rota çizme
 - `sim-core.js`: `routeNext` (yakın / geçilmiş / hattın dibindeki noktaları atlar), `followRoute` (açık seyirde doğrudan, orsada koridor + layline ile zikzak, kenar koruması), rota bitmeden şamandıra dönüşü başlamaz. `command('route', pts|null)`.

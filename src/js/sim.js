@@ -168,11 +168,9 @@
   }
   // Rüzgar gölgesi (pis rüzgar) konileri
   function drawShadows(parent, boats, w) {
-    const down = E.fwd(w + 180), right = E.fwd(w + 90), L = S.SHADOW_LEN;
     for (const b of boats) {
       if (!(b.phase === 'race' || b.phase === 'round')) continue;
-      const h0 = 16, h1 = 16 + L * 0.22, p = (a, l) => `${(b.x + down.x * a + right.x * l).toFixed(1)},${(b.y + down.y * a + right.y * l).toFixed(1)}`;
-      el('polygon', { points: [p(12, -h0), p(12, h0), p(L, h1), p(L, -h1)].join(' '), fill: 'rgba(2,10,20,.28)', stroke: 'rgba(248,113,113,.25)', 'stroke-dasharray': '3 5' }, parent);
+      el('polygon', { points: E.shadowPolygon(b, w), fill: 'rgba(2,10,20,.3)', stroke: 'rgba(248,113,113,.4)', 'stroke-dasharray': '3 4' }, parent);
     }
   }
   // Notlar: kalabalıkta üst üste binmesin (önce senin teknen, sonra hatalar, sonra kurallar)

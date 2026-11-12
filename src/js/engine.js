@@ -191,10 +191,49 @@
     const f = v => v.toFixed(1);
     return { d: `M0,${my} C${f(c1x)},${f(c1y)} ${f(c2x)},${f(c2y)} ${f(tx)},${f(ty)} L0,${my} Z`, tip: { x: tx, y: ty } };
   }
+  // ---------- Rüzgar gölgesi (pis rüzgar) – senaryolar, kural motoru ve simülatör ortak ----------
+  // Her teknenin rüzgaraltında kısa bir koni: kıçtan yaklaşık 1 tekne boyu. İçindeki tekne yavaşlar.
+  // along: rüzgaraltı yönünde tekne merkezinden uzaklık; half: o uzaklıkta koninin yarı genişliği.
+  const SHADOW = { from: 12, len: 72, w0: 16, spread: 0.25, loss: 0.3 };
+  // Yelkeni boş (bekleyen) tekne daha zayıf gölge yapar: 0.4 … 1
+  function shadowStrength(v, base) {
+    if (v == null) return 1;
+    const rel = v / (base || 55);
+    return 0.4 + 0.6 * Math.max(0, Math.min(1, (rel - 0.15) / 0.45));
+  }
+  // p noktası c teknesinin gölgesinde mi? 0..1 (gölge gücü hariç)
+  function shadowOf(p, c, w) {
+    const d = fwd(w + 180), r = fwd(w + 90);
+    const dx = p.x - c.x, dy = p.y - c.y, along = dx * d.x + dy * d.y;
+    if (along < SHADOW.from || along > SHADOW.len) return 0;
+    const half = SHADOW.w0 + along * SHADOW.spread, lat = Math.abs(dx * r.x + dy * r.y);
+    if (lat > half) return 0;
+    const a = (along - SHADOW.from) / (SHADOW.len - SHADOW.from), l = lat / half;
+    return (1 - 0.7 * a) * (1 - l * l);
+  }
+  // casters: [{x,y,v?,str?,ref?}] → { k (0..1, hız kaybı = SHADOW.loss·k), by (gölgeyi yapan) }
+  function shadowK(p, casters, w, base) {
+    let best = { k: 0, by: null };
+    for (const c of casters) {
+      if (c === p || (c.ref != null && c.ref === p.ref)) continue;
+      const k = shadowOf(p, c, w) * (c.str != null ? c.str : shadowStrength(c.v, base));
+      if (k > best.k) best = { k: Math.min(1, k), by: c.ref != null ? c.ref : c };
+    }
+    return best;
+  }
+  // Koninin çokgen noktaları (SVG points)
+  function shadowPolygon(c, w) {
+    const d = fwd(w + 180), r = fwd(w + 90), S = SHADOW;
+    const p = (a, l) => `${(c.x + d.x * a + r.x * l).toFixed(1)},${(c.y + d.y * a + r.y * l).toFixed(1)}`;
+    const h0 = S.w0 + S.from * S.spread, h1 = S.w0 + S.len * S.spread;
+    return [p(S.from, -h0), p(S.from, h0), p(S.len, h1), p(S.len, -h1)].join(' ');
+  }
+
   function seedOf(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) % 1000; return h / 37; }
 
   global.SailEngine = {
     sailPose, sailShape, seedOf,
+    SHADOW, shadowStrength, shadowOf, shadowK, shadowPolygon,
     DEG, norm180, norm360, lerp, lerpAngle, fwd,
     windAt, tackHeading, runHeading, buildTrack, sampleTrack, sailState, speedFor, obstaclesOf, avoidDir,
     CLOSE_HAULED, RUN

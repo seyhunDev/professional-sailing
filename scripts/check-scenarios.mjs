@@ -11,15 +11,15 @@ let problems = 0;
 const warn = (scn, msg) => { problems++; console.log(`  ⚠ ${scn.id}: ${msg}`); };
 for (const scn of globalThis.SCENARIOS) {
   console.log('•', scn.id);
-  const tracks = scn.boats.map(b => ({ id: b.id, track: E.buildTrack(scn, b.start, b.segs, { v0: b.v0, t0: b.t0 }) }));
-  if (scn.crowd && scn.crowd.length) {
-    const specs = scn.crowd.map(c => {
-      const sp = { tack: c.tack || 'starboard', row: c.row || 0, back: c.back || 0, v0: c.v0 };
-      if (c.slot != null && scn.line) { const { pin, boat } = scn.line; sp.slot = { x: pin.x + (boat.x - pin.x) * c.slot, y: pin.y + (boat.y - pin.y) * c.slot }; } else sp.pos = c.pos;
-      return sp;
-    });
-    R.simulate(scn, specs, tracks).forEach((tr, i) => tracks.push({ id: 'filo' + (i + 1), crowd: true, track: tr }));
-  }
+  // uygulamadaki gibi: senaryo tekneleri + filo, pis rüzgar yavaşlaması dahil
+  const specs = (scn.crowd || []).map(c => {
+    const sp = { tack: c.tack || 'starboard', row: c.row || 0, back: c.back || 0, v0: c.v0 };
+    if (c.slot != null && scn.line) { const { pin, boat } = scn.line; sp.slot = { x: pin.x + (boat.x - pin.x) * c.slot, y: pin.y + (boat.y - pin.y) * c.slot }; } else sp.pos = c.pos;
+    return sp;
+  });
+  const sc = R.buildScene(scn, specs);
+  const tracks = scn.boats.map((b, i) => ({ id: b.id, track: sc.scripted[i] }));
+  sc.extras.forEach((tr, i) => tracks.push({ id: 'filo' + (i + 1), crowd: true, track: tr }));
   const obs = E.obstaclesOf(scn);
   const minPair = {}; const minObs = {};
   for (let t = 0; t <= scn.duration; t += 0.1) {

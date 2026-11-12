@@ -359,7 +359,6 @@
     rungs: { boat: 'S', from: 24.5 },
     sightline: { from: 0, to: 6, label: 'Transit: pin\'den hakem botuna bak — hat burada' },
     sag: { from: 0, to: 21.5 },
-    shadows: { from: 7, to: 16 },
     boats: [
       { id: 'S', name: 'Yayı gören, ortada yukarı', role: 'dogru', color: '#2a9d8f',
         start: { x: 88, y: 452, h: 90 }, v0: 2,
@@ -407,7 +406,6 @@
     rungs: { boat: 'S', from: 24.5 },
     sightline: { from: 0, to: 6, label: 'Transit: pin\'den hakem botuna bak — hat burada' },
     sag: { from: 0, to: 21.5, label: 'Yay yok: filo hattın dibinde (en fazla {d} boy)' },
-    shadows: { from: 7, to: 16 },
     boats: [
       { id: 'S', name: 'Hattı gören, boşlukta aynı hizada', role: 'dogru', color: '#2a9d8f',
         start: { x: 88, y: 452, h: 90 }, v0: 2,
@@ -428,7 +426,7 @@
     steps: [
       { t: 0, title: 'Start\'a 72 sn: yine önce hatta bak', text: 'S yine pin\'in dışında, hattın uzantısında: pin ile hakem botunu aynı hizaya getirip hatta bakıyor (transit). Bu kez gördüğü şey farklı: filo hattın dibinde dizilmiş, yay yok. Turuncu çizgi neredeyse hattın üstünde.' },
       { t: 4, title: 'Yay yoksa plan değişir', text: 'Ortaya gidip "herkesten yukarı durmak" diye bir avantaj yok: yukarı duran erken çıkar (OCS). Avantaj artık iki şeyden gelir: doğru zamanda doğru boşluk ve rüzgaraltında açık su. S yine hattın altından, apaz ile ortaya gidiyor.' },
-      { t: 8, title: 'Rüzgar gölgesi', text: 'Filonun rüzgaraltından geçerken her teknenin arkasında 4 boyluk bir pis rüzgar konisi var. S bunların içinden geçerken yavaşlar: ortaya gitme süreni buna göre hesapla, son anda değil, erken yola çık.' },
+      { t: 8, title: 'Rüzgar gölgesi', text: 'Filonun rüzgaraltından geçerken her teknenin kıçından yaklaşık 1 boy uzanan bir pis rüzgar (dirty air) konisi var. S bunların içinden geçerken yavaşlar (etiketteki yüzde): ortaya gitme süreni buna göre hesapla, son anda değil, erken yola çık.' },
       { t: 13.5, title: 'Boşluğa gir, herkesle AYNI hizada', text: 'S iki tekne arasındaki boşluğa giriyor ve komşularıyla aynı hizada, hattın 1 boy altında duruyor. Yukarı çıkmıyor; çünkü komşular zaten hattın dibinde. Rüzgaraltındaki boşluğu korumak önemli: sinyalde oraya doğru doldurup hızlanacak.' },
       { t: 21.5, title: '2.5 sn kala doldur', text: 'Herkes aynı mesafeden hızlanıyor. Fark zamanlamada: geç kalan ya da boşluğu kapatılan geride kalır. S rüzgaraltındaki boşluk sayesinde temiz hızlanıyor.' },
       { t: 24, title: 'START: aynı hizada, temiz', text: 'S komşularıyla aynı anda hatta. İA2\'deki gibi 2 boy önde değil, ama temiz havada ve tam hızda. Yay yoksa amaç öne geçmek değil, kötü start yapmamak.' }

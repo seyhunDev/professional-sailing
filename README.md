@@ -107,7 +107,7 @@ Segment modları: `closehauled` (rüzgara 45°, kontrayı takip eder; rüzgar d�
 
 İsteğe bağlı görsel katmanlar (hepsi `from`/`to` sn aralığında görünür): `sightline` (pin'den hakem botuna transit),
 `sag` (filonun burunlarından geçen hat yayı eğrisi; `label` içinde `{d}` = en derin nokta, boy),
-`shadows` (filo teknelerinin rüzgaraltında 4 boyluk pis rüzgar konisi; koninin içine giren senaryo teknesine `note` yazılır).
+`shadows` (pis rüzgar artık **her senaryoda otomatik**: her teknenin kıçından ~1 boy uzanan koni çizilir, içine giren tekne gerçekten yavaşlar ve senaryo teknesinde "Pis rüzgar · hız −%" rozeti çıkar. Ayar `engine.js` → `SHADOW`. `shadows: false` senaryoda kapatır, `shadows: {from, to}` yalnızca çizimi o aralığa sınırlar; `boats[].noShadow: true` o teknenin yavaşlamasını kapatır. Katmanlar menüsünde "Pis rüzgar (gölge)" anahtarı).
 
 ## Yol haritası
 
