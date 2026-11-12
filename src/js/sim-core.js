@@ -14,8 +14,11 @@
   const LINE = { pin: { x: 300, y: 740 }, boat: { x: 700, y: 740 } };
   const MARK = { x: 500, y: 90, label: 'Orsa şamandırası' };
   const BASE = 55, TAU = 1.2, HOLD_V = BASE * 0.04;
-  const START_AT = 12;            // sn (simülasyon); sayaç clockScale ile 1:00 gösterir
-  const CLOCK_SCALE = 5;
+  // Zaman ölçeği: 1 simülasyon saniyesi = CLOCK_SCALE gerçek saniye. Varsayılan parkurda start → orsa şamandırası
+  // ortalama ~15 dakika sürer; 1× oynatma gerçek zamandır (sim.js oynatırken CLOCK_SCALE'e böler).
+  const START_AT = 8.4;           // sn (simülasyon)
+  const CLOCK_SCALE = 300 / START_AT;   // geri sayım 5:00; şamandıraya ortalama ~14-15 dk
+  const MAN_MARGIN = 320;         // manuel tekne parkur kenarını bu kadar aşabilir (deniz parkurla bitmez); ötesinde zorunlu tramola
   const TURN_RATE = 110;          // derece/sn
   const GUST_GAIN = 0.25;         // sağanakta hız artışı
   // Deniz: akıntı ve dalga tekneleri rüzgaraltına kaydırır (px/s). Teknenin kendi sürüklenmesi (yalpalama, köre düşme) de eklenir.
@@ -438,11 +441,13 @@
             }
           } else wt = b.tack;                              // uçların arasında: düz devam, hattı geç
         }
-        const edge = b.x < 40 || b.x > WORLD.w - 40;
+        const edge = b.manual ? b.x < -MAN_MARGIN + 40 || b.x > WORLD.w + MAN_MARGIN - 40 : b.x < 40 || b.x > WORLD.w - 40;
         if (b.manual) {                                    // yalnız parkurdan çıkmasın (ve bunu söyler)
-          wt = (b.x < 25 && b.tack === 'starboard') ? 'port' : (b.x > WORLD.w - 25 && b.tack === 'port') ? 'starboard' : b.tack;
-          if (wt !== b.tack) { note(b, s, 'Parkur kenarı: zorunlu tramola', 'bad', 3); log(s, `${b.id}: parkurun kenarına geldi, zorunlu tramola`); }
-          else if ((b.x < 110 && b.tack === 'starboard') || (b.x > WORLD.w - 110 && b.tack === 'port')) { if (t - (b.warnAt || -9) > 5) { b.warnAt = t; note(b, s, 'Kenara yaklaşıyorsun: tramola?', '', 2.5); } }
+          // tramolayı yalnız sen atarsın: parkurun yan kenarını geçebilir, ancak çok uzaklaşırsa (MAN_MARGIN) zorunlu döner
+          const L = -MAN_MARGIN, Rr = WORLD.w + MAN_MARGIN;
+          wt = (b.x < L + 25 && b.tack === 'starboard') ? 'port' : (b.x > Rr - 25 && b.tack === 'port') ? 'starboard' : b.tack;
+          if (wt !== b.tack) { note(b, s, 'Çok uzaklaştın: zorunlu tramola', 'bad', 3); log(s, `${b.id}: parkurdan çok uzaklaştı, zorunlu tramola`); }
+          else if ((b.x < 0 && b.tack === 'starboard') || (b.x > WORLD.w && b.tack === 'port')) { if (t - (b.warnAt || -9) > 6) { b.warnAt = t; note(b, s, 'Parkurun dışına çıkıyorsun: tramola?', '', 2.5); } }
         }
         if (wt !== b.tack && t - b.lastTack > MIN_TACK_GAP && (t > s.startAt + 3 || edge)) {
           // K13 bilinci: tramoladan sonra biriyle çakışacaksa bekle
@@ -683,7 +688,7 @@
 
   global.SailSim = {
     runToEnd,
-    DT, HULL, WORLD, LINE, MARK, BASE, START_AT, CLOCK_SCALE, PERSONAS, MINE_COLOR, OBSTACLES,
+    DT, HULL, WORLD, LINE, MARK, BASE, START_AT, CLOCK_SCALE, MAN_MARGIN, PERSONAS, MINE_COLOR, OBSTACLES,
     SHADOW_LEN, SEA, SEA_DEFAULT, knots, defaultFleet, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
 })(typeof window !== 'undefined' ? window : globalThis);

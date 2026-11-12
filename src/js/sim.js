@@ -50,7 +50,8 @@
       let cx = c.x == null ? B.x + B.w * B.vis / 2 : c.x, cy = c.y == null ? B.y + B.h / 2 : c.y;
       if (c.follow) { const m = view().boats.find(b => b.mine && !b.gone); if (m) { cx += (m.x - cx) * 0.18; cy += (m.y - h * 0.08 - cy) * 0.18; } }
       const ex = sheetCover() * h;                              // telefonda alt sayfanın kapattığı kısım: parkur onun üstüne kaydırılabilsin
-      cx = clampN(cx, B.x + vw / 2, B.x + B.w * B.vis - vw / 2); cy = clampN(cy, B.y + h / 2, B.y + B.h - h / 2 + ex);
+      const mx = S.MAN_MARGIN + 40;                              // manuel tekne parkur kenarını aşabilir: kamera da gidebilsin
+      cx = clampN(cx, B.x - mx + vw / 2, B.x + B.w * B.vis + mx - vw / 2); cy = clampN(cy, B.y + h / 2, B.y + B.h - h / 2 + ex);
       c.x = cx; c.y = cy;
       st.vb = { x: cx - vw / 2, y: cy - h / 2, w, h };
     }
@@ -479,7 +480,7 @@
   function tick(ts) {
     const dt = Math.min(0.1, (ts - st.lastTs) / 1000 || 0); st.lastTs = ts;
     if (st.mode === 'run') {
-      st.playT += dt * st.speed;
+      st.playT += dt * st.speed / S.CLOCK_SCALE;   // 1× = gerçek zaman (start → şamandıra ~15 dk)
       if (st.playT >= lastT()) {
         st.playT = lastT(); st.mode = 'end';
         const mine = st.frames[st.frames.length - 1].boats.find(b => b.mine);
