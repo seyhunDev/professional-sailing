@@ -254,7 +254,7 @@ body.sim { position: fixed; inset: 0; overscroll-behavior: none; }
 /* tablet: sahnenin altında, yakınlaştırma düğmelerinin sağında (üstte pusula ve panel var) */
 @media (min-width: 641px) and (max-width: 1100px) {
   .mode-strip { top: auto; bottom: 14px; left: 110px; right: 14px; justify-content: flex-start; margin: 0; }
-  .toast { bottom: 56px; }
+  .toast { bottom: 10px; z-index: 6; }   /* bildirim kısa süre şeridin üstünü kapatır, tekneleri değil */
   .gust-bar:not(.hidden) ~ .mode-strip { display: none; }   /* sağanak kartı aynı köşede: kart zaten seçimi söylüyor */
 }
 /* telefon: pusulanın altında, alt alta */

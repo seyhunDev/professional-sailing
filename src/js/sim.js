@@ -31,11 +31,13 @@
     const panelOpen = !$('panel').classList.contains('hidden') && !phoneMq.matches && Wd > 900;
     const padPx = panelOpen ? Math.min(400, $('panel').offsetWidth + 28) : 0, Wa = Math.max(200, Wd - padPx);
     const V = { x: 0, y: -50, w: W.w, h: W.h + 90 };    // gösterilecek alan (şamandıra üstü ve 2. sıra altı paylı)
-    let w = V.w, h = V.h;
-    if (Wa / Hd > V.w / V.h) w = V.h * Wa / Hd; else h = V.w * Hd / Wa;
-    const k = w / Wa, wTot = Wd * k;                      // ekran pikseli başına birim
+    // tablette alttaki durum şeridi ve bildirim start hattının üstüne binmesin: parkuru o şeridin üstüne sığdır
+    const padB = !phoneMq.matches && Wd <= 1100 ? (innerHeight > innerWidth ? 100 : 64) : 0, Ha = Math.max(200, Hd - padB);
+    let w = V.w, hA = V.h;
+    if (Wa / Ha > V.w / V.h) w = V.h * Wa / Ha; else hA = V.w * Ha / Wa;
+    const k = w / Wa, wTot = Wd * k, h = Hd * k;           // ekran pikseli başına birim
     const topShare = phoneMq.matches ? 0.12 : 0.5;          // telefonda parkur üstte, alt sayfa altta kalsın
-    st.base = { x: V.x - (w - V.w) / 2, y: V.y - (h - V.h) * topShare, w: wTot, h, vis: Wa / Wd };
+    st.base = { x: V.x - (w - V.w) / 2, y: V.y - (hA - V.h) * topShare, w: wTot, h, vis: Wa / Wd };
     applyCam();
   }
   // ---------- Kamera: yakınlaştır / kaydır / teknemi takip et ----------

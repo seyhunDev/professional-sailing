@@ -133,6 +133,9 @@
 
 ## Oturum günlüğü (en yeni üstte)
 
+### 2026-11-12 · Simülatör: dikey iPad'de start alanı yukarıda
+- Kullanıcı: dikey iPad'de alttaki durum şeridi/bildirim start hattının üstüne geliyor. `fitViewBox` tablette (≤1100 px, telefon değil) parkuru alttan boş bant bırakarak sığdırır: dikeyde 100 px, yatayda 64 px (`padB`; yön `innerHeight > innerWidth` ile, çünkü sahne kutusu dikey iPad'de bile yataya yakın). Tablette bildirim (toast) şeridin yerine, en alta çıkar. Sağanak kartı açıkken kart tekneleri kapatabilir (kapatılınca açılır).
+
 ### 2026-11-12 · Simülatör: seçim durumları belirgin
 - Kullanıcı: "manuel seçildiğinde ne seçili, ne yapılıyor anlaşılmıyor; her bağlam için seçim durumlarını belirgin yap". Yapılanlar "Güncel durum"da (Seçim durumları maddesi). Yalnız `sim.html`, `sim.css`, `sim.js` (çizim/etiket ve `stateUpdate`); çekirdeğe dokunulmadı. `npm run check` temiz.
 - Hız/tramola ve sağanak paneli yerleşimi ayrı sohbetlerde. Durum şeridi rota çubuğu açıkken gizlenir; sağanak kartı sağ altta olduğundan ona karışmaz.
