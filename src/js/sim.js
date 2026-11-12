@@ -128,12 +128,11 @@
     const g = el('g', { transform: `translate(${b.x.toFixed(1)},${b.y.toFixed(1)}) rotate(${b.h.toFixed(1)})` }, wrap);
     el('path', { d: 'M0,-25 C 9,-16 11,2 9,22 L -9,22 C -11,2 -9,-16 0,-25 Z', fill: b.color, stroke: '#fff', 'stroke-width': 1.5 }, g);
     el('path', { d: 'M0,-20 C 6,-13 7,2 6,18 L -6,18 C -7,2 -6,-13 0,-20 Z', fill: 'rgba(255,255,255,0.18)' }, g);
-    const L = 27, my = -6;
-    let tipX, tipY, ctrlX, ctrlY;
-    if (sail.luffing) { const fl = Math.sin(t * 18 + b.x) * 6; tipX = fl * 0.6; tipY = my + L; ctrlX = fl * 1.5; ctrlY = my + L * 0.5; }
-    else { const a = sail.boom * E.DEG; tipX = sail.side * Math.sin(a) * L; tipY = my + Math.cos(a) * L; ctrlX = tipX * 0.5 + sail.side * 9; ctrlY = my + (tipY - my) * 0.5; }
-    el('path', { d: `M0,${my} Q${ctrlX.toFixed(1)},${ctrlY.toFixed(1)} ${tipX.toFixed(1)},${tipY.toFixed(1)} L0,${my} Z`, fill: 'rgba(255,255,255,0.85)', stroke: '#fff', 'stroke-width': 1 }, g);
-    el('line', { x1: 0, y1: my, x2: tipX.toFixed(1), y2: tipY.toFixed(1), stroke: '#222', 'stroke-width': 1.5 }, g);
+    const my = -6, seed = E.seedOf(b.id);
+    const pose = E.sailPose(b.h, w, { v: b.v, base: 55, t, seed });
+    const sh = E.sailShape(pose, t, seed, 27, my);
+    el('path', { d: sh.d, fill: 'rgba(255,255,255,0.85)', stroke: '#fff', 'stroke-width': 1 }, g);
+    el('line', { x1: 0, y1: my, x2: sh.tip.x.toFixed(1), y2: sh.tip.y.toFixed(1), stroke: '#222', 'stroke-width': 1.5 }, g);
     // etiket
     const tk = sail.tack === 'starboard' ? 'S' : 'İ';
     const lab = el('g', { transform: `translate(${b.x.toFixed(1)},${(b.y + 36).toFixed(1)})` }, wrap);

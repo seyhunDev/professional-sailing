@@ -15,7 +15,7 @@
 - **Engel kaçınma** (`engine.avoidDir`): şamandıra, pin ve hakem botu engeldir; önünde engel olan tekne (scripted ya da eklenen) kendiliğinden yana kaçıp rotaya döner. `npm run check` (`scripts/check-scenarios.mjs`) her senaryoda alan dışı, çarpışma, engele yaklaşma ve start hattı geçişini denetler; `expectOutside` / `expectEarly` ile bilinçli istisnalar.
 - Terim: start hattının şamandıra ucu **pin**; "orsa şamandırası" yalnızca parkurun rüzgarüstü şamandırası için.
 - Senaryo katmanları: `rungs {boat, from, to}`, `laylines [{x,y,tack,len,from,to,label}]`, `readouts [{boat,from,to}]` (rota + rüzgar açısı), segment `note` (scripted tekne üstünde yazı).
-- Motor: segment tabanlı rota üretici (closehauled / run / heading / hold), ivme modeli, rüzgar keyframe'leri, yelken/bumba geometrisi, boş yelken sallanması.
+- Motor: segment tabanlı rota üretici (closehauled / run / heading / hold), ivme modeli, rüzgar keyframe'leri, yelken/bumba geometrisi, boş yelken sallanması. **Yelken pırpırlaması** (`engine.sailPose` + `sailShape`, senaryolar ve simülatör ortak): yavaş tekne (v ≤ %15 temel hız) yelkeni boşaltmış sayılır; rüzgara tam dönükse bumba ortada iki yana sallanır, baş rüzgardan açıksa bumba rüzgar yönünde uzanır ve yelken dalgalanır; hızlandıkça (≥ %45) kademeli olarak trimlenir.
 - **Kalabalık filo** (`scn.crowd`): start senaryolarına senaryo tanımından gelen gri tekneler; `slot` (0=pin, 1=hakem botu), `row` (2. sıra 60 px geride), ya da `pos`+`v0`. Hat geçiş noktası bir slot ise hattın 1-1.5 boy dibinde rüzgara baş verip (`w±25°`, hız %4) bekler; `goBefore` (2.5 s) kala yelkeni doldurur, `tau` (1.0) ile küçük tekne gibi hızlanır; kural manevraları sinyalden 0.5 s sonra başlar (start patlamasında yalnızca engel kaçınma). Yan yana boşluk: hat yönü ile orsa rotası arasındaki açı küçükse (büyük bias) slotları daha seyrek koy (A3: 600 px hat, Δu≥0.2).
 - Ek tekneler start senaryolarında **hat üstünde slot** alır (`scn.startSlots`, 0=pin 1=hakem botu; slotlar dolunca 2. sıra 70 px geride). Hızlanma mesafesi hesaplanıp bekleme konumu geriye yerleştirilir; sinyalde hattı uçlar arasından geçerler. Erken geçen "ERKEN · OCS", uçların dışından geçen "Çizgi dışından geçti!" notu alır. Beklerken kural manevrası yapılmaz.
 - Ek tekneler: kullanıcı ekler; `rules.js` tüm ek tekneleri birlikte simüle eder. Karşılaşmalarda RRS 10 (bordalama ya da yetmezse tramola), 11 (rüzgarüstü orsalar), 12 (arkadaki yavaşlar), 14 (hak sahibi de temas önler) uygulanır; manevra notu teknenin üstünde 2.5 s görünür. Scripted tekneler rotalarını değiştirmez (ders onlar).
@@ -98,6 +98,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · Bekleyen teknelerde yelken pırpırlaması
+- Yapılanlar: `engine.sailPose` (hıza ve rüzgar açısına göre bumba açısı, sallanma, titreme) ve `engine.sailShape` (dalgalanan yelken yolu) eklendi; `app.js` ve `sim.js` bunları kullanıyor. Senaryo verisine dokunulmadı.
+- Sonraki sohbete not: A8/A17 (geri yelken, backing) için `sailPose`'a ters karın eklenebilir.
 
 ### 2026-11-12 · Yarış simülatörü (1. aşama)
 - Kullanıcı isteği: hazır animasyonlardan ayrı, kendi kurduğu yarış. Karar (kullanıcı): senin teknen otomatik gider + Tramola / taktik komutları.

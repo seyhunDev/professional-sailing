@@ -152,7 +152,49 @@
     return { twa, abs, tack, boom, side, luffing: abs < 30 };
   }
 
+  // ---------- Yelken pozu (bekleyen/yavaş teknede pırpırlama) ----------
+  // opts: { v, base, t, seed }. Yavaş tekne (v/base küçük) yelkeni boşaltmış sayılır:
+  //  - rüzgara tam dönükse bumba ortada, iki yana sallanır;
+  //  - baş rüzgardan biraz açıksa bumba rüzgar yönünde (rüzgaraltına) uzanır ve yelken pırpırlar.
+  // Dönen: { beta (bumba açısı, + sağa / − sola, derece), flutter (0..1), belly (yelken karnı, px, + sağa) }
+  function sailPose(h, windFrom, opts) {
+    opts = opts || {};
+    const st = sailState(h, windFrom);
+    const t = opts.t || 0, seed = opts.seed || 0;
+    const base = opts.base || 55;
+    let slack = 0;
+    if (opts.v != null) slack = Math.max(0, Math.min(1, (0.45 - opts.v / base) / 0.3)); // v ≤ %15 → tamamen boş, ≥ %45 → trimli
+    if (st.abs > 100) slack *= Math.max(0, 1 - (st.abs - 100) / 40);                   // pupada boş yelken de dolu durur
+    const trim = st.luffing ? 0 : st.boom;
+    const stream = Math.min(st.abs, 85);                                               // boş yelken rüzgarla hizalanır
+    let mag = trim + (stream - trim) * slack;
+    let beta = st.side * mag;
+    // rüzgara tam dönük: bumba iki yana sallanır
+    const headUp = Math.max(0, 1 - st.abs / 18) * Math.max(slack, st.luffing ? 0.6 : 0);
+    beta += headUp * 16 * Math.sin(t * 2.4 + seed);
+    const flutter = Math.max(slack, st.luffing ? 0.8 : 0);
+    beta += flutter * 2.5 * Math.sin(t * 13 + seed * 1.7);                              // bumba ucunda titreme
+    const belly = st.side * 9 * (1 - flutter);
+    return { beta, flutter, belly, slack, sail: st };
+  }
+  // Yelken çizimi (tekne yerel koordinatı: baş −y). Dönen: { d (yelken yolu), tip {x,y} }
+  function sailShape(pose, t, seed, L, my) {
+    L = L || 27; my = my == null ? -6 : my;
+    const b = pose.beta * DEG;
+    const tx = Math.sin(b) * L, ty = my + Math.cos(b) * L;
+    const nx = Math.cos(b), ny = -Math.sin(b);                 // bumbaya dik (sağ yön, beta=0 iken +x)
+    const ph = t * 22 + (seed || 0);
+    const A = 7 * pose.flutter;
+    const o1 = pose.belly * 1.1 + A * Math.sin(ph), o2 = pose.belly * 0.9 - A * Math.sin(ph + 1.4);
+    const c1x = tx / 3 + nx * o1, c1y = my + (ty - my) / 3 + ny * o1;
+    const c2x = tx * 2 / 3 + nx * o2, c2y = my + (ty - my) * 2 / 3 + ny * o2;
+    const f = v => v.toFixed(1);
+    return { d: `M0,${my} C${f(c1x)},${f(c1y)} ${f(c2x)},${f(c2y)} ${f(tx)},${f(ty)} L0,${my} Z`, tip: { x: tx, y: ty } };
+  }
+  function seedOf(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) % 1000; return h / 37; }
+
   global.SailEngine = {
+    sailPose, sailShape, seedOf,
     DEG, norm180, norm360, lerp, lerpAngle, fwd,
     windAt, tackHeading, runHeading, buildTrack, sampleTrack, sailState, speedFor, obstaclesOf, avoidDir,
     CLOSE_HAULED, RUN
