@@ -75,16 +75,29 @@
   // ---------- Ek tekneler: kural motoruyla birlikte simüle edilir ----------
   function simulateExtras() {
     const scn = state.scn;
-    const tracks = SailRules.simulate(scn, state.extras.map(b => ({ pos: b.pos, tack: b.tack })), state.boats);
+    const tracks = SailRules.simulate(scn, state.extras.map(b => ({ pos: b.pos, slot: b.slot, row: b.row, tack: b.tack })), state.boats);
     state.extras.forEach((b, i) => b.track = tracks[i]);
   }
   function addBoat() {
     const scn = state.scn; if (!scn.addBoat) return;
     const side = $('selSide').value, tack = $('selTack').value;
-    const pos = scn.addBoat[side]; const n = state.extras.length;
-    const jitter = { x: pos.x + (n % 3 - 1) * 26, y: pos.y + Math.floor(n / 3) * 44 };
-    state.extras.push({ id: 'X' + (n + 1), name: `Tekne ${n + 1} (${tack === 'starboard' ? 'sancak' : 'iskele'})`,
-      color: EXTRA_COLORS[n % EXTRA_COLORS.length], pos: jitter, tack, extra: true });
+    const n = state.extras.length;
+    const boat = { id: 'X' + (n + 1), name: `Tekne ${n + 1} (${tack === 'starboard' ? 'sancak' : 'iskele'})`,
+      color: EXTRA_COLORS[n % EXTRA_COLORS.length], tack, extra: true };
+    if (scn.line && scn.startAt > 0) {
+      // start senaryosu: hat üstünde bir geçiş noktası (slot) seç; tekne geride bekleyip oradan geçer
+      const { pin, boat: cb } = scn.line;
+      const slots = (scn.startSlots || { pin: [0.12, 0.26], middle: [0.5, 0.62], committee: [0.9, 0.78] })[side] || [0.5];
+      const k = state.extras.filter(b => b.side === side).length;      // bu uçta kaçıncı tekne
+      const u = slots[k % slots.length];
+      boat.side = side;
+      boat.slot = { x: pin.x + (cb.x - pin.x) * u, y: pin.y + (cb.y - pin.y) * u };
+      boat.row = Math.floor(k / slots.length);        // slotlar dolunca 2. sıra: daha geride bekler
+    } else {
+      const pos = scn.addBoat[side];
+      boat.pos = { x: pos.x + (n % 3 - 1) * 26, y: pos.y + Math.floor(n / 3) * 44 };
+    }
+    state.extras.push(boat);
     simulateExtras(); buildLegend(); render();
   }
   function removeBoat() { state.extras.pop(); simulateExtras(); buildLegend(); render(); }

@@ -81,7 +81,9 @@
       { t: 20.2, title: 'START', text: 'Yeşil tekne tam bu anda, tam hızla çizgide. Gri tekne ise hızlanmaya yeni başlıyor: çizgiyi 3-4 saniye sonra, yavaş geçecek ve öndekilerin rüzgar gölgesinde kalacak.' },
       { t: 25, title: 'Sonuç', text: 'İyi start için formül: zaman–mesafe hissi (kaç saniyede kaç tekne boyu?), çizginin gerisinde güvenli bekleme, ve sinyalden ~5 sn önce tam hıza çıkma. Antrenmanda 1 dakikalık "box start" ve "kaç saniyede çizgiye varırım" egzersizleri yapın.' }
     ],
-    addBoat: { pin: { x: 290, y: 560 }, middle: { x: 390, y: 640 }, committee: { x: 720, y: 560 } }
+    addBoat: { pin: { x: 290, y: 560 }, middle: { x: 390, y: 640 }, committee: { x: 720, y: 560 } },
+    // hat üstünde boş geçiş noktaları (0 = pin, 1 = hakem botu); scripted tekneler ~0.16 / 0.42 / 0.78'de
+    startSlots: { pin: [0.28], middle: [0.54], committee: [0.86] }
   });
 
   // ---------- B1: Kural 10 ----------

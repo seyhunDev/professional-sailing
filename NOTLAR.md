@@ -8,10 +8,16 @@
 - Hazır senaryolar (5): A1 line bias, A2 zamanlama/OCS, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
 - Arayüz: tam ekran sahne, üst çubuk (senaryo seçimi, Bilgi, Katmanlar, tam ekran), alt çubuk (oynat, hız, zaman çubuğu, tekne ekle/çıkar), sağda canlı takipli bilgi kartı.
 - Motor: segment tabanlı rota üretici (closehauled / run / heading / hold), ivme modeli, rüzgar keyframe'leri, yelken/bumba geometrisi, boş yelken sallanması.
+- Ek tekneler start senaryolarında **hat üstünde slot** alır (`scn.startSlots`, 0=pin 1=hakem botu; slotlar dolunca 2. sıra 70 px geride). Hızlanma mesafesi hesaplanıp bekleme konumu geriye yerleştirilir; sinyalde hattı uçlar arasından geçerler. Erken geçen "ERKEN · OCS", uçların dışından geçen "Çizgi dışından geçti!" notu alır. Beklerken kural manevrası yapılmaz.
 - Ek tekneler: kullanıcı ekler; `rules.js` tüm ek tekneleri birlikte simüle eder. Karşılaşmalarda RRS 10 (bordalama ya da yetmezse tramola), 11 (rüzgarüstü orsalar), 12 (arkadaki yavaşlar), 14 (hak sahibi de temas önler) uygulanır; manevra notu teknenin üstünde 2.5 s görünür. Scripted tekneler rotalarını değiştirmez (ders onlar).
 - Kategoriler: Kurallar / Taktik / Teknik; KONULAR.md de bu üç bölüme ayrıldı (Teknik = G1-G7, Aşama 1 ile).
 
 ## Sıradaki işler (öncelik sırasıyla, her biri bir sohbete uygun)
+> Karar (2026-11-12): **Önce Taktik → Start (A) bitirilecek, sonra Kurallar, sonra Teknik.** Liste: KONULAR.md → A1–A15.
+- [ ] **Start paketi 1:** A1'e ölçüm yöntemleri (rüzgara karşı durma, iki uca seyretme, pusula) · A3 pin ucu avantajlı · A4 hakem botu avantajlı (barging dahil).
+- [ ] **Start paketi 2:** A5 hat yayı (line sag) ve transit (A6) · A7 rüzgaraltına boşluk (hole) · A8 bekleme teknikleri.
+- [ ] **Start paketi 3:** A9 start sonrası ilk 2 dk (temiz hava, lane) · A10 iskele kontra start · A11 Vanderbilt yaklaşması.
+- [ ] **Start paketi 4:** A12 bayraklar/sinyaller · A13 OCS düzeltme · A14 akıntı · A15 kalabalıkta sıra.
 - [ ] **Senaryo paketi 2:** B2 Kural 11 (rüzgaraltı/rüzgarüstü), C3 layline & overstand, E1 geniş gir – dar çık. (KONULAR.md'de 🔜 olanlar)
 - [ ] **Senaryo paketi 3:** C2 kalıcı dönüş, A3 barging, B4 Kural 13 (tramola atarken), D2 pupada kavança.
 - [ ] **Kural motoru iyileştirme:** Kural 13 (tramola atarken yol ver), Kural 18 (zone içinde şamandıra yeri), Kural 16 (rota değiştirirken yer ver), start öncesi bekleyen teknelerin çizgi üstünde dizilmesi; tekne eklerken konumu sürükleyerek seçme.
@@ -49,7 +55,8 @@
 ## Oturum günlüğü (en yeni üstte)
 ### 2026-11-12 · Kuruluş sohbeti (devam): kural motoru ve kategoriler
 - Yapılanlar: `src/js/rules.js` (K10/11/12/14, birlikte simülasyon, bordala-veya-tramola seçimi, histerezis), kategoriler Kurallar/Taktik/Teknik, KONULAR.md üç bölüm + Teknik (G) tablosu, A2'de OCS teknesinin dönüş rotası düzeltildi.
-- Yarım kalan: kalabalık senaryolarda etiketler üst üste binebiliyor (ek teknelerde basamak farkı artık gösterilmiyor; yeterli değilse etiket yerleşimi gerekir).
+- Start düzeltmesi: slot mantığı + OCS / çizgi dışı tespiti; kural eşikleri sıkılaştırıldı (risk dmin<58 px, yakınlık <42 px, K14 dmin<40).
+- Yarım kalan: A1'de scripted iskele tekne ile eklenen sancak tekne 25 px'e kadar yaklaşabiliyor (scripted tekne yol vermiyor). Kalabalık senaryolarda etiketler üst üste binebiliyor (ek teknelerde basamak farkı artık gösterilmiyor; yeterli değilse etiket yerleşimi gerekir).
 - Sonraki sohbete not: `scripts/check-scenarios.mjs` yazılırken ek tekne karışımıyla (2 iskele + 2 sancak) minimum mesafe testi de eklensin; bu sohbette geçici betikle ölçüldü (min ~40 px).
 
 ### 2026-11-12 · Kuruluş sohbeti

@@ -35,17 +35,25 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 
 # II. TAKTİK
 
-## A. Start
+## A. Start Taktiği (profesyonel sıra: önce ölçüm, sonra plan, sonra uygulama)
 
 | # | Konu | Animasyonda ne gösterilecek | Durum |
 |---|------|-----------------------------|-------|
-| A1 | Start çizgisi avantajı (line bias) | Rüzgar yönüne göre hangi uç (hakem botu / orsa şamandırası) öndedir? Rüzgara dik "merdiven basamağı" çizgisiyle fark görselleştirilir. | ✅ |
-| A2 | Zamanlama: zaman–mesafe, hızlanma | Geri sayım, çizgiye yaklaşma, orsalayarak bekleme (hold), bordayarak hızlanma, "erken start (OCS)" ve "geç kalan" tekne. | ✅ |
-| A3 | Hakem botu ucunda "barging" | Rüzgarüstünden sokulan teknenin hakkı yoktur; rüzgaraltı tekne orsa edebilir (RRS 11). | 🔜 |
-| A4 | İskele kontra start | Çizgi iskeleye avantajlı ve filo seyrekse iskele kontrayla orsa şamandırasından çıkış. | ⬜ |
-| A5 | Start sonrası ilk 2 dakika: temiz hava | Rüzgar gölgesi (dirty air) ve "boşluk bulmak için erken tramola". | ⬜ |
-| A6 | Transit (kerteriz) ile çizgiyi görme | Kıyıdaki sabit nokta ile çizgi hizası. | ⬜ |
-| A7 | Bayrak ve ses sinyalleri (5-4-1-0), I / U / siyah bayrak | Zaman çizelgesi animasyonu. | ⬜ |
+| A1 | Hat avantajını ölçme (line bias) | Rüzgara karşı durup burnun gösterdiği taraf; iki uca aynı kontrada seyredip karşılaştırma; pusula ile hat yönü vs rüzgar yönü. Merdiven basamağıyla kazanç. | ✅ (ölçüm yöntemleri eklenecek) |
+| A2 | Zaman–mesafe: bekleme, hızlanma, OCS | Geri sayım, hold, 4-5 sn kala bordalama; erken ve geç tekne. | ✅ |
+| A3 | Pin ucu avantajlıysa | Pin'e yakın ama pin'e "layline"ı kaçırmadan start; pin'e sıkışma riski (pin'i dönemeyen tekne); alternatif: iskele kontra start (A10). | 🔜 |
+| A4 | Hakem botu ucu avantajlıysa | Birinci sıra için erken yer alma, barging yasağı (rüzgarüstünden sokulamazsın), hakem botunun kıçını "çiti" olarak kullanma; kalabalıksa hakem botundan 3-5 tekne aşağısı. | 🔜 |
+| A5 | Hat yayı (line sag) ve ortadan start | Filo ortada hattın gerisinde yay yapar; transit ile hattı gören tekne 1-2 boy önde çıkar. | 🔜 |
+| A6 | Transit (kerteriz) ile hattı görme | Pin–hakem botu hizasının kıyıdaki sabit noktası; "transit kapanınca hattasın". Pin'den ve hakem botundan iki yönlü transit. | 🔜 |
+| A7 | Rüzgaraltına boşluk yaratma (hole) | Son 60 sn: rüzgaraltındaki boşluğu açma (bear away, sonra orsa), boşluğu rüzgarüstü teknelerden koruma; boşluk = hızlanma alanı. | 🔜 |
+| A8 | Bekleme (hold) teknikleri | Orsalayıp durma, yelkeni boşaltma, "double tack", geri yelken (backing); hattın 2-4 boy gerisinde yer tutma. | 🔜 |
+| A9 | Start sonrası ilk 2 dakika | Temiz hava: rüzgaraltı teknenin rüzgar gölgesi, "lane" kaybedince erken tramola kararı; kapalı rüzgarda ısrar etmemek. | 🔜 |
+| A10 | İskele kontra start | Pin ucu çok avantajlı ve filo seyrekse: pin'den iskele kontra çıkış; sancak filosunun önünden geçme hesabı; risk analizi. | 🔜 |
+| A11 | Yaklaşma rotaları: Vanderbilt ve "dip" | Uzaklaş–dön–geri (zamanla ölçülmüş), hattın rüzgarüstünden inip (dip start, yalnızca I bayrağı yokken) yer alma. | ⬜ |
+| A12 | Start sinyalleri ve bayraklar | 5-4-1-0 sırası, P / I / U / siyah bayrak anlamları, genel geri çağırma (Birinci Tekrar), erteleme (AP). | ⬜ |
+| A13 | OCS düzeltme | Çizginin uçlarından dolaşma (I bayrağı), çizgiyi geri geçme (P bayrağı); kaybedilen süre. | ⬜ |
+| A14 | Akıntı etkisi | Akıntı hatta doğru / hattan uzağa: bekleme mesafesi ve hızlanma zamanı değişir. | ⬜ |
+| A15 | Kalabalıkta pozisyon ve sıra | Birinci sıra vs ikinci sıra; ikinci sıranın gölgede kalması; "kötü start"tan kurtulma: erken tramola. | ⬜ |
 
 ## C. Rüzgar ve Orsa Stratejisi (upwind)
 
@@ -98,6 +106,6 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | G6 | Hızlanma ve durma (start için) | Orsalayarak durma, bordalayarak hızlanma; A2 ile ilişkili. | ⬜ |
 | G7 | Sağanakta tekne dengesi ve dümen | Sağanak gelince ne yapılır. | ⬜ |
 
-## Öncelik sırası (ilk 10 animasyon)
-1. A1 Line bias ✅  2. A2 Zamanlama ✅  3. B1 Kural 10 ✅  4. C1 Header'da tramola ✅  5. B8 Kural 18 ✅
-6. B2 Kural 11  7. C3 Layline  8. E1 Geniş gir – dar çık  9. C2 Kalıcı dönüş  10. A3 Barging
+## Öncelik sırası
+**Önce Taktik → Start (A) tamamlanır, sonra Kurallar (B), sonra Teknik (G).**
+Start sırası: A1 ölçüm yöntemleri → A3 pin avantajlı → A4 hakem botu avantajlı → A5 hat yayı → A6 transit → A7 boşluk → A8 bekleme → A9 ilk 2 dakika → A10 iskele start → A11-A15.
