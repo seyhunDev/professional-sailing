@@ -26,6 +26,9 @@
     <symbol id="i-route" viewBox="0 0 24 24"><path d="M5 19c3 0 3-5 7-5s4 4 7 4M12 14V5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3"/><circle cx="12" cy="5" r="2" fill="currentColor"/></symbol>
     <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M4.5 12H15a5 5 0 0 1 0 10h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v5h7V4M8 20v-6h8v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-boat" viewBox="0 0 24 24"><path d="M12 3c3 3.5 4 8 3.5 15h-7C8 11 9 6.5 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
   </svg>
 
@@ -34,6 +37,7 @@
     <h1 class="sim-h1">Yarış Simülatörü</h1>
     <div class="spacer"></div>
     <div class="tool-group">
+      <button id="btnRecs" class="tool" title="Kayıtlı yarışlar: tekrar izle, dosyaya aktar"><svg><use href="#i-save"/></svg><span class="lbl">Kayıtlar</span></button>
       <button id="btnPanel" class="tool on" title="Sıralama ve olaylar"><svg><use href="#i-list"/></svg><span class="lbl">Sıralama</span></button>
       <button id="btnFull" class="tool" title="Tam ekran"><svg><use href="#i-expand"/></svg></button>
     </div>
@@ -128,6 +132,40 @@
       <span id="msMine" class="ms-chip"></span>
       <span id="msRules" class="ms-chip ms-warn hidden">Yol vermez</span>
       <button id="msSel" class="ms-chip ms-sel hidden" title="Seçimi kaldır"></button>
+    </div>
+
+    <div id="saveDlg" class="picker dlg hidden" role="dialog" aria-modal="true" aria-labelledby="saveDlgTitle">
+      <div class="picker-panel dlg-panel">
+        <div class="picker-head">
+          <div><h2 id="saveDlgTitle">Yarış bitti · Kaydedelim mi?</h2><div class="picker-sub" id="saveDlgSub"></div></div>
+          <button class="icon" id="saveDlgClose" title="Kapat (Esc)"><svg><use href="#i-close"/></svg></button>
+        </div>
+        <div class="dlg-body">
+          <div class="rec-sum" id="saveDlgSum"></div>
+          <label class="dlg-lbl" for="saveName">Kayıt adı</label>
+          <input id="saveName" class="name-in dlg-in" type="text" maxlength="40" autocomplete="off" spellcheck="false">
+          <p class="dlg-note">Kurulum (tekneler, isimler, taktikler, parkur, rüzgar, deniz) ve yarış boyunca yaptığın her şey (rüzgar dönüşleri, sağanaklar, tramolalar, rotalar) saklanır. <b>Kayıtlar</b>'dan aynen tekrar izleyebilir, dosya olarak başka cihaza taşıyabilirsin.</p>
+        </div>
+        <div class="dlg-actions">
+          <button class="tb" id="saveNo">Kaydetme</button>
+          <button class="tb primary" id="saveYes"><svg class="ci"><use href="#i-check"/></svg>Kaydet</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="recDlg" class="picker dlg hidden" role="dialog" aria-modal="true" aria-labelledby="recDlgTitle">
+      <div class="picker-panel dlg-panel wide">
+        <div class="picker-head">
+          <div><h2 id="recDlgTitle">Kayıtlı yarışlar <small id="recCount"></small></h2><div class="picker-sub">Bu cihazda (tarayıcıda) saklanır · başka cihaza dosya olarak taşı</div></div>
+          <button class="icon" id="recDlgClose" title="Kapat (Esc)"><svg><use href="#i-close"/></svg></button>
+        </div>
+        <div class="dlg-tools">
+          <button class="tb primary" id="recSaveNow"><svg class="ci"><use href="#i-save"/></svg>Bu yarışı kaydet</button>
+          <label class="tb file-btn" title="Bir yarış dosyasını (.json) aç"><svg class="ci"><use href="#i-upload"/></svg>Dosyadan yükle<input type="file" id="recFile" accept=".json,application/json"></label>
+          <button class="tb" id="recExportAll" title="Bütün kayıtları tek dosyaya indir (yedek)"><svg class="ci"><use href="#i-download"/></svg>Tümünü indir</button>
+        </div>
+        <ul class="rec-list" id="recList"></ul>
+      </div>
     </div>
 
     <aside id="panel" class="info-card sim-panel">
@@ -228,6 +266,7 @@
             <li><b>Elle sür:</b> alttaki <b>Elle sür</b> (ya da D) ile teknenin dümeni ve iskotası sende; bu sırada zaman durur, diğer tekneler yerinde bekler. <b>◀ Sola / Sağa ▶</b> düğmelerini basılı tut (klavyede ← →): tekne orsalar ya da kafa açar; rüzgarın içinden geçince <b>tramola</b>, pupadan geçince <b>kavança</b> olur. <b>Oto iskota</b> açıkken iskota kendiliğinden ayarlanır; <b>Sal</b> (↓) ile yavaşlarsın (yelken pırpırlar), <b>Çek</b> (↑) ile hızlanırsın. Oto iskotayı kapatırsan kafa açarken iskotayı sen salmalısın, yoksa yelken boğulur. Teknen istediğin yere götürünce <b>Otomatik ▶</b>: yarış kaldığı yerden devam eder, teknen start'ı alır ve şamandırayı dönene kadar orsaya gider; tramolalara yine sen karar verirsin, yarışta da ↑ ↓ ile hızını değiştirirsin.</li>
             <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>
             <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
+            <li><b>Kaydet:</b> yarış bitince <b>“Kaydedelim mi?”</b> diye sorulur; bir ad verip kaydet. Kurulum (tekneler, isimler, taktikler, parkur, rüzgar, deniz) ve yarışta yaptığın her şey (rüzgar dönüşleri, sağanaklar, tramolalar, rotalar) bu cihazda saklanır. Üstteki <b>Kayıtlar</b>'dan yarışı aynen <b>İzle</b>, yalnız <b>Kurulum</b>unu yükleyip değiştir, ya da <b>Dosya</b> olarak indirip başka cihazda <b>Dosyadan yükle</b> ile aç.</li>
             <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
           </ol>
         </section>
@@ -312,6 +351,7 @@
   <script src="js/engine.js"></script>
   <script src="js/rules.js"></script>
   <script src="js/sim-core.js"></script>
+  <script src="js/sim-records.js"></script>
   <script src="js/sim.js"></script>
 </body>
 </html>

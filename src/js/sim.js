@@ -1,6 +1,6 @@
 /* Yarış simülatörü – arayüz: yerleştirme (sürükle), rüzgar / sağanak, start, geri sarma, sıralama */
 (function () {
-  const E = SailEngine, S = SailSim;
+  const E = SailEngine, S = SailSim, Rec = SailRecords, jcopy = Rec.jcopy;
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const $ = id => document.getElementById(id);
   const el = (tag, attrs, parent) => {
@@ -17,7 +17,7 @@
     mode: 'setup',            // setup | run | pause | end
     fleet: S.defaultFleet(12),
     wind: 0, gusts: [],
-    sim: null, frames: [], speed: 1, lastTs: 0, acc: 0,
+    sim: null, frames: [], rec: null, speed: 1, lastTs: 0, acc: 0,
     show: { speed: true, shadow: true },   // pis rüzgar konileri varsayılan açık
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
     cam: { z: 1, x: null, y: null, follow: false }, base: null, pinch: null, pts: new Map(),
@@ -545,19 +545,50 @@
   }
   function lastT() { return st.frames.length ? st.frames[st.frames.length - 1].t : 0; }
   function startRace() {
+    const setup = { fleet: jcopy(st.fleet), wind: st.wind, gusts: jcopy(st.gusts), course: { ...st.course }, sea: { ...st.sea }, boat: { ...st.boat } };
     st.frames = S.runToEnd(S.newRace(st.fleet, { wind: st.wind, gusts: st.gusts, course: st.course, sea: st.sea, boat: st.boat }));
     st.playT = 0; st.sim = viewAt(0); st.mode = 'run'; st.sel = null; st.ended = false;
+    st.rec = Rec.begin(setup);
   }
-  // Şu anki kareden başlayarak değişikliği uygula ve yarışı ileriye yeniden hesapla
-  function applyChange(fn) {
-    if (st.drive && st.drive.s) { fn(st.drive.s); updatePanel(true); return; }   // elle sürerken: donmuş ana uygula, Otomatik'te ileri hesaplanır
+  // Yarış sırasındaki değişiklikler: her biri yazılabilir bir "işlem" (op). Aynı işlem kayıtlı yarışı
+  // tekrar oynatırken aynı karede yeniden uygulanır; hesap deterministik olduğu için yarış birebir aynı çıkar.
+  const OPS = {
+    wind: (r, o) => { r.wind = E.norm180(r.wind + o.d); r.events.push({ t: r.t, text: `Rüzgar ${o.d > 0 ? 'sağa' : 'sola'} döndü → ${Math.round(E.norm360(r.wind))}°`, kind: 'wind' }); },
+    gustAdd: (r, o) => { r.gusts.push({ ...o.g }); r.events.push({ t: r.t, text: `${o.side === 'L' ? 'Sol' : 'Sağ'} tarafa sağanak geldi`, kind: 'wind' }); },
+    gustClear: r => { r.gusts.length = 0; r.events.push({ t: r.t, text: 'Sağanak geçti', kind: 'wind' }); },
+    gustMove: (r, o) => { if (r.gusts[o.i]) { Object.assign(r.gusts[o.i], o.pos); r.events.push({ t: r.t, text: 'Sağanak taşındı', kind: 'wind' }); } },
+    gust: (r, o) => { if (r.gusts[o.i]) { GUST_FX[o.fx](r.gusts, o.i, o.k); r.events.push({ t: r.t, text: o.text, kind: 'wind' }); } },
+    sea: (r, o) => { r.sea = { ...(r.sea || S.SEA_DEFAULT), [o.key]: o.val }; r.events.push({ t: r.t, text: o.key === 'current' ? `Akıntı: ${SEA_TXT.current[o.val]}` : `Dalga: ${SEA_TXT.waves[o.val]}`, kind: 'wind' }); },
+    cmd: (r, o) => S.command(r, o.c, o.v, o.id)
+  };
+  // Şu anki kareden başlayarak değişikliği uygula ve yarışı ileriye yeniden hesapla.
+  // op: { k: 'wind' | 'cmd' | ... } (kayda girer). Eski tarz fonksiyon da olur: o zaman kayda o karenin kopyası yazılır.
+  function applyChange(op) {
+    if (st.drive && st.drive.s) {                        // elle sürerken: donmuş ana uygula, Otomatik'te ileri hesaplanır (kayda çıkışta girer)
+      if (typeof op === 'function') op(st.drive.s); else OPS[op.k](st.drive.s, op);
+      updatePanel(true); return;
+    }
     if (!st.frames.length) return;
     const i = frameIndexAt(st.playT), base = S.clone(st.frames[i]);
-    fn(base);
+    if (typeof op === 'function') { op(base); Rec.note(st.rec, i, { k: 'snap', state: jcopy(base) }); }
+    else { OPS[op.k](base, op); Rec.note(st.rec, i, op); }
     st.frames = st.frames.slice(0, i).concat(S.runToEnd(base));
     st.playT = base.t; st.sim = viewAt(st.playT); st.ended = false;
     if (st.mode === 'end') st.mode = 'pause';
     updatePanel(true);
+  }
+  // Kayıttaki kurulumu ve işlemleri sırayla uygula (tekrar oynatma)
+  function replay(rec) {
+    let frames = S.runToEnd(S.newRace(jcopy(rec.setup.fleet), jcopy(rec.setup)));
+    for (const op of rec.ops) {
+      const i = Math.min(op.i, frames.length - 1);
+      let base;
+      if (op.k === 'snap') base = jcopy(op.state);
+      else if (OPS[op.k]) { base = S.clone(frames[i]); OPS[op.k](base, op); }
+      else continue;
+      frames = frames.slice(0, i).concat(S.runToEnd(base));
+    }
+    return frames;
   }
   function tick(ts) {
     const dt = Math.min(0.1, (ts - st.lastTs) / 1000 || 0); st.lastTs = ts;
@@ -567,7 +598,7 @@
       if (st.playT >= lastT()) {
         st.playT = lastT(); st.mode = 'end';
         const mine = st.frames[st.frames.length - 1].boats.find(b => b.mine);
-        toast(mine && mine.finish ? `Yarış bitti · Senin teknen ${mine.finish}. oldu` : 'Yarış bitti');
+        if (!askSave()) toast(mine && mine.finish ? `Yarış bitti · Senin teknen ${mine.finish}. oldu` : 'Yarış bitti');
       }
       st.sim = viewAt(st.playT);
     }
@@ -641,6 +672,7 @@
     }
     const s = d.s;
     if (m) s.events.push({ t: s.t, text: `${m.id}: elle sürdün, otomatiğe döndü (tramolalar yine senin)`, kind: '' });
+    Rec.note(st.rec, d.i, { k: 'snap', state: jcopy(s) });   // elle sürülen an kayda: o karenin durumu
     st.frames = st.frames.slice(0, d.i).concat(S.runToEnd(s));
     st.playT = s.t; st.sim = viewAt(st.playT); st.ended = false;
     st.mode = play ? 'run' : 'pause';
@@ -681,7 +713,7 @@
     }
     if (!['wait', 'race', 'ocs', 'round'].includes(m.phase)) return;
     const nv = Math.max(0, Math.min(S.SHEET_OFF_MAX, (m.sheetOff || 0) + dir * SHEET_STEP * 1.5));
-    if (nv !== (m.sheetOff || 0)) applyChange(r => S.command(r, 'sheet', nv));
+    if (nv !== (m.sheetOff || 0)) applyChange({ k: 'cmd', c: 'sheet', v: nv });
   }
   function toggleAutoTrim() {
     if (!st.drive) return;
@@ -741,22 +773,24 @@
     const cur = st.mode === 'setup' ? st.wind : st.sim.wind;
     if (Math.abs(E.norm180(cur + delta)) > WIND_MAX) { toast(`Rüzgar en fazla ±${WIND_MAX}° döndürülebilir (şamandıra rüzgarüstünde kalsın)`); return; }
     if (st.mode === 'setup') st.wind = E.norm180(st.wind + delta);
-    else applyChange(r => { r.wind = E.norm180(r.wind + delta); r.events.push({ t: r.t, text: `Rüzgar ${delta > 0 ? 'sağa' : 'sola'} döndü → ${Math.round(E.norm360(r.wind))}°`, kind: 'wind' }); });
+    else applyChange({ k: 'wind', d: delta });
   }
   // ---------- Sağanak düzenleme: dokun → seç, boyut −/+, sıfırla, sil ----------
   const GUST_BASE = { rx: 120, ry: 190 };
-  function gustEdit(fn, text) {
+  const GUST_FX = {
+    scale: (a, i, k) => { const g = a[i], f = Math.max(0.4, Math.min(2.5, (g.rx / GUST_BASE.rx) * k)); g.rx = GUST_BASE.rx * f; g.ry = GUST_BASE.ry * f; },
+    reset: (a, i) => { a[i].rx = GUST_BASE.rx; a[i].ry = GUST_BASE.ry; },
+    del: (a, i) => a.splice(i, 1)
+  };
+  function gustEdit(fx, k, text) {
     const i = st.gsel; if (i == null) return;
-    if (st.mode === 'setup') { if (st.gusts[i]) fn(st.gusts, i); }
-    else applyChange(r => { if (r.gusts[i]) { fn(r.gusts, i); r.events.push({ t: r.t, text, kind: 'wind' }); } });
+    if (st.mode === 'setup') { if (st.gusts[i]) GUST_FX[fx](st.gusts, i, k); }
+    else applyChange({ k: 'gust', fx, i, k, text });
     gustBarUpdate(); updatePanel(true);
   }
-  function gustScale(k) {
-    gustEdit((a, i) => { const g = a[i], f = Math.max(0.4, Math.min(2.5, (g.rx / GUST_BASE.rx) * k)); g.rx = GUST_BASE.rx * f; g.ry = GUST_BASE.ry * f; },
-      `Sağanak ${st.gsel + 1} ${k > 1 ? 'büyüdü' : 'küçüldü'}`);
-  }
-  function gustReset() { gustEdit((a, i) => { a[i].rx = GUST_BASE.rx; a[i].ry = GUST_BASE.ry; }, `Sağanak ${st.gsel + 1} ilk boyutuna döndü`); }
-  function gustDelete() { const n = st.gsel + 1; gustEdit((a, i) => a.splice(i, 1), `Sağanak ${n} geçti`); st.gsel = null; gustBarUpdate(); }
+  function gustScale(k) { gustEdit('scale', k, `Sağanak ${st.gsel + 1} ${k > 1 ? 'büyüdü' : 'küçüldü'}`); }
+  function gustReset() { gustEdit('reset', 0, `Sağanak ${st.gsel + 1} ilk boyutuna döndü`); }
+  function gustDelete() { const n = st.gsel + 1; gustEdit('del', 0, `Sağanak ${n} geçti`); st.gsel = null; gustBarUpdate(); }
   // Sağanağı seç: ayar kartı sağ altta açılır ve bir kez parlar (yeni açıldığı fark edilsin)
   function gustSelect(i) {
     const was = st.gsel;
@@ -806,10 +840,10 @@
   function addGust(side) {
     const g = { x: S.MARK.x + (side === 'L' ? -270 : 270), y: (S.MARK.y + S.LINE.pin.y) / 2, rx: 120, ry: 190 };
     if (st.mode === 'setup') st.gusts.push(g);
-    else applyChange(r => { r.gusts.push(g); r.events.push({ t: r.t, text: `${side === 'L' ? 'Sol' : 'Sağ'} tarafa sağanak geldi`, kind: 'wind' }); });
+    else applyChange({ k: 'gustAdd', g, side });
     gustSelect(gustList().length - 1);
   }
-  function clearGusts() { st.gsel = null; if (st.mode === 'setup') st.gusts.length = 0; else applyChange(r => { r.gusts.length = 0; r.events.push({ t: r.t, text: 'Sağanak geçti', kind: 'wind' }); });  gustBarUpdate(); }
+  function clearGusts() { st.gsel = null; if (st.mode === 'setup') st.gusts.length = 0; else applyChange({ k: 'gustClear' });  gustBarUpdate(); }
   function renumber() {
     let k = 1;
     for (const b of st.fleet) if (!b.mine) { b.id = String(k); b.name = `Tekne ${k}`; k++; }
@@ -934,7 +968,7 @@
     if (d.kind === 'gust' && d.moved && st.mode !== 'setup') {
       const idx = st.sim.gusts.indexOf(d.obj), pos = { x: d.obj.x, y: d.obj.y };
       d.obj.x = d.x1; d.obj.y = d.y1;                 // eski karedeki konumu geri koy; değişiklik bu andan itibaren
-      if (idx >= 0) applyChange(r => { Object.assign(r.gusts[idx], pos); r.events.push({ t: r.t, text: 'Sağanak taşındı', kind: 'wind' }); });
+      if (idx >= 0) applyChange({ k: 'gustMove', i: idx, pos });
     }
     if (d.kind === 'gust' && (!d.moved || st.mode === 'setup')) { const i = gustList().indexOf(d.obj); if (i >= 0) gustSelect(i); }
     if (d.kind === 'pick') { if (!d.moved) { st.sel = st.sel === d.obj.id ? null : d.obj.id; st.gsel = null; if (phoneMq.matches) setPanelOpen(true); } $('course').style.cursor = ''; updatePanel(true); return; }
@@ -987,7 +1021,7 @@
   function routeWipe() { st.draft = []; st.steps = []; routeBarUpdate(); }
   function applyRoute(pts) {
     if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.route = pts; }
-    else applyChange(r => S.command(r, 'route', pts));
+    else applyChange({ k: 'cmd', c: 'route', v: pts });
     updatePanel(true);
   }
   function startDraw() {
@@ -1042,6 +1076,147 @@
     }
   }
 
+  // ---------- Yarış kaydı: bitince "Kaydedelim mi?", Kayıtlar listesi, tekrar izleme, dosya ----------
+  const dlgOpen = () => !$('saveDlg').classList.contains('hidden') || !$('recDlg').classList.contains('hidden');
+  const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }); };
+  function raceSummary() {
+    const last = st.frames[st.frames.length - 1], boats = last.boats;
+    const mine = boats.find(b => b.mine), win = boats.find(b => b.finish === 1);
+    return { boats: boats.length, cls: st.boat.cls, windKn: st.boat.windKn, mine: mine ? mine.finish || null : null, mineName: mine ? nameOf(mine) : '',
+      winner: win ? nameOf(win) : '', penalties: boats.reduce((n, b) => n + (b.penalties || 0), 0), changes: st.rec.ops.length,
+      dur: Math.max(0, Math.round((last.t - last.startAt) * S.CLOCK_SCALE)) };
+  }
+  function defaultName() {
+    if (st.rec.savedId && st.rec.name) return `${st.rec.name} (değişik)`.slice(0, 40);
+    const d = new Date(), cls = S.CLASSES[st.boat.cls] ? S.CLASSES[st.boat.cls].name : '';
+    return `${cls} ${st.boat.windKn} kn · ${d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} ${d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  function sumHtml(m) {
+    const cls = S.CLASSES[m.cls] ? S.CLASSES[m.cls].name : m.cls;
+    const chips = [`${esc(cls)} · ${m.windKn} kn`, `${m.boats} tekne`];
+    if (m.mine) chips.push(`<b>${esc(m.mineName || 'Sen')}: ${m.mine}.</b>`);
+    if (m.winner) chips.push(`Birinci: ${esc(m.winner)}`);
+    chips.push(m.changes ? `${m.changes} değişiklik` : 'değişiklik yok');
+    if (m.penalties) chips.push(`${m.penalties} ceza`);
+    return chips.map(c => `<span class="rc">${c}</span>`).join('');
+  }
+  // Yarış bittiğinde: kaydedilmemiş değişiklik varsa ve bu hali için daha önce sorulmadıysa sor
+  function askSave() {
+    const r = st.rec;
+    if (!r || !Rec.dirty(r) || r.asked === r.rev) return false;
+    r.asked = r.rev;
+    openSaveDlg(true);
+    return true;
+  }
+  function openSaveDlg(atEnd) {
+    if (!st.rec || !st.frames.length) return;
+    if (st.mode === 'run') st.mode = 'pause';
+    const m = raceSummary();
+    $('saveDlgTitle').textContent = atEnd ? 'Yarış bitti · Kaydedelim mi?' : 'Bu yarışı kaydet';
+    $('saveDlgSub').textContent = atEnd && m.mine ? `${m.mineName || 'Senin teknen'} ${m.mine}. oldu` : 'Kurulum ve yarış boyunca yaptığın her şey saklanır';
+    $('saveDlgSum').innerHTML = sumHtml(m);
+    $('saveName').value = defaultName();
+    $('saveDlg').classList.remove('hidden');
+    setTimeout(() => { $('saveName').focus(); $('saveName').select(); }, 30);
+    updatePanel(true);
+  }
+  function closeSaveDlg() { $('saveDlg').classList.add('hidden'); }
+  function saveRace() {
+    const r = st.rec; if (!r) return;
+    const name = $('saveName').value.replace(/\s+/g, ' ').trim().slice(0, 40) || defaultName();
+    const setup = jcopy(r.setup), names = new Map(st.fleet.map(b => [b.id, b.sailor]));
+    setup.fleet.forEach(b => { const n = names.get(b.id); if (n) b.sailor = n; else delete b.sailor; });   // yarışta değişen isimler
+    const entry = { id: Rec.newId(), name, savedAt: new Date().toISOString(), setup, ops: jcopy(r.ops), summary: raceSummary() };
+    try { Rec.put(entry); }
+    catch (e) { toast('Kaydedilemedi: tarayıcının alanı dolu ya da kapalı. Kayıtlar\'dan eski yarışları silip ya da dosyaya aktarıp yeniden dene.'); return; }
+    r.savedRev = r.rev; r.savedId = entry.id; r.name = name;
+    closeSaveDlg(); updatePanel(true);
+    toast(`Kaydedildi: “${name}” · Kayıtlar'dan tekrar izleyebilirsin`);
+  }
+  // Kayıttaki kurulumu ekrana koy
+  function useSetup(su) {
+    if (st.drive) exitDrive(false);
+    if (st.drawMode) endDraw(false);
+    st.course = { ...S.COURSE_DEFAULT, ...(su.course || {}) }; S.setCourse(st.course);
+    st.sea = { ...S.SEA_DEFAULT, ...(su.sea || {}) }; setBoatCfg({ ...S.BOAT_DEFAULT, ...(su.boat || {}) });
+    st.wind = +su.wind || 0; st.gusts = jcopy(su.gusts || []); st.fleet = jcopy(su.fleet);
+    st.sel = null; st.gsel = null; gustBarUpdate();
+  }
+  function openRace(e, watch) {
+    useSetup(e.setup);
+    if (!watch) {
+      st.mode = 'setup'; st.sim = null; st.frames = []; st.rec = null;
+      fitViewBox(); updatePanel(true); toast(`“${e.name}” kurulumu yüklendi: değiştirip yeniden start verebilirsin`);
+      return;
+    }
+    st.frames = replay(e); st.playT = 0; st.sim = viewAt(0); st.mode = 'pause'; st.ended = false;
+    st.rec = Object.assign(Rec.begin(jcopy(e.setup)), { ops: jcopy(e.ops), rev: 0, savedRev: 0, asked: 0, savedId: e.id, name: e.name });
+    fitViewBox(); updatePanel(true); toast(`“${e.name}” yüklendi · ▶ ile izle, istediğin yerde değiştir`);
+  }
+  function download(name, text) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+  }
+  // iki dokunuşla onay (silme / kaydedilmemiş yarışı bırakma)
+  function armed(btn, text) {
+    if (btn.dataset.armed && Date.now() - +btn.dataset.armed < 3000) return true;
+    const old = btn.innerHTML; btn.dataset.armed = Date.now(); btn.textContent = text; btn.classList.add('armed');
+    setTimeout(() => { delete btn.dataset.armed; btn.innerHTML = old; btn.classList.remove('armed'); }, 3000);
+    return false;
+  }
+  function openRecDlg() { recRender(); $('recDlg').classList.remove('hidden'); }
+  function closeRecDlg() { $('recDlg').classList.add('hidden'); }
+  function recRender() {
+    const races = Rec.list(), r = st.rec, can = !!(r && st.frames.length);
+    const sv = $('recSaveNow');
+    sv.disabled = !can || !Rec.dirty(r);
+    sv.classList.toggle('primary', can && Rec.dirty(r));
+    sv.innerHTML = !can ? 'Kaydedilecek yarış yok' : Rec.dirty(r) ? '<svg class="ci"><use href="#i-save"/></svg>Bu yarışı kaydet' : '<svg class="ci"><use href="#i-check"/></svg>Bu yarış kayıtlı';
+    sv.title = !can ? "Önce start ver: yarış başlayınca kaydedebilirsin" : '';
+    $('recExportAll').disabled = !races.length;
+    $('recCount').textContent = races.length ? `${races.length} yarış` : '';
+    $('recList').innerHTML = races.length ? races.map(e => `<li class="rec-item${r && r.savedId === e.id ? ' cur' : ''}" data-id="${esc(e.id)}">
+        <div class="rec-main"><div class="rec-name">${esc(e.name)}${r && r.savedId === e.id ? ' <span class="rec-cur">açık</span>' : ''}</div>
+          <div class="rec-date">${esc(fmtDate(e.savedAt))}</div>
+          ${e.summary ? `<div class="rec-sum">${sumHtml(e.summary)}</div>` : ''}</div>
+        <div class="rec-act">
+          <button class="tb primary" data-act="watch" title="Yarışı aynen tekrar oynat"><svg class="ci"><use href="#i-play"/></svg>İzle</button>
+          <button class="tb" data-act="setup" title="Yalnız kurulumu yükle (tekneler, isimler, parkur, rüzgar)">Kurulum</button>
+          <button class="tb" data-act="file" title="Dosya olarak indir (başka cihaza taşı, paylaş)"><svg class="ci"><use href="#i-download"/></svg>Dosya</button>
+          <button class="tb del" data-act="del" title="Kaydı sil">Sil</button>
+        </div></li>`).join('')
+      : '<li class="rec-empty">Henüz kayıtlı yarış yok.<br>Start ver, yarış bitince “Kaydedelim mi?” diye sorulur. Başka cihazdan aldığın yarış dosyasını <b>Dosyadan yükle</b> ile açabilirsin.</li>';
+  }
+  $('btnRecs').addEventListener('click', openRecDlg);
+  $('recDlgClose').addEventListener('click', closeRecDlg);
+  $('recDlg').addEventListener('click', e => { if (e.target === $('recDlg')) closeRecDlg(); });
+  $('recSaveNow').addEventListener('click', () => { closeRecDlg(); openSaveDlg(false); });
+  $('recExportAll').addEventListener('click', () => { const a = Rec.list(); if (a.length) download(`yarislar-${new Date().toISOString().slice(0, 10)}.json`, Rec.toFile(a)); });
+  $('recList').addEventListener('click', ev => {
+    const btn = ev.target.closest('button[data-act]'), li = ev.target.closest('li[data-id]'); if (!btn || !li) return;
+    const e = Rec.get(li.dataset.id); if (!e) { recRender(); return; }
+    const act = btn.dataset.act;
+    if (act === 'file') { download(Rec.fileName(e), Rec.toFile(e)); return; }
+    if (act === 'del') { if (!armed(btn, 'Emin misin?')) return; Rec.remove(e.id); if (st.rec && st.rec.savedId === e.id) { st.rec.savedId = null; st.rec.savedRev = -1; } recRender(); toast(`“${e.name}” silindi`); return; }
+    if (Rec.dirty(st.rec) && st.frames.length && !armed(btn, 'Kaydedilmemiş yarış gidecek, emin misin?')) return;
+    closeRecDlg(); openRace(e, act === 'watch');
+  });
+  $('recFile').addEventListener('change', ev => {
+    const f = ev.target.files && ev.target.files[0]; ev.target.value = '';
+    if (!f) return;
+    f.text().then(text => {
+      const got = Rec.fromFile(text);
+      if (!got.length) { toast('Bu dosyada yarış kaydı bulunamadı'); return; }
+      try { for (const e of got.reverse()) Rec.put(e); } catch (e) { toast('Kaydedilemedi: tarayıcının alanı dolu'); return; }
+      recRender(); toast(got.length > 1 ? `${got.length} yarış yüklendi` : `“${got[0].name}” yüklendi · İzle ile aç`);
+    });
+  });
+  $('saveYes').addEventListener('click', saveRace);
+  $('saveNo').addEventListener('click', () => { closeSaveDlg(); toast('Kaydedilmedi · istersen Kayıtlar\'dan sonra da kaydedebilirsin'); });
+  $('saveDlgClose').addEventListener('click', closeSaveDlg);
+  $('saveName').addEventListener('keydown', e => { if (e.key === 'Enter') saveRace(); else if (e.key === 'Escape') closeSaveDlg(); });
+
   // ---------- panel aç/kapa ----------
   function setPanelOpen(open) { $('panel').classList.toggle('hidden', !open); $('btnPanel').classList.toggle('on', open); fitViewBox(); }
 
@@ -1062,10 +1237,10 @@
   $('btnGustL').addEventListener('click', () => addGust('L'));
   $('btnGustR').addEventListener('click', () => addGust('R'));
   $('btnGustClear').addEventListener('click', clearGusts);
-  $('btnTack').addEventListener('click', () => { if (st.drive) helmTurn('tack'); else if (st.frames.length) applyChange(r => S.command(r, 'tack')); });
+  $('btnTack').addEventListener('click', () => { if (st.drive) helmTurn('tack'); else if (st.frames.length) applyChange({ k: 'cmd', c: 'tack' }); });
   $('selMinePersona').addEventListener('change', e => {
     if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.persona = e.target.value; updatePanel(true); }
-    else { const v = e.target.value; applyChange(r => S.command(r, 'persona', v)); }
+    else { const v = e.target.value; applyChange({ k: 'cmd', c: 'persona', v }); }
   });
   $('btnFleetMinus').addEventListener('click', () => { removeOne(); updatePanel(true); });
   $('btnFleetPlus').addEventListener('click', () => { addOne(); updatePanel(true); });
@@ -1091,7 +1266,7 @@
   $('selMineSpeed').addEventListener('change', e => {
     const v = +e.target.value;
     if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.speedK = v; updatePanel(true); }
-    else applyChange(r => S.command(r, 'speed', v));
+    else applyChange({ k: 'cmd', c: 'speed', v });
   });
   $('selSpeed').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('speedK', +x.dataset.v, 'speed'); });
   $('selDrift').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('drift', +x.dataset.v, 'drift'); });
@@ -1126,7 +1301,7 @@
   $('btnBoatReset').addEventListener('click', () => { if (st.mode !== 'setup') return; setBoatCfg({ ...S.BOAT_DEFAULT }); updatePanel(true); toast('Varsayılan: Optimist, 8 knot rüzgar, 30 sn kala hızlanma'); });
   function setSea(key, val) {
     if (st.mode === 'setup') { st.sea = { ...st.sea, [key]: val }; updatePanel(true); return; }
-    applyChange(r => { r.sea = { ...(r.sea || S.SEA_DEFAULT), [key]: val }; r.events.push({ t: r.t, text: key === 'current' ? `Akıntı: ${SEA_TXT.current[val]}` : `Dalga: ${SEA_TXT.waves[val]}`, kind: 'wind' }); });
+    applyChange({ k: 'sea', key, val });
   }
   $('seaCurrent').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setSea('current', +x.dataset.v); });
   $('seaWaves').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setSea('waves', +x.dataset.v); });
@@ -1136,7 +1311,7 @@
     const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
     const on = !mine.manual;
     if (st.mode === 'setup') { mine.manual = on; if (on) mine.route = null; updatePanel(true); }
-    else applyChange(r => S.command(r, 'manual', on));
+    else applyChange({ k: 'cmd', c: 'manual', v: on });
     toast(on ? 'Manuel: start\'tan sonra tramolayı yalnız sen atarsın (Tramola düğmesi ya da T)' : 'Otomatik: teknen taktiğine göre kendisi tramola atar');
   }
   $('btnManual').addEventListener('click', toggleManual);
@@ -1144,14 +1319,14 @@
     const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
     const on = !mine.ignoresRules;
     if (st.mode === 'setup') { mine.ignoresRules = on; updatePanel(true); }
-    else applyChange(r => S.command(r, 'rules', on));
+    else applyChange({ k: 'cmd', c: 'rules', v: on });
     toast(on ? 'Senin teknen artık yol vermiyor: hak sahibi kaçmak zorunda kalırsa protesto edilirsin' : 'Senin teknen yine kurallara uyuyor');
   });
   // seçili tekne: kurulumda doğrudan, yarışta o andan itibaren yeniden hesaplanır
   function selEdit(prop, val, cmd) {
     if (!st.sel) return;
     if (st.mode === 'setup') { const b = st.fleet.find(q => q.id === st.sel); if (b) { b[prop] = val; updatePanel(true); } }
-    else { const id = st.sel; applyChange(r => S.command(r, cmd, val, id)); }
+    else { const id = st.sel; applyChange({ k: 'cmd', c: cmd, v: val, id }); }
   }
   $('selPersona').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('persona', x.dataset.v, 'persona'); });
   $('selName').addEventListener('input', e => {
@@ -1203,6 +1378,7 @@
   window.addEventListener('blur', () => { if (st.drive) { st.drive.keyRud = 0; st.drive.touchRud = 0; } });
   document.addEventListener('keydown', e => {
     if (e.target.closest('input, select, textarea')) return;
+    if (dlgOpen()) { if (e.key === 'Escape') { closeSaveDlg(); closeRecDlg(); } return; }
     if (st.drive) {                                      // elle sürerken klavye dümen ve iskotadır
       const k = e.key;
       if (RUD_KEYS[k] != null) { e.preventDefault(); st.drive.keyRud = RUD_KEYS[k]; return; }

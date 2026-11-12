@@ -103,5 +103,26 @@ for (const wind of [-12, 0, 12]) {
   console.log(`• elle sürme: orsa ${(S.knots(vClose)).toFixed(1)} kn, fazla çekik ${S.knots(vOver).toFixed(1)} kn · otomatik bitiş ${a.finishT ? a.finishT.toFixed(1) : '-'} s, iskota salık ${b2.finishT ? b2.finishT.toFixed(1) : '-'} s`);
   if (bad.length) { problems++; console.log('  ⚠ elle sürme:', bad.join(', ')); }
 }
+// Yarış kaydı (sim-records.js): kayıt kurulum + işlemleri saklar, tekrar oynatınca yarış birebir aynı çıkmalı.
+// Bu yüzden hesap deterministik olmalı ve kurulum JSON'dan geçince aynı sonucu vermeli.
+{
+  const sig = f => JSON.stringify(f[f.length - 1].boats.map(b => [b.id, Math.round(b.x * 1e6), Math.round(b.y * 1e6), b.finish, b.penalties]));
+  const run = fleet => {
+    const opts = { wind: 5, gusts: [{ x: 300, y: 450, rx: 120, ry: 190 }], boat: { cls: 'ilca6', windKn: 12, accelAt: 30 } };
+    let fr = S.runToEnd(S.newRace(fleet, opts));
+    for (const [i, fn] of [[150, r => S.command(r, 'tack')], [250, r => { r.wind += 10; }], [350, r => S.command(r, 'persona', 'sag', '3')]]) {
+      const k = Math.min(i, fr.length - 1), base = S.clone(fr[k]); fn(base); fr = fr.slice(0, k).concat(S.runToEnd(base));
+    }
+    // elle sürme: donmuş kopyada sür, kayda o karenin JSON kopyası girer
+    const k = Math.min(420, fr.length - 1), d = S.clone(fr[k]), m = d.boats.find(b => b.mine);
+    if (S.drive && ['wait', 'race', 'ocs'].includes(m.phase)) { m.manual = true; for (let j = 0; j < 30; j++) S.drive(d, m, { rudder: j < 10 ? -1 : 0, autoTrim: true }, 0.05); }
+    fr = fr.slice(0, k).concat(S.runToEnd(JSON.parse(JSON.stringify(d))));
+    return sig(fr);
+  };
+  S.setCourse(S.COURSE_DEFAULT);
+  const f0 = S.defaultFleet(12), a = run(f0), b = run(JSON.parse(JSON.stringify(S.defaultFleet(12))));
+  console.log(`• yarış kaydı tekrar oynatma: ${a === b ? 'birebir aynı' : 'FARKLI'}`);
+  if (a !== b) { problems++; console.log('  ⚠ kayıttan tekrar oynatılan yarış farklı çıktı (deterministik değil)'); }
+}
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);
