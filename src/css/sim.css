@@ -179,3 +179,6 @@ body.sim { position: fixed; inset: 0; overscroll-behavior: none; }
 @media (max-width: 640px) { .zoom-ctl { left: auto; right: 10px; bottom: auto; top: 10px; } }
 @media (max-width: 640px) { .stage:has(.route-bar:not(.hidden)) .zoom-ctl, .stage:has(.gust-bar:not(.hidden)) .zoom-ctl { display: none; } }
 @media (max-width: 640px) { .zoom-ctl { padding: 3px; gap: 0; border-radius: 12px; } .zoom-ctl button { min-width: 40px; height: 36px; font-size: 18px; } .zoom-ctl .zc-txt { font-size: 11px; height: 30px; padding: 0 6px; } #zoomVal { display: none; } }
+.tb.accent.pulse:not(:disabled) { box-shadow: 0 0 0 0 rgba(251,146,60,.5); animation: tackPulse 2s ease-out infinite; }
+@keyframes tackPulse { 0% { box-shadow: 0 0 0 0 rgba(251,146,60,.45); } 70%, 100% { box-shadow: 0 0 0 8px rgba(251,146,60,0); } }
+@media (min-width: 1101px) and (max-width: 1520px) { .cg { padding: 0 10px; } .cg .tb { padding: 0 11px; } .cg-mine .cg-body { gap: 5px; } }

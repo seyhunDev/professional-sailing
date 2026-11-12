@@ -129,6 +129,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · Simülatör: Manuel mod (tramolayı yalnız kullanıcı atar)
+- Alt çubukta **Manuel** anahtarı (M tuşu), kurulumda ve yarışta. Açıkken senin teknen start'tan sonra hiç kendi tramola atmaz: taktik / layline / kaçış tramolası / rüzgarda kalma / şamandırayı tutmama tramolaları kapalı; yalnız parkurun kenarına (25 px) gelince güvenlik tramolası. Start'a yaklaşma ve şamandıra dönüşü otomatik. Rota kapanır, taktik seçimi pasif, Tramola düğmesi yanıp söner. Kapalıyken eski davranış.
+- Motor: `b.manual`, `command 'manual'`; kayıtta saklanır.
+- Taktik seçimindeki "Yalnız komutla" seçeneği kaldırıldı (Manuel onun yerini aldı); alt çubuk 1400 px'te tek satıra sığacak şekilde sıkıştırıldı.
 ### 2026-11-12 – İA4 rüzgarüstü teknenin altına yanaş (yer tutma)
 - Kullanıcı isteği: ayrı başlık; kalabalıkta sıkışan tekne çıkıp boş yerde rüzgarüstü teknenin altına yanaşsın, bekleyip start etsin; aynı animasyonda hatalı olan rüzgaraltındakinin üstüne yanaşsın, alttaki daha hızlı gitsin.
 - Yapılanlar: yeni İA4 `ia4-leeward-of-windward` (S doğru, L hak, H hata + 5 filo, W adlı filo teknesi), KONULAR H8 ✅. `npm run check` temiz. Ekran görüntüleri: proje dosyaları `yer-tutma/`.
