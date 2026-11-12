@@ -33,7 +33,10 @@
   - **Motor gereksinimleri:** scripted teknelere bekleme (`hold`) var; eklenecekler: `backing` (yelken geri basılı, tekne geri gidiyor; yelken karnı ters), rüzgara baş vermişken yelkenin tamamen boş çizilmesi (var), 8-10 tekne için etiket seyrekleştirme (yalnızca manevra yapanın notu), kırmızı "hatalı hareket" rozeti (`note` için `kind:'fault'`), daha geniş hat için `addBoat` slotları, Kural 13 ve 22 kural motoruna (ek tekneler) eklenmeli.
   - Teslim: 3 senaryo (A16, A17, A8) + KONULAR.md ✅ + `npm run check` temiz + ekran görüntüleri.
 - [x] **Yarış simülatörü – 1. aşama** (2026-11-12): sayfa, sürükle-bırak, rüzgar, sağanak, start/OCS, layline tramolası, şamandıra dönüşü, sıralama, olay listesi, Tramola komutu, geri sarma.
-- [ ] **Yarış simülatörü – 2. aşama:** rüzgar gölgesi (dirty air) etkisi, salınımlı rüzgar (otomatik kayma), sağanağın rüzgarla sürüklenmesi, şamandırada tam K18 (zone, iç tekneye yer), pupa ayağı ve bitiş hattı, senaryoyu linkle paylaşma, tekne döndürerek yerleştirme. Şamandırada 12 teknede 3-6 temas oluyor; zone mantığıyla azaltılabilir.
+- [ ] **Simülatör 2a (kullanıcı onayladı sırayı):** start'ta yarışın tamamını önceden hesapla, değişiklikte (sağanak/rüzgar/rota) o andan ileri yeniden hesapla; ileri sarma ve "tahmini sıra". Her teknede hız ("4.2 kn"), sağanakta yeşil ↑, pis rüzgarda kırmızı ↓; pis rüzgar gölgesi (rüzgaraltında 3-4 boy, katman).
+- [ ] **Simülatör 2b:** "ne oldu / kim haklı" ayrımı: yol vermeyen tekne → protesto + iki tur ceza (720°) animasyonu; temasta hak sahibi kaçınabilecekken kaçınmadıysa o da ceza (K14); "kural bilmeyen" tekne özelliği (kendi teknene de).
+- [ ] **Simülatör 2c:** kendi teknene rota çizme (parmakla çizgi; rüzgara karşı kısımda otomatik zikzak; bitince şamandıraya).
+- [ ] **Yarış simülatörü – 2. aşama (eski liste):** rüzgar gölgesi (dirty air) etkisi, salınımlı rüzgar (otomatik kayma), sağanağın rüzgarla sürüklenmesi, şamandırada tam K18 (zone, iç tekneye yer), pupa ayağı ve bitiş hattı, senaryoyu linkle paylaşma, tekne döndürerek yerleştirme. Şamandırada 12 teknede 3-6 temas oluyor; zone mantığıyla azaltılabilir.
 - [ ] **Uygulama adı (ayrı sohbet):** "Professional Sailing" muhtemelen kullanımda. Yeni isim kriterleri: kısa, akılda kalıcı, Türkçe sporcuya da uluslararası kitleye de uyan, alan adı / GitHub adı boş, "taktik + yelken + öğrenme" çağrışımı. 10-15 aday üret, 3'e indir, kullanıcıya sun. Seçilince: GitHub depo adı, site adresi, `index.html` başlığı, README, CLAUDE.md, NOTLAR.md güncellenir (yayın adresi değişeceği için kullanıcıya haber verilir).
 - [ ] **Start paketi 2:** A5 hat yayı (line sag) ve transit (A6) · A7 rüzgaraltına boşluk (hole) · A8 bekleme teknikleri.
 - [ ] **Start paketi 3:** A9 start sonrası ilk 2 dk (temiz hava, lane) · A10 iskele kontra start · A11 Vanderbilt yaklaşması.
@@ -107,6 +110,13 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · Simülatör: şamandıra dönüşü ve uç durumlar
+- Kullanıcı bildirdi: geriye çekilen tekne şamandırayı altından/yanlış taraftan döndü. Sebep: şamandıradan kaçınma "engel sağdaysa sola dön" diyordu, iskele kontrayla soldan gelen tekne şamandıranın solundan çıkıp yanlış yönde dönüyordu; dönüş de sabit "sola dön" ile yapılıyordu.
+- Düzeltme: dönüş artık şamandıra etrafında 38 px yarıçaplı çember (şamandıra hep iskelede); giriş yalnızca rüzgarüstü yarıdan; şamandıradan kaçış hep sağa; kural kaçış rotaları şamandırayı da hesaba katıyor; K18'de yol veren yavaşlıyor.
+- Yeni uç durumlar: hattı uçların dışından geçen start sayılmaz (geri dönüp içinden geçer), kenara giden tekne bekler/tramola atar, pin'e takılan bordalayarak dolaşır, üst üste bırakılan tekne boş yere kayar, rüzgar ±40° ile sınırlı.
+- `scripts/fuzz-sim.mjs`: rastgele yerleşim/rüzgar/sağanakla yarışlar; YANLIŞ_TARAF, ALTINDAN, ÇARPTI, BİTMEDİ, TAKILDI, ALAN_DIŞI, HAT_DIŞI arar (`--iz=yarış:tekne` ile iz). `npm run check` 60 yarış koşar. 150 yarışta kalan: şamandıra kalabalığında nadiren 8 s yavaş ilerleme (TAKILDI).
+- Kullanıcının yeni istekleri (sıradaki işlere eklendi): ileriye yeniden hesaplama, hız göstergesi + pis rüzgar, protesto/ceza turu, rota çizme.
 ### 2026-11-12 · Arayüz boşluk ve taşma düzeltmeleri
 - Kullanıcı geri bildirimi: "Yarış başladı" yazısı sayaç kutusundan taşıyordu; bilgi kartında uzun "Senaryo özeti" kesiliyordu; genel padding hataları.
 - Yapılanlar: sayaç kutusu ve tekne etiketi genişliği ölçülerek (`textW`, canvas measureText) hesaplanıyor; kartta adım metni + Tekneler + Senaryo özeti tek kaydırılabilir alanda (`.info-scroll`), gezinti düğmeleri en altta sabit; telefonda da Senaryo özeti açılabiliyor; masaüstünde parkur kartın altında kalmıyor (görünüm sağa kayıyor); hazırlık bayrağı yazısına kontur. NOTLAR'a "Arayüz kontrol listesi" eklendi. 11 senaryo × 4 cihaz son anda tarandı; taşan HTML öğesi yok.

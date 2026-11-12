@@ -285,7 +285,10 @@
   function backToSetup() { st.mode = 'setup'; st.sim = null; st.frames = []; updatePanel(true); }
 
   // ---------- rüzgar, sağanak, filo ----------
+  const WIND_MAX = 40;   // daha büyük açıda şamandıra yan tarafa düşer, orsa ayağı anlamını yitirir
   function setWind(delta) {
+    const cur = st.mode === 'setup' ? st.wind : st.sim.wind;
+    if (Math.abs(E.norm180(cur + delta)) > WIND_MAX) { toast(`Rüzgar en fazla ±${WIND_MAX}° döndürülebilir (şamandıra rüzgarüstünde kalsın)`); return; }
     if (st.mode === 'setup') st.wind = E.norm180(st.wind + delta);
     else { truncateFrames(); st.sim.wind = E.norm180(st.sim.wind + delta); st.sim.events.push({ t: st.sim.t, text: `Rüzgar ${delta > 0 ? 'sağa' : 'sola'} döndü → ${Math.round(E.norm360(st.sim.wind))}°`, kind: 'wind' }); }
   }
@@ -381,9 +384,25 @@
     const d = st.drag; st.drag = null;
     if (!d) return;
     if (d.kind === 'boat' && !d.moved) { st.sel = st.sel === d.obj.id ? null : d.obj.id; if (phoneMq.matches) setPanelOpen(true); }
+    if (d.kind === 'boat' && d.moved) settleBoat(d.obj);
     if (d.kind === 'boat' && d.moved && S.lineSide(d.obj) === -1) toast('Bu tekne hattın üstünde: start\'ta erken (OCS) sayılır, geri dönmek zorunda kalır.');
+    else if (d.kind === 'boat' && d.moved) {
+      const u = (d.obj.x - S.LINE.pin.x) / (S.LINE.boat.x - S.LINE.pin.x);
+      if (u < -0.05 || u > 1.05) toast('Bu tekne hattın ucunun dışında: önce hattın içine gelmeli, uçların dışından geçerse start sayılmaz.');
+    }
     $('course').style.cursor = '';
     updatePanel(true);
+  }
+
+  // Bırakılan tekne başka bir teknenin, pin'in ya da hakem botunun üstüne düştüyse en yakın boş yere kaydır
+  function settleBoat(b) {
+    const blocked = p => st.fleet.some(o => o !== b && Math.hypot(o.x - p.x, o.y - p.y) < 34) ||
+      S.OBSTACLES.some(o => Math.hypot(o.x - p.x, o.y - p.y) < o.r + 22);
+    if (!blocked(b)) return;
+    for (let r = 10; r < 200; r += 8) for (let a = 0; a < 360; a += 30) {
+      const p = { x: b.x + Math.sin(a * E.DEG) * r, y: b.y + Math.cos(a * E.DEG) * r };
+      if (p.x > 20 && p.x < W.w - 20 && p.y > 20 && p.y < W.h - 10 && !blocked(p)) { b.x = p.x; b.y = p.y; toast('Orası dolu, tekne en yakın boş yere kaydırıldı'); return; }
+    }
   }
 
   // ---------- panel aç/kapa ----------

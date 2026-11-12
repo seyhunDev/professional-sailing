@@ -17,6 +17,8 @@
   const GUST_GAIN = 0.25;         // sağanakta hız artışı
   const MIN_TACK_GAP = 3;         // iki tramola arası en az (sn)
   const OBSTACLES = E.obstaclesOf({ marks: [MARK], line: LINE });
+  const LINE_OBS = E.obstaclesOf({ line: LINE });           // pin + hakem botu
+  const MARK_OBS = [{ x: MARK.x, y: MARK.y, r: 14 }];
 
   const PERSONAS = {
     sol: 'Sol taraf', orta: 'Orta', sag: 'Sağ taraf', saganak: 'Sağanak avcısı', manuel: 'Senin kararın'
@@ -27,10 +29,15 @@
 
   // ---------- Yardımcılar ----------
   // Şamandıranın iskeleden dönülmesi için geçiş noktası (şamandıranın rüzgarüstü-sağı)
+  // Dönüş çemberi: tekne şamandıranın etrafında R_ROUND yarıçapla, şamandıra iskelesinde kalacak şekilde
+  // (saat yönünün tersine) döner. Giriş noktası çemberin rüzgarüstü-sağında (rüzgara göre +60°).
+  const R_ROUND = 38;
   function waypoint(w) {
-    const up = E.fwd(w), right = E.fwd(w + 90);
-    return { x: MARK.x + up.x * 16 + right.x * 24, y: MARK.y + up.y * 16 + right.y * 24 };
+    const f = E.fwd(w + 60);
+    return { x: MARK.x + f.x * R_ROUND, y: MARK.y + f.y * R_ROUND };
   }
+  // Teknenin şamandıra etrafındaki açısı (rüzgara göre): 0 = tam rüzgarüstü, +90 sağ, −90 sol, ±180 rüzgaraltı
+  const markAngle = (b, w) => E.norm180(bearing(MARK, b) - w);
   function bearing(a, b) { return E.norm360(Math.atan2(b.x - a.x, -(b.y - a.y)) / E.DEG); }
   const lineSide = p => R.lineSide(LINE, p);     // +1: start tarafı (hattın altı)
 
@@ -105,7 +112,7 @@
     opts = opts || {};
     const w = opts.wind != null ? opts.wind : 0;
     const boats = fleet.map(b => ({ ...b, phase: 'wait', go: false, man: null, manUntil: -1, note: '', noteUntil: -1,
-      lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, v: HOLD_V }));
+      lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, started: false, outside: false, v: HOLD_V }));
     for (const b of boats) b.h = w + (b.tack === 'starboard' ? -25 : 25);
     return { t: 0, wind: w, gusts: (opts.gusts || []).map(g => ({ ...g })), boats, events: [], finished: 0, pairLog: {}, startAt: START_AT };
   }
@@ -239,11 +246,15 @@
     cands.push({ kind: 'slow', off: 0, speed: 0.35, cost: 5 });
     cands.push({ kind: 'slow', off: away * 20, speed: 0.4, cost: 6 });
     if (b.phase === 'race' && t - b.lastTack > 1.5 && g.rule !== 14) cands.push({ kind: 'tack', h: E.tackHeading(w, b.tack === 'starboard' ? 'port' : 'starboard'), speed: 0.6, cost: 9 });
+    // K18: şamandırada dönen tekneye yer ver → bordalayıp uzaklaşma, rotada yavaşla ya da hafif orsala
+    if (g.rule === 18) cands.splice(0, cands.length,
+      { kind: 'hold', off: 0, speed: 1, cost: 0 }, { kind: 'slow', off: 0, speed: 0.3, cost: 3 }, { kind: 'slow', off: -away * 15, speed: 0.35, cost: 4 }, { kind: 'duck', off: away * 15, speed: 0.6, cost: 5 });
     let best = null;
     for (const c of cands) {
       const h = c.h != null ? c.h : target + c.off, v = Math.max(8, Math.max(b.v, 22) * c.speed);
       let m = 1e9;
       for (const O of others) { const r = closest(b, h, v, O, 4); if (r.d < 220) m = Math.min(m, r.dmin); }
+      const rm = closest(b, h, v, { x: MARK.x, y: MARK.y, h: 0, v: 0 }, 3); m = Math.min(m, rm.dmin + 14);   // şamandıraya da çarpma
       const score = Math.min(m, 50) - c.cost;
       if (!best || score > best.score) best = { ...c, score };
     }
@@ -273,45 +284,66 @@
           const need = timeToCover(distToLine(b, hClose)) + 0.4;
           if (remain <= need) b.go = true;
         }
+        const outside = (b.x < 60 && E.fwd(hClose).x < 0) || (b.x > WORLD.w - 60 && E.fwd(hClose).x > 0);
+        if (outside) b.go = false;                       // kenara gidiyorsa bekle (alan dışına çıkma)
         if (b.go) target = hClose;
         else { target = w + (b.tack === 'starboard' ? -25 : 25); holding = true; }
         if (remain <= 0) { b.phase = lineSide(b) === -1 ? 'ocs' : 'race'; if (b.phase === 'ocs') ocs(b, s); }
       }
       if (b.phase === 'race') {
-        const wt = wantedTack(b, s, w);
-        if (wt !== b.tack && t - b.lastTack > MIN_TACK_GAP && t > s.startAt + 3) {
+        let wt = wantedTack(b, s, w);
+        // start hattını henüz uçların arasından geçmediyse: önce hattın içine yönel
+        let lineAim = null;
+        if (!b.started) {
+          const u0 = R.lineParam(LINE, b), u = clamp(u0, 0.12, 0.88);
+          if (Math.abs(u0 - u) > 0.01) {                   // uçların dışında: hattın içindeki bir noktaya yönel
+            const P = { x: LINE.pin.x + (LINE.boat.x - LINE.pin.x) * u, y: LINE.pin.y + (LINE.boat.y - LINE.pin.y) * u - 30 };
+            lineAim = { brg: bearing(b, P), rel: E.norm180(bearing(b, P) - w) };
+            wt = lineAim.rel > 0 ? 'port' : 'starboard';
+          } else wt = b.tack;                              // uçların arasında: düz devam, hattı geç
+        }
+        const edge = b.x < 40 || b.x > WORLD.w - 40;
+        if (wt !== b.tack && t - b.lastTack > MIN_TACK_GAP && (t > s.startAt + 3 || edge)) {
           // K13 bilinci: tramoladan sonra biriyle çakışacaksa bekle
           const nh = E.tackHeading(w, wt), others = snap.filter(o => o.ref !== b);
           const relWp = E.norm180(bearing(b, waypoint(w)) - w);
           const must = (b.tack === 'starboard' && relWp >= 46) || (b.tack === 'port' && relWp <= -46) || b.x < 70 || b.x > WORLD.w - 70;
           let m = 1e9;
           for (const o of others) { const c = closest(b, nh, 30, o, 4); if (c.d < 220) m = Math.min(m, c.dmin); }
-          if (m > (must ? 26 : 32) || (b.x < 40 || b.x > WORLD.w - 40) || t - Math.max(b.lastTack, s.startAt) > 9) doTack(b, s, '');
+          if (m > (must ? 26 : 32) || edge || t - Math.max(b.lastTack, s.startAt) > 9) doTack(b, s, '');
         }
         const wp = waypoint(w), dWp = Math.hypot(wp.x - b.x, wp.y - b.y);
         const brg = bearing(b, wp), rel = E.norm180(brg - w);
         target = E.tackHeading(w, b.tack);
         // şamandırayı tutuyorsa doğrudan geçiş noktasına (orsa açısından dar değilse)
-        if ((b.tack === 'starboard' && rel <= -45) || (b.tack === 'port' && rel >= 45)) target = brg;
-        else if (Math.abs(rel) >= 55) { target = brg; b.tack = rel > 0 ? 'port' : 'starboard'; }   // şamandıra rüzgarüstünde değil (aşmış): doğrudan git
-        const above = dot({ x: b.x - MARK.x, y: b.y - MARK.y }, E.fwd(w));
-        if (dWp < 20 || (above > 30 && dWp < 150) || (above > 8 && dot({ x: b.x - MARK.x, y: b.y - MARK.y }, E.fwd(w + 90)) > -6 && dWp < 70)) b.phase = 'round';
+        if (lineAim) { if (Math.abs(lineAim.rel) >= 45) { target = lineAim.brg; b.tack = lineAim.rel > 0 ? 'port' : 'starboard'; } }
+        else if (!b.started) { /* hattın içinde: orsa rotasında devam */ }
+        else if ((b.tack === 'starboard' && rel <= -45) || (b.tack === 'port' && rel >= 45)) target = brg;
+        else if (!lineAim && Math.abs(rel) >= 55) { target = brg; b.tack = rel > 0 ? 'port' : 'starboard'; }   // şamandıra rüzgarüstünde değil (aşmış): doğrudan git
+        // dönüşe başla: giriş noktasına geldi ya da şamandıranın rüzgarüstü tarafında, çembere yakın.
+        // Şamandıranın altından (rüzgaraltı yarısından) dönüşe başlanmaz.
+        const dM = Math.hypot(b.x - MARK.x, b.y - MARK.y), phi = markAngle(b, w);
+        if (b.started && (dWp < 20 || (phi > -10 && phi < 110 && dM < R_ROUND + 26) || (phi > -95 && phi < 95 && dM < 160 && dot({ x: b.x - MARK.x, y: b.y - MARK.y }, E.fwd(w)) > 30))) {
+          b.phase = 'round'; b.roundAt = t;
+        }
       }
       if (b.phase === 'round') {
-        target = w + 180; turnDir = -1;                  // iskeleden dönüş: sola (saat yönünün tersine)
-        if (Math.abs(E.norm180(b.h - target)) < 20) {
+        // çember teğeti (şamandıra solda) + yarıçap düzeltmesi
+        const dM = Math.hypot(b.x - MARK.x, b.y - MARK.y), th = bearing(MARK, b);
+        target = th - 90 - clamp((dM - R_ROUND) * 1.4, -45, 45);
+        if (markAngle(b, w) < -100 || t - b.roundAt > 8) {
           b.phase = 'done'; b.finish = ++s.finished; b.finishT = t - s.startAt; b.doneAt = t;
           note(b, s, `${b.finish}. bitirdi`, 'good', 3);
           log(s, `${b.id} şamandırayı ${b.finish}. sırada döndü`, 'good');
         }
       }
       if (b.phase === 'done') {
-        target = w + 180 + 30; turnDir = 0;
+        target = w + 180 + 25; turnDir = 0;
         if (t - b.doneAt > 5) b.gone = true;
       }
       if (b.phase === 'ocs') {
         target = w + 180;
-        if (lineSide(b) === 1 && distToLine(b, w) > 8) { b.phase = 'race'; note(b, s, 'Geri döndü, şimdi start', '', 2); }
+        if (lineSide(b) === 1 && distToLine(b, w) > 8) { b.phase = 'race'; b.started = false; note(b, s, b.outside ? 'Geri döndü, şimdi hattın içinden' : 'Geri döndü, şimdi start', '', 2); }
       }
 
       // kurallar: yol vermesi gereken tekne, temas riskini en iyi azaltan rotayı seçer
@@ -341,9 +373,18 @@
       // dönüş
       let diff = E.norm180(target - b.h);
       if (turnDir < 0 && diff > 0) diff -= 360;          // yalnızca sola dön
-      const rate = (b.phase === 'round' ? 75 : TURN_RATE) * DT;
+      const rate = (b.phase === 'round' ? 130 : TURN_RATE) * DT;
       b.h = E.norm360(b.h + clamp(diff, -rate, rate));
-      if (b.phase !== 'round') { const dir = E.avoidDir(b.x, b.y, b.h, OBSTACLES, b.v); if (dir !== 0) b.h = E.norm360(b.h + dir * 160 * DT); }
+      if (b.phase !== 'round') {
+        let dir = E.avoidDir(b.x, b.y, b.h, LINE_OBS, b.v);
+        // kaçış rüzgara doğru (yelken boşa) götürecekse öbür taraftan, bordalayarak dolaş
+        if (dir !== 0 && b.phase !== 'wait' && Math.abs(E.norm180(b.h + dir * 20 - w)) < 38) dir = -dir;
+        // start etmemiş tekne pin'i hattın içinden (pin solunda kalacak şekilde) geçmeye çalışır
+        if (dir !== 0 && !b.started && Math.hypot(b.x - LINE.pin.x, b.y - LINE.pin.y) < 90 && Math.abs(E.norm180(b.h + 20 - w)) >= 32) dir = 1;
+        if (dir !== 0) b.h = E.norm360(b.h + dir * 160 * DT);
+        // şamandıra önündeyse hep sağa kaç: şamandıra teknenin iskelesinde (solunda) kalsın, yanlış taraftan geçilmesin
+        else if (b.phase !== 'done' && E.avoidDir(b.x, b.y, b.h, MARK_OBS, b.v) !== 0) b.h = E.norm360(b.h + 320 * DT);
+      }
       // hız
       const twa = Math.abs(E.norm180(b.h - w));
       let vt = holding ? HOLD_V : E.speedFor(twa, BASE) * speedK;
@@ -354,12 +395,8 @@
       b.v += (vt - b.v) * Math.min(1, DT / TAU);
     }
 
-    // hareket + erken start
-    for (const b of active) {
-      const f = E.fwd(b.h), was = lineSide(b);
-      b.x += f.x * b.v * DT; b.y += f.y * b.v * DT;
-      if (b.phase === 'wait' && t < s.startAt && was === 1 && lineSide(b) === -1) ocs(b, s);
-    }
+    // hareket
+    for (const b of active) { const f = E.fwd(b.h); b.x += f.x * b.v * DT; b.y += f.y * b.v * DT; }
     // temas: üst üste binmeyi engelle, kaydet
     const live = active.filter(b => b.phase !== 'done');
     for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
@@ -368,6 +405,22 @@
         const push = (26 - d) / 2, ux = dx / d, uy = dy / d;
         a.x -= ux * push; a.y -= uy * push; c.x += ux * push; c.y += uy * push;
         if (rulesOn && d < 22) { log(s, `Temas: ${a.id} – ${c.id}`, 'bad', 'temas' + a.id + c.id); note(a, s, 'Temas!', 'bad', 1.5); note(c, s, 'Temas!', 'bad', 1.5); }
+      }
+    }
+    // start hattı geçişleri (temas itmesi dahil, tüm hareketten sonra)
+    for (const b of active) {
+      const side = lineSide(b), was = b.prevSide == null ? side : b.prevSide;
+      b.prevSide = side;
+      if (!(was === 1 && side === -1)) continue;
+      if (b.phase === 'wait' && t < s.startAt) { ocs(b, s); continue; }
+      if ((b.phase === 'race' || b.phase === 'wait') && !b.started) {
+        const u = R.lineParam(LINE, b);
+        if (u >= -0.05 && u <= 1.05) b.started = true;    // gövde payı: merkez uca 20 px'e kadar dışarıda olabilir
+        else {
+          b.phase = 'ocs'; b.outside = true;
+          note(b, s, 'Hattı uçların dışından geçti · start sayılmaz', 'bad', 3.5);
+          log(s, `${b.id} start hattını uçların dışından geçti, geri dönüp hattın içinden geçmeli`, 'bad', 'dis' + b.id);
+        }
       }
     }
     s.t = +(t + DT).toFixed(4);
