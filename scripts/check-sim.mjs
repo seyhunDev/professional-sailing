@@ -76,5 +76,32 @@ for (const wind of [-12, 0, 12]) {
   console.log(`• K11 rüzgarüstü/rüzgaraltı ayrımı: ${bad ? bad + ' hatalı durum' : 'doğru'}`);
   if (bad) { problems++; console.log('  ⚠ K11: rüzgaraltı tekne rüzgarüstü sayıldı'); }
 }
+// Elle sürme: zaman durur, yalnız senin teknen hareket eder. Kafa aç → pupa → kavança → orsa → tramola;
+// fazla çekik iskota yavaşlatır; sonra Otomatik (manuel) yarış biter, iskota salıkken hız düşük kalır.
+{
+  S.setCourse(S.COURSE_DEFAULT);
+  const fleet = S.defaultFleet(12), me = fleet.find(b => b.mine), still = fleet.filter(b => !b.mine).map(b => b.x + ',' + b.y).join();
+  Object.assign(me, { x: 500, y: 560, h: -45, v: 0, manual: true });
+  const ctx = { t: 0, wind: 0, gusts: [], boats: fleet }, evs = [];
+  const run = (n, inp) => { for (let i = 0; i < n; i++) evs.push(...S.drive(ctx, me, inp || {}, 0.05)); };
+  run(60); const vClose = me.v;
+  run(40, { rudder: -1 }); run(20);                         // kafa aç, pupaya
+  S.helmTurn(me, 0, 'jibe'); run(50);                       // kavança
+  S.helmTurn(me, 0, 'tack'); run(80);                       // tramola (iskele → sancak)
+  const vTrim = me.v; run(10, { rudder: -1, autoTrim: false }); run(40, { autoTrim: false });   // iskota salmadan kafa aç
+  const vOver = me.v, ok = [
+    ['ilerledi', me.y < 560 || me.x !== 500], ['orsada hızlandı', vClose > 40], ['kavança oldu', evs.includes('jibe')], ['tramola oldu', evs.includes('tack')],
+    ['fazla çekik yavaş', vOver < vTrim * 0.8], ['diğerleri yerinde', fleet.filter(b => !b.mine).map(b => b.x + ',' + b.y).join() === still],
+    ['sayı', [me.x, me.y, me.h, me.v, me.sheet].every(Number.isFinite)]];
+  const bad = ok.filter(([, v]) => !v).map(([k]) => k);
+  // otomatik: yarış biter; iskota salık teknen daha geç biter
+  const race = off => { const f = S.defaultFleet(12); const m = f.find(b => b.mine); m.manual = true; m.sheetOff = off; const s = S.newRace(f, { wind: 0 });
+    while (s.t < 160 && s.boats.some(b => !b.finish)) S.step(s); return s.boats.find(b => b.mine); };
+  const a = race(0), b2 = race(16);
+  if (!a.finish || !b2.finish) bad.push('otomatikte bitirmedi');
+  else if (!(b2.finishT > a.finishT)) bad.push('iskota salıkken yavaşlamadı');
+  console.log(`• elle sürme: orsa ${(S.knots(vClose)).toFixed(1)} kn, fazla çekik ${S.knots(vOver).toFixed(1)} kn · otomatik bitiş ${a.finishT ? a.finishT.toFixed(1) : '-'} s, iskota salık ${b2.finishT ? b2.finishT.toFixed(1) : '-'} s`);
+  if (bad.length) { problems++; console.log('  ⚠ elle sürme:', bad.join(', ')); }
+}
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);

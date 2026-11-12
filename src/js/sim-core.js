@@ -219,8 +219,8 @@
     opts = opts || {};
     const w = opts.wind != null ? opts.wind : 0;
     const boats = fleet.map(b => ({ ...b, phase: 'wait', go: false, man: null, manUntil: -1, note: '', noteUntil: -1,
-      lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, started: false, outside: false, penalties: 0, penaltyAt: null, penTurn: 0, penWait: false, penAway: null, penFinish: false, routeIdx: 0, routeFrom: null, v: HOLD_V }));
-    for (const b of boats) b.h = w + (b.tack === 'starboard' ? -25 : 25);
+      lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, started: false, outside: false, penalties: 0, penaltyAt: null, penTurn: 0, penWait: false, penAway: null, penFinish: false, routeIdx: 0, routeFrom: null, v: b.drv && b.v != null ? b.v : HOLD_V }));
+    for (const b of boats) if (!b.drv) b.h = w + (b.tack === 'starboard' ? -25 : 25);   // elle sürülmüş tekne yönünü korur
     const course = { ...COURSE_DEFAULT, ...(opts.course || {}) }; setCourse(course);
     const sea = { ...SEA_DEFAULT, ...(opts.sea || {}) };
     const boat = { ...BOAT_DEFAULT, ...(opts.boat || {}) }; setBoat(boat);
@@ -310,6 +310,9 @@
       b.route = arg && arg.length ? arg.map(p => ({ x: p.x, y: p.y })) : null; b.routeIdx = 0; b.routeFrom = { x: b.x, y: b.y };
       log(s, b.route ? `${b.id}: yeni rota çizildi` : `${b.id}: rota silindi`);
     } else if (cmd === 'manual') { b.manual = !!arg; if (arg) b.route = null; log(s, `${b.id}: ${arg ? 'manuel: tramolaları sen atıyorsun' : 'otomatik tramolaya döndü'}`);
+    } else if (cmd === 'sheet') {
+      b.sheetOff = clamp(+arg || 0, 0, SHEET_OFF_MAX);
+      log(s, `${b.id}: ${b.sheetOff ? `iskota salındı, hız %${Math.round(trimEff(b.sheetOff) * 100)}` : 'iskota çekildi, tam hız'}`);
     } else if (cmd === 'drift') { b.drift = +arg || 0; log(s, `${b.id}: sürüklenme ${['yok', 'az', 'çok'][b.drift]}`);
     } else if (cmd === 'persona') { b.persona = arg; log(s, `${b.id}: taktik → ${PERSONAS[arg]}`); }
   }
@@ -465,6 +468,70 @@
     }
     if ((b.tack === 'starboard' && r <= -LA + 1) || (b.tack === 'port' && r >= LA - 1)) return brg;   // noktayı tutuyor
     return E.tackHeading(w, b.tack);
+  }
+
+  // ---------- İskota ve elle sürme (senin teknen) ----------
+  // İdeal iskota = rüzgar açısına göre bumba açısı (engine.sailState: orsada ~10°, apazda ~35°, pupada ~85°).
+  // Fazla salınmış yelken pırpırlar (40° fazlası: neredeyse durur), fazla çekik yelken boğulur (en çok %65 kayıp).
+  const SHEET_MAX = 88, SHEET_OFF_MAX = 36;
+  const idealSheet = abs => E.sailState(abs, 0).boom;
+  const trimEff = d => (d >= 0 ? Math.max(0.1, 1 - d / 40) : Math.max(0.35, 1 + d / 45));
+  // Elle sürme: zaman durur, diğer tekneler yerinde kalır; yalnız `b` hareket eder (dt sim. saniyesi kadar).
+  // inp: { rudder: −1 (sola) … +1 (sağa), autoTrim: iskota rüzgar açısına göre kendiliğinden ayarlanır }
+  // b.sheet: bumba açısı (iskota), b.sheetOff: otomatik iskotada ideale göre salma payı, b.helm: Tramola/Kavança düğmesiyle dönüş.
+  // Dönen: olaylar dizisi ('tack' | 'jibe' | 'contact:ID' | 'hit')
+  function drive(s, b, inp, dt) {
+    if (s.course) setCourse(s.course);
+    setBoat(s.boat || BOAT_DEFAULT);
+    inp = inp || {};
+    const w = s.wind, out = [];
+    const others = s.boats.filter(o => o !== b && !o.gone && o.phase !== 'done');
+    const casters = others.filter(o => o.phase !== 'wait').map(o => ({ x: o.x, y: o.y, v: o.v, ref: o }));   // simülatördeki gibi: bekleyen tekne gölge yapmaz
+    if (b.sheet == null) b.sheet = idealSheet(Math.abs(E.norm180(b.h - w)));
+    const n = Math.max(1, Math.ceil(dt / DT - 1e-9)), H = dt / n;   // ekran karesi kadar (kesirli) adımlar
+    for (let i = 0; i < n; i++) {
+      // dümen: tekne hızlandıkça daha çabuk döner (dururken dümen az tutar)
+      const rate = (30 + 55 * clamp(b.v / BASE, 0, 1)) * H;
+      if (inp.rudder) { b.h = E.norm360(b.h + clamp(inp.rudder, -1, 1) * rate); b.helm = null; b.v *= 1 - 0.12 * H * Math.abs(inp.rudder); }
+      else if (b.helm) { const st = Math.min(b.helm.left, rate); b.h = E.norm360(b.h + b.helm.dir * st); b.helm.left -= st; if (b.helm.left <= 0.01) b.helm = null; }
+      const rel = E.norm180(b.h - w), abs = Math.abs(rel), tk = rel < 0 ? 'starboard' : 'port';
+      if (tk !== b.tack) { out.push(abs < 90 ? 'tack' : 'jibe'); b.tack = tk; b.lastTack = s.t; }
+      // iskota
+      const ideal = idealSheet(abs);
+      if (inp.autoTrim !== false) { const want = clamp(ideal + (b.sheetOff || 0), 0, SHEET_MAX); b.sheet += clamp(want - b.sheet, -150 * H, 150 * H); }
+      b.sheet = clamp(b.sheet, 0, SHEET_MAX);
+      const eff = abs < 30 ? 1 : trimEff(b.sheet - ideal);
+      b.trim = eff;
+      // rüzgar: sağanak, pis rüzgar, deniz (yarıştaki hız modeliyle aynı)
+      b.inGust = gustAt(s.gusts, b, w);
+      const sh = E.shadowK({ x: b.x, y: b.y, ref: b }, casters, w, BASE);
+      b.shadow = sh.k; b.shadowBy = sh.by ? sh.by.id : null;
+      const sea = s.sea || SEA_DEFAULT, upw = abs < 75 ? 1 : 0.4;
+      const vt = E.speedFor(abs, BASE) * eff * (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow) * (b.speedK || 1) *
+        (1 - upw * ((SEA.waveLoss[sea.waves] || 0) + (SEA.boatLoss[b.drift || 0] || 0)));
+      b.v += (vt - b.v) * Math.min(1, H / (vt > b.v ? TAU : TAU * 2.2));   // yelkeni boşaltınca tekne bir süre süzülür
+      const f = E.fwd(b.h), dw = E.fwd(w + 180), dr = driftOf(s, b);
+      b.x += (f.x * b.v + dw.x * dr) * H; b.y += (f.y * b.v + dw.y * dr) * H;
+      // şamandıra, pin, hakem botu ve duran teknelerin içinden geçemez
+      for (const o of OBSTACLES) {
+        const dx = b.x - o.x, dy = b.y - o.y, d = Math.hypot(dx, dy) || 0.01, R0 = o.r + 16;
+        if (d < R0) { b.x = o.x + dx / d * R0; b.y = o.y + dy / d * R0; b.v *= 0.6; if (!out.includes('hit')) out.push('hit'); }
+      }
+      for (const o of others) {
+        const dx = b.x - o.x, dy = b.y - o.y, d = Math.hypot(dx, dy) || 0.01;
+        if (d < 28) { b.x = o.x + dx / d * 28; b.y = o.y + dy / d * 28; b.v *= 0.6; if (!out.includes('contact:' + o.id)) out.push('contact:' + o.id); }
+      }
+      b.x = clamp(b.x, -MAN_MARGIN + 20, WORLD.w + MAN_MARGIN - 20); b.y = clamp(b.y, 15, WORLD.h - 10);
+    }
+    b.drv = true;
+    return out;
+  }
+  // Tramola / kavança düğmesi: rüzgarın içinden (tramola) ya da pupadan (kavança) öbür kontraya dön
+  function helmTurn(b, w, kind) {
+    const stb = E.norm180(b.h - w) < 0;
+    const target = kind === 'tack' ? E.tackHeading(w, stb ? 'port' : 'starboard') : w + (stb ? 150 : -150);
+    const dir = kind === 'tack' ? (stb ? 1 : -1) : (stb ? -1 : 1);
+    b.helm = { dir, left: E.norm360((target - b.h) * dir), kind };
   }
 
   // ---------- Bir adım ----------
@@ -696,6 +763,7 @@
       if (!holding && creepV == null) {
         const sea = s.sea || SEA_DEFAULT, upw = twa < 75 ? 1 : 0.4;              // dalga ve yalpalama en çok orsada yavaşlatır
         vt *= (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow) * (b.speedK || 1) * (1 - upw * ((SEA.waveLoss[sea.waves] || 0) + (SEA.boatLoss[b.drift || 0] || 0)));
+        if (b.sheetOff && b.phase !== 'penalty') vt *= trimEff(b.sheetOff);   // senin teknen: iskota salınmış (yavaşlıyor)
       }   // teknenin kendi hızı (tekne/denizci farkı)
       b.v += (vt - b.v) * Math.min(1, DT / tau);
     }
@@ -786,6 +854,6 @@
     runToEnd,
     DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, setBoat, upwindKn, BOAT,
     get START_AT() { return START_AT; }, get CLOCK_SCALE() { return CLOCK_SCALE; }, MAN_MARGIN, PERSONAS, MINE_COLOR, OBSTACLES,
-    SHADOW_LEN, SEA, SEA_DEFAULT, knots, defaultFleet, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
+    SHADOW_LEN, SEA, SEA_DEFAULT, knots, drive, helmTurn, idealSheet, trimEff, SHEET_MAX, SHEET_OFF_MAX, defaultFleet, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
 })(typeof window !== 'undefined' ? window : globalThis);

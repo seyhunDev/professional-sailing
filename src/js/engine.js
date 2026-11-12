@@ -165,8 +165,10 @@
     let slack = 0;
     if (opts.v != null) slack = Math.max(0, Math.min(1, (0.45 - opts.v / base) / 0.3)); // v ≤ %15 → tamamen boş, ≥ %45 → trimli
     if (st.abs > 100) slack *= Math.max(0, 1 - (st.abs - 100) / 40);                   // pupada boş yelken de dolu durur
-    const trim = st.luffing ? 0 : st.boom;
     const stream = Math.min(st.abs, 85);                                               // boş yelken rüzgarla hizalanır
+    // opts.sheet: iskota (bumbanın en fazla açılabileceği açı). Fazla salınmışsa yelken pırpırlar, fazla çekikse bumba içeride kalır
+    const trim = st.luffing ? 0 : opts.sheet != null ? Math.min(opts.sheet, stream) : st.boom;
+    if (opts.sheet != null && !st.luffing) slack = Math.max(slack, Math.min(1, Math.max(0, (opts.sheet - st.boom - 6) / 28)));
     let mag = trim + (stream - trim) * slack;
     let beta = st.side * mag;
     // rüzgara tam dönük: bumba iki yana sallanır

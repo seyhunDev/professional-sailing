@@ -266,3 +266,79 @@ body.sim { position: fixed; inset: 0; overscroll-behavior: none; }
   .toast { top: 44px; }
 }
 @media (min-width: 1101px) and (max-width: 1520px) { .cg { padding: 0 8px; } .cg .tb { padding: 0 9px; } .cg .tb.tgl { padding: 0 10px 0 8px; } }
+
+/* ---------- Elle sürme: dümen ve iskota paneli (sahnenin altında ortada) ---------- */
+.helm-pad { position: absolute; left: 0; right: 0; bottom: 14px; margin: 0 auto; width: fit-content; max-width: calc(100% - 28px); z-index: 7;
+  display: flex; align-items: stretch; gap: 10px; padding: 10px; background: var(--panel-solid); border: 1.5px solid #fb923c; border-radius: 16px;
+  box-shadow: var(--shadow), 0 0 0 4px rgba(251,146,60,.12); animation: gbIn .22s ease-out; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.hp-rud { flex: 0 0 auto; width: 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 12px;
+  background: var(--raised); border: 1px solid var(--border-strong); color: var(--text); font: inherit; cursor: pointer; touch-action: none; transition: background .1s, transform .08s; }
+.hp-rud .hp-arrow { font-size: 26px; line-height: 1; color: #fb923c; }
+.hp-rud b { font-size: 14px; }
+.hp-rud small { font-size: 11.5px; color: var(--text2); font-weight: 600; }
+.hp-rud:hover { background: var(--raised2); }
+.hp-rud.held { background: #fb923c; border-color: #fb923c; color: #2a1204; transform: scale(.96); }
+.hp-rud.held .hp-arrow, .hp-rud.held small { color: #2a1204; }
+.hp-mid { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.hp-head { display: flex; align-items: center; gap: 10px; }
+.hp-head .rb-text { flex: 1 1 auto; }
+.hp-head .rb-text span { max-width: none; }
+.hp-dot { width: 10px; height: 10px; border-radius: 50%; background: #fb923c; flex: 0 0 auto; animation: rbPulse 1.4s ease-in-out infinite; }
+.hp-stat { display: flex; align-items: baseline; gap: 10px; font-size: 12.5px; color: var(--text2); }
+.hp-kn { font-size: 18px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; min-width: 64px; }
+.hp-sheet { display: flex; align-items: center; gap: 8px; }
+.hp-sheet .tb { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; height: 46px; min-height: 46px; width: 70px; padding: 0; touch-action: none; line-height: 1.1; }
+.hp-sheet .tb b { font-size: 14px; }
+.hp-sheet .tb small { font-size: 10.5px; color: var(--text2); font-weight: 600; }
+.hp-sheet .tb.held { background: var(--raised2); border-color: #fb923c; }
+.hp-gwrap { flex: 1 1 auto; min-width: 150px; display: flex; flex-direction: column; gap: 5px; }
+.hp-trimtxt { font-size: 11.5px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* iskota göstergesi: 0° (tam çekik) … 90° (tam salık); yeşil çentik ideal iskota, yuvarlak senin iskotan */
+.trim-gauge { position: relative; height: 12px; border-radius: 6px; background: linear-gradient(90deg, rgba(248,113,113,.35), var(--raised2) 20%, var(--raised2) 80%, rgba(248,113,113,.35)); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.tg-ideal { position: absolute; top: -3px; bottom: -3px; width: 4px; margin-left: -2px; border-radius: 2px; background: #4ade80; }
+.tg-knob { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fbbf24; border: 2px solid #fff; transition: left .12s linear; }
+.trim-gauge.ok .tg-knob { background: #22c55e; } .trim-gauge.bad .tg-knob { background: #ef4444; } .trim-gauge.off .tg-knob { background: #94a3b8; }
+.hp-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.hp-actions .tb { display: inline-flex; align-items: center; gap: 6px; height: 38px; min-height: 38px; padding: 0 12px; font-size: 13px; font-weight: 600; }
+.hp-actions #hpGo { margin-left: auto; }
+/* yarışta (otomatik): yalnız hız (iskota) ve yeniden elle sürme */
+.helm-pad.race .hp-rud, .helm-pad.race #hpAuto, .helm-pad.race #hpTack, .helm-pad.race #hpJibe { display: none; }
+.helm-pad.race { border-color: rgba(251,146,60,.55); box-shadow: var(--shadow); padding: 6px 8px; }
+.helm-pad.race .hp-mid { flex-direction: row; align-items: center; gap: 10px; }
+.helm-pad.race .hp-head .rb-text span, .helm-pad.race #hpPoint { display: none; }
+.helm-pad.race .hp-head .rb-text b { font-size: 13px; }
+.helm-pad.race .hp-kn { font-size: 15px; min-width: 52px; }
+.helm-pad.race .hp-sheet .tb { height: 38px; min-height: 38px; width: 62px; }
+.helm-pad.race .hp-gwrap { min-width: 130px; }
+.helm-pad.race #hpGo { animation: none; background: var(--raised); border-color: var(--border-strong); color: var(--text); box-shadow: none; }
+.helm-pad.race #hpGo .ci { display: none; }
+.helm-pad.race .hp-dot { animation: none; }
+.helm-pad:not(.hidden) ~ .gust-bar { display: none; }
+#btnDrive.on { background: #fb923c; border-color: #fb923c; color: #2a1204; font-weight: 800; }
+#btnDrive.on::before { background: radial-gradient(circle at 15.5px 50%, #fff 4.5px, transparent 5px), rgba(42,18,4,.45); box-shadow: none; }
+.ph-drive { background: #fb923c; border-color: #fb923c; color: #2a1204; font-weight: 800; }
+@media (min-width: 1101px) { .stage:has(#panel:not(.hidden)) .helm-pad { right: 390px; } }
+@media (min-width: 641px) { .stage:has(.helm-pad:not(.hidden):not(.race)) .zoom-ctl { bottom: auto; top: 200px; } }
+/* tablet: şerit sahnenin altında, panel onun yerine geçer */
+@media (min-width: 641px) and (max-width: 1100px) { .helm-pad:not(.hidden) ~ .mode-strip { display: none; } }
+/* telefon: tam genişlik, dümen düğmeleri iki yanda (iki başparmak) */
+@media (max-width: 640px), (max-height: 460px) {
+  .helm-pad { left: 6px; right: 6px; bottom: 6px; max-width: none; width: auto; padding: 7px; gap: 6px; border-radius: 12px; }
+  .hp-rud { width: 64px; }
+  .hp-rud .hp-arrow { font-size: 22px; }
+  .hp-mid { flex: 1 1 auto; gap: 6px; }
+  .hp-head .rb-text span { display: none; }
+  .hp-sheet .tb { width: 54px; height: 42px; min-height: 42px; }
+  .hp-gwrap { min-width: 0; }
+  .hp-actions .tb { height: 34px; min-height: 34px; padding: 0 8px; font-size: 12px; }
+  .hp-actions #hpAuto { padding: 0 8px 0 6px; }
+  .hp-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .hp-actions .tb { justify-content: center; }
+  .hp-long, #hpTack .ci { display: none; }
+  .hp-actions #hpGo { margin-left: 0; }
+  .hp-stat { font-size: 11.5px; gap: 6px; }
+  .hp-kn { font-size: 16px; min-width: 0; }
+  .helm-pad:not(.hidden) ~ .mode-strip { display: none; }
+}
+/* dümen paneli açıkken bildirim üstte (panel ve tekne kapanmasın) */
+@media (min-width: 641px) { .stage:has(.helm-pad:not(.hidden)) .toast { bottom: auto; top: 54px; } }

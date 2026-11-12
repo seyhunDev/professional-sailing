@@ -32,7 +32,9 @@
     const padPx = panelOpen ? Math.min(400, $('panel').offsetWidth + 28) : 0, Wa = Math.max(200, Wd - padPx);
     const V = { x: 0, y: -50, w: W.w, h: W.h + 90 };    // gösterilecek alan (şamandıra üstü ve 2. sıra altı paylı)
     // tablette alttaki durum şeridi ve bildirim start hattının üstüne binmesin: parkuru o şeridin üstüne sığdır
-    const padB = !phoneMq.matches && Wd <= 1100 ? (innerHeight > innerWidth ? 100 : 64) : 0, Ha = Math.max(200, Hd - padB);
+    // yarışta hız kutusu (dümen paneli, ince) açıksa parkur onun üstüne sığsın
+    const hp = $('helmPad'), padHp = hp && !hp.classList.contains('hidden') && !st.drive ? hp.offsetHeight + 22 : 0;
+    const padB = Math.max(padHp, !phoneMq.matches && Wd <= 1100 ? (innerHeight > innerWidth ? 100 : 64) : 0), Ha = Math.max(200, Hd - padB);
     let w = V.w, hA = V.h;
     if (Wa / Ha > V.w / V.h) w = V.h * Wa / Ha; else hA = V.w * Ha / Wa;
     const k = w / Wa, wTot = Wd * k, h = Hd * k;           // ekran pikseli başına birim
@@ -50,8 +52,9 @@
       c.z = Math.max(1, Math.min(Z_MAX, c.z));
       const w = B.w / c.z, h = B.h / c.z, vw = w * B.vis;      // görünen genişlik (masaüstünde panel sağı kapatır)
       let cx = c.x == null ? B.x + B.w * B.vis / 2 : c.x, cy = c.y == null ? B.y + B.h / 2 : c.y;
-      if (c.follow) { const m = view().boats.find(b => b.mine && !b.gone); if (m) { cx += (m.x - cx) * 0.18; cy += (m.y - h * 0.08 - cy) * 0.18; } }
-      const ex = sheetCover() * h;                              // telefonda alt sayfanın kapattığı kısım: parkur onun üstüne kaydırılabilsin
+      const cov = sheetCover() + padCover();                   // alttan kapanan kısım (telefonda alt sayfa, elle sürerken dümen paneli)
+      if (c.follow) { const m = view().boats.find(b => b.mine && !b.gone); if (m) { cx += (m.x - cx) * 0.18; cy += (m.y + h * (0.5 - (1 - cov) * 0.56) - cy) * 0.18; } }   // tekne açık kalan alanın ortasında
+      const ex = cov * h;                              // telefonda alt sayfanın kapattığı kısım: parkur onun üstüne kaydırılabilsin
       const mx = S.MAN_MARGIN + 40;                              // manuel tekne parkur kenarını aşabilir: kamera da gidebilsin
       cx = clampN(cx, B.x - mx + vw / 2, B.x + B.w * B.vis + mx - vw / 2); cy = clampN(cy, B.y + h / 2, B.y + B.h - h / 2 + ex);
       c.x = cx; c.y = cy;
@@ -59,6 +62,11 @@
     }
     $('course').setAttribute('viewBox', `${st.vb.x.toFixed(1)} ${st.vb.y.toFixed(1)} ${st.vb.w.toFixed(1)} ${st.vb.h.toFixed(1)}`);
     camUi();
+  }
+  function padCover() {
+    const pad = $('helmPad'); if (!pad || pad.classList.contains('hidden')) return 0;
+    const r = $('course').getBoundingClientRect(), p = pad.getBoundingClientRect();
+    return r.height ? Math.max(0, Math.min(0.6, (r.bottom - p.top + 8) / r.height)) : 0;
   }
   function sheetCover() {
     if (!phoneMq.matches || $('panel').classList.contains('hidden')) return 0;
@@ -114,8 +122,9 @@
   function view() {
     if (st.mode === 'setup') {
       return { t: 0, wind: st.wind, gusts: st.gusts, startAt: S.START_AT,
-        boats: st.fleet.map(b => ({ ...b, h: st.wind + (b.tack === 'starboard' ? -25 : 25), v: 0 })), events: [] };
+        boats: st.fleet.map(b => (b.drv ? { ...b } : { ...b, h: st.wind + (b.tack === 'starboard' ? -25 : 25), v: 0 })), events: [] };
     }
+    if (st.drive && st.drive.s) return st.drive.s;      // yarışta elle sürerken: donmuş an
     return st.sim;
   }
 
@@ -196,6 +205,7 @@
     el('path', { d: `M${M.x + 22},${M.y - 14} A 26 26 0 0 0 ${M.x - 22},${M.y - 14}`, fill: 'none', stroke: 'rgba(255,209,102,.7)', 'stroke-width': 1.5, 'marker-end': 'url(#arrowHead)' }, g);
   }
 
+  const boomSm = { beta: null, ts: 0, k: 0.45 };          // derece / ms
   function drawBoat(parent, b, w, t, sel) {
     const sail = E.sailState(b.h, w);
     const op = b.phase === 'done' ? Math.max(0.15, 1 - (t - b.doneAt) / 5) : 1;
@@ -212,8 +222,16 @@
     el('path', { d: 'M0,-25 C 9,-16 11,2 9,22 L -9,22 C -11,2 -9,-16 0,-25 Z', fill: b.color, stroke: '#fff', 'stroke-width': 1.5 }, g);
     el('path', { d: 'M0,-20 C 6,-13 7,2 6,18 L -6,18 C -7,2 -6,-13 0,-20 Z', fill: 'rgba(255,255,255,0.18)' }, g);
     const my = -6, seed = E.seedOf(b.id);
-    const pose = E.sailPose(b.h, w, { v: b.v, base: 55, t, seed });
-    const sh = E.sailShape(pose, t, seed, 27, my);
+    // elle sürerken yelken iskotaya göre (fazla salıksa pırpırlar); yarışta iskota salınmışsa da öyle
+    const drv = !!(st.drive && b.mine), tt = drv ? performance.now() / 1000 : t;
+    const sheet = drv ? b.sheet : b.sheetOff ? E.sailState(b.h, w).boom + b.sheetOff : null;
+    const pose = E.sailPose(b.h, w, { v: drv ? null : b.v, base: 55, t: tt, seed, sheet });
+    if (drv) {                                          // kavançada bumba bir yandan öbürüne savrulur (anında atlamaz)
+      const now = performance.now(), p = boomSm;
+      if (p.beta != null && now - p.ts < 300) pose.beta = p.beta + Math.max(-p.k * (now - p.ts), Math.min(p.k * (now - p.ts), pose.beta - p.beta));
+      p.beta = pose.beta; p.ts = now;
+    }
+    const sh = E.sailShape(pose, tt, seed, 27, my);
     el('path', { d: sh.d, fill: 'rgba(255,255,255,0.85)', stroke: '#fff', 'stroke-width': 1 }, g);
     el('line', { x1: 0, y1: my, x2: sh.tip.x.toFixed(1), y2: sh.tip.y.toFixed(1), stroke: '#222', 'stroke-width': 1.5 }, g);
     // etiket
@@ -233,7 +251,7 @@
     if (b.sailor) el('text', { x: 0, y: 21, 'text-anchor': 'middle', fill: b.mine ? '#fed7aa' : '#e2e8f0', 'font-size': 10.5, 'font-weight': 700,
       'paint-order': 'stroke', stroke: 'rgba(2,12,22,.9)', 'stroke-width': 3 }, lab).textContent = b.sailor;
     // hız: sağanakta yeşil ↑, pis rüzgarda kırmızı ↓
-    if (st.show.speed && (b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs' || b.phase === 'penalty')) {
+    if (st.show.speed && (drv || b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs' || b.phase === 'penalty')) {
       const up = b.inGust > 0.25, down = b.shadow > 0.05;   // gölgedeki her tekne ↓ gösterir
       const col = down ? '#f87171' : up ? '#4ade80' : 'rgba(226,232,240,.85)';
       const txt = `${S.knots(b.v).toFixed(1)} kn${down ? ' ↓' : up ? ' ↑' : ''}`;
@@ -390,7 +408,7 @@
   const nameOf = b => b.sailor || (b.mine ? 'Sen' : b.name);
   // ---------- Kurulumu bu cihazda sakla (ileride Firebase'e taşınacak) ----------
   const SAVE_KEY = 'ps.sim.setup.v1';
-  const BOAT_KEYS = ['id', 'x', 'y', 'tack', 'persona', 'speedK', 'drift', 'manual', 'ignoresRules', 'mine', 'sailor', 'route'];
+  const BOAT_KEYS = ['id', 'x', 'y', 'tack', 'persona', 'speedK', 'drift', 'manual', 'ignoresRules', 'mine', 'sailor', 'route', 'drv', 'h', 'sheetOff'];
   function saveSetup() {
     if (st.mode !== 'setup') return;
     const data = { v: 1, wind: st.wind, sea: st.sea, boat: st.boat, course: st.course, gusts: st.gusts, fleet: st.fleet.map(b => Object.fromEntries(BOAT_KEYS.map(k => [k, b[k]]))) };
@@ -413,6 +431,7 @@
       b.speedK = +o.speedK || 1; b.drift = Math.max(0, Math.min(2, o.drift | 0)); b.manual = !!o.manual; b.ignoresRules = !!o.ignoresRules;
       if (o.sailor) b.sailor = String(o.sailor).slice(0, 18);
       if (Array.isArray(o.route) && o.route.length) b.route = o.route;
+      if (o.drv && i === mineIdx) { b.drv = true; b.h = +o.h || 0; b.v = 0; b.sheetOff = Math.max(0, Math.min(S.SHEET_OFF_MAX, +o.sheetOff || 0)); }   // elle sürülmüş: yönü kalsın
       return b;
     });
     renumber();
@@ -456,9 +475,14 @@
     $('btnMineRules').classList.toggle('on', !!(mine && mine.ignoresRules));
     const hasRoute = !!(mine && mine.route && (mine.routeIdx || 0) < mine.route.length);
     $('btnRoute').disabled = !mine || (!setup && !!mine.finish) || !!mine.manual;
+    $('btnRoute').classList.toggle('hidden', !!(mine && mine.manual));   // manuelde rota yok: alt çubukta yer açılsın (Elle sür)
     $('btnRoute').classList.toggle('has', hasRoute);
     $('btnRoute').querySelector('.lbl2').textContent = hasRoute ? 'Rota ✓' : 'Rota';
     $('btnMineRules').disabled = !mine || (!setup && (mine.phase === 'done' || !!mine.finish));
+    $('btnDrive').classList.toggle('on', !!st.drive); $('btnDrive').setAttribute('aria-pressed', !!st.drive);
+    $('btnDrive').disabled = !mine || (!st.drive && !setup && !['wait', 'race', 'ocs'].includes(mine.phase));
+    if (st.drive) { $('btnTack').disabled = false; $('btnTack').classList.remove('pulse'); }
+    helmUpdate(v);
     stateUpdate(v, mine);
     updatePanel();
   }
@@ -469,8 +493,8 @@
     const setup = st.mode === 'setup', manual = !!(mine && mine.manual), hasRoute = !!(mine && mine.route && (mine.routeIdx || 0) < mine.route.length);
     const sb = st.sel && (setup ? st.fleet : v.boats).find(b => b.id === st.sel);
     const gl = st.gsel != null && (setup || st.sim) ? gustList() : null;
-    const phase = setup ? ['setup', 'Kurulum'] : st.mode === 'pause' ? ['pause', 'Duraklatıldı'] : st.mode === 'end' ? ['end', 'Yarış bitti'] : v.t < v.startAt ? ['count', "Start'a geri sayım"] : ['race', 'Yarış'];
-    const key = [phase[0], manual, hasRoute, mine && mine.persona, mine && mine.ignoresRules, mine && mine.finish, sb && sb.id, sb && sb.sailor, st.gsel, gl && gl.length, st.drawMode].join('|');
+    const phase = st.drive ? ['drive', 'Elle sürüş · zaman durdu'] : setup ? ['setup', 'Kurulum'] : st.mode === 'pause' ? ['pause', 'Duraklatıldı'] : st.mode === 'end' ? ['end', 'Yarış bitti'] : v.t < v.startAt ? ['count', "Start'a geri sayım"] : ['race', 'Yarış'];
+    const key = [phase[0], !!st.drive, manual, hasRoute, mine && mine.persona, mine && mine.ignoresRules, mine && mine.finish, sb && sb.id, sb && sb.sailor, st.gsel, gl && gl.length, st.drawMode].join('|');
     if (key === lastStateKey) return;
     lastStateKey = key;
     // ana durum ve senin teknenin modu
@@ -480,7 +504,7 @@
     else {
       m.classList.remove('hidden');
       m.className = 'ms-chip ' + (manual ? 'ms-manual' : hasRoute ? 'ms-route' : 'ms-auto');
-      m.innerHTML = manual ? '<b>Manuel</b> tramolayı sen atarsın (T)' : hasRoute ? '<b>Rota</b> çizdiğin rotayı izliyor' : `<b>Otomatik</b> taktik: ${esc(S.PERSONAS[mine.persona] || mine.persona)}`;
+      m.innerHTML = st.drive ? '<b>Elle sür</b> dümen ve iskota sende' : manual ? '<b>Manuel</b> tramolayı sen atarsın (T)' : hasRoute ? '<b>Rota</b> çizdiğin rotayı izliyor' : `<b>Otomatik</b> taktik: ${esc(S.PERSONAS[mine.persona] || mine.persona)}`;
     }
     $('msRules').classList.toggle('hidden', !(mine && mine.ignoresRules));
     // seçili nesne (tekne ya da sağanak); dokununca seçim kalkar
@@ -526,6 +550,7 @@
   }
   // Şu anki kareden başlayarak değişikliği uygula ve yarışı ileriye yeniden hesapla
   function applyChange(fn) {
+    if (st.drive && st.drive.s) { fn(st.drive.s); updatePanel(true); return; }   // elle sürerken: donmuş ana uygula, Otomatik'te ileri hesaplanır
     if (!st.frames.length) return;
     const i = frameIndexAt(st.playT), base = S.clone(st.frames[i]);
     fn(base);
@@ -536,7 +561,8 @@
   }
   function tick(ts) {
     const dt = Math.min(0.1, (ts - st.lastTs) / 1000 || 0); st.lastTs = ts;
-    if (st.mode === 'run') {
+    if (st.drive) driveTick(dt);
+    else if (st.mode === 'run') {
       st.playT += dt * st.speed / S.CLOCK_SCALE;   // 1× = gerçek zaman (start → şamandıra ~15 dk)
       if (st.playT >= lastT()) {
         st.playT = lastT(); st.mode = 'end';
@@ -549,6 +575,7 @@
     requestAnimationFrame(tick);
   }
   function togglePlay() {
+    if (st.drive) { exitDrive(true); return; }          // elle sürerken oynat = Otomatik
     if (st.drawMode) endDraw(true);                      // çizim açıkken oynat: rotayı kaydet, sonra devam
     if (st.mode === 'setup') startRace();
     else if (st.mode === 'run') st.mode = 'pause';
@@ -556,9 +583,157 @@
     else if (st.mode === 'end') { st.playT = 0; st.sim = viewAt(0); st.mode = 'run'; }
     updatePanel(true);
   }
-  function backToSetup() { st.mode = 'setup'; st.sim = null; st.frames = []; updatePanel(true); }
+  function backToSetup() { st.drive = null; st.mode = 'setup'; st.sim = null; st.frames = []; updatePanel(true); }
   // Tahmini sonuç: hesaplanmış yarışın son karesi
   function predicted() { return st.frames.length ? st.frames[st.frames.length - 1] : null; }
+
+  // ---------- Elle sürme: dümen ve iskota sende, zaman durur (diğer tekneler yerinde) ----------
+  // Kurulumda teknen start'tan önce istediğin yere götürülür; yarışta (duraklatıp) o andan sürersin.
+  // Otomatik ▶: yarış kaldığı yerden hesaplanır; teknen orsaya devam eder, tramolalar yine senin (Manuel açık kalır).
+  const DRIVE_TEMPO = 0.7;                                // elle sürerken 1 gerçek sn = 0.7 sim. sn (tekne ~1 boy/sn)
+  const SHEET_STEP = 6;                                   // Çek / Sal: bir dokunuş (derece)
+  function driveCtx() {
+    const d = st.drive;
+    return d.s || { t: 0, wind: st.wind, gusts: st.gusts, sea: st.sea, boat: st.boat, course: st.course, boats: st.fleet, events: [] };
+  }
+  function driveBoat() { return st.drive && driveCtx().boats.find(b => b.mine); }
+  function enterDrive() {
+    if (st.drive) return;
+    if (st.drawMode) endDraw(true);
+    if (st.mode === 'setup') {
+      const m = st.fleet.find(b => b.mine); if (!m) return;
+      if (!m.drv) { m.h = st.wind + (m.tack === 'starboard' ? -25 : 25); m.v = 0; m.sheet = null; }
+      m.manual = true; m.route = null;
+      st.drive = { s: null };
+    } else {
+      if (!st.frames.length) return;
+      const i = frameIndexAt(st.playT), s = S.clone(st.frames[i]), m = s.boats.find(b => b.mine);
+      if (!m || !['wait', 'race', 'ocs'].includes(m.phase)) { toast(m && m.phase === 'penalty' ? 'Ceza turundayken elle sürülemez' : 'Teknen şamandırayı döndü: elle sürülemez'); return; }
+      m.manual = true; m.route = null; m.man = null; m.escH = null; m.sheet = null;
+      st.drive = { s, i };
+      st.mode = 'pause'; st.sim = s;
+    }
+    if (phoneMq.matches) setPanelOpen(false);            // telefonda alt sayfa kapansın: sahne dümen paneline yer açsın
+    st.camPrev = { ...st.cam };                         // kamera tekneni izlesin, panelin üstünde kalsın; çıkınca eski görünüme döner
+    if (!st.cam.follow) { st.cam.follow = true; st.cam.z = Math.max(st.cam.z, phoneMq.matches ? 1.6 : 1.8); }
+    Object.assign(st.drive, { keyRud: 0, touchRud: 0, autoTrim: st.autoTrim !== false, noteAt: 0, lastEv: {} });
+    toast('Elle sürüyorsun · diğer tekneler duruyor. ← → dümen, ↑ ↓ iskota, T tramola, K kavança. Bitince Otomatik ▶');
+    updatePanel(true);
+  }
+  function exitDrive(play) {
+    const d = st.drive; if (!d) return;
+    const ctx = driveCtx(), m = ctx.boats.find(b => b.mine);
+    st.drive = null;
+    if (st.camPrev && !st.camPrev.follow) { Object.assign(st.cam, st.camPrev); applyCam(); }
+    st.camPrev = null;
+    if (m) {
+      m.helm = null; m.note = '';
+      // iskotayı elle bıraktıysan: yarışta ideale göre o kadar salık kalır (hız düşük); fazla çekik yarışta yok
+      const ideal = S.idealSheet(Math.abs(E.norm180(m.h - ctx.wind)));
+      m.sheetOff = Math.max(0, Math.min(S.SHEET_OFF_MAX, Math.round(d.autoTrim ? (m.sheetOff || 0) : m.sheet - ideal)));
+    }
+    if (!d.s) {                                          // kurulum: teknen burada bekler, start'ta otomatik devam eder (tam trimle hızlanır)
+      if (m) m.sheetOff = 0;
+      if (m && S.lineSide(m) === -1) toast('Teknen hattın üstünde: start\'ta erken (OCS) sayılır, geri dönmek zorunda kalır');
+      updatePanel(true);
+      if (play) togglePlay();
+      return;
+    }
+    const s = d.s;
+    if (m) s.events.push({ t: s.t, text: `${m.id}: elle sürdün, otomatiğe döndü (tramolalar yine senin)`, kind: '' });
+    st.frames = st.frames.slice(0, d.i).concat(S.runToEnd(s));
+    st.playT = s.t; st.sim = viewAt(st.playT); st.ended = false;
+    st.mode = play ? 'run' : 'pause';
+    updatePanel(true);
+  }
+  function driveNote(m, text, kind) { m.note = text; m.noteKind = kind || ''; m.noteUntil = 1e9; st.drive.noteAt = performance.now() + 1700; }
+  function driveTick(dt) {
+    const d = st.drive, ctx = driveCtx(), m = ctx.boats.find(b => b.mine); if (!m) return;
+    const rud = Math.max(-1, Math.min(1, d.keyRud + d.touchRud));
+    const ev = S.drive(ctx, m, { rudder: rud, autoTrim: d.autoTrim }, dt * DRIVE_TEMPO);
+    const now = performance.now();
+    for (const e of ev) {
+      if (e === 'tack' || e === 'jibe') {
+        driveNote(m, e === 'tack' ? 'Tramola!' : 'Kavança!', 'good');
+        if (d.s) d.s.events.push({ t: d.s.t, text: `${m.id}: ${e === 'tack' ? 'tramola' : 'kavança'} (elle)`, kind: '' });
+      } else if (now - (d.lastEv[e] || 0) > 1500) {
+        d.lastEv[e] = now;
+        driveNote(m, e === 'hit' ? 'Dikkat: çarpıyorsun!' : `Temas! (${e.slice(8)})`, 'bad');
+      }
+    }
+    if (d.noteAt && now > d.noteAt) { m.note = ''; d.noteAt = 0; }
+    if (st.mode !== 'setup') st.sim = ctx;
+  }
+  function helmTurn(kind) {
+    const m = driveBoat(); if (!m) return;
+    const w = driveCtx().wind, abs = Math.abs(E.norm180(m.h - w));
+    if (kind === 'jibe' && abs < 100) { toast('Kavança pupadan atılır: önce kafa aç (rüzgarı kıçtan al)'); return; }
+    S.helmTurn(m, w, kind);
+  }
+  // İskota: elle sürerken Çek / Sal; yarışta (otomatik) hız düşür / artır
+  function sheetBy(dir) {
+    const m = st.drive ? driveBoat() : (st.mode !== 'setup' && view().boats.find(b => b.mine));
+    if (!m) return;
+    if (st.drive) {
+      if (st.drive.autoTrim) m.sheetOff = Math.max(-18, Math.min(S.SHEET_OFF_MAX, (m.sheetOff || 0) + dir * SHEET_STEP));
+      else m.sheet = Math.max(0, Math.min(S.SHEET_MAX, (m.sheet || 0) + dir * SHEET_STEP));
+      return;
+    }
+    if (!['wait', 'race', 'ocs', 'round'].includes(m.phase)) return;
+    const nv = Math.max(0, Math.min(S.SHEET_OFF_MAX, (m.sheetOff || 0) + dir * SHEET_STEP * 1.5));
+    if (nv !== (m.sheetOff || 0)) applyChange(r => S.command(r, 'sheet', nv));
+  }
+  function toggleAutoTrim() {
+    if (!st.drive) return;
+    const m = driveBoat(); st.drive.autoTrim = st.autoTrim = !st.drive.autoTrim;
+    if (m && st.drive.autoTrim) m.sheetOff = 0;
+    toast(st.drive.autoTrim ? 'Oto iskota: dümen kırdıkça iskota kendiliğinden çekilir / salınır' : 'İskota sende: kafa açarken sal (↓), orsalarken çek (↑)');
+  }
+  // dümen / iskota paneli
+  const POS = a => a < 30 ? 'rüzgara karşı' : a < 60 ? 'orsa' : a < 120 ? 'apaz' : a < 165 ? 'geniş apaz' : 'pupa';
+  let lastHelmKey = '';
+  function helmUpdate(v) {
+    const pad = $('helmPad'), m = v.boats.find(b => b.mine);
+    const raceShow = !st.drive && st.mode !== 'setup' && m && m.manual && ['wait', 'race', 'ocs', 'round'].includes(m.phase);
+    const show = !!(st.drive && m) || !!raceShow;
+    const was = pad.className;
+    pad.classList.toggle('hidden', !show); document.body.classList.toggle('driving', !!st.drive);
+    if (show) pad.classList.toggle('race', !st.drive);
+    if (pad.className !== was) fitViewBox();             // ince yarış kutusu açıldı / kapandı: parkur ona göre sığsın
+    if (!show) { lastHelmKey = ''; return; }
+    const drv = !!st.drive, abs = Math.abs(E.norm180(m.h - v.wind)), ideal = S.idealSheet(abs);
+    const sheet = drv ? (m.sheet != null ? m.sheet : ideal) : Math.min(S.SHEET_MAX, ideal + (m.sheetOff || 0));
+    const dlt = sheet - ideal, eff = abs < 30 ? 1 : S.trimEff(dlt), stb = E.norm180(m.h - v.wind) < 0;
+    const trimTxt = abs < 30 ? 'Rüzgara karşı: yelken boş, tekne duruyor' : dlt > 8 ? 'Fazla salık: yelken pırpırlıyor' : dlt < -8 ? 'Fazla çekik: yelken boğuluyor' : 'İskota iyi';
+    const key = [drv, Math.round(abs), Math.round(sheet), Math.round(eff * 100), stb, m.v.toFixed(1), st.drive && st.drive.autoTrim, m.phase].join('|');
+    if (key === lastHelmKey) return; lastHelmKey = key;
+    $('hpGo').querySelector('.hp-go-lbl').textContent = drv ? 'Otomatik' : 'Elle sür';
+    $('hpGo').title = drv ? 'Otomatik: yarış devam etsin, teknen orsaya gitsin; tramolalar yine senin (Enter / boşluk)' : 'Elle sür (D): zaman durur, dümen ve iskota sende';
+    $('hpClose').classList.toggle('hidden', !drv);
+    $('hpTitle').textContent = drv ? 'Elle sürüyorsun' : 'Hızın';
+    $('hpHint').textContent = drv ? 'Diğer tekneler duruyor · ← → dümen · ↑ ↓ iskota' : '↑ ↓ ile hızını ayarla · D: yeniden elle sür';
+    $('hpSpeed').textContent = `${S.knots(m.v).toFixed(1).replace('.', ',')} kn`;
+    $('hpPoint').textContent = `${POS(abs)} · ${stb ? 'sancak' : 'iskele'} kontra`;
+    $('hpLeftSub').textContent = stb ? 'kafa aç' : 'orsa'; $('hpRightSub').textContent = stb ? 'orsa' : 'kafa aç';
+    const tg = $('hpGauge'), pct = x => `${Math.max(0, Math.min(100, x / 90 * 100)).toFixed(1)}%`;
+    tg.querySelector('.tg-ideal').style.left = pct(ideal); tg.querySelector('.tg-knob').style.left = pct(sheet);
+    tg.className = 'trim-gauge ' + (abs < 30 ? 'off' : Math.abs(dlt) <= 8 ? 'ok' : Math.abs(dlt) <= 20 ? 'meh' : 'bad');
+    $('hpTrimTxt').textContent = drv ? `${trimTxt} · güç %${Math.round(eff * 100)}` : (m.sheetOff ? `İskota salık · hız %${Math.round(eff * 100)}` : 'Tam hız · iskota trimli');
+    $('hpAuto').classList.toggle('on', !!(st.drive && st.drive.autoTrim));
+    $('hpEase').disabled = !drv && !(m.sheetOff < S.SHEET_OFF_MAX); $('hpTrim').disabled = !drv && !m.sheetOff;
+    $('hpJibe').disabled = drv && abs < 100;
+    $('hpEase').title = drv ? 'İskotayı sal (↓)' : 'İskotayı sal, yavaşla (↓)'; $('hpTrim').title = drv ? 'İskotayı çek (↑)' : 'İskotayı çek, hızlan (↑)';
+  }
+  // basılı tutulan düğmeler (dümen, iskota): parmak kalkınca biter
+  function holdBtn(id, down, up, repeat) {
+    const x = $(id); let iv = 0, to = 0;
+    const stop = () => { clearTimeout(to); clearInterval(iv); to = iv = 0; x.classList.remove('held'); if (up) up(); };
+    x.addEventListener('pointerdown', e => { if (x.disabled) return; e.preventDefault(); try { x.setPointerCapture(e.pointerId); } catch (er) { /* yok */ } x.classList.add('held'); down();
+      if (repeat) to = setTimeout(() => { iv = setInterval(down, repeat); }, 380); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => x.addEventListener(t, stop));
+    x.addEventListener('contextmenu', e => e.preventDefault());
+    x.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); down(); if (up) setTimeout(up, 250); } });
+  }
 
   // ---------- rüzgar, sağanak, filo ----------
   const WIND_MAX = 40;   // daha büyük açıda şamandıra yan tarafa düşer, orsa ayağı anlamını yitirir
@@ -875,7 +1050,7 @@
   $('btnReset').addEventListener('click', backToSetup);
   $('speedSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.speed = +b.dataset.v; [...$('speedSeg').children].forEach(x => x.classList.toggle('on', x === b)); });
   $('scrub').addEventListener('input', e => {
-    if (!st.frames.length) return;
+    if (!st.frames.length || st.drive) return;
     st.playT = +e.target.value; st.sim = viewAt(st.playT);
     if (st.mode === 'run' || st.mode === 'end') st.mode = 'pause';
     updatePanel(true);
@@ -887,7 +1062,7 @@
   $('btnGustL').addEventListener('click', () => addGust('L'));
   $('btnGustR').addEventListener('click', () => addGust('R'));
   $('btnGustClear').addEventListener('click', clearGusts);
-  $('btnTack').addEventListener('click', () => { if (st.frames.length) applyChange(r => S.command(r, 'tack')); });
+  $('btnTack').addEventListener('click', () => { if (st.drive) helmTurn('tack'); else if (st.frames.length) applyChange(r => S.command(r, 'tack')); });
   $('selMinePersona').addEventListener('change', e => {
     if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.persona = e.target.value; updatePanel(true); }
     else { const v = e.target.value; applyChange(r => S.command(r, 'persona', v)); }
@@ -957,6 +1132,7 @@
   $('seaWaves').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setSea('waves', +x.dataset.v); });
   $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('ignoresRules', x.dataset.v === 'vermez', 'rules'); });
   function toggleManual() {
+    if (st.drive) exitDrive(false);                     // otomatik tramolaya dönmeden önce elle sürmeyi bitir
     const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
     const on = !mine.manual;
     if (st.mode === 'setup') { mine.manual = on; if (on) mine.route = null; updatePanel(true); }
@@ -1011,8 +1187,35 @@
   svg.addEventListener('pointermove', onMove);
   svg.addEventListener('pointerup', onUp);
   svg.addEventListener('pointercancel', onUp);
+  // elle sürme: dümen paneli ve klavye
+  holdBtn('hpLeft', () => { if (st.drive) st.drive.touchRud = -1; }, () => { if (st.drive) st.drive.touchRud = 0; });
+  holdBtn('hpRight', () => { if (st.drive) st.drive.touchRud = 1; }, () => { if (st.drive) st.drive.touchRud = 0; });
+  holdBtn('hpEase', () => sheetBy(1), null, 140);
+  holdBtn('hpTrim', () => sheetBy(-1), null, 140);
+  $('hpAuto').addEventListener('click', toggleAutoTrim);
+  $('hpTack').addEventListener('click', () => { helmTurn('tack'); flash('hpTack'); });
+  $('hpJibe').addEventListener('click', () => { helmTurn('jibe'); flash('hpJibe'); });
+  $('hpGo').addEventListener('click', () => (st.drive ? exitDrive(true) : enterDrive()));
+  $('hpClose').addEventListener('click', () => (st.drive ? exitDrive(false) : enterDrive()));
+  $('btnDrive').addEventListener('click', () => (st.drive ? exitDrive(false) : enterDrive()));
+  const RUD_KEYS = { ArrowLeft: -1, ArrowRight: 1, a: -1, A: -1, d: 1, D: 1 };
+  document.addEventListener('keyup', e => { if (st.drive && RUD_KEYS[e.key] != null) st.drive.keyRud = 0; });
+  window.addEventListener('blur', () => { if (st.drive) { st.drive.keyRud = 0; st.drive.touchRud = 0; } });
   document.addEventListener('keydown', e => {
     if (e.target.closest('input, select, textarea')) return;
+    if (st.drive) {                                      // elle sürerken klavye dümen ve iskotadır
+      const k = e.key;
+      if (RUD_KEYS[k] != null) { e.preventDefault(); st.drive.keyRud = RUD_KEYS[k]; return; }
+      if (k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); sheetBy(-1); return; }
+      if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); sheetBy(1); return; }
+      if (k === 't' || k === 'T') { helmTurn('tack'); flash('hpTack'); return; }
+      if (k === 'k' || k === 'K') { helmTurn('jibe'); flash('hpJibe'); return; }
+      if (k === 'o' || k === 'O') { toggleAutoTrim(); return; }
+      if (k === 'Escape') { exitDrive(false); return; }
+      if (k === 'Enter') { exitDrive(true); return; }
+    } else if ((e.key === 'd' || e.key === 'D') && !e.metaKey && !e.ctrlKey) { enterDrive(); return; }
+    else if (e.key === 'ArrowUp' && st.mode !== 'setup') { e.preventDefault(); sheetBy(-1); return; }
+    else if (e.key === 'ArrowDown' && st.mode !== 'setup') { e.preventDefault(); sheetBy(1); return; }
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (e.key === 't' || e.key === 'T') $('btnTack').click();
     else if (e.key === 'm' || e.key === 'M') toggleManual();

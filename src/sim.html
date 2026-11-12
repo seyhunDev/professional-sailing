@@ -97,6 +97,32 @@
       </div>
     </div>
 
+    <div id="helmPad" class="helm-pad hidden" role="toolbar" aria-label="Dümen ve iskota">
+      <button class="hp-rud" id="hpLeft" title="Dümen: sola dön (← ya da A, basılı tut)"><span class="hp-arrow">◀</span><b>Sola</b><small id="hpLeftSub">kafa aç</small></button>
+      <div class="hp-mid">
+        <div class="hp-head">
+          <span class="hp-dot"></span>
+          <div class="rb-text"><b id="hpTitle">Elle sürüyorsun</b><span id="hpHint"></span></div>
+          <button class="icon sm" id="hpClose" title="Elle sürmeyi bitir, teknen burada kalsın (Esc)"><svg><use href="#i-close"/></svg></button>
+        </div>
+        <div class="hp-stat"><span id="hpSpeed" class="hp-kn">0,0 kn</span><span id="hpPoint"></span></div>
+        <div class="hp-sheet">
+          <button class="tb" id="hpEase"><b>Sal</b><small>yavaşla</small></button>
+          <div class="hp-gwrap">
+            <div class="trim-gauge" id="hpGauge" aria-hidden="true"><span class="tg-ideal"></span><span class="tg-knob"></span></div>
+            <span id="hpTrimTxt" class="hp-trimtxt"></span>
+          </div>
+          <button class="tb" id="hpTrim"><b>Çek</b><small>hızlan</small></button>
+        </div>
+        <div class="hp-actions">
+          <button class="tb tgl" id="hpAuto" title="İskota rüzgar açısına göre kendiliğinden ayarlansın (O)">Oto<span class="hp-long">iskota</span></button>
+          <button class="tb" id="hpTack" title="Tramola: rüzgarın içinden öbür kontraya (T)"><svg class="ci"><use href="#i-tack"/></svg>Tramola</button>
+          <button class="tb" id="hpJibe" title="Kavança: pupadan öbür kontraya (K)">Kavança</button>
+          <button class="tb rb-done ready" id="hpGo" title="Otomatik: yarış devam etsin, teknen orsaya gitsin; tramolalar yine senin (Enter / boşluk)"><svg class="ci"><use href="#i-play"/></svg><span class="hp-go-lbl">Otomatik</span></button>
+        </div>
+      </div>
+      <button class="hp-rud" id="hpRight" title="Dümen: sağa dön (→ ya da D, basılı tut)"><span class="hp-arrow">▶</span><b>Sağa</b><small id="hpRightSub">orsa</small></button>
+    </div>
     <div id="modeStrip" class="mode-strip" aria-live="polite">
       <span id="msPhase" class="ms-chip"></span>
       <span id="msMine" class="ms-chip"></span>
@@ -199,6 +225,7 @@
             <li><b>Tekne ve rüzgar:</b> panelin <b>Tekne ve rüzgar</b> kutusundan sınıfı (Optimist, ILCA 4 / 6 / 7) ve rüzgar hızını (knot) seç; tekne hızı sınıfın o rüzgardaki ortalama orsa hızından hesaplanır (ör. Optimist 8 knot rüzgarda ≈3.5 kn, ILCA 7 15 knot rüzgarda ≈5.5 kn). <b>Hızlanma</b> start'a kaç saniye kala yelkenlerin doldurulacağıdır: tekneler o ana kadar yelken boş, hattın gerisinde yavaşça yer tutar, sonra hızlanır. Geç hızlanan hatta yavaş varır; erken hızlanan yavaşlamak zorunda kalır.</li>
             <li><b>Akıntı ve dalga:</b> panelin <b>Deniz</b> kutusundan akıntıyı (hafif / orta / güçlü) ve dalgayı (küçük / büyük) seç; tekneler rüzgaraltına kayar, orsada yavaş yükselir, layline'lar açılır. Yalpalayan, köre düşen bir sporcuyu göstermek için tekneye dokunup <b>Kayma</b>yı <b>Az</b> ya da <b>Çok</b> yap. Yarışta da değiştirebilirsin.</li>
             <li><b>Manuel:</b> alttaki <b>Manuel</b> açıkken senin teknen start'tan sonra kendi kendine hiç tramola atmaz; ne zaman dönüleceğine sen <b>Tramola</b> (ya da T tuşu) ile karar verirsin. Start'a yaklaşma ve şamandırayı dönme yine otomatiktir. Kapalıyken tekne taktiğine göre kendisi karar verir.</li>
+            <li><b>Elle sür:</b> alttaki <b>Elle sür</b> (ya da D) ile teknenin dümeni ve iskotası sende; bu sırada zaman durur, diğer tekneler yerinde bekler. <b>◀ Sola / Sağa ▶</b> düğmelerini basılı tut (klavyede ← →): tekne orsalar ya da kafa açar; rüzgarın içinden geçince <b>tramola</b>, pupadan geçince <b>kavança</b> olur. <b>Oto iskota</b> açıkken iskota kendiliğinden ayarlanır; <b>Sal</b> (↓) ile yavaşlarsın (yelken pırpırlar), <b>Çek</b> (↑) ile hızlanırsın. Oto iskotayı kapatırsan kafa açarken iskotayı sen salmalısın, yoksa yelken boğulur. Teknen istediğin yere götürünce <b>Otomatik ▶</b>: yarış kaldığı yerden devam eder, teknen start'ı alır ve şamandırayı dönene kadar orsaya gider; tramolalara yine sen karar verirsin, yarışta da ↑ ↓ ile hızını değiştirirsin.</li>
             <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>
             <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
             <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
@@ -249,6 +276,7 @@
         <div class="cg-lbl mine-lbl">Senin teknen</div>
         <div class="cg-body">
           <button class="tb tgl" id="btnManual" title="Manuel: start'tan sonra tekne kendi kendine tramola atmaz, tramolayı sen atarsın (M)">Manuel</button>
+          <button class="tb tgl" id="btnDrive" title="Elle sür (D): dümen ve iskota sende, diğer tekneler durur">Elle sür</button>
           <button class="tb accent" id="btnTack" title="Tramola (T)"><svg class="ci"><use href="#i-tack"/></svg>Tramola</button>
           <select class="tb" id="selMinePersona" title="Taktik">
             <option value="orta">Taktik: Orta</option><option value="sol">Taktik: Sol</option><option value="sag">Taktik: Sağ</option><option value="saganak">Taktik: Sağanak</option><option value="manuel" hidden>Taktik: Sen</option>
