@@ -89,7 +89,7 @@
 | A12 | `a12-flags` | ✅ | Yalnızca U bayrağı canlı; P/I/siyah varyantları ve 5-4-1-0 sırası eksik. | A2, A13 |
 | İA1 | `ia1-port-approach-pin` | ✅ | Solda bekle, apaz gel, layline üstünde tramola; X en alttaki teknenin ~1 boy altına girer (rüzgaraltında boşluk kalır), sinyalde onunla yan yana çıkar; Z (layline altı) ve Y (geç) hataları. Fikir: K13/K15 ihlali yapan 3. hata teknesi (ceza turu). | A3, A16 |
 | İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. S hattın uzantısında (pin dışı, hat hizası) bakar, sonra hattın altından ortaya gider. Yay eğrisi (`sag`) çiziliyor; pis rüzgar artık ortak motor özelliği (S gölgede gerçekten yavaşlar, ama filonun 2-3 boy altından geçtiği için etkisi küçük). | A5, A6, H5 |
-| İA2b | `ia2b-no-sag` | ✅ | İA2'nin "yay yok" eşi: 8 tekne hattın dibinde, S 0.28-0.50 arasındaki boşluğa herkesle aynı hizada girer, aynı anda çıkar. | A5, H5 |
+| İA2b | `ia2b-no-sag` | ✅ | İA2'nin "yay yok" eşi: 8 tekne hattın dibinde; S 3 ile 4 arasındaki boşluğa girer ama **4'ün hemen rüzgaraltına sokulur** (merkezler ~44 px, aynı hiza; kullanıcı isteği 2026-11-12: "4'e yakın olsun, önemli taktik"), 3'e doğru rüzgaraltı boşluğu kalır; 4 ile paralel çıkar. Kendi sohbeti var ("İA2b yay yok taktiğini geliştir"). | A5, H5 |
 | B1 | `b1-rule10` | ✅ | Tek tekne bordalama. Fikir: lee-bow varyantı. | B2 |
 | B8 | `b8-rule18` | ✅ | Zone + bindirme. Fikir: 18.3 zone içinde tramola varyantı. | B9 |
 | C1 | `c1-header-tack` | ✅ | Salınımlı rüzgar. Fikir: pusula okuması katmanı. | C2, C3 |
