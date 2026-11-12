@@ -11,15 +11,20 @@ const cases = [
   { name: 'rüzgar -15° (pin avantajlı)', wind: -15 },
   { name: 'sağda sağanak', wind: 0, gusts: [{ x: 760, y: 450, rx: 130, ry: 200 }] },
   { name: 'yarışta rüzgar 12° sağa döner', wind: 0, shift: { at: 25, to: 12 } },
+  { name: 'senin teknen sağa rota çizdi', wind: 0, route: [{ x: 560, y: 700 }, { x: 800, y: 560 }, { x: 820, y: 300 }, { x: 600, y: 150 }] },
+  { name: 'senin teknen düz yukarı rota (zikzak)', wind: 10, route: [{ x: 500, y: 600 }, { x: 500, y: 200 }] },
 ];
 let problems = 0;
 const verbose = process.argv.includes('-v');
 for (const c of cases) {
-  const s = S.newRace(S.defaultFleet(12), { wind: c.wind, gusts: c.gusts });
-  let out = 0;
+  const fleet = S.defaultFleet(12); if (c.route) fleet.find(b => b.mine).route = c.route;
+  const s = S.newRace(fleet, { wind: c.wind, gusts: c.gusts });
+  let out = 0; const near = c.route ? c.route.map(() => 1e9) : [];
   while (s.t < 150 && s.boats.some(b => !b.finish)) {
     if (c.shift && Math.abs(s.t - c.shift.at) < 1e-6) s.wind = c.shift.to;
     S.step(s);
+    const me = s.boats.find(b => b.mine);
+    if (c.route && s.t > s.startAt) c.route.forEach((p, i) => { near[i] = Math.min(near[i], Math.hypot(me.x - p.x, me.y - p.y)); });
     for (const b of s.boats) if (!b.gone && (b.x < -40 || b.x > S.WORLD.w + 40 || b.y < -40 || b.y > S.WORLD.h + 40)) out++;
   }
   const unfinished = s.boats.filter(b => !b.finish).map(b => `${b.id}(${b.phase} ${b.x.toFixed(0)},${b.y.toFixed(0)})`);
@@ -31,6 +36,9 @@ for (const c of cases) {
   if (verbose) for (const e of s.events) console.log(`    ${e.t.toFixed(1)} ${e.text}`);
   if (unfinished.length) { problems++; console.log('  ⚠ bitiremeyen:', unfinished.join(', ')); }
   if (out) { problems++; console.log('  ⚠ alan dışı örnek:', out); }
+  // rota: start'tan sonraki her noktanın yakınından (zikzak koridoru + nokta yarıçapı) geçmeli
+  const missed = c.route ? c.route.map((p, i) => [i, near[i]]).filter(([i, d]) => S.lineSide(c.route[i]) === -1 && d > 80) : [];
+  if (missed.length) { problems++; console.log('  ⚠ rota noktası kaçtı:', missed.map(([i, d]) => `#${i} ${d.toFixed(0)} px`).join(', ')); }
   if (contacts > 6) { problems++; console.log('  ⚠ temas çok:', contacts); }   // kalabalık şamandıra dönüşünde birkaç temas gerçekçi; fazlası hata
 }
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');

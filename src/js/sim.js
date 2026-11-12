@@ -19,7 +19,8 @@
     wind: 0, gusts: [],
     sim: null, frames: [], speed: 1, lastTs: 0, acc: 0,
     show: { speed: true, shadow: false },
-    sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0
+    sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
+    drawMode: false, drawPts: null
   };
 
   // ---------- görünüm ----------
@@ -153,6 +154,18 @@
         'paint-order': 'stroke', stroke: 'rgba(2,12,22,.85)', 'stroke-width': 3, 'font-variant-numeric': 'tabular-nums' }, lab).textContent = txt;
     }
   }
+  // Senin teknenin çizilen rotası (kalan kısmı) ve çizilmekte olan çizgi
+  function drawRoute(parent, v) {
+    const pts2 = a => a.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const m = v.boats.find(b => b.mine);
+    if (m && m.route && (m.routeIdx || 0) < m.route.length && !m.finish) {
+      const rest = m.route.slice(m.routeIdx || 0), all = st.mode === 'setup' ? rest : [{ x: m.x, y: m.y }, ...rest];
+      el('polyline', { points: pts2(all), fill: 'none', stroke: 'rgba(251,146,60,.85)', 'stroke-width': 2.5, 'stroke-dasharray': '8 6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, parent);
+      const end = rest[rest.length - 1];
+      el('circle', { cx: end.x.toFixed(1), cy: end.y.toFixed(1), r: 6, fill: '#fb923c', stroke: '#fff', 'stroke-width': 1.5 }, parent);
+    }
+    if (st.drawPts && st.drawPts.length > 1) el('polyline', { points: pts2(st.drawPts), fill: 'none', stroke: '#fdba74', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, parent);
+  }
   // Rüzgar gölgesi (pis rüzgar) konileri
   function drawShadows(parent, boats, w) {
     const down = E.fwd(w + 180), right = E.fwd(w + 90), L = S.SHADOW_LEN;
@@ -204,6 +217,7 @@
     const bl = $('boatLayer'); bl.innerHTML = '';
     const order = v.boats.filter(b => !b.gone).sort((a, b) => (a.mine ? 1 : 0) - (b.mine ? 1 : 0));
     if (st.show.shadow && st.mode !== 'setup') drawShadows(bl, order, w);
+    drawRoute(bl, v);
     for (const b of order) drawBoat(bl, b, w, v.t, st.sel === b.id);
     drawNotes(bl, order, v.t);
     drawHud(v);
@@ -262,6 +276,9 @@
     $('btnTack').disabled = !mine || setup || mine.phase !== 'race';
     if (mine && document.activeElement !== $('selMinePersona')) $('selMinePersona').value = mine.persona;
     $('btnMineRules').classList.toggle('on', !!(mine && mine.ignoresRules));
+    const hasRoute = !!(mine && mine.route && (mine.routeIdx || 0) < mine.route.length);
+    $('btnRoute').disabled = !mine || (!setup && !!mine.finish);
+    $('btnRouteClear').disabled = !hasRoute || (!setup && !!mine.finish);
     $('btnMineRules').disabled = !mine || (!setup && (mine.phase === 'done' || !!mine.finish));
     updatePanel();
   }
@@ -353,7 +370,7 @@
     const mineAt = st.fleet.find(b => b.mine);
     const fresh = S.defaultFleet(n);
     // senin teknenin yerini koru
-    if (mineAt) { const m = fresh.find(b => b.mine); m.x = mineAt.x; m.y = mineAt.y; m.tack = mineAt.tack; m.persona = mineAt.persona; m.ignoresRules = mineAt.ignoresRules; }
+    if (mineAt) { const m = fresh.find(b => b.mine); m.x = mineAt.x; m.y = mineAt.y; m.tack = mineAt.tack; m.persona = mineAt.persona; m.ignoresRules = mineAt.ignoresRules; m.route = mineAt.route; }
     st.fleet = fresh; st.sel = null;
   }
   function addOne() {
@@ -401,6 +418,7 @@
   }
   function onDown(ev) {
     const p = toWorld(ev);
+    if (st.drawMode) { st.drawPts = [p]; $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); return; }
     const b = st.mode === 'setup' ? hitBoat(p) : null;
     if (b) {
       const fb = st.fleet.find(x => x.id === b.id);
@@ -413,6 +431,7 @@
     if (st.drag) { $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); }
   }
   function onMove(ev) {
+    if (st.drawPts) { const p = toWorld(ev), q = st.drawPts[st.drawPts.length - 1]; if (Math.hypot(p.x - q.x, p.y - q.y) > 8) st.drawPts.push(p); return; }
     const d = st.drag;
     if (!d) { const p = toWorld(ev); $('course').style.cursor = (st.mode === 'setup' && hitBoat(p)) || hitGust(p) ? 'grab' : ''; return; }
     if (Math.hypot(ev.clientX - d.x0, ev.clientY - d.y0) > 4) d.moved = true;
@@ -423,6 +442,7 @@
     $('course').style.cursor = 'grabbing';
   }
   function onUp() {
+    if (st.drawPts) { finishRoute(st.drawPts); st.drawPts = null; return; }
     const d = st.drag; st.drag = null;
     if (!d) return;
     if (d.kind === 'gust' && d.moved && st.mode !== 'setup') {
@@ -438,6 +458,32 @@
       if (u < -0.05 || u > 1.05) toast('Bu tekne hattın ucunun dışında: önce hattın içine gelmeli, uçların dışından geçerse start sayılmaz.');
     }
     $('course').style.cursor = '';
+    updatePanel(true);
+  }
+
+  // Çizgiyi seyrelt (≈40 px aralık), senin teknene rota olarak ver
+  function finishRoute(raw) {
+    setDrawMode(false);
+    const pts = [raw[0]];
+    for (const p of raw) { const q = pts[pts.length - 1]; if (Math.hypot(p.x - q.x, p.y - q.y) >= 40) pts.push(p); }
+    const last = raw[raw.length - 1]; if (pts[pts.length - 1] !== last) pts.push(last);
+    const clean = pts.map(p => ({ x: Math.max(20, Math.min(W.w - 20, p.x)), y: Math.max(20, Math.min(W.h - 10, p.y)) }));
+    let len = 0; for (let i = 1; i < clean.length; i++) len += Math.hypot(clean[i].x - clean[i - 1].x, clean[i].y - clean[i - 1].y);
+    if (len < 60) { toast('Rota çok kısa; teknenin gideceği yolu biraz daha uzun çiz.'); return; }
+    if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.route = clean; }
+    else applyChange(r => S.command(r, 'route', clean));
+    toast('Rota hazır: teknen çizgiyi izler, rüzgara karşı kısımlarda zikzak (tramola) atar, sonra şamandıraya gider.');
+    updatePanel(true);
+  }
+  function setDrawMode(on) {
+    st.drawMode = on; $('btnRoute').classList.toggle('on', on);
+    $('course').style.cursor = on ? 'crosshair' : '';
+    if (on && st.mode === 'run') st.mode = 'pause';
+    if (on) toast('Parmağınla (ya da fareyle) teknenin gideceği yolu çiz.');
+  }
+  function clearRoute() {
+    if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.route = null; }
+    else applyChange(r => S.command(r, 'route', null));
     updatePanel(true);
   }
 
@@ -481,6 +527,8 @@
   $('btnFleetPlus').addEventListener('click', () => { addOne(); updatePanel(true); });
   $('btnFleetLine').addEventListener('click', () => { setFleetSize(st.fleet.length); updatePanel(true); toast('Tekneler hattın dibine yeniden dizildi'); });
   $('selTack').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.tack = x.dataset.v; updatePanel(true); } });
+  $('btnRoute').addEventListener('click', () => setDrawMode(!st.drawMode));
+  $('btnRouteClear').addEventListener('click', clearRoute);
   $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.ignoresRules = x.dataset.v === 'vermez'; updatePanel(true); } });
   $('btnMineRules').addEventListener('click', () => {
     const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
@@ -507,6 +555,7 @@
     if (e.target.closest('input, select, textarea')) return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (e.key === 't' || e.key === 'T') $('btnTack').click();
+    else if (e.key === 'Escape' && st.drawMode) { st.drawPts = null; setDrawMode(false); }
     else if (e.key === 'ArrowLeft') setWind(-5);
     else if (e.key === 'ArrowRight') setWind(5);
   });

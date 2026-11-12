@@ -132,7 +132,7 @@
     opts = opts || {};
     const w = opts.wind != null ? opts.wind : 0;
     const boats = fleet.map(b => ({ ...b, phase: 'wait', go: false, man: null, manUntil: -1, note: '', noteUntil: -1,
-      lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, started: false, outside: false, penalties: 0, penaltyAt: null, penTurn: 0, penWait: false, penFinish: false, v: HOLD_V }));
+      lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, started: false, outside: false, penalties: 0, penaltyAt: null, penTurn: 0, penWait: false, penFinish: false, routeIdx: 0, routeFrom: null, v: HOLD_V }));
     for (const b of boats) b.h = w + (b.tack === 'starboard' ? -25 : 25);
     return { t: 0, wind: w, gusts: (opts.gusts || []).map(g => ({ ...g })), boats, events: [], finished: 0, pairLog: {}, startAt: START_AT };
   }
@@ -214,6 +214,9 @@
       if (b.phase === 'race' && s.t - b.lastTack > 1) { doTack(b, s, 'Tramola!'); b.persona = 'manuel'; log(s, `${b.id}: tramola (senin kararın)`); }
       else if (b.phase === 'wait') { b.tack = b.tack === 'starboard' ? 'port' : 'starboard'; }
     } else if (cmd === 'rules') { b.ignoresRules = !!arg; log(s, `${b.id}: ${arg ? 'artık yol vermiyor (kural bilmeyen)' : 'kurallara uyuyor'}`);
+    } else if (cmd === 'route') {
+      b.route = arg && arg.length ? arg.map(p => ({ x: p.x, y: p.y })) : null; b.routeIdx = 0; b.routeFrom = { x: b.x, y: b.y };
+      log(s, b.route ? `${b.id}: yeni rota çizildi` : `${b.id}: rota silindi`);
     } else if (cmd === 'persona') { b.persona = arg; log(s, `${b.id}: taktik → ${PERSONAS[arg]}`); }
   }
 
@@ -299,6 +302,45 @@
     return rule === 14 ? `Temas önleme · K14 (${act})` : `${r} (${act})`;
   }
 
+  // ---------- Çizilen rota (senin teknen) ----------
+  // Rota noktalarını sırayla izler. Nokta rüzgarın yasak bölgesindeyse (orsadan dar) zikzak atar:
+  // çizginin iki yanında ROUTE_CORR px'lik bir koridorda kalır, koridorun kenarına gelince ya da
+  // noktayı öbür kontrayla tutunca tramola atar. Rota bitince taktiğine göre şamandıraya gider.
+  const ROUTE_CORR = 45;
+  function routeNext(b) {
+    const r = b.route;
+    while (b.routeIdx < r.length) {
+      const P = r[b.routeIdx], A = b.routeIdx > 0 ? r[b.routeIdx - 1] : (b.routeFrom || P);
+      const d = Math.hypot(P.x - b.x, P.y - b.y);
+      const seg = { x: P.x - A.x, y: P.y - A.y }, L = Math.hypot(seg.x, seg.y);
+      const passed = L > 1 && dot({ x: P.x - b.x, y: P.y - b.y }, seg) / L < -5;   // noktayı çizgi yönünde geçti
+      if (d < 32 || passed || lineSide(P) === 1) { b.routeIdx++; continue; }      // hattın dibindeki noktalar start'tan önce
+      return { P, A };
+    }
+    return null;
+  }
+  function followRoute(b, s, w, t) {
+    if (!b.routeFrom) b.routeFrom = { x: b.x, y: b.y };
+    const nx = routeNext(b);
+    if (!nx) { note(b, s, 'Rota bitti, şamandıraya', 'good', 2); log(s, `${b.id}: çizdiğin rota bitti, şamandıraya gidiyor`); return E.tackHeading(w, b.tack); }
+    const { P, A } = nx, brg = bearing(b, P), r = E.norm180(brg - w);
+    if (Math.abs(r) >= 47) {                           // açık seyir: doğrudan noktaya
+      const want = r > 0 ? 'port' : 'starboard';
+      if (want !== b.tack) { b.tack = want; b.lastTack = t; }
+      return brg;
+    }
+    // orsa: zikzak. Çizgiye göre yanal sapma (+ sağ)
+    const seg = { x: P.x - A.x, y: P.y - A.y }, L = Math.hypot(seg.x, seg.y) || 1;
+    const lat = dot({ x: b.x - A.x, y: b.y - A.y }, { x: -seg.y / L, y: seg.x / L });
+    let want = b.tack;
+    if (b.tack === 'starboard' && (lat < -ROUTE_CORR || r >= 44)) want = 'port';
+    if (b.tack === 'port' && (lat > ROUTE_CORR || r <= -44)) want = 'starboard';
+    if (b.x < 60) want = 'port'; if (b.x > WORLD.w - 60) want = 'starboard';
+    if (want !== b.tack && t - b.lastTack > 2.2) doTack(b, s, '');
+    if ((b.tack === 'starboard' && r <= -44) || (b.tack === 'port' && r >= 44)) return brg;   // noktayı tutuyor
+    return E.tackHeading(w, b.tack);
+  }
+
   // ---------- Bir adım ----------
   function step(s) {
     const w = s.wind, t = s.t, active = s.boats.filter(b => !b.gone);
@@ -327,7 +369,8 @@
         if (remain <= 0) { b.phase = lineSide(b) === -1 ? 'ocs' : 'race'; if (b.phase === 'ocs') ocs(b, s); }
       }
       if (b.phase === 'race') {
-        let wt = wantedTack(b, s, w);
+        const routing = b.started && b.route && b.routeIdx < b.route.length;
+        let wt = routing ? b.tack : wantedTack(b, s, w);
         // start hattını henüz uçların arasından geçmediyse: önce hattın içine yönel
         let lineAim = null;
         if (!b.started) {
@@ -356,10 +399,11 @@
         else if (!b.started) { /* hattın içinde: orsa rotasında devam */ }
         else if ((b.tack === 'starboard' && rel <= -45) || (b.tack === 'port' && rel >= 45)) target = brg;
         else if (!lineAim && Math.abs(rel) >= 55) { target = brg; b.tack = rel > 0 ? 'port' : 'starboard'; }   // şamandıra rüzgarüstünde değil (aşmış): doğrudan git
+        if (routing) target = followRoute(b, s, w, t);
         // dönüşe başla: giriş noktasına geldi ya da şamandıranın rüzgarüstü tarafında, çembere yakın.
         // Şamandıranın altından (rüzgaraltı yarısından) dönüşe başlanmaz.
         const dM = Math.hypot(b.x - MARK.x, b.y - MARK.y), phi = markAngle(b, w);
-        if (b.started && (dWp < 20 || (phi > -10 && phi < 110 && dM < R_ROUND + 26) || (phi > -95 && phi < 95 && dM < 160 && dot({ x: b.x - MARK.x, y: b.y - MARK.y }, E.fwd(w)) > 30))) {
+        if (b.started && !(b.route && b.routeIdx < b.route.length) && (dWp < 20 || (phi > -10 && phi < 110 && dM < R_ROUND + 26) || (phi > -95 && phi < 95 && dM < 160 && dot({ x: b.x - MARK.x, y: b.y - MARK.y }, E.fwd(w)) > 30))) {
           b.phase = 'round'; b.roundAt = t;
         }
       }
