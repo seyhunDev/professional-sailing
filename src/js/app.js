@@ -337,6 +337,20 @@
     }
     const inWin = o => o && state.t >= (o.from || 0) && (o.to == null || state.t <= o.to);
     const crowdNow = () => state.extras.filter(b => b.crowd).map(b => E.sampleTrack(b.track, state.t));
+    // boşluk işaretleri: iki filo teknesi ({a,b}: crowd sırası, 0'dan) arasındaki boşluk, hattın hemen
+    // üstünde köşeli parantez + etiket; uçlar teknelerin o anki konumunun hatta izdüşümü
+    if (scn.gaps && scn.line && inWin(scn.gaps)) {
+      const { pin, boat } = scn.line; const dx = boat.x - pin.x, dy = boat.y - pin.y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+      const nx = uy, ny = -ux;                               // hattın rüzgarüstü normali (pin→hakem botu, ekranda yukarı)
+      const cr = crowdNow(), off = 16, tick = 6, pad = 18;   // pad: tekne genişliği kadar içeri
+      const onLine = (p, sh) => { const u = (p.x - pin.x) * ux + (p.y - pin.y) * uy + sh; return { x: pin.x + ux * u + nx * off, y: pin.y + uy * u + ny * off }; };
+      for (const it of scn.gaps.items || []) {
+        if (!cr[it.a] || !cr[it.b]) continue;
+        const col = it.color || '#fbbf24', a = onLine(cr[it.a], pad), b = onLine(cr[it.b], -pad);
+        el('path', { d: `M${a.x - nx * tick},${a.y - ny * tick} L${a.x},${a.y} L${b.x},${b.y} L${b.x - nx * tick},${b.y - ny * tick}`, fill: 'none', stroke: col, 'stroke-width': 2, opacity: .9 }, g);
+        if (it.label) el('text', { x: (a.x + b.x) / 2 + nx * 8, y: (a.y + b.y) / 2 + ny * 8, 'text-anchor': 'middle', fill: col, 'font-size': 12, 'font-weight': 700, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.7)', 'stroke-width': 3 }, g).textContent = it.label;
+      }
+    }
     // hat yayı (line sag): filonun burunlarından geçen eğri, hat ile arası taralı
     if (scn.sag && scn.line && inWin(scn.sag)) {
       const { pin, boat } = scn.line; const lx0 = boat.x - pin.x, ly0 = boat.y - pin.y, L = Math.hypot(lx0, ly0), ux = lx0 / L, uy = ly0 / L;

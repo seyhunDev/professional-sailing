@@ -102,7 +102,7 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | H2 | Hakem botunda ikinci sıradan erken tramola ile sağa kaçış | Birinci sıra gölgesinden kurtulma, sağ tarafın temiz havası. | ⬜ |
 | H3 | Rüzgaraltına boşluk açma ve "kapı" kapatma (son 30 sn) | Bordalayıp rüzgaraltındaki tekneyi uzaklaştırma, sonra orsa edip boşluğu koruma; K11/K16 sınırları. | ⬜ |
 | H4 | Start öncesi rakibi "sürükleme": orsa ile hattın üstüne itme | Rüzgaraltı tekne orsa eder, rüzgarüstündeki fodepar riskine girer; K11, K16, sportmenlik sınırı. | ⬜ |
-| H5 | Hat yayını (sag) kullanma: transit ile 1-2 boy önde çıkış | Pin tarafından transit, apaz ile ortaya, boşluğa komşulardan yukarı, zamanlama ve rüzgar gölgesi; yay yoksa aynı hizada. | ✅ (İA2, İA2b yay yok) |
+| H5 | Hat yayını (sag) kullanma: transit ile 1-2 boy önde çıkış | Pin tarafından transit, apaz ile ortaya, boşluğa komşulardan yukarı, zamanlama ve rüzgar gölgesi; yay yoksa aynı hizada. | ✅ (İA2, İA2b yay yok, İA2c boşluk seçimi) |
 | H6 | Genel geri çağırma sonrası taktik değişimi | Siyah bayrak sonrası temkinli start; U bayrağında kalabalıktan kaçınma. | ⬜ |
 
 # III. TEKNİK

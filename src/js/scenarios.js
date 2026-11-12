@@ -436,6 +436,64 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // ---------- İA2c: yay yok, hangi boşluk? ----------
+  S.push({
+    id: 'ia2c-pick-gap',
+    category: 'İleri Taktik', topic: 'Start',
+    title: 'İA2c · Yay yok: dar mı, geniş mi? 2 dk önceden boşluk seç',
+    summary: 'İA2b\'nin devamı: filo yine hattın dibinde ama sırada üç boşluk var: pin yanında DAR bir boşluk, ortada ve hakem botu tarafında iki GENİŞ boşluk. Rüzgar 5° sağda, hakem botu ucu biraz avantajlı. S hatta 2 dakika kala bakar; süresi olduğu için avantajlı uzaktaki geniş boşluğa gider ve rüzgarüstü komşusunun hemen rüzgaraltına sokulur. D 1 dakika kala bakar, süresi yetmez, dezavantajlı uçtaki dar boşluğa sıkışır.',
+    duration: 36,
+    baseSpeed: 40, tau: 1.0, goBefore: 2.5,
+    clockScale: 4,
+    wind: 5,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 30,
+    rungs: { boat: 'S', from: 30.5 },
+    sightline: { from: 0, to: 5, label: 'Transit: 2 dk kala hatta bak' },
+    gaps: { from: 2, to: 27.5, items: [
+      { a: 1, b: 2, label: 'Dar', color: '#f87171' },
+      { a: 3, b: 4, label: 'Geniş · orta', color: '#fbbf24' },
+      { a: 5, b: 6, label: 'Geniş · avantajlı', color: '#34d399' }
+    ] },
+    boats: [
+      { id: 'S', name: '2 dk önce bakan, avantajlıya', role: 'dogru', color: '#2a9d8f',
+        start: { x: 88, y: 452, h: 90 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 90, dur: 4, speed: 0.04, turn: 0 },
+          { mode: 'heading', h: 160, dur: 3.4, turn: 0.8, note: 'Hattın altına iniyor' },
+          { mode: 'heading', h: 90, dur: 12.0, turn: 1.0, note: 'Apaz: filonun altından avantajlı boşluğa' },
+          { mode: 'heading', h: 40, dur: 1.6, turn: 1.0, speed: 1, note: '7\'nin rüzgaraltına sokul' },
+          { mode: 'hold', h: 345, dur: 6.2, speed: 0.04, turn: 1.0, note: '7\'nin rüzgaraltında, aynı hiza' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10, turn: 0.8 }
+        ] },
+      { id: 'D', name: '1 dk önce bakan, dar boşlukta', role: 'hata', color: '#e76f51',
+        start: { x: 83, y: 548, h: 90 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 90, dur: 15, speed: 0.04, turn: 0, note: 'Hâlâ hatta bakmadı' },
+          { mode: 'heading', h: 110, dur: 2.5, turn: 0.8, note: '1 dk kala: vakit az, en yakın boşluk' },
+          { mode: 'heading', h: 80, dur: 3.5, turn: 1.0 },
+          { mode: 'heading', h: 20, dur: 1.0, turn: 1.0, speed: 1, note: 'Dar boşluğa sıkıştı' },
+          { mode: 'hold', h: 345, dur: 5.6, speed: 0.04, turn: 1.0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 9, turn: 0.8, note: 'Dar boşluk: hata payı yok' }
+        ] }
+    ],
+    // 7 tekne: 0.12-0.26 DAR (D buraya), 0.34-0.55 GENİŞ orta, 0.64-0.87 GENİŞ avantajlı (S 7'nin rüzgaraltına)
+    crowd: [
+      { slot: 0.05, back: 0 }, { slot: 0.12, back: 4 }, { slot: 0.26, back: 0 }, { slot: 0.34, back: 5 },
+      { slot: 0.55, back: 0 }, { slot: 0.64, back: 4 }, { slot: 0.87, back: 0 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dk: önce hatta bak', text: 'S pin\'in dışında, hattın uzantısında; pin ile hakem botunu aynı hizaya getirip hatta bakıyor (transit). 2 dakika kala bakmak, 1 dakika kala bakmaktan çok daha fazla seçenek verir: uzaktaki bir boşluğa gitmeye hâlâ vakit vardır.' },
+      { t: 3, title: 'Üç boşluk, iki soru', text: 'Yay yok, filo hattın dibinde. Sırada üç boşluk var: pin yanında DAR (tek tekne zor sığar), ortada GENİŞ, hakem botu tarafında GENİŞ. Rüzgar 5° sağa dönmüş: hakem botu ucu biraz avantajlı (A1). İki soru sor: (1) Hangisine zamanında yetişirim? (2) Hangisi daha avantajlı?' },
+      { t: 6, title: 'Süre var: avantajlıya git', text: 'S\'nin 1 dakikadan fazla vakti var; filonun 1-2 boy altından apaz ile hakem botu tarafındaki geniş boşluğa gidiyor. Filonun pis rüzgarından geçerken yavaşlar; bunu hesaba katıp erken yola çıkıyor. Dar boşluk en yakın ama riskli: komşular biraz düşerse kapanır, rüzgaraltında yer yok.' },
+      { t: 15, title: 'D 1 dk kala bakıyor', text: 'D ancak şimdi hatta bakıyor. Avantajlı boşluğa gidecek vakit yok (filonun altından ~13 boy). Geriye en yakın boşluk kalıyor: pin yanındaki dar boşluk. D oraya sıkışıyor: komşularıyla arasında yarım boy bile yok.' },
+      { t: 21, title: 'Geniş boşlukta doğru yer', text: 'S geniş boşluğun ortasına değil, rüzgarüstü komşusu 7\'nin hemen rüzgaraltına sokuluyor (İA2b\'deki gibi), aynı hizada. 7 S\'nin rüzgarüstünde (Kural 11: rüzgarüstü yol verir); S\'nin rüzgaraltında 6\'ya kadar açık su var. Sinyalde oraya doldurup hızlanacak.' },
+      { t: 30, title: 'START: avantajlı uçta, temiz', text: 'S avantajlı tarafta, temiz havada ve tam hızda çıkıyor. D dar boşlukta: çıkarken komşuları ona yer açmak zorunda kalıyor (sahnedeki K11/K14 notları), her an temas ve protesto riski; biri biraz düşse boşluk tamamen kapanırdı. Üstelik dezavantajlı uçta: 5° fark 600 px hatta yaklaşık 1 boy eder, S bu boyu avantajlı uçtan bedavaya aldı. Kural: hatta erken bak; süren varsa avantajlı geniş boşluğu seç, yoksa yakındaki geniş boşluğu seç, dar boşluğu son çare bırak.' }
+    ],
+    addBoat: { pin: { x: 290, y: 580 }, middle: { x: 500, y: 580 }, committee: { x: 720, y: 580 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   // ---------- B1: Kural 10 ----------
   S.push({
     id: 'b1-rule10',
