@@ -127,6 +127,11 @@
 
 ## Oturum günlüğü (en yeni üstte)
 
+### 2026-11-12 · Simülatör üst çubuğu, Simülatör düğmesi, tam ekran
+- Simülatör üst çubuğu sadeleşti: logo, SİM rozeti ve alt yazı kalktı; solda çerçeveli "← Senaryolar" düğmesi + "Yarış Simülatörü" başlığı, sağda Sıralama ve tam ekran.
+- Ana sayfadaki Simülatör bağlantısı diğer araç düğmeleriyle aynı yapıda, turuncu zemin + çerçeve; tablette de yazısı görünür (≤420 px'te yalnız simge).
+- Tam ekranda (iPad Safari) sistemin sol üstteki X düğmesi üst çubuğa biniyordu: `html.is-fs` sınıfı (fullscreenchange / webkitfullscreenchange) ile üst çubuğun soluna 76 px boşluk; iki sayfada da.
+
 ### 2026-11-12 · İA2b: S 4'ün rüzgaraltında + yeni İA2c (boşluk seçimi)
 - Kullanıcı isteği: İA2b'de S 3'e yakındı; 4'ün hemen rüzgaraltına, ona yakın olsun (önemli taktik). Ayrıca İA2b'nin içinde alt senaryolar: dar/geniş boşluk, süreye ve avantaja göre seçim, 2 dk önceden bakış; şimdilik +1 senaryo, gerisi fikir.
 - Yapılanlar: İA2b S rotası (apaz 7.5 s, giriş 1.6 s, bekleme 5.2 s; filoyla aynı anda doldurur), 4 ile ~44 px, paralel çıkış. Yeni senaryo İA2c `ia2c-pick-gap` + yeni katman `gaps` (app.js, README). NOTLAR'a İA2b ailesi fikir listesi. `npm run check` temiz.

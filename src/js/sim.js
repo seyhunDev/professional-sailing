@@ -630,7 +630,10 @@
   $('btnPanel').addEventListener('click', () => setPanelOpen($('panel').classList.contains('hidden')));
   $('btnPanelClose').addEventListener('click', () => setPanelOpen(false));
   $('panelHead').addEventListener('click', e => { if (phoneMq.matches && e.target.closest('.info-title-wrap, .handle')) $('panel').classList.toggle('collapsed'); });
-  $('btnFull').addEventListener('click', () => { const d = document.documentElement; if (!document.fullscreenElement) (d.requestFullscreen || d.webkitRequestFullscreen || (() => {})).call(d); else document.exitFullscreen(); });
+  // tam ekran: iPad'de sistemin X düğmesi sol üste biner → üst çubukta yer aç
+  const fsSync = () => document.documentElement.classList.toggle('is-fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
+  document.addEventListener('fullscreenchange', fsSync); document.addEventListener('webkitfullscreenchange', fsSync);
+  $('btnFull').addEventListener('click', () => { const d = document.documentElement; if (!(document.fullscreenElement || document.webkitFullscreenElement)) (d.requestFullscreen || d.webkitRequestFullscreen || (() => {})).call(d); else (document.exitFullscreen || document.webkitExitFullscreen).call(document); });
   const svg = $('course');
   svg.addEventListener('pointerdown', onDown);
   svg.addEventListener('pointermove', onMove);

@@ -313,5 +313,11 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
 }
 
 /* simülatör bağlantısı (üst çubuk) */
-a.sim-link { color: #fdba74; text-decoration: none; }
-a.sim-link:hover { color: #fed7aa; }
+/* Simülatör bağlantısı: diğer araç düğmeleriyle aynı yapı, turuncu ve çerçeveli (tıklanabilir olduğu belli) */
+a.sim-link { text-decoration: none; color: #fed7aa; background: rgba(251,146,60,.16); border-color: rgba(251,146,60,.6); font-weight: 600; }
+a.sim-link svg { color: #fb923c; }
+a.sim-link:hover { background: rgba(251,146,60,.26); border-color: #fb923c; color: #fff; }
+@media (max-width: 1100px) { a.sim-link.tool { width: auto; padding: 0 12px 0 10px; } a.sim-link .lbl { display: inline; } }
+@media (max-width: 420px) { a.sim-link.tool { width: var(--tap); padding: 0; } a.sim-link .lbl { display: none; } }
+/* Tam ekranda (iPad Safari) sol üstte sistemin kapatma (X) düğmesi çıkar: üst çubuğun solunu boş bırak */
+html.is-fs .topbar { padding-left: 76px; }

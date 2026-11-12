@@ -500,6 +500,9 @@
   $('chkShadows').onchange = e => { state.show.shadows = e.target.checked; render(); };
   $('chkTrails').onchange = e => { state.show.trails = e.target.checked; render(); };
   $('btnLayers').onclick = () => { const m = $('layersMenu'); m.classList.toggle('hidden'); $('btnLayers').classList.toggle('on', !m.classList.contains('hidden')); };
+  // tam ekran: iPad'de sistemin X düğmesi sol üste biner → üst çubukta yer aç
+  const fsSync = () => document.documentElement.classList.toggle('is-fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
+  document.addEventListener('fullscreenchange', fsSync); document.addEventListener('webkitfullscreenchange', fsSync);
   $('btnFull').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); };
   $('btnInfo').onclick = () => setInfoOpen(!state.infoOpen);
   $('btnInfoClose').onclick = () => setInfoOpen(false);
