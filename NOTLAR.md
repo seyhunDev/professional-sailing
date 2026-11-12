@@ -19,6 +19,14 @@
 ## Sıradaki işler (öncelik sırasıyla, her biri bir sohbete uygun)
 > Karar (2026-11-12): **Önce Taktik → Start (A) bitirilecek, sonra Kurallar, sonra Teknik.** Liste: KONULAR.md → A1–A15.
 - [x] **Start paketi 1** (2026-11-12): A1b ölçüm yöntemleri · A3 pin ucu avantajlı · A4 hakem botu avantajlı (barging).
+- [ ] **Start paketi 5 – İLERİ SEVİYE KALABALIK START (kullanıcı isteği, öncelikli; ayrı sohbet):**
+  Hedef kitle: yarışan Optimist sporcuları. Geniş hat (600 px, ~12 boy), 8-10 tekne, gerçek start karmaşası.
+  - **A16 · Pin avantajlı, pin'de karmaşa:** pin'e yığılma; layline altında kalıp pin'i dönemeyenler; pin'de tramola atmak zorunda kalan tekne (Kural 13: tramola atarken yol ver; tramola bitince iskele kontrada herkese yol verir, Kural 10); rüzgaraltı teknenin orsa hakkı (K11) ile rüzgarüstündekilerin pin'e sıkıştırılması; geç kalıp 2. sırada çıkan; pin'e çarpan (K31 → tek tur ceza). Doğru çözüm: layline'ın üstünde, 3-4 boy geride bekleyip son 5 s'de hızlanmak.
+  - **A17 · Hakem botunda yer mücadelesi (Optimist):** rüzgara baş verip bekleme (hold), yelken boş; "double tack"; rüzgaraltına inip yer açma ve açılan yeri koruma; rüzgarüstünden sokulan (barging) hak alamaz; rüzgaraltı orsa hakkı (K11, start öncesi uygun rota sınırı yok); tramola atarken yol ver (K13); **geri giden tekne yol verir (K22.3: yelkeni geriye basıp suda geri hareket eden tekne herkese yol verir)**; hak kazanınca yer ver (K15), rota değiştirirken yer ver (K16); temas önleme (K14); hakem botuna temas (K31). **Hatalı hareketler (kırmızı rozet):** rüzgarüstünden sokulma, pompalama/sallama/dümenle kürek (K42; rüzgara baş vermişken dümeni çevirerek dönmek K42.3(d) ile sınırlı izinli), hakem botuna yaslanma, geri giderken yol istemek, bindirme kurmadan "yer" istemek.
+  - **A8 · Bekleme teknikleri** (bu paketle birleşsin): orsalayıp durma, yelkeni boşaltma, geri yelken (backing) ile yavaşlama/geri gitme, ikili tramola, hattın 2-4 boy gerisinde yer tutma; hızlanma mesafesi.
+  - **Motor gereksinimleri:** scripted teknelere bekleme (`hold`) var; eklenecekler: `backing` (yelken geri basılı, tekne geri gidiyor; yelken karnı ters), rüzgara baş vermişken yelkenin tamamen boş çizilmesi (var), 8-10 tekne için etiket seyrekleştirme (yalnızca manevra yapanın notu), kırmızı "hatalı hareket" rozeti (`note` için `kind:'fault'`), daha geniş hat için `addBoat` slotları, Kural 13 ve 22 kural motoruna (ek tekneler) eklenmeli.
+  - Teslim: 3 senaryo (A16, A17, A8) + KONULAR.md ✅ + `npm run check` temiz + ekran görüntüleri.
+- [ ] **Uygulama adı (ayrı sohbet):** "Professional Sailing" muhtemelen kullanımda. Yeni isim kriterleri: kısa, akılda kalıcı, Türkçe sporcuya da uluslararası kitleye de uyan, alan adı / GitHub adı boş, "taktik + yelken + öğrenme" çağrışımı. 10-15 aday üret, 3'e indir, kullanıcıya sun. Seçilince: GitHub depo adı, site adresi, `index.html` başlığı, README, CLAUDE.md, NOTLAR.md güncellenir (yayın adresi değişeceği için kullanıcıya haber verilir).
 - [ ] **Start paketi 2:** A5 hat yayı (line sag) ve transit (A6) · A7 rüzgaraltına boşluk (hole) · A8 bekleme teknikleri.
 - [ ] **Start paketi 3:** A9 start sonrası ilk 2 dk (temiz hava, lane) · A10 iskele kontra start · A11 Vanderbilt yaklaşması.
 - [ ] **Start paketi 4:** A12 bayraklar/sinyaller · A13 OCS düzeltme · A14 akıntı · A15 kalabalıkta sıra.
@@ -42,6 +50,7 @@
 - 2026-11-12 · **Bilgi kartı tek adım gösterir**, canlı takip açık/kapalı; kullanıcı Önceki/Sonraki ile gezince takip kapanır.
 
 ## Açık sorular (kullanıcıya)
+- Uygulama adı: karar bekliyor (ayrı sohbette adaylar üretilecek).
 - Hedef sınıf: Optimist mi, ILCA 4/6 mı, karışık mı? (Hız/dönüş oranları ve "tekne boyu" ölçeği buna göre ayarlanabilir.)
 - Senaryolarda İngilizce terimlerin parantez içinde verilmesi devam etsin mi, yoksa yalnızca Türkçe mi?
 - Antrenörler sahada tablet mi kullanacak? (Mobil düzenin önceliğini belirler.)
@@ -57,6 +66,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 · İş tanımı: ileri seviye kalabalık start + uygulama adı
+- Kullanıcı istedi: kalabalık, geniş hatlı, pin avantajlı ve pin'de karmaşa olan start; bekleme taktikleri; Optimist'lerin hakem botunda rüzgara baş verip yer mücadelesi; geçerli kurallar ve hatalı hareketler. Ayrı sohbette yapılacak → "Sıradaki işler → Start paketi 5" ayrıntılı tanım.
+- Uygulama adı için ayrı sohbet → "Sıradaki işler → Uygulama adı".
+
 ### 2026-11-12 · Arayüz: senaryo seçici ve duyarlı düzen
 - Yapılanlar: açılır menü yerine kategori sekmeli kart paneli (`#picker`), üst çubukta kategori › konu + başlık düğmesi; telefon / tablet / bilgisayar düzenleri; telefonda bilgi kartı alttan sayfa (daraltılabilir), tekne ekle popover; iPad'de 44 px dokunma hedefleri. Playwright ile 1400×800, iPad Pro 11 (yatay/dikey), iPhone 13 (dikey/yatay) kontrol edildi.
 - Yarım kalan: dikey telefonda sahne küçük; gerçek cihazda dokunma testi kullanıcıya bırakıldı.

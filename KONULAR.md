@@ -54,6 +54,8 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | A13 | OCS düzeltme | Çizginin uçlarından dolaşma (I bayrağı), çizgiyi geri geçme (P bayrağı); kaybedilen süre. | ⬜ |
 | A14 | Akıntı etkisi | Akıntı hatta doğru / hattan uzağa: bekleme mesafesi ve hızlanma zamanı değişir. | ⬜ |
 | A15 | Kalabalıkta pozisyon ve sıra | Birinci sıra vs ikinci sıra; ikinci sıranın gölgede kalması; "kötü start"tan kurtulma: erken tramola. | ⬜ |
+| A16 | İleri: geniş hat, pin avantajlı, pin'de karmaşa | 8-10 tekne; layline altında kalanlar, pin'de tramola (K13→K10), rüzgaraltı orsa hakkı, pin'e temas (K31), 2. sıra. | 🔜 |
+| A17 | İleri: hakem botunda yer mücadelesi (Optimist) | Rüzgara baş verip bekleme, rüzgaraltına inip yer açma, barging, K11/K13/K15/K16/K22.3 (geri giden yol verir)/K14/K31/K42; hatalı hareketler kırmızı rozetle. | 🔜 |
 
 ## C. Rüzgar ve Orsa Stratejisi (upwind)
 
