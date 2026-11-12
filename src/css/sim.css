@@ -197,3 +197,70 @@ body.sim { position: fixed; inset: 0; overscroll-behavior: none; }
 .tb.accent.pulse:not(:disabled) { box-shadow: 0 0 0 0 rgba(251,146,60,.5); animation: tackPulse 2s ease-out infinite; }
 @keyframes tackPulse { 0% { box-shadow: 0 0 0 0 rgba(251,146,60,.45); } 70%, 100% { box-shadow: 0 0 0 8px rgba(251,146,60,0); } }
 @media (min-width: 1101px) and (max-width: 1520px) { .cg { padding: 0 10px; } .cg .tb { padding: 0 11px; } .cg-mine .cg-body { gap: 5px; } }
+
+/* ---------- Seçim durumları: seçili / açık olan her şey dolu renkle ---------- */
+/* seçenek grupları: seçili olan dolu mavi, ötekiler sönük */
+.seg button.on, .speed button.on { background: var(--accent); color: var(--accent-ink); font-weight: 800; box-shadow: 0 1px 4px rgba(56,189,248,.35); }
+.seg button.on:hover { color: var(--accent-ink); }
+.seg#selRules button[data-v="vermez"].on { background: #ef4444; color: #fff; box-shadow: 0 1px 4px rgba(239,68,68,.4); }
+/* aç/kapa düğmeleri: solda küçük anahtar; açıkken dolu renk */
+.tb.tgl { display: inline-flex; align-items: center; gap: 6px; }
+.tb.tgl::before { content: ''; flex: 0 0 auto; width: 22px; height: 13px; border-radius: 7px; transition: background .15s;
+  background: radial-gradient(circle at 6.5px 50%, #94a3b8 4px, transparent 4.5px), var(--raised2); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.tb.tgl.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 800; }
+.tb.tgl.on::before { background: radial-gradient(circle at 15.5px 50%, #fff 4.5px, transparent 5px), rgba(4,32,47,.55); box-shadow: none; }
+.tb.tgl.warn.on { background: #dc2626; border-color: #ef4444; color: #fff; }
+.tb.tgl.warn.on::before { background: radial-gradient(circle at 15.5px 50%, #fff 4.5px, transparent 5px), rgba(69,10,10,.55); }
+#btnRoute.on { background: #fb923c; border-color: #fb923c; color: #2a1204; font-weight: 800; }
+/* basınca tepki */
+.tb, .seg button, .stepper button, .speed button, .play, .tool, .ms-chip { transition: transform .08s, background .15s, color .15s, border-color .15s; }
+.tb:active:not(:disabled), .seg button:active:not(:disabled), .stepper button:active:not(:disabled), .speed button:active, .tool:active { transform: scale(.94); }
+.tb:disabled, .seg button:disabled, .stepper button:disabled { cursor: not-allowed; }
+.tb.fired { animation: fired .6s ease-out; }
+@keyframes fired { 0% { background: #fb923c; color: #2a1204; box-shadow: 0 0 0 0 rgba(251,146,60,.8); } 100% { box-shadow: 0 0 0 14px rgba(251,146,60,0); } }
+/* seçili tekne kutusu ve sıralamadaki satırı */
+#selBox { background: rgba(56,189,248,.1); box-shadow: inset 3px 0 0 var(--accent); }
+#selTitle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); text-transform: none; letter-spacing: 0; font-weight: 700; }
+#selTitle .boat-id { color: #0b1724; font-size: 11px; }
+#selTitle em { font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); border-radius: 6px; padding: 2px 6px; }
+.standings li { cursor: pointer; }
+.standings li:hover { background: var(--raised); }
+.standings li.sel { background: rgba(56,189,248,.18); box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--text); }
+#course .boat { cursor: pointer; }
+#course .gust { cursor: pointer; }
+
+/* sahnenin üstünde durum şeridi: ne oluyor, senin teknen hangi modda, ne seçili */
+.mode-strip { position: absolute; top: 12px; left: 0; right: 0; margin: 0 auto; width: fit-content; max-width: calc(100% - 24px); z-index: 4;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; pointer-events: none; }
+.ms-chip { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 15px; font-size: 12.5px; font-weight: 600; white-space: nowrap;
+  background: var(--panel-solid); border: 1px solid var(--border-strong); color: var(--text2); box-shadow: var(--shadow); }
+.ms-chip b { font-weight: 800; text-transform: uppercase; letter-spacing: .05em; font-size: 11.5px; }
+.ms-chip::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+.ms-chip.ms-sel::before, .ms-chip.ms-auto::before { display: none; }
+.ph-setup { color: #7dd3fc; } .ph-count { color: #fbbf24; } .ph-race { color: #4ade80; } .ph-end { color: #cbd5e1; }
+.ph-pause { color: #e2e8f0; border-color: #e2e8f0; }
+.ph-race::before, .ph-count::before { animation: msBlink 1.2s ease-in-out infinite; }
+@keyframes msBlink { 50% { opacity: .25; } }
+.ms-manual { background: #fb923c; border-color: #fb923c; color: #2a1204; }
+.ms-route { background: rgba(251,146,60,.18); border-color: #fb923c; color: #fed7aa; }
+.ms-auto b { color: var(--text); }
+.ms-warn { background: #dc2626; border-color: #ef4444; color: #fff; font-weight: 800; }
+.ms-sel { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; cursor: pointer; font-family: inherit; }
+.ms-sel .boat-id { color: #0b1724; font-size: 11px; box-shadow: 0 0 0 1.5px rgba(4,32,47,.5); }
+.ms-sel .ci.x { width: 13px; height: 13px; opacity: .75; }
+.ms-sel:hover .ci.x { opacity: 1; }
+.route-bar:not(.hidden) ~ .mode-strip { display: none; }
+@media (min-width: 1101px) { .mode-strip { left: 280px; right: 12px; } .stage:has(#panel:not(.hidden)) .mode-strip { right: 390px; } }
+/* tablet: sahnenin altında, yakınlaştırma düğmelerinin sağında (üstte pusula ve panel var) */
+@media (min-width: 641px) and (max-width: 1100px) {
+  .mode-strip { top: auto; bottom: 14px; left: 110px; right: 14px; justify-content: flex-start; margin: 0; }
+  .toast { bottom: 56px; }
+}
+/* telefon: pusulanın altında, alt alta */
+@media (max-width: 640px) {
+  .mode-strip { top: 166px; left: 8px; right: auto; margin: 0; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .ms-chip { height: 26px; padding: 0 9px; font-size: 11.5px; }
+  .ms-auto, .ms-route { display: none; }
+  .toast { top: 44px; }
+}
+@media (min-width: 1101px) and (max-width: 1520px) { .cg { padding: 0 8px; } .cg .tb { padding: 0 9px; } .cg .tb.tgl { padding: 0 10px 0 8px; } }

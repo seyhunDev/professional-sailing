@@ -97,6 +97,13 @@
       </div>
     </div>
 
+    <div id="modeStrip" class="mode-strip" aria-live="polite">
+      <span id="msPhase" class="ms-chip"></span>
+      <span id="msMine" class="ms-chip"></span>
+      <span id="msRules" class="ms-chip ms-warn hidden">Yol vermez</span>
+      <button id="msSel" class="ms-chip ms-sel hidden" title="Seçimi kaldır"></button>
+    </div>
+
     <aside id="panel" class="info-card sim-panel">
       <div class="info-head" id="panelHead">
         <button class="handle" id="btnCollapse" title="Daralt / genişlet"><span></span></button>
@@ -228,7 +235,7 @@
           <button class="tb tgl" id="btnManual" title="Manuel: start'tan sonra tekne kendi kendine tramola atmaz, tramolayı sen atarsın (M)">Manuel</button>
           <button class="tb accent" id="btnTack" title="Tramola (T)"><svg class="ci"><use href="#i-tack"/></svg>Tramola</button>
           <select class="tb" id="selMinePersona" title="Taktik">
-            <option value="orta">Taktik: Orta</option><option value="sol">Taktik: Sol</option><option value="sag">Taktik: Sağ</option><option value="saganak">Taktik: Sağanak</option><option value="manuel" hidden>Taktik: Komutla</option>
+            <option value="orta">Taktik: Orta</option><option value="sol">Taktik: Sol</option><option value="sag">Taktik: Sağ</option><option value="saganak">Taktik: Sağanak</option><option value="manuel" hidden>Taktik: Sen</option>
           </select>
           <select class="tb" id="selMineSpeed" title="Teknenin hızı (tekne ve denizci farkı)">
             <option value="0.9">Hız −10%</option><option value="0.95">Hız −5%</option><option value="1">Hız normal</option><option value="1.05">Hız +5%</option><option value="1.1">Hız +10%</option>

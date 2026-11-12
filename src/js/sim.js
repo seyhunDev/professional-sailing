@@ -153,6 +153,9 @@
       el('text', { y: -gu.ry * 0.15, 'text-anchor': 'middle', fill: '#bae6fd', 'font-size': 14, 'font-weight': 700, 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.8)', 'stroke-width': 4 }, lab).textContent = v.gusts.length > 1 ? `SAĞANAK ${i + 1}` : 'SAĞANAK';
       el('text', { y: -gu.ry * 0.15 + 17, 'text-anchor': 'middle', fill: '#7dd3fc', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.8)', 'stroke-width': 4 }, lab).textContent = 'tekneler %25 hızlı';
       if (on) el('text', { y: -gu.ry * 0.15 - 20, 'text-anchor': 'middle', fill: '#38bdf8', 'font-size': 11, 'font-weight': 800, 'letter-spacing': '.08em', 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.85)', 'stroke-width': 4 }, lab).textContent = 'SEÇİLİ · AYARLAR ALTTA';
+      else { const tag = 'dokun: düzenle', tw = tag.length * 6.4 + 16;
+        el('rect', { x: -tw / 2, y: -gu.ry * 0.15 + 26, width: tw, height: 18, rx: 9, fill: 'rgba(2,21,38,.55)', stroke: 'rgba(125,211,252,.35)' }, lab);
+        el('text', { x: 0, y: -gu.ry * 0.15 + 39, 'text-anchor': 'middle', fill: '#7dd3fc', 'font-size': 10.5, 'font-weight': 600 }, lab).textContent = tag; }
     });
   }
 
@@ -195,7 +198,12 @@
     const sail = E.sailState(b.h, w);
     const op = b.phase === 'done' ? Math.max(0.15, 1 - (t - b.doneAt) / 5) : 1;
     const wrap = el('g', { opacity: op.toFixed(2), 'data-boat': b.id, class: 'boat' }, parent);
-    if (b.mine || sel) el('circle', { cx: b.x.toFixed(1), cy: b.y.toFixed(1), r: 31, fill: b.mine ? 'rgba(251,146,60,.12)' : 'rgba(56,189,248,.1)', stroke: sel ? '#38bdf8' : 'rgba(251,146,60,.7)', 'stroke-width': sel ? 2 : 1.5, 'stroke-dasharray': sel ? '' : '4 4' }, wrap);
+    if (b.mine && !sel) el('circle', { cx: b.x.toFixed(1), cy: b.y.toFixed(1), r: 31, fill: 'rgba(251,146,60,.12)', stroke: 'rgba(251,146,60,.7)', 'stroke-width': 1.5, 'stroke-dasharray': '4 4' }, wrap);
+    if (sel) {                                           // seçili: dolu mavi halka + dışa yayılan nabız
+      const ph = (performance.now() / 1400) % 1;
+      el('circle', { cx: b.x.toFixed(1), cy: b.y.toFixed(1), r: (34 + ph * 14).toFixed(1), fill: 'none', stroke: '#38bdf8', 'stroke-width': 2.5, opacity: (0.7 * (1 - ph)).toFixed(2) }, wrap);
+      el('circle', { cx: b.x.toFixed(1), cy: b.y.toFixed(1), r: 33, fill: 'rgba(56,189,248,.16)', stroke: '#38bdf8', 'stroke-width': 3 }, wrap);
+    }
     if (b.phase === 'penalty') el('circle', { cx: b.x.toFixed(1), cy: b.y.toFixed(1), r: 29, fill: 'none', stroke: '#f87171', 'stroke-width': 2, 'stroke-dasharray': '6 4' }, wrap);
     if (b.inGust > 0.2 && b.phase !== 'wait') el('circle', { cx: b.x.toFixed(1), cy: b.y.toFixed(1), r: 26, fill: 'none', stroke: 'rgba(125,211,252,.6)', 'stroke-width': 1.5 }, wrap);
     const g = el('g', { transform: `translate(${b.x.toFixed(1)},${b.y.toFixed(1)}) rotate(${b.h.toFixed(1)})` }, wrap);
@@ -211,7 +219,11 @@
     const lab = el('g', { transform: `translate(${b.x.toFixed(1)},${(b.y + 36).toFixed(1)})` }, wrap);
     const idTxt = b.id;
     const wTxt = 7.1 * idTxt.length + 26 + (b.ignoresRules ? 12 : 0);
-    el('rect', { x: -wTxt / 2, y: -10, width: wTxt, height: 19, rx: 9, fill: b.mine ? 'rgba(124,45,18,.9)' : 'rgba(7,18,30,.78)', stroke: b.ignoresRules ? '#f87171' : b.mine ? '#fb923c' : 'rgba(255,255,255,.25)' }, lab);
+    el('rect', { x: -wTxt / 2, y: -10, width: wTxt, height: 19, rx: 9, fill: b.mine ? 'rgba(124,45,18,.9)' : 'rgba(7,18,30,.78)', stroke: sel ? '#38bdf8' : b.ignoresRules ? '#f87171' : b.mine ? '#fb923c' : 'rgba(255,255,255,.25)', 'stroke-width': sel ? 2.2 : 1 }, lab);
+    if (b.mine && b.manual) {                            // senin teknen manuelde: etiketin solunda turuncu "M" (manuel)
+      el('rect', { x: -wTxt / 2 - 20, y: -8.5, width: 17, height: 17, rx: 5, fill: '#fb923c', stroke: '#fff', 'stroke-width': 1 }, lab);
+      el('text', { x: -wTxt / 2 - 11.5, y: 4, 'text-anchor': 'middle', fill: '#2a1204', 'font-size': 11, 'font-weight': 900 }, lab).textContent = 'M';
+    }
     el('text', { x: -wTxt / 2 + 7, y: 4, fill: '#fff', 'font-size': 11.5, 'font-weight': 700 }, lab).textContent = idTxt;
     if (b.ignoresRules) el('text', { x: -wTxt / 2 + 9 + 7.1 * idTxt.length, y: 4, fill: '#f87171', 'font-size': 12, 'font-weight': 900 }, lab).textContent = '!';
     el('rect', { x: wTxt / 2 - 17, y: -7, width: 13, height: 13, rx: 3.5, fill: tk === 'S' ? '#22c55e' : '#ef4444' }, lab);
@@ -338,7 +350,7 @@
     const setupSel = st.mode === 'setup';
     $('selBox').classList.toggle('hidden', !sb);
     if (sb) {
-      $('selTitle').textContent = (sb.mine ? 'Senin teknen' : `Tekne ${sb.id}`) + (sb.sailor ? ` · ${sb.sailor}` : '');
+      $('selTitle').innerHTML = `<span class="boat-id" style="background:${sb.color}">${esc(sb.id)}</span>` + esc((sb.mine ? 'Senin teknen' : `Tekne ${sb.id}`) + (sb.sailor ? ` · ${sb.sailor}` : '')) + '<em>seçili</em>';
       if (document.activeElement !== $('selName')) $('selName').value = sb.sailor || '';
       $('selTackRow').classList.toggle('hidden', !setupSel); $('selSetupRow').classList.toggle('hidden', !setupSel);
       const over = !setupSel && (sb.finish || sb.phase === 'done');
@@ -352,7 +364,7 @@
     }
     // sıralama
     const rows = st.mode === 'setup' ? st.fleet.map(b => ({ b, status: S.PERSONAS[b.persona] + ' · ' + (b.tack === 'starboard' ? 'sancak' : 'iskele') + (b.ignoresRules ? ' · yol vermez' : '') + speedTxt(b) })) : S.standings(v).map(r => ({ ...r, status: r.status + speedTxt(r.b) }));
-    $('standings').innerHTML = rows.map((r, i) => `<li class="${r.b.mine ? 'me' : ''} ${r.b.finish ? 'fin' : ''} ${r.b.phase === 'penalty' ? 'pen' : ''}"><span class="pos">${st.mode === 'setup' ? '' : i + 1}</span>` +
+    $('standings').innerHTML = rows.map((r, i) => `<li data-id="${esc(r.b.id)}" class="${r.b.mine ? 'me' : ''} ${r.b.finish ? 'fin' : ''} ${r.b.phase === 'penalty' ? 'pen' : ''} ${st.sel === r.b.id ? 'sel' : ''}"><span class="pos">${st.mode === 'setup' ? '' : i + 1}</span>` +
       `<span class="boat-id" style="background:${r.b.color}">${esc(r.b.id)}</span><span class="nm">${esc(nameOf(r.b))}</span><span class="stt">${esc(r.status)}</span></li>`).join('');
     // olaylar
     const evs = v.events.filter(e => !st.mineOnly || /(^|\s)SEN\b/.test(e.text)).slice(-40).reverse();
@@ -428,7 +440,7 @@
     $('btnManual').disabled = !mine || (!setup && !!mine.finish);
     $('selMinePersona').disabled = !!(mine && mine.manual);
     $('btnTack').classList.toggle('pulse', !!(mine && mine.manual && !setup && mine.phase === 'race'));
-    if (mine && document.activeElement !== $('selMinePersona')) $('selMinePersona').value = mine.persona;
+    if (mine && document.activeElement !== $('selMinePersona')) $('selMinePersona').value = mine.manual ? 'manuel' : mine.persona;
     if (mine && document.activeElement !== $('selMineSpeed')) $('selMineSpeed').value = String(mine.speedK || 1);
     $('selMineSpeed').disabled = !mine || (!setup && !!mine.finish);
     $('btnMineRules').classList.toggle('on', !!(mine && mine.ignoresRules));
@@ -437,7 +449,42 @@
     $('btnRoute').classList.toggle('has', hasRoute);
     $('btnRoute').querySelector('.lbl2').textContent = hasRoute ? 'Rota ✓' : 'Rota';
     $('btnMineRules').disabled = !mine || (!setup && (mine.phase === 'done' || !!mine.finish));
+    stateUpdate(v, mine);
     updatePanel();
+  }
+
+  // ---------- Seçim ve mod durumu: neyin seçili / açık olduğunu her an göster ----------
+  let lastStateKey = '';
+  function stateUpdate(v, mine) {
+    const setup = st.mode === 'setup', manual = !!(mine && mine.manual), hasRoute = !!(mine && mine.route && (mine.routeIdx || 0) < mine.route.length);
+    const sb = st.sel && (setup ? st.fleet : v.boats).find(b => b.id === st.sel);
+    const gl = st.gsel != null && (setup || st.sim) ? gustList() : null;
+    const phase = setup ? ['setup', 'Kurulum'] : st.mode === 'pause' ? ['pause', 'Duraklatıldı'] : st.mode === 'end' ? ['end', 'Yarış bitti'] : v.t < v.startAt ? ['count', "Start'a geri sayım"] : ['race', 'Yarış'];
+    const key = [phase[0], manual, hasRoute, mine && mine.persona, mine && mine.ignoresRules, mine && mine.finish, sb && sb.id, sb && sb.sailor, st.gsel, gl && gl.length, st.drawMode].join('|');
+    if (key === lastStateKey) return;
+    lastStateKey = key;
+    // ana durum ve senin teknenin modu
+    $('msPhase').className = 'ms-chip ph-' + phase[0]; $('msPhase').textContent = phase[1];
+    const m = $('msMine');
+    if (!mine) m.classList.add('hidden');
+    else {
+      m.classList.remove('hidden');
+      m.className = 'ms-chip ' + (manual ? 'ms-manual' : hasRoute ? 'ms-route' : 'ms-auto');
+      m.innerHTML = manual ? '<b>Manuel</b> tramolayı sen atarsın (T)' : hasRoute ? '<b>Rota</b> çizdiğin rotayı izliyor' : `<b>Otomatik</b> taktik: ${esc(S.PERSONAS[mine.persona] || mine.persona)}`;
+    }
+    $('msRules').classList.toggle('hidden', !(mine && mine.ignoresRules));
+    // seçili nesne (tekne ya da sağanak); dokununca seçim kalkar
+    const s = $('msSel');
+    const selTxt = sb ? `<span class="boat-id" style="background:${sb.color}">${esc(sb.id)}</span>${esc(sb.mine ? 'Senin teknen' : 'Tekne ' + sb.id)} seçili`
+      : gl && gl[st.gsel] ? `<svg class="ci"><use href="#i-gust"/></svg>${gl.length > 1 ? 'Sağanak ' + (st.gsel + 1) : 'Sağanak'} seçili` : '';
+    s.classList.toggle('hidden', !selTxt || !!st.drawMode);
+    if (selTxt) s.innerHTML = selTxt + '<svg class="ci x"><use href="#i-close"/></svg>';
+    // düğmeler: basılı durum (aria-pressed) ve devre dışıysa nedeni
+    $('btnManual').setAttribute('aria-pressed', manual); $('btnMineRules').setAttribute('aria-pressed', !!(mine && mine.ignoresRules));
+    $('btnTack').title = setup ? "Tramola: start'tan sonra kullanılır (T)" : manual ? 'Tramola at (T): manuelde tramolayı yalnız sen atarsın' : 'Tramola at (T)';
+    $('selMinePersona').title = manual ? 'Manuel açık: taktik kullanılmaz, tramolayı sen atarsın' : 'Taktik';
+    $('btnRoute').title = manual ? 'Manuel açık: rota çizilemez (önce Manuel\'i kapat)' : 'Teknenin rotasını çiz / düzenle';
+    [...document.querySelectorAll('.seg button, #speedSeg button, .seg-tgl button')].forEach(x => x.setAttribute('aria-pressed', x.classList.contains('on')));
   }
 
   function toast(msg) {
@@ -904,6 +951,14 @@
   $('btnMakeMine').addEventListener('click', () => { if (st.sel) { makeMine(st.sel); updatePanel(true); } });
   $('btnRemoveBoat').addEventListener('click', () => { if (st.sel) { removeOne(st.sel); updatePanel(true); } });
   $('btnSelClose').addEventListener('click', () => { st.sel = null; updatePanel(true); });
+  $('msSel').addEventListener('click', () => { st.sel = null; st.gsel = null; gustBarUpdate(); updatePanel(true); });
+  $('standings').addEventListener('click', e => {
+    const li = e.target.closest('li[data-id]'); if (!li) return;
+    st.sel = st.sel === li.dataset.id ? null : li.dataset.id; st.gsel = null; gustBarUpdate(); updatePanel(true);
+  });
+  // komut düğmesine basınca kısa parlama: komutun alındığı görülsün
+  const flash = id => { const x = $(id); x.classList.remove('fired'); void x.offsetWidth; x.classList.add('fired'); };
+  $('btnTack').addEventListener('click', () => flash('btnTack'));
   $('chkMineOnly').addEventListener('change', e => { st.mineOnly = e.target.checked; updatePanel(true); });
   $('btnPanel').addEventListener('click', () => setPanelOpen($('panel').classList.contains('hidden')));
   $('btnPanelClose').addEventListener('click', () => setPanelOpen(false));

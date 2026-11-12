@@ -24,6 +24,8 @@
 - Kategoriler: Kurallar / Taktik / Teknik; KONULAR.md de bu üç bölüme ayrıldı (Teknik = G1-G7, Aşama 1 ile).
 - **Yarış simülatörü** (`src/sim.html`, ana sayfada üst çubukta "Simülatör"): kullanıcı tekneleri sürükleyip yerleştirir, rüzgarı ±5° döndürür, sol/sağ sağanak ekler, start verir; tekneler orsa şamandırasına gidip iskeleden döner, sıralanır. Çekirdek `js/sim-core.js` (canlı adım, DOM yok), arayüz `js/sim.js`. Kurallar kendi "kaçış seçici"siyle (aday rotalar arasında en güvenlisi): K10/11/12/13/14/18/22. Kişilikler: sol/orta/sağ/sağanak avcısı/manuel. Geri sarma: 0.1 s kareler. Denetim: `scripts/check-sim.mjs` (5 durum, herkes bitirmeli, temas ≤6). **Protesto ve ceza (2b):** yol vermeyen tekne yüzünden hak sahibi K14 kaçışı yapmak zorunda kalırsa ya da temas olursa yol vermesi gereken tekne protesto edilir ve iki tur (720°) ceza atar (şamandıradan 140 px, hattan 40 px uzakta; şamandırayı cezasız dönemez, önce uzaklaşıp cezayı atar sonra bitirir). "Yol vermez" (`ignoresRules`) tekne seçeneği (kurulumda tekne seçince "Davranış"; senin teknen için alt çubukta, yarışta da). **Rota çizme (2c):** alt çubukta "Rota çiz" → varsayılan **Açılı** (sürükleme = orsa açısına oturan düz bacak) ya da **Serbest** parmakla çizgi (≈40 px aralıklı noktalara seyreltilir) → `b.route`; teknen start'tan sonra noktaları sırayla izler (`followRoute`), orsadan dar kısımlarda çizginin ±45 px koridorunda zikzak atar, rota bitince taktiğine göre şamandıraya gider; yarışta yeni rota `command('route')` ile o andan yeniden hesaplanır, × siler. Rota kural denetiminden muaf değil (yol vermezse protesto). Fuzz `CEZA_TAKILDI` / `CEZA_ATILMADI` denetler, protesto sayısını yazar (`--protesto` gerekçe dağılımı).
 
+- **Seçim durumları (simülatör, 2026-11-12):** seçili/açık olan her şey dolu renkle: seçenek grupları (`.seg button.on`, hız 1×/2×/4×) dolu mavi; aç/kapa düğmeleri (`.tb.tgl`: Manuel, Yol vermez) solda küçük anahtar, açıkken dolu (Yol vermez kırmızı); Rota çizerken düğme dolu turuncu; basınca küçülme, Tramola'ya basınca turuncu parlama. Sahnede **durum şeridi** (`#modeStrip`, `stateUpdate()`): aşama (Kurulum / geri sayım / Yarış / Duraklatıldı / bitti) · senin teknenin modu (MANUEL turuncu / ROTA / OTOMATİK + taktik) · Yol vermez (kırmızı) · seçili tekne ya da sağanak çipi (dokununca seçim kalkar). Masaüstünde üst orta, tablette sahnenin altı, telefonda pusulanın altı; rota çubuğu açıkken gizlenir. Seçili tekne: dolu mavi halka + nabız, etiket kenarı mavi; panelde rozetli "SEÇİLİ" başlık; Sıralama satırına dokununca tekne seçilir (seçili satır mavi). Manuelde teknenin etiketinde turuncu **M**, Taktik seçicide "Taktik: Sen". Sağanak: seçiliyken parlak kenar + "SEÇİLİ · düzenleniyor", değilken "dokun: düzenle". Devre dışı düğmeler nedenini `title`da söyler.
+
 ## Sıradaki işler (öncelik sırasıyla, her biri bir sohbete uygun)
 > Karar (2026-11-12): **Önce Taktik → Start (A) bitirilecek, sonra Kurallar, sonra Teknik.** Liste: KONULAR.md → A1–A15.
 - [x] **Start paketi 1** (2026-11-12): A1b ölçüm yöntemleri · A3 pin ucu avantajlı · A4 hakem botu avantajlı (barging).
@@ -130,6 +132,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · Simülatör: seçim durumları belirgin
+- Kullanıcı: "manuel seçildiğinde ne seçili, ne yapılıyor anlaşılmıyor; her bağlam için seçim durumlarını belirgin yap". Yapılanlar "Güncel durum"da (Seçim durumları maddesi). Yalnız `sim.html`, `sim.css`, `sim.js` (çizim/etiket ve `stateUpdate`); çekirdeğe dokunulmadı. `npm run check` temiz.
+- Hız/tramola ve sağanak paneli yerleşimi ayrı sohbetlerde. Durum şeridi rota çubuğu açıkken gizlenir; sağanak kartı sağ altta olduğundan ona karışmaz.
+- Sonraki: kullanıcı geri bildirimi; telefonda şerit pusulanın altında alt alta, kalabalık bulursa yalnız aşama + seçili gösterilebilir.
 
 ### 2026-11-12 · Simülatör: sağanak ayarları görünür
 - Kullanıcı: sağanak eklenince ayarlar üstte çıkıyor, fark edilmiyor. Ayar çubuğu **sağ altta kart** oldu (`#gustBar`, "Sağanak N ayarları"): Boyut − %N +, Sıfırla, Sil, ×/Esc. Panel açıkken panelin soluna kayar (≥641 px), telefonda altta tam genişlik ve alt panel kapanır.
