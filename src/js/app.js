@@ -219,11 +219,38 @@
     el('line', { x1: 0, y1: my, x2: sh.tip.x.toFixed(1), y2: sh.tip.y.toFixed(1), stroke: '#222', 'stroke-width': 1.5 }, g);
     el('circle', { cx: 0, cy: my, r: 1.8, fill: '#222' }, g);
     if (state.show.labels) drawLabel(parent, b, s, sail);
-    if (s.note) {
-      const fault = /^HATA/.test(s.note);
-      const n = el('text', { x: s.x.toFixed(1), y: (s.y - 36).toFixed(1), 'text-anchor': 'middle', fill: fault ? '#ff5d5d' : '#ffd166', 'font-size': 12, 'font-weight': 700,
-        'paint-order': 'stroke', stroke: 'rgba(0,0,0,.7)', 'stroke-width': 3 }, parent);
-      n.textContent = s.note;
+    if (s.note) frameNotes.push({ x: s.x, y: s.y, text: s.note, color: b.color });
+  }
+
+  // Tekne notları: kutulu rozet, tekne üstünde. Üst üste binerse yukarı (sonra aşağı) kaydırılır, ince çizgiyle tekneye bağlanır.
+  let frameNotes = [];
+  function drawNotes(parent) {
+    const placed = [], H = 22, pad = 10;
+    const boats = [...state.boats, ...state.extras].map(b => E.sampleTrack(b.track, state.t));
+    // engeller: tekne gövdeleri, tekne etiketleri, hakem botu (+ yazısı), pin, şamandıralar
+    const obst = [];
+    for (const p of boats) { obst.push({ x: p.x - 16, y: p.y - 26, w: 32, h: 52 }); if (state.show.labels) obst.push({ x: p.x - 28, y: p.y + 26, w: 56, h: 20 }); }
+    const scn = state.scn;
+    if (scn.line) { const { pin, boat: cb } = scn.line; obst.push({ x: cb.x - 40, y: cb.y - 54, w: 80, h: 104 }, { x: pin.x - 16, y: pin.y - 10, w: 32, h: 40 }); }
+    for (const m of scn.marks || []) obst.push({ x: m.x - 12, y: m.y - 28, w: 24, h: 38 });
+    const ov = (r, q, m) => r.x < q.x + q.w + m && q.x < r.x + r.w + m && r.y < q.y + q.h + m && q.y < r.y + r.h + m;
+    const hit = (r) => placed.some(q => ov(r, q, 4)) || obst.some(q => ov(r, q, 0));
+    // önce teknesi üstte olanlar yerleşsin (yukarı kaydırma tutarlı olsun)
+    for (const n of [...frameNotes].sort((a, b) => a.y - b.y)) {
+      const fault = /^HATA/.test(n.text), col = fault ? '#f87171' : '#fbbf24';
+      const w = Math.ceil(textW(n.text, 12, 700)) + pad * 2;
+      const offs = [-50, -74, -98, -122, 52, 76];
+      let r = null, off = offs[0];
+      for (const o of offs) { const c = { x: n.x - w / 2, y: n.y + o, w, h: H }; if (!hit(c)) { r = c; off = o; break; } }
+      if (!r) r = { x: n.x - w / 2, y: n.y + offs[0], w, h: H };
+      placed.push(r);
+      const g = el('g', {}, parent);
+      if (off !== offs[0]) {                                   // kaydırıldıysa tekneye ince bağlantı
+        const ey = off < 0 ? r.y + H : r.y;
+        el('line', { x1: n.x, y1: n.y + (off < 0 ? -22 : 22), x2: n.x, y2: ey, stroke: col, 'stroke-width': 1, opacity: .6 }, g);
+      }
+      el('rect', { x: r.x, y: r.y, width: w, height: H, rx: 11, fill: 'rgba(7,18,30,.86)', stroke: col, 'stroke-width': 1.2 }, g);
+      el('text', { x: n.x, y: r.y + H / 2 + 4.2, 'text-anchor': 'middle', fill: col, 'font-size': 12, 'font-weight': 700 }, g).textContent = n.text;
     }
   }
 
@@ -369,7 +396,9 @@
     const w = E.windAt(scn.wind, state.t);
     drawWind(w); drawOverlays(w);
     const bl = $('boatLayer'); bl.innerHTML = '';
+    frameNotes = [];
     for (const b of [...state.boats, ...state.extras]) drawBoat(bl, b, E.sampleTrack(b.track, state.t), w);
+    drawNotes(el('g', {}, bl));
     drawHud(w);
     const sc = $('scrub'); sc.value = state.t; sc.style.setProperty('--p', (state.t / scn.duration * 100) + '%');
     $('timeLabel').innerHTML = `${fmtClock(state.t)}<span class="tot"> / ${fmtClock(scn.duration)}</span>`;

@@ -96,7 +96,8 @@
 3. **Gezinti hep görünsün:** Önceki / Bu ana git / Sonraki kartın en altında sabit; kaydırmayla kaybolmaz.
 4. **Parkur kartın altında kalmasın:** geniş ekranda `fitViewBox` yatay fazlalığı kartın genişliği kadar sağa verir; kart kapanınca ortalanır.
 5. **Kontrol:** masaüstü 1400×800, iPad Pro 11 yatay/dikey, iPhone 13 dikey/yatay; her senaryonun SON anında (en uzun metinler) ve "Senaryo özeti" açıkken ekran görüntüsü. Playwright ile `scrollWidth > clientWidth` olan HTML öğesi kalmamalı.
-6. Kenar boşlukları: kart içi yatay 16 px (telefonda 14), bölümler arası ince çizgi + 10-12 px; dokunma hedefi ≥ 44 px.
+6. Sahnedeki yazı kutulu rozet olur ve `drawNotes` çakışma denetiminden geçer; yeni bir sahne yazısı eklenirse engel listesine (`obst`) eklenir.
+7. Kenar boşlukları: kart içi yatay 16 px (telefonda 14), bölümler arası ince çizgi + 10-12 px; dokunma hedefi ≥ 44 px.
 
 ## Senaryo kontrol listesi (her yeni senaryo için)
 1. `npm run check` çalıştır: alan dışı, tekne çakışması (<30 px), engele yaklaşma (<10 px), start hattı geçişi. Uyarı sıfır olmalı; bilinçli istisnaları `expectOutside` / `expectEarly` ile işaretle.
@@ -109,7 +110,8 @@
 ### 2026-11-12 · Arayüz boşluk ve taşma düzeltmeleri
 - Kullanıcı geri bildirimi: "Yarış başladı" yazısı sayaç kutusundan taşıyordu; bilgi kartında uzun "Senaryo özeti" kesiliyordu; genel padding hataları.
 - Yapılanlar: sayaç kutusu ve tekne etiketi genişliği ölçülerek (`textW`, canvas measureText) hesaplanıyor; kartta adım metni + Tekneler + Senaryo özeti tek kaydırılabilir alanda (`.info-scroll`), gezinti düğmeleri en altta sabit; telefonda da Senaryo özeti açılabiliyor; masaüstünde parkur kartın altında kalmıyor (görünüm sağa kayıyor); hazırlık bayrağı yazısına kontur. NOTLAR'a "Arayüz kontrol listesi" eklendi. 11 senaryo × 4 cihaz son anda tarandı; taşan HTML öğesi yok.
-- Yarım kalan: sahnedeki serbest yazılar (adım notları, layline etiketleri) kutusuz; kalabalıkta birbirine binebilir.
+- Ek (aynı gün): tekne notları (segment `note`, kural motoru notları) artık kutulu rozet (`drawNotes`): sarı = bilgi, kırmızı = "HATA:". Tekne gövdesi/etiketi, hakem botu, pin, şamandıra ve diğer notlarla çakışırsa yukarı (sonra aşağı) kaydırılır, ince çizgiyle tekneye bağlanır.
+- Yarım kalan: layline / transit etiketleri hâlâ kutusuz; oynatırken kaydırılan not bir konumdan diğerine zıplayabilir.
 
 
 ### 2026-11-12 · Bekleyen teknelerde yelken pırpırlaması
