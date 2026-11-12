@@ -6,7 +6,9 @@
 ## Güncel durum (2026-11-12)
 - Canlı: https://seyhundev.github.io/professional-sailing/ — main'e push ile otomatik yayın (GitHub Actions, hash'li dosya adları, sağ altta sürüm damgası).
 - Start senaryolarında (A1, A2, A3, A4) kalabalık filo var; A3 hattı 600 px (12 boy), rüzgar 335°.
-- Hazır senaryolar (8): A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
+- Yeni kategori **İleri Taktik** (4. sekme; `category: 'İleri Taktik'`), KONULAR.md → H bölümü. İlk senaryo İA1.
+- Senaryo alanları: `clockScale` (sayaç gerçek zaman çarpanı, ör. 4 → 30 s animasyon = 2 dk), `prepFlag` ('P','I','U','Siyah') + `flagDownAt` (1 dk kala bayrak iner).
+- Hazır senaryolar (10): A12 bayraklar ve İA1 pin dışında bekleme dahil; A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
 - Arayüz: tam ekran sahne; üst çubukta **senaryo seçici** (kategori sekmeleri Taktik/Kurallar/Teknik, alt konu başlıkları, özetli kartlar), Bilgi, Katmanlar, tam ekran; alt çubuk (oynat, hız, zaman çubuğu, tekne ekle/çıkar); canlı takipli bilgi kartı.
 - **Duyarlı düzen** (3 sınıf): bilgisayar (>1100 px: kart sağ üstte, tekne ekle alt çubukta), tablet (≤1100: ikon düğmeler; dikeyde kart SAĞ ÜSTTE geniş (64vw, maks %44 yükseklik), parkur ekranın alt kısmına kaydırılır: `fitViewBox` dikey fazlalığın %68'ini üste verir; telefonda tersi %22), telefon (≤640 px ya da yükseklik ≤460: kart alttan açılır sayfa + daraltma tutamacı, tekne ekle popover'da, seçici tam ekran). Dokunma hedefleri ≥44 px, iOS güvenli alan payları.
 - **Engel kaçınma** (`engine.avoidDir`): şamandıra, pin ve hakem botu engeldir; önünde engel olan tekne (scripted ya da eklenen) kendiliğinden yana kaçıp rotaya döner. `npm run check` (`scripts/check-scenarios.mjs`) her senaryoda alan dışı, çarpışma, engele yaklaşma ve start hattı geçişini denetler; `expectOutside` / `expectEarly` ile bilinçli istisnalar.
@@ -47,6 +49,7 @@
 - 2026-11-12 · **Yayın: GitHub Actions + hash'li derleme.** Sebep: Pages'in 10 dk önbelleği yeni HTML'i eski CSS/JS ile eşleştirdi. `scripts/build.mjs` dosya adına içerik özeti ekler.
 - 2026-11-12 · **Yeni depo** `seyhunDev/professional-sailing`; eski `python_deneme` terk edildi.
 - 2026-11-12 · **Aşama 1 (yeni öğrenenler) atlandı**, Aşama 2 (yarış hazırlığı) ile başlandı.
+- 2026-11-12 · **Fodepar (OCS) gösterimi hafif:** erken tekne çizgiyi burnuyla yarım boy geçer, durur, geri döner (K22.3). "Fodepar" terimi kullanıcı tercihi; OCS parantezde.
 - 2026-11-12 · **Tekne ekle/çıkar arayüzden kaldırıldı** (kod duruyor, `addBoat`/`removeBoat`); kalabalık, senaryo tanımındaki `crowd` ile gelir. Sebep: kullanıcı gerçekçi, hazır kalabalık startlar istiyor; serbest ekleme kafa karıştırıyordu.
 - 2026-11-12 · **Küçük tekne start modeli:** Optimist/ILCA hattın hemen dibinde (1-1.5 boy) bekler, 2-3 s kala doldurur. A2 buna göre yeniden yazıldı; eski "4-5 boy geride bekle" metni kaldırıldı.
 - 2026-11-12 · **Kural motoru ek teknelere uygulanır, scripted teknelere uygulanmaz.** Sebep: scripted tekneler dersin kendisi; ek tekneler "kalabalık" ve kuralların canlı gösterimi. Hak sahibi notu gösterilmez (kalabalıkta okunmuyor), yalnızca yol veren manevralar yazılır.
@@ -70,6 +73,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 · Fodepar hafif, start bayrakları (A12), İleri Taktik grubu (İA1)
+- Yapılanlar: A2'de erken tekne yarım boy geçip duruyor ve geri dönüyor; A12 (U bayrağı, 1 dk kala bayrak iner, burnu çizgide olan UFD; P/I/siyah farkları adımlarda; clockScale 4); yeni kategori İleri Taktik + İA1 (pin dışında iskele bekleme, grubun altına tramola, K10/13/15/11; clockScale 3). HUD: hazırlık bayrağı çizimi ve dakika:saniye sayaç.
+- Yarım kalan: A12'de yalnızca U bayrağı canlandırılıyor; P/I/siyah için ayrı varyant (ya da bayrak seçici) istenebilir. 5-4-1-0 sinyal sırası ve AP/Birinci Tekrar ayrı senaryo.
+- Sonraki sohbete not: İleri Taktik H2–H6 konuları KONULAR.md'de; Start paketi 5 (A16/A17) ile birlikte planlanabilir.
+
 ### 2026-11-12 · Kalabalık start ve hattın dibinde bekleme (kullanıcı düzeltmesi)
 - Yapılanlar: `crowd` alanı + rules.simulate'te start modeli (goBefore, tau, rulesFrom); A2 yeniden (hattın dibinde bekleme, 7 filo teknesi, 2 sıra); A3 geniş hat 600 px, rüzgar 335°, P1/P2/P3 de bekliyor, 2 filo; A4'te C bekliyor + 6 filo; A1'de 4 filo. Tekne ekle/çıkar arayüzden gizlendi. Checker kalabalığı da denetliyor (`filoN`), en yakın yaklaşma zamanı ve konumuyla.
 - Öğrenilen: büyük bias'ta hat boyunca dizilen tekneler neredeyse kıç kıça gelir (yan mesafe = Δx·sin(rota–hat açısı)); slotları seyrek koymak gerekir. Hakem botu çevresi 60 px boş kalmalı (hold konumu sağa kayar).

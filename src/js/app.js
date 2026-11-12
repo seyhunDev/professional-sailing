@@ -248,9 +248,22 @@
     el('line', { x1: cx - d.x * 30, y1: cy - d.y * 30, x2: cx + d.x * 22, y2: cy + d.y * 22, stroke: '#fff', 'stroke-width': 3, 'marker-end': 'url(#arrowHead)' }, g);
     el('text', { x: cx, y: cy + 60, 'text-anchor': 'middle', fill: '#fff', 'font-size': 12 }, g).textContent = `Rüzgar ${Math.round(E.norm360(w))}°`;
     if (scn.startAt != null && scn.startAt > 0) {
-      const rem = scn.startAt - state.t;
+      const rem = (scn.startAt - state.t) * (scn.clockScale || 1);
+      const fmt = r => scn.clockScale ? `${Math.floor(r / 60)}:${String(Math.floor(r % 60)).padStart(2, '0')}` : `${r.toFixed(1)} s`;
       const txt = el('text', { x: cx + 60, y: cy + 10, fill: rem > 0 ? '#ffd166' : '#2a9d8f', 'font-size': 26, 'font-weight': 700, 'font-variant-numeric': 'tabular-nums' }, g);
-      txt.textContent = rem > 0 ? `Start'a ${rem.toFixed(1)} s` : 'START ✔';
+      txt.textContent = rem > 0 ? `Start'a ${fmt(rem)}` : 'START ✔';
+      // hazırlık bayrağı: son 1 dakikada indirilir
+      if (scn.prepFlag && scn.line) {
+        const up = state.t < (scn.flagDownAt != null ? scn.flagDownAt : scn.startAt);
+        const bx = scn.line.boat.x + 22, by = scn.line.boat.y - 40;
+        el('line', { x1: bx, y1: by + 46, x2: bx, y2: by - 6, stroke: '#fff', 'stroke-width': 2 }, g);
+        if (up) {
+          const col = { P: '#1f77b4', I: '#ffd166', U: '#e63946', Z: '#e63946', Siyah: '#111' }[scn.prepFlag] || '#ffd166';
+          el('rect', { x: bx, y: by - 6, width: 30, height: 20, fill: col, stroke: '#fff', 'stroke-width': 1 }, g);
+          el('text', { x: bx + 15, y: by + 9, 'text-anchor': 'middle', fill: scn.prepFlag === 'Siyah' ? '#fff' : '#fff', 'font-size': 13, 'font-weight': 700 }, g).textContent = scn.prepFlag === 'Siyah' ? '■' : scn.prepFlag;
+        }
+        el('text', { x: bx + 36, y: by + 8, fill: '#ffd166', 'font-size': 11 }, g).textContent = up ? `Hazırlık bayrağı: ${scn.prepFlag}` : 'Bayrak indi: son 1 dk';
+      }
     }
     el('text', { x: vb.x + 16, y: vb.y + vb.h - 12, fill: 'rgba(255,255,255,0.45)', 'font-size': 12 }, g).textContent = scn.category + (scn.topic ? ' › ' + scn.topic : '') + ' · ' + scn.title;
   }
@@ -313,7 +326,7 @@
   window.addEventListener('resize', () => { fitViewBox(); render(); });
 
   // ---------- Senaryo seçici (kategori sekmeleri + kartlar) ----------
-  const CATS = ['Taktik', 'Kurallar', 'Teknik'];
+  const CATS = ['Taktik', 'İleri Taktik', 'Kurallar', 'Teknik'];
   let pickerCat = 'Taktik';
   function openPicker(open) {
     $('picker').classList.toggle('hidden', !open);

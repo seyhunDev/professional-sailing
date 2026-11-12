@@ -97,10 +97,11 @@
       { id: 'E', name: 'Erken (OCS)', color: '#e76f51',
         start: { x: 455, y: 492, h: 340 }, v0: 2,
         segs: [
-          { mode: 'hold', h: 340, dur: 12, speed: 0.05, turn: 0 },
-          { mode: 'closehauled', tack: 'starboard', dur: 8, turn: 0.8 },   // 8 s kala doldurdu: çok erken
-          { mode: 'heading', h: 125, dur: 4.4, turn: 1.6 },                 // geri dönüp çizginin altına
-          { mode: 'closehauled', tack: 'starboard', dur: 3.6, turn: 1.6 }
+          { mode: 'hold', h: 340, dur: 17.2, speed: 0.05, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 3.3, turn: 0.8 },   // 2.8 s kala doldurdu: yarım boy erken → burnu çizgiyi geçer
+          { mode: 'hold', h: 0, dur: 1.5, speed: 0.05, turn: 0.8, note: 'Fodepar!' },        // durdu
+          { mode: 'heading', h: 180, dur: 2.4, turn: 1.2, note: 'Geri dön' },                  // çizginin altına in
+          { mode: 'closehauled', tack: 'starboard', dur: 3.6, turn: 1.2 }
         ] },
       { id: 'G', name: 'Geç kalan', color: '#8d99ae',
         start: { x: 335, y: 495, h: 340 }, v0: 2,
@@ -111,15 +112,15 @@
     ],
     crowd: [
       { slot: 0.20 }, { slot: 0.44 }, { slot: 0.70 }, { slot: 0.82 }, { slot: 0.93 },
-      { slot: 0.30, row: 1 }, { slot: 0.42, row: 1 }
+      { slot: 0.20, row: 1 }, { slot: 0.44, row: 1 }
     ],
     steps: [
       { t: 0, title: 'Start\'a 20 sn: filo hattın dibinde', text: 'Gri tekneler hattın 1-1.5 boy gerisinde rüzgara baş vermiş, yelkenleri boş bekliyor. Aralarında boşluklar var: boşluk, hızlanma alanıdır. Yeşil tekne yarım hızla yerine geliyor.' },
       { t: 4, title: 'Yerini al, rüzgara baş ver', text: 'Yeşil tekne de hattın dibinde durdu. Burnu rüzgara yakın, yelken boş ("sallanıyor"). Küçük teknede bekleme burada yapılır: hattan uzakta değil, hemen gerisinde. Rüzgaraltınızdaki boşluğu koruyun; biri sokulursa orsa edip kapatın (Kural 11).' },
-      { t: 12, title: 'Turuncu çok erken doldurdu', text: 'Turuncu 8 saniye kala yelkenini doldurdu. Küçük tekne 2-3 saniyede tam hıza çıkar; 8 saniye çok fazla, çizgiyi sinyalden önce geçecek.' },
-      { t: 15, title: 'Turuncu çizgiyi geçti: OCS', text: 'Start sinyalinden önce çizgiyi geçen tekne OCS\'dir. Geri dönüp çizginin start tarafından yeniden geçmek zorunda (I bayrağı varsa uçlardan dolaşarak). 10-15 saniye kayıp.' },
+      { t: 17.2, title: 'Turuncu yarım saniye erken doldurdu', text: 'Turuncu 2.8 saniye kala yelkenini doldurdu; yeşil 3 saniye kala ama 1 boy daha gerideydi. Yarım saniye bile küçük teknede yarım boy eder.' },
+      { t: 19.6, title: 'Burnu çizgiyi geçti: fodepar (OCS)', text: 'Sinyalde teknenin herhangi bir parçası (burun!) çizginin öbür tarafındaysa erken start = fodepar (OCS). Çoğu fodepar böyle olur: yarım boy. P bayrağında geri dönüp hattı yeniden geçmek yeter; I bayrağında uçlardan dolaşılır; U ve siyah bayrakta son 1 dakikada bu burun yarıştan çıkarır (bkz. A12).' },
       { t: 16.5, title: '3.5 sn kala: doldur ve hızlan', text: 'Yeşil tekne bordalayıp yelkeni dolduruyor. Filo da 2.5 s kala dolduruyor. Küçük teknede hızlanma kısa sürer; bu yüzden bekleme hattın dibinde, hızlanma son 2-3 saniyedir.' },
-      { t: 20, title: 'START', text: 'Yeşil tekne tam bu anda, tam hızla çizgide; filo da birlikte çıkıyor. Gri tekne hâlâ bekliyor: çizgiyi 2 saniye sonra, yavaş geçecek ve öndekilerin rüzgar gölgesinde kalacak.' },
+      { t: 20, title: 'START', text: 'Yeşil tekne tam bu anda, tam hızla çizgide; filo da birlikte çıkıyor. Turuncu geri dönüyor: 8-10 saniye ve kirli hava. Gri tekne hâlâ bekliyor: çizgiyi 2 saniye sonra, yavaş geçecek.' },
       { t: 25, title: 'Sonuç', text: 'Formül: hattın dibinde (1-1.5 boy) rüzgara baş verip bekle, rüzgaraltında boşluk tut, sinyalden 2-3 s önce doldur. Antrenmanda "kaç saniyede 1 boy?" hissini çalışın: yelkeni doldurup çizgiye varma süresini tekrar tekrar ölçün.' }
     ],
     addBoat: { pin: { x: 290, y: 560 }, middle: { x: 390, y: 640 }, committee: { x: 720, y: 560 } },
@@ -231,6 +232,94 @@
     startSlots: { pin: [0.12], middle: [0.3], committee: [0.62] },
     tau: 1.0, goBefore: 2.5,
     crowd: [{ slot: 0.08 }, { slot: 0.2 }, { slot: 0.32 }, { slot: 0.58 }, { slot: 0.14, row: 1 }, { slot: 0.5, row: 1 }]
+  });
+
+  // ---------- A12: Start bayrakları ve fodepar ----------
+  S.push({
+    id: 'a12-flags',
+    category: 'Taktik', topic: 'Start',
+    title: 'A12 · Start bayrakları: P, I, U, siyah — son 1 dakikada burun',
+    summary: 'Hazırlık bayrağı hangi fodepar (OCS) kuralının geçerli olduğunu söyler. P: geri dön, yeniden geç. I: uçlardan dolaş. U: son 1 dakikada hattın üstündeysen yarıştan çıkarsın (genel geri çağırma olursa affedilir). Siyah: çıkarsın ve tekrar startta da yarışamazsın.',
+    duration: 36,
+    baseSpeed: 40, tau: 1.0, goBefore: 2.5,
+    clockScale: 4,            // 1 animasyon saniyesi = 4 gerçek saniye (son 2 dakika)
+    prepFlag: 'U',
+    flagDownAt: 15,           // 1 dk kala bayrak iner (t=15 → 60 s)
+    wind: 0,
+    line: { pin: { x: 250, y: 440 }, boat: { x: 750, y: 440 } },
+    startAt: 30,
+    boats: [
+      { id: 'F', name: 'F – Burnu son dakikada çizgide', color: '#e76f51',
+        start: { x: 520, y: 520, h: 340 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 340, dur: 12, speed: 0.05, turn: 0 },
+          { mode: 'hold', h: 350, dur: 6, speed: 0.12, turn: 0.8 },                       // hattın dibine fazla sokuldu
+          { mode: 'hold', h: 350, dur: 2, speed: 0.1, turn: 0, note: 'Burun çizgide!' },
+          { mode: 'heading', h: 170, dur: 3, turn: 1.2, speed: 0.6, note: 'Geri çekiliyor' }, // geri in
+          { mode: 'hold', h: 340, dur: 4.5, speed: 0.05, turn: 1.0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 8.5, turn: 0.8 }
+        ] },
+      { id: 'T', name: 'T – Temiz: hattın dibinde ama altında', color: '#2a9d8f',
+        start: { x: 440, y: 524, h: 340 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 340, dur: 27.5, speed: 0.05, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 8.5, turn: 0.8 }
+        ] }
+    ],
+    crowd: [{ slot: 0.1 }, { slot: 0.68 }, { slot: 0.82 }, { slot: 0.94 }, { slot: 0.1, row: 1 }, { slot: 0.68, row: 1 }],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dakika: hazırlık bayrağı U', text: 'Hakem botunda hazırlık bayrağı dalgalanıyor: U. Bayrak hangi fodepar (OCS) kuralının geçerli olduğunu söyler. Saat sağ üstte, gerçek zaman (animasyon 4× hızlı).' },
+      { t: 6, title: 'Bayrak türleri', text: 'P (mavi-beyaz): fodepar yaparsan geri dönüp hattı yeniden geç, ceza yok. I (sarı-siyah): son 1 dakikada hattın üstündeysen uçlardan dolaşarak geri dön. U (kırmızı-beyaz kare): son 1 dakikada gövdenin bir parçası hat üçgenindeyse yarıştan çıkarsın (UFD) ama genel geri çağırma olursa yeniden yarışabilirsin. Siyah: aynı şey ama genel geri çağırmada bile yarışamazsın (BFD).' },
+      { t: 12, title: 'Turuncu hattın dibine fazla sokuldu', text: 'Turuncu bekleme yerini hattın tam dibine aldı. Rüzgar ve dalga tekneyi öne iter; küçük teknede yarım boy 2-3 saniyede gider.' },
+      { t: 15, title: '1 dakika: bayrak indi, uzun ses', text: 'Hazırlık bayrağı indi. U bayrağı kuralı şimdi başladı: bu andan start sinyaline kadar burnun çizgiyi geçmesi yarıştan çıkarır. Fodepar yalnızca son saniyede olmaz; son 1 dakikanın tamamında olur.' },
+      { t: 18, title: 'Burun çizgide: UFD', text: 'Turuncunun burnu çizginin üstünde. U bayrağı altında bu tekne artık fodepar: komite not aldı, start sonrası sonuçlarda "UFD" yazacak. Geri çekilmesi kurtarmaz; yalnızca genel geri çağırma (Birinci Tekrar) kurtarır. P bayrağı olsaydı geri çekilip start tarafına dönmesi yeterdi.' },
+      { t: 20, title: 'Geri çekiliyor', text: 'Turuncu yelkeni geri basıp (backing) geri çekiliyor. Geri giden tekne herkese yol verir (Kural 22.3). P bayrağında bu hamle doğru; U ve siyah bayrakta artık geç.' },
+      { t: 24, title: 'Yeşil: hattın dibinde ama altında', text: 'Yeşil de hattın dibinde bekliyor ama burnu çizginin 1-1.5 boy altında. Hattı görmek için transit (kerteriz) kullanın; emin değilseniz yarım boy geride durun. U ve siyah bayrakta "yarım boy fazla" değil, "yarım boy eksik" tarafında hata yapın.' },
+      { t: 30, title: 'START', text: 'Filo çıkıyor. Turuncu da geçiyor ama UFD: sonuçlarda yarıştan çıkarılmış sayılacak. Özet: bayrağa bak, kuralı bil; U/siyah bayrakta son 1 dakikada burnu çizgiden uzak tut.' }
+    ],
+    addBoat: { pin: { x: 290, y: 560 }, middle: { x: 500, y: 560 }, committee: { x: 720, y: 560 } },
+    startSlots: { pin: [0.4], middle: [0.5], committee: [0.9] },
+    expectEarly: ['F']
+  });
+
+  // ---------- İA1: Pin'in dışında bekleyip grubun altına tramola ----------
+  S.push({
+    id: 'ia1-port-approach-pin',
+    category: 'İleri Taktik', topic: 'Start',
+    title: 'İA1 · Pin\'in dışında bekle, son 40 sn\'de grubun altına tramola',
+    summary: 'Pin avantajlıysa pin grubu erken oluşur ve içinde yer kalmaz. İleri taktik: kavgaya girmeden pin\'in dışında, iskele kontrada bekle; son 40 saniyede grubun altından iskele ile gel, pin\'e en yakın teknenin rüzgaraltındaki boşluğa tramola at, rüzgaraltı hakkıyla yerini koru, pin\'den çık.',
+    duration: 27,
+    baseSpeed: 40, tau: 1.0, goBefore: 2.5,
+    clockScale: 3,
+    wind: 350,
+    line: { pin: { x: 250, y: 440 }, boat: { x: 750, y: 440 } },
+    startAt: 24,
+    rungs: { boat: 'X', from: 25.5 },
+    laylines: [{ x: 250, y: 440, tack: 'starboard', len: 260, from: 10, to: 24, label: 'Pin layline\'ı' }],
+    boats: [
+      { id: 'X', name: 'X – Dışarıda bekleyen (iskele)', color: '#2a9d8f',
+        start: { x: 239, y: 637, h: 15 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 15, dur: 9, speed: 0.05, turn: 0, note: 'Pin\'in dışında, iskele kontrada bekliyor' },
+          { mode: 'closehauled', tack: 'port', dur: 4.5, turn: 1.0, note: 'İskele ile grubun altından yaklaş' },
+          { mode: 'hold', h: 325, dur: 8.5, speed: 0.05, turn: 1.3, note: 'Tramola → boşluğa yerleş' },
+          { mode: 'closehauled', tack: 'starboard', dur: 8.0, turn: 0.8 }
+        ] }
+    ],
+    crowd: [{ slot: 0.2 }, { slot: 0.34 }, { slot: 0.48 }, { slot: 0.62 }, { slot: 0.34, row: 1 }, { slot: 0.62, row: 1 }, { slot: 0.82 }],
+    steps: [
+      { t: 0, title: 'Start\'a 72 sn: pin grubu oluştu', text: 'Rüzgar 350°: pin hafif avantajlı. Gri tekneler pin\'e yakın yerleri çoktan almış, hattın dibinde rüzgara baş vermiş bekliyor. Yeşil X ise kavganın dışında: pin\'in solunda, iskele kontrada, yelkeni boş.' },
+      { t: 4, title: 'Neden dışarıda?', text: 'Grubun içinde 70 saniye yer tutmak zordur: sürüklenirsin, rüzgarüstünden biri sokulur, boşluğun kapanır. Dışarıda beklerken hattı, rüzgarı ve boşlukları rahat görürsün; sonra karar verirsin.' },
+      { t: 9, title: 'Son 45 sn: iskele ile gel', text: 'X yelkenini doldurup iskele kontrada grubun ALTINDAN geliyor. Dikkat: iskele kontra herkese yol verir (Kural 10); bu yüzden sancak teknelerin rüzgaraltından, onların burnuna girmeden geçer.' },
+      { t: 13, title: 'Boşluğu seç', text: 'Hedef: pin\'e en yakın teknenin hemen rüzgaraltındaki boşluk. Gerekli yer: tramola bitince gövde o tekneye değmeyecek kadar; yani en az 1 boy.' },
+      { t: 15, title: 'Tramola: Kural 13 ve 15', text: 'Tramola atarken X herkese yol verir (Kural 13). Tramola bitip sancak kontrada rüzgaraltı tekne olunca hak sahibidir ama Kural 15: yeni kazandığı hakla rüzgarüstündeki tekneye başta kaçınma yeri vermek zorunda. Yani tramolayı dibine değil, yarım boy aşağısına at.' },
+      { t: 17, title: 'Yerini koru', text: 'Artık X rüzgaraltı tekne: rüzgarüstündeki gri tekne ona yol vermek zorunda (Kural 11). Start öncesi uygun rota sınırı yoktur; biri sokulmaya kalkarsa orsa edip kapatabilir. Rüzgaraltında kimse yok: boşluk X\'in.' },
+      { t: 21.5, title: '2.5 sn kala doldur', text: 'Pin layline\'ının üstünde, boşluğu var: bordalayıp hızlanıyor.' },
+      { t: 24, title: 'START: pin\'den temiz çıkış', text: 'X pin\'in hemen yanından, tam hızla, temiz havada. Grup içinde 70 saniye itişen tekneler çoğu zaman bu kadar temiz çıkamaz.' },
+      { t: 26, title: 'Riskler', text: 'Çok erken gelirsen boşluk henüz yok ya da sürüklenip pin\'e düşersin. Çok geç gelirsen boşluk kapanmıştır; herkesin kıçından geçmek zorunda kalırsın. Pin çok avantajlıysa grup sıkışır, boşluk daralır. Hafif rüzgarda tramola çok yavaştır: 50 sn kala gel.' }
+    ],
+    addBoat: { pin: { x: 290, y: 560 }, middle: { x: 500, y: 560 }, committee: { x: 720, y: 560 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
   // ---------- B1: Kural 10 ----------

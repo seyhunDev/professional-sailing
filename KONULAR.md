@@ -50,7 +50,7 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | A9 | Start sonrası ilk 2 dakika | Temiz hava: rüzgaraltı teknenin rüzgar gölgesi, "lane" kaybedince erken tramola kararı; kapalı rüzgarda ısrar etmemek. | 🔜 |
 | A10 | İskele kontra start | Pin ucu çok avantajlı ve filo seyrekse: pin'den iskele kontra çıkış; sancak filosunun önünden geçme hesabı; risk analizi. | 🔜 |
 | A11 | Yaklaşma rotaları: Vanderbilt ve "dip" | Uzaklaş–dön–geri (zamanla ölçülmüş), hattın rüzgarüstünden inip (dip start, yalnızca I bayrağı yokken) yer alma. | ⬜ |
-| A12 | Start sinyalleri ve bayraklar | 5-4-1-0 sırası, P / I / U / siyah bayrak anlamları, genel geri çağırma (Birinci Tekrar), erteleme (AP). | ⬜ |
+| A12 | Start sinyalleri ve bayraklar | P / I / U / siyah bayrak ve son 1 dakika kuralı; burnu çizgide olan tekne (UFD); geri çekilme (K22.3). 5-4-1-0 sırası ve AP/Birinci Tekrar bayrakları ayrıca eklenecek. | ✅ |
 | A13 | OCS düzeltme | Çizginin uçlarından dolaşma (I bayrağı), çizgiyi geri geçme (P bayrağı); kaybedilen süre. | ⬜ |
 | A14 | Akıntı etkisi | Akıntı hatta doğru / hattan uzağa: bekleme mesafesi ve hızlanma zamanı değişir. | ⬜ |
 | A15 | Kalabalıkta pozisyon ve sıra | Birinci sıra vs ikinci sıra; ikinci sıranın gölgede kalması; "kötü start"tan kurtulma: erken tramola. | ⬜ |
@@ -93,6 +93,17 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 |---|------|-----------------------------|-------|
 | F1 | Parkur tipleri: sosis, trapez, üçgen | Üstten görünüş, şamandıra sırası. | ⬜ |
 | F2 | Yarış komitesi sinyalleri: erteleme (AP), genel geri çağırma, kısaltma (S), parkur değişikliği (C) | Bayraklar ve anlamları. | ⬜ |
+
+## H. İleri Taktik (yarışan sporcular için spesifik hamleler)
+
+| # | Konu | Animasyonda ne gösterilecek | Durum |
+|---|------|-----------------------------|-------|
+| H1 | Pin'in dışında bekle, son 40 sn'de grubun altına tramola | İskele kontrada dışarıda bekleme, grubun altından yaklaşma (K10), boşluğa tramola (K13, K15), rüzgaraltı hakkıyla yeri koruma (K11), pin'den temiz çıkış; riskler. | ✅ (İA1) |
+| H2 | Hakem botunda ikinci sıradan erken tramola ile sağa kaçış | Birinci sıra gölgesinden kurtulma, sağ tarafın temiz havası. | ⬜ |
+| H3 | Rüzgaraltına boşluk açma ve "kapı" kapatma (son 30 sn) | Bordalayıp rüzgaraltındaki tekneyi uzaklaştırma, sonra orsa edip boşluğu koruma; K11/K16 sınırları. | ⬜ |
+| H4 | Start öncesi rakibi "sürükleme": orsa ile hattın üstüne itme | Rüzgaraltı tekne orsa eder, rüzgarüstündeki fodepar riskine girer; K11, K16, sportmenlik sınırı. | ⬜ |
+| H5 | Hat yayını (sag) kullanma: transit ile 1 boy önde çıkış | Filo ortada geri sarkar; transit bilen tekne öne çıkar. | ⬜ |
+| H6 | Genel geri çağırma sonrası taktik değişimi | Siyah bayrak sonrası temkinli start; U bayrağında kalabalıktan kaçınma. | ⬜ |
 
 # III. TEKNİK
 
