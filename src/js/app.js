@@ -192,7 +192,9 @@
       el('text', { x: pin.x, y: pin.y + 24, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12 }, g).textContent = 'Pin';
       cbNode = E.drawCommitteeBoat(el, g);
       cbNode.setAttribute('transform', E.committeeBoatTransform(boat.x, boat.y, E.windAt(scn.wind, state.t)));
-      el('text', { x: boat.x, y: boat.y + 70, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
+      // committeeLabel: 'right' → yazı hakem botunun sağına (sol tarafta bekleyen tekneyle çakışmasın)
+      const cbRight = scn.committeeLabel === 'right';
+      el('text', { x: boat.x + (cbRight ? 22 : 0), y: boat.y + (cbRight ? 52 : 70), 'text-anchor': cbRight ? 'start' : 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
     }
     for (const m of scn.marks || []) {
       if (m.zone) {

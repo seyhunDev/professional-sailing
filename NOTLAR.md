@@ -6,9 +6,9 @@
 ## Güncel durum (2026-11-12)
 - Canlı: https://seyhundev.github.io/professional-sailing/ — main'e push ile otomatik yayın (GitHub Actions, hash'li dosya adları, sağ altta sürüm damgası).
 - Start senaryolarında (A1, A2, A3, A4) kalabalık filo var; A3 hattı 600 px (12 boy), rüzgar 335°.
-- Yeni kategori **İleri Taktik** (4. sekme; `category: 'İleri Taktik'`), KONULAR.md → H bölümü. İlk senaryo İA1.
+- Yeni kategori **İleri Taktik** (4. sekme; `category: 'İleri Taktik'`), KONULAR.md → H bölümü. Start senaryoları uca göre üç konuda (2026-11-12): `topic` **'Start · Pin'** (İA1), **'Start · Orta'** (İA2, İA2b, İA2c), **'Start · Hakem botu'** (İA3). Seçici konuları senaryoların dosyadaki ilk geçiş sırasına göre dizer.
 - Senaryo alanları: `clockScale` (sayaç gerçek zaman çarpanı, ör. 4 → 30 s animasyon = 2 dk), `prepFlag` ('P','I','U','Siyah') + `flagDownAt` (1 dk kala bayrak iner).
-- Hazır senaryolar (13): A12 bayraklar, İA1 pin dışında bekleme, İA2 hat yayı, İA2b yay yok, İA2c boşluk seçimi dahil; A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
+- Hazır senaryolar (14): İA3 hakem botu ucunda yer tutma, A12 bayraklar, İA1 pin dışında bekleme, İA2 hat yayı, İA2b yay yok, İA2c boşluk seçimi dahil; A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
 - Arayüz (v3, 2026-11-12): tam ekran sahne; üst çubukta logo + **senaryo düğmesi** (kategori renkli kod rozeti, kategori · konu, başlık), SVG simgeli Bilgi / Katmanlar / tam ekran. **Senaryo seçici** ortada modal (telefonda tam ekran): arama, kategori sekmeleri (renk noktası + sayı), konu başlıklı 2-3 sütunlu kart ızgarası (kod, başlık, özet, süre/tekne/adım). Alt çubuk: yuvarlak oynat, başa al, **adım işaretli zaman çizelgesi** (işarete tıkla → o ana git), dk:sn, hız düğmeleri (telefonda tek düğme, dokundukça değişir). Bilgi kartı: adım çubuğu (tıklanabilir), Canlı anahtarı, simgeli Önceki / Bu ana git / Sonraki, **Tekneler** listesi (renkli kimlik + kısa ad + rol rozeti). Sürüm damgası Katmanlar menüsünün altında.
 - **Tekne etiketi** (sahnede): küçük rozet = [rol simgesi] KİMLİK [S/İ kutusu]. Rol (`boats[].role`: `hak` hak sahibi ✓ yeşil, `yol` yol verir ! sarı, `dogru` doğru ✓ yeşil, `hata` hata ✕ kırmızı) etiket kenarı ve simgesiyle; kontra yeşil S (sancak) / kırmızı İ (iskele) kutusuyla (seyir feneri renkleri). Tekne adları kısa (≤25 harf); uzun açıklama adımlara.
 - **Duyarlı düzen** (3 sınıf): bilgisayar (>1100 px: kart sağ üstte, tekne ekle alt çubukta), tablet (≤1100: ikon düğmeler; dikeyde kart SAĞ ÜSTTE geniş (64vw, maks %44 yükseklik), parkur ekranın alt kısmına kaydırılır: `fitViewBox` dikey fazlalığın %68'ini üste verir; telefonda tersi %22), telefon (≤640 px ya da yükseklik ≤460: kart alttan açılır sayfa + daraltma tutamacı, tekne ekle popover'da, seçici tam ekran). Dokunma hedefleri ≥44 px, iOS güvenli alan payları.
@@ -91,6 +91,7 @@
 | İA1 | `ia1-port-approach-pin` | ✅ | Solda bekle, apaz gel, layline üstünde tramola; X en alttaki teknenin ~1 boy altına girer (rüzgaraltında boşluk kalır), sinyalde onunla yan yana çıkar; Z (layline altı) ve Y (geç) hataları. Fikir: K13/K15 ihlali yapan 3. hata teknesi (ceza turu). | A3, A16 |
 | İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. S hattın uzantısında (pin dışı, hat hizası) bakar, sonra hattın altından ortaya gider. Yay eğrisi (`sag`) çiziliyor; pis rüzgar artık ortak motor özelliği (S gölgede gerçekten yavaşlar, ama filonun 2-3 boy altından geçtiği için etkisi küçük). | A5, A6, H5 |
 | İA2b | `ia2b-no-sag` | ✅ | İA2'nin "yay yok" eşi: 8 tekne hattın dibinde; S 3 ile 4 arasındaki boşluğa girer ama **4'ün hemen rüzgaraltına sokulur** (merkezler ~44 px, aynı hiza; kullanıcı isteği 2026-11-12: "4'e yakın olsun, önemli taktik"), 3'e doğru rüzgaraltı boşluğu kalır; 4 ile paralel çıkar. Kendi sohbeti var ("İA2b yay yok taktiğini geliştir"). | A5, H5 |
+| İA3 | `ia3-committee-hold` | ✅ | Hakem botu ucu (rüzgar 5°): H 2 dk kala layline'dan gelir, turuncu bayrağın hemen solunda (merkez ~(767,487), hakem botu engeline ~22 px) hattın 1 boy altında `hold` (hız 0.008, sürünmez) bekler; rüzgaraltında 6 numaraya kadar ~2 boy boşluk. B (hata) 1 dk kala sağdan apaz barging dener, bordalayıp H'nin kıçından dolaşır, 2. sırada H'nin pis rüzgarında çıkar. `committeeLabel: 'right'` (yazı H ile çakışmasın). Fikir: H'nin rüzgaraltındaki boşluğa sokulmaya çalışan 3. tekne ve H'nin bordalayıp boşluğu koruması (H3); geri yelken ile yer düzeltme (motor `backing` gelince). | A4, A17, İA4 |
 | İA2c | `ia2c-pick-gap` | ✅ | İA2b'nin alt senaryosu (2026-11-12): rüzgar 5° (hakem botu ucu avantajlı), 7 tekne, üç boşluk: pin yanında DAR (2-3), ortada GENİŞ (4-5), hakem botu tarafında GENİŞ avantajlı (6-7); `gaps` katmanı. S 2 dk kala bakar (`clockScale: 4`), filonun altından avantajlı boşluğa gider, 7'nin hemen rüzgaraltına sokulur (~45 px). D 1 dk kala bakar, dar boşluğa sıkışır; startta komşuları K11/K14 ile yer açar. Sonraki varyant fikirleri: "İA2b ailesi fikir listesi". | İA2b, A1, A5 |
 | B1 | `b1-rule10` | ✅ | Tek tekne bordalama. Fikir: lee-bow varyantı. | B2 |
 | B8 | `b8-rule18` | ✅ | Zone + bindirme. Fikir: 18.3 zone içinde tramola varyantı. | B9 |
@@ -127,6 +128,12 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 – İA3 hakem botu ucunda yer tutma + İleri Taktik start gruplaması
+- İleri Taktik start senaryoları üç konuya ayrıldı: Start · Pin / Start · Orta / Start · Hakem botu (kullanıcı isteği). Kardeş sohbetin "rüzgarüstü teknenin altına yanaş" senaryosu (İA4) ayrı konu 'Yer tutma' ile geliyor.
+- Yeni İA3 (`ia3-committee-hold`), dosyanın sonunda. KONULAR H7 ✅. Arayüz: `scn.committeeLabel: 'right'` seçeneği (hakem botu yazısı sağa).
+- `npm run check` temiz; ekran görüntüleri project-files/hakem-botu-yer-tutma/.
+- Sonraki sohbete not: H'nin rüzgaraltı boşluğunu savunduğu varyant (H3) bu senaryonun doğal devamı.
+
 ### 2026-11-12 – Hakem botu çizimi
 - Hakem botu gerçekçi motorlu tekne olarak yeniden çizildi, tek kod (`engine.js`) iki sayfada kullanılıyor; turuncu bayrak belirgin dalgalanıyor, rüzgarla dönüyor.
 - Sonraki sohbete not: bayrak/gövde rüzgar yönüne göre döndüğünden çok büyük rüzgar dönüşlerinde etiket ile çakışma kontrol edilebilir.

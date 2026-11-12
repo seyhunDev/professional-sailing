@@ -104,6 +104,7 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | H4 | Start öncesi rakibi "sürükleme": orsa ile hattın üstüne itme | Rüzgaraltı tekne orsa eder, rüzgarüstündeki fodepar riskine girer; K11, K16, sportmenlik sınırı. | ⬜ |
 | H5 | Hat yayını (sag) kullanma: transit ile 1-2 boy önde çıkış | Pin tarafından transit, apaz ile ortaya, boşluğa komşulardan yukarı, zamanlama ve rüzgar gölgesi; yay yoksa aynı hizada. | ✅ (İA2, İA2b yay yok, İA2c boşluk seçimi) |
 | H6 | Genel geri çağırma sonrası taktik değişimi | Siyah bayrak sonrası temkinli start; U bayrağında kalabalıktan kaçınma. | ⬜ |
+| H7 | Hakem botu ucunda yer tutma | Erken ve layline'dan (rüzgaraltından) gel, turuncu bayrağın dibinde hattın 1 boy altında rüzgara baş verip bekle; rüzgarüstünde boşluk bırakma, rüzgaraltındaki boşluğu koru, 2-3 sn kala doldur; HATA: geç gelip araya sokulan (barging, K11, K31). | ✅ (İA3) |
 
 # III. TEKNİK
 
