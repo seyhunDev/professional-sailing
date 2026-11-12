@@ -494,6 +494,71 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // ---------- İA4: rüzgarüstü teknenin altına yanaş ----------
+  S.push({
+    id: 'ia4-leeward-of-windward',
+    category: 'İleri Taktik', topic: 'Start · Yer tutma',
+    title: 'İA4 · Sıkıştıysan çık: boş yerde rüzgarüstü teknenin altına yanaş',
+    summary: 'S pin tarafındaki kalabalıkta ikinci sırada sıkışmış: önü kapalı, havası kirli. Geri çekilip filonun altından daha boş bir yere gider ve bir teknenin hemen RÜZGARALTINA, ona yakın yanaşır; rüzgaraltında açık su kalır, sinyalde oraya doldurup temiz çıkar. Aynı animasyonda hata: H de kalabalıktan çıkar ama bir teknenin RÜZGARÜSTÜNE, ona çok yakın yanaşır; startta rüzgaraltındaki L orsalar, daha hızlıdır ve H\'yi geride bırakır.',
+    duration: 36,
+    baseSpeed: 40, tau: 1.0, goBefore: 2.5,
+    clockScale: 3,
+    wind: 0,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 27,
+    rungs: { boat: 'S', from: 27.5 },
+    boats: [
+      { id: 'S', name: 'Rüzgarüstündekinin altına', role: 'dogru', color: '#2a9d8f',
+        start: { x: 377, y: 582, h: 340 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 340, dur: 3, speed: 0.04, turn: 0, note: 'Sıkıştı: önü kapalı, hava kirli' },
+          { mode: 'heading', h: 210, dur: 2.0, turn: 0.9, note: 'Geri çekil, kalabalıktan çık' },
+          { mode: 'heading', h: 88, dur: 3.55, turn: 1.0, note: 'Filonun altından boş yere' },
+          { mode: 'heading', h: 40, dur: 2.8, turn: 1.0, speed: 1, note: 'W\'nin rüzgaraltına yanaş' },
+          { mode: 'hold', h: 340, dur: 13.15, speed: 0.04, turn: 1.0, note: 'W\'ye yakın, altı boş' },
+          { mode: 'heading', h: 290, dur: 1.4, turn: 0.8, note: 'Boşluğa doldur, hızlan' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10, turn: 0.8 }
+        ] },
+      { id: 'L', name: 'Rüzgaraltı · hızlı çıkan', role: 'hak', color: '#1f77b4',
+        start: { x: 700, y: 505, h: 340 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 340, dur: 24.5, speed: 0.04, turn: 0 },
+          { mode: 'heading', h: 290, dur: 1.4, turn: 0.8, note: 'Altı boş: doldur, hızlan' },
+          { mode: 'closehauled', tack: 'starboard', dur: 1.6, turn: 0.8 },
+          { mode: 'heading', h: 330, dur: 1.2, turn: 0.8, note: 'K11: orsalar, H yol verir' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10, turn: 0.8 }
+        ] },
+      { id: 'H', name: 'Rüzgaraltındakinin üstüne', role: 'hata', color: '#e76f51',
+        start: { x: 431, y: 587, h: 340 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 340, dur: 2, speed: 0.04, turn: 0, note: 'Sıkıştı' },
+          { mode: 'heading', h: 210, dur: 1.4, turn: 0.9, note: 'O da kalabalıktan çıkıyor' },
+          { mode: 'heading', h: 90, dur: 5.3, turn: 1.0 },
+          { mode: 'heading', h: 40, dur: 3.8, turn: 1.0, speed: 1, note: 'L\'nin rüzgarüstüne yanaştı' },
+          { mode: 'hold', h: 345, dur: 12.0, speed: 0.04, turn: 1.0, note: 'L\'ye çok yakın, üstünde' },
+          { mode: 'closehauled', tack: 'starboard', dur: 2.9, turn: 0.8, speed: 0.75, note: 'Altı dolu: düşüp hızlanamıyor' },
+          { mode: 'heading', h: 355, dur: 1.6, speed: 0.6, turn: 1.0, note: 'L orsaladı: yol ver' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10, turn: 0.8, speed: 0.85, note: 'Geride, L\'nin ters rüzgarında' }
+        ] }
+    ],
+    // pin tarafında kalabalık (0.06-0.27); 0.36 ile W (0.56) arası boş: S W'nin hemen rüzgaraltına (~44 px)
+    // yanaşır. Sağda L (scripted, 0.75) ve onun hemen rüzgarüstüne yanaşan H.
+    crowd: [
+      { slot: 0.03, back: 0 }, { slot: 0.12, back: 5 }, { slot: 0.21, back: 0 }, { slot: 0.30, back: 5 },
+      { slot: 0.58, back: 0, id: 'W', name: 'Rüzgarüstü komşu' }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 81 sn: S sıkışmış', text: 'Pin tarafı kalabalık. S ikinci sırada kalmış: önünde tekneler, havası kirli (pis rüzgar), hızlanacak yeri yok. Burada beklerse start\'ta arkada kalır.' },
+      { t: 3, title: 'Geri çekil, kalabalıktan çık', text: 'S rüzgaraltına dönüp kalabalığın arkasından çıkıyor, kavança atıp filonun 2 boy altından apaz ile hattın ortasına gidiyor. Sıkıştığın yerde inat etme: vakit varken daha boş bir yere geç.' },
+      { t: 12, title: 'Boş yerde: rüzgarüstündekinin ALTINA yanaş', text: 'Ortada boşluk var. S boşluğun ortasına değil, rüzgarüstü komşusu W\'nin hemen rüzgaraltına, ona yakın yanaşıyor (yaklaşık 1 boy). W rüzgarüstünde olduğu için S\'ye yol verir (Kural 11), üstüne inemez. S\'nin rüzgaraltında ise açık su kalıyor: sinyalde hızlanacağı yer orası.' },
+      { t: 15.5, title: 'Hata: rüzgaraltındakinin ÜSTÜNE yanaşmak', text: 'H de kalabalıktan çıkıp sağa gitti ama yanlış tarafa yanaştı: L\'nin hemen rüzgarüstüne, ona çok yakın. Şimdi rüzgaraltı tekne L; L orsalarsa H yol vermek zorunda (Kural 11). H\'nin altında açık su yok, kendi yeri L\'nin elinde.' },
+      { t: 24.5, title: '2.5 sn kala doldur', text: 'S ve L altlarındaki boşluğa doğru biraz düşüp yelkeni dolduruyor, hızlanıyor. H\'nin düşecek yeri yok: hemen altında L var.' },
+      { t: 27, title: 'START: altı boş olan kazanır', text: 'S temiz havada, tam hızda çıkıyor; W üstte kalıyor. Sağda L hızlanınca biraz orsalıyor (Kural 11): H yol vermek için duruyor, L\'nin ters rüzgarında kalıyor ve geride düşüyor. Kural: yer tutarken hep rüzgarüstündeki teknenin altına, ona yakın yanaş; altındaki boşluk senindir. Rüzgaraltındakinin üstüne yanaşırsan boşluk onundur.' }
+    ],
+    addBoat: { pin: { x: 290, y: 600 }, middle: { x: 500, y: 600 }, committee: { x: 720, y: 600 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   // ---------- B1: Kural 10 ----------
   S.push({
     id: 'b1-rule10',
