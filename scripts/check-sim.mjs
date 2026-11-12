@@ -61,5 +61,18 @@ for (const wind of [-12, 0, 12]) {
   console.log(`• manuel mod, rüzgar ${wind}°: kendiliğinden tramola ${self}`);
   if (self) { problems++; console.log('  ⚠ manuel tekne kendiliğinden tramola attı'); }
 }
+// K11 rüzgarüstü testi: bindirmeli aynı kontrada rüzgarüstü, diğerinin rüzgarüstü YANINDAKİ teknedir
+// (rüzgaraltı tekne biraz önde olup rüzgar yönüne izdüşümde yukarıda görünse bile).
+{
+  const R = globalThis.SailRules, E = globalThis.SailEngine;
+  let bad = 0;
+  for (const w of [-30, 0, 20]) for (const tack of [-1, 1]) for (const back of [0, 25, 44]) for (const lat of [20, 34, 45]) {
+    const h = w + tack * 45, f = E.fwd(h), side = E.fwd(h - tack * 90);   // side: rüzgar tarafı
+    const L = { x: 300, y: 300, h }, W = { x: 300 + lat * side.x - back * f.x, y: 300 + lat * side.y - back * f.y, h };
+    if (!R.isWindward(W, L, w) || R.isWindward(L, W, w)) bad++;
+  }
+  console.log(`• K11 rüzgarüstü/rüzgaraltı ayrımı: ${bad ? bad + ' hatalı durum' : 'doğru'}`);
+  if (bad) { problems++; console.log('  ⚠ K11: rüzgaraltı tekne rüzgarüstü sayıldı'); }
+}
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);

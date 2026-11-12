@@ -282,7 +282,7 @@
     if (tb !== to) return tb === 'port' ? 10 : 0;
     if (R.clearAstern(b, O)) return 12;
     if (R.clearAstern(O, b)) return 0;
-    return dot({ x: b.x - O.x, y: b.y - O.y }, E.fwd(w)) > 0 ? 11 : 0;
+    return R.isWindward(b, O, w) ? 11 : 0;                              // rüzgarüstü (yan olarak) yol verir
   }
   // Protesto: hak sahibi `by`, `b`'nin kural ihlali yüzünden rota değiştirmek zorunda kaldı ya da temas oldu → b iki tur ceza atar
   function protest(s, b, by, rule, why) {

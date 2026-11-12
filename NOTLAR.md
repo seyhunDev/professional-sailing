@@ -72,6 +72,8 @@
 
 - 2026-11-12 · **Pis rüzgar tek yerden:** gölge geometrisi ve hız kaybı `engine.js` → `SHADOW`'da; senaryo/kural motoru/simülatör aynı fonksiyonları çağırır. Boy 4 tekne boyundan ~1 boya indirildi (kullanıcı: "çok uzun"). Senaryo teknelerinin rotası değişmez, yalnızca zamanda esnetilir (ders rotası korunur). Uygulama ve `check-scenarios` rotaları aynı `SailRules.buildScene` ile üretir.
 
+- 2026-11-12 · **Rüzgarüstü/rüzgaraltı (K11) yana göre belirlenir:** `SailRules.isWindward(X, O, windFrom)` (rules.js), simülatör (`classify`) ve senaryo kalabalığı (`decide`) bunu kullanır. Rüzgarüstü = diğer teknenin rotasına dik, rüzgar tarafındaki yanda duran tekne (RRS tanımı). Eski test yalnızca rüzgar yönüne izdüşüme bakıyordu: rüzgaraltı tekne yarım boy önde olunca "daha yukarıda" görünüp yol veriyordu (simülatörde K11 yol vermelerinin ~%28'i ters). Tam rüzgara/tam pupada yan belirsizse eski teste düşer. `check-sim` bunu denetler.
+
 ## Açık sorular (kullanıcıya)
 - Uygulama adı: karar bekliyor (ayrı sohbette adaylar üretilecek).
 - Hedef sınıf: Optimist mi, ILCA 4/6 mı, karışık mı? (Hız/dönüş oranları ve "tekne boyu" ölçeği buna göre ayarlanabilir.)
@@ -132,6 +134,9 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · K11 rüzgarüstü/rüzgaraltı ters çalışıyordu
+- Kullanıcı: simülatörde rüzgaraltı tekne kaçıyor, rüzgarüstü kaçması gerekirken. Sebep: rüzgarüstü testi rüzgar yönüne izdüşümdü; yan yana, yakın hatta giden teknelerde biraz önde olan rüzgaraltı tekne "yukarıda" sayılıyordu. Düzeltme: `SailRules.isWindward` (yan, rotaya dik). Simülatör ve senaryo kalabalığı (ek tekneler) ortak kullanır. Scripted senaryo tekneleri ve metinleri zaten doğruydu (kural motoru kullanmıyorlar). 15 yarışlık ölçüm: ters K11 yol verme 78/277 → ~0 (kalan birkaç sınır durumu tam yan yana). `check-sim`e K11 geometri testi eklendi. `npm run check` temiz.
 
 ### 2026-11-12 · Simülatör: dikey iPad'de start alanı yukarıda
 - Kullanıcı: dikey iPad'de alttaki durum şeridi/bildirim start hattının üstüne geliyor. `fitViewBox` tablette (≤1100 px, telefon değil) parkuru alttan boş bant bırakarak sığdırır: dikeyde 100 px, yatayda 64 px (`padB`; yön `innerHeight > innerWidth` ile, çünkü sahne kutusu dikey iPad'de bile yataya yakın). Tablette bildirim (toast) şeridin yerine, en alta çıkar. Sağanak kartı açıkken kart tekneleri kapatabilir (kapatılınca açılır).

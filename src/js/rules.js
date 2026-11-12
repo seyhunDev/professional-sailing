@@ -19,6 +19,22 @@
     return dot({ x: X.x - O.x, y: X.y - O.y }, f) < -HULL * 0.9;
   }
 
+  // X, O'nun rüzgarüstünde mi? (RRS tanımı: bindirmeli iki tekneden rüzgarüstü olan, diğerinin
+  // RÜZGARÜSTÜ YANINDA duran teknedir.) Yan, teknelerin rotasına diktir: aynı kontrada yan yana
+  // giden iki teknede biraz önde olan rüzgaraltı tekne, rüzgar yönüne izdüşümde "daha yukarıda"
+  // görünebilir; yalnızca rüzgar yönüne bakmak bu yüzden hakkı ters verir.
+  function isWindward(X, O, windFrom) {
+    const up = E.fwd(windFrom);
+    const fx = E.fwd(X.h), fo = E.fwd(O.h);
+    let f = { x: fx.x + fo.x, y: fx.y + fo.y }; const fl = Math.hypot(f.x, f.y);
+    const rel = { x: X.x - O.x, y: X.y - O.y };
+    if (fl < 1e-6) return dot(rel, up) > 0;
+    f = { x: f.x / fl, y: f.y / fl };
+    const k = dot(up, f), n = { x: up.x - k * f.x, y: up.y - k * f.y };   // rotaya dik, rüzgar tarafı
+    if (Math.hypot(n.x, n.y) < 0.17) return dot(rel, up) > 0;            // tam rüzgara ya da tam pupa: yan belirsiz
+    return dot(rel, n) > 0;
+  }
+
   // En yakın yaklaşma: {tc, dmin, d}
   function approach(X, O) {
     const r = { x: O.x - X.x, y: O.y - X.y };
@@ -34,7 +50,6 @@
 
   // X için karar: {kind, note, rule} | null
   function decide(X, others, windFrom) {
-    const up = E.fwd(windFrom);                    // rüzgara doğru birim vektör
     let best = null;
     for (const O of others) {
       const a = approach(X, O);
@@ -51,7 +66,7 @@
       } else {
         const xAstern = clearAstern(X, O), oAstern = clearAstern(O, X);
         if (!xAstern && !oAstern) {
-          const windward = dot({ x: X.x - O.x, y: X.y - O.y }, up) > 0;
+          const windward = isWindward(X, O, windFrom);
           dec = windward
             ? { kind: 'luff', note: 'Rüzgarüstü yol verir · K11', rule: 11 }
             : { kind: 'row', note: 'Hak sahibi · K11', rule: 11 };
@@ -228,5 +243,5 @@
     return { scripted: scripted.map(s => s.track), extras };
   }
 
-  global.SailRules = { simulate, buildScene, warpForShadows, decide, clearAstern, approach, lineSide, lineParam };
+  global.SailRules = { simulate, buildScene, warpForShadows, decide, clearAstern, isWindward, approach, lineSide, lineParam };
 })(typeof window !== 'undefined' ? window : globalThis);
