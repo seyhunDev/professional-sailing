@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1724">
+  <meta name="robots" content="noindex">
+  <title>Professional Sailing · Ziyaret Kayıtları</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/visits.css">
+</head>
+<body class="visits">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-boat" viewBox="0 0 24 24"><path d="M12 3c3 3.5 4 8 3.5 15h-7C8 11 9 6.5 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  </svg>
+  <header class="topbar">
+    <a class="tool back-btn" href="./" title="Senaryolara dön"><svg><use href="#i-back"/></svg><span class="lbl">Senaryolar</span></a>
+    <h1 class="vis-h1">Ziyaret kayıtları</h1>
+    <div class="spacer"></div>
+    <div class="tool-group">
+      <a class="tool" href="sim.html" title="Yarış simülatörü"><svg><use href="#i-boat"/></svg><span class="lbl">Simülatör</span></a>
+    </div>
+  </header>
+
+  <main class="vis-main" id="visMain">
+    <section class="vis-locked hidden" id="visLocked">
+      <h2>Bu sayfa yalnızca site sahibine açık</h2>
+      <p>Ziyaret kayıtlarını görmek için sahip girişi yap.</p>
+      <button class="tb primary" id="visOwner">Site sahibi girişi</button>
+    </section>
+
+    <div id="visBody" class="hidden">
+      <div class="vis-note">
+        <b>Bu sayfa yalnızca bu tarayıcıdaki kayıtları gösterir.</b>
+        Site şu an sunucusuz (GitHub Pages) çalıştığı için her ziyaretçinin kaydı kendi tarayıcısında kalır; başkalarının
+        ziyaretleri buraya Firebase bağlanınca gelecek. Şimdilik başka bir cihazdan (ör. telefonundan) "JSON indir" ile aldığın
+        dosyayı "Dosyadan ekle" ile burada birleştirebilirsin. IP adresi tarayıcıdan güvenilir alınamaz; Firebase'te sunucu tarafında eklenecek.
+      </div>
+
+      <div class="vis-actions">
+        <label class="switch"><input type="checkbox" id="visHideOwner"><span class="track"><span class="knob"></span></span><span class="sw-lbl">Sahip ziyaretlerini gizle</span></label>
+        <div class="spacer"></div>
+        <button class="tb" id="visJson">JSON indir</button>
+        <button class="tb" id="visCsv">CSV indir</button>
+        <label class="tb file-btn">Dosyadan ekle<input type="file" id="visFile" accept=".json,application/json"></label>
+        <button class="tb danger" id="visClear">Temizle</button>
+      </div>
+
+      <div class="vis-stats" id="visStats"></div>
+
+      <div class="vis-cols">
+        <section class="vis-box"><h3>En çok açılan senaryolar</h3><ol class="vis-rank" id="visTopScn"></ol></section>
+        <section class="vis-box"><h3>Nereden geldiler</h3><ol class="vis-rank" id="visFrom"></ol></section>
+        <section class="vis-box"><h3>Cihaz · tarayıcı</h3><ol class="vis-rank" id="visDev"></ol></section>
+        <section class="vis-box"><h3>En çok basılan düğmeler</h3><ol class="vis-rank" id="visClicks"></ol></section>
+      </div>
+
+      <section class="vis-box">
+        <h3>Ziyaretçiler <small>satıra dokun: yalnız o kişinin olayları</small></h3>
+        <div class="vis-table-wrap"><table class="vis-table" id="visPeople"></table></div>
+      </section>
+
+      <section class="vis-box">
+        <h3>Olaylar <small id="visEvCount"></small></h3>
+        <div class="vis-filter">
+          <select class="tb" id="visType"><option value="">Tüm türler</option></select>
+          <input class="tb" id="visSearch" placeholder="Ara (senaryo, düğme, ad…)">
+          <button class="tb hidden" id="visWhoClear"></button>
+        </div>
+        <ol class="vis-events" id="visEvents"></ol>
+        <button class="tb vis-more hidden" id="visMore">Daha fazla göster</button>
+      </section>
+    </div>
+  </main>
+  <script src="js/track.js"></script>
+  <script src="js/access.js"></script>
+  <script src="js/visits.js"></script>
+</body>
+</html>

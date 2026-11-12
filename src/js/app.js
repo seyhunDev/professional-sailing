@@ -164,6 +164,7 @@
     document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', c.dataset.id === scn.id));
     buildLegend(); buildTimeline(); buildSideOptions(); drawCourse(); updatePlayButton();
     showStep(0, false); render();
+    if (window.SailTrack) SailTrack.log('scenario', { id: scn.id, title: scn.title, category: scn.category });
   }
   // Tekne listesi: renkli kimlik + kısa ad + rol rozeti; filo tek satırda özetlenir
   function buildLegend() {
@@ -634,18 +635,24 @@
       const a = $('pickerList').querySelector('.card.active'); if (a) a.scrollIntoView({ block: 'nearest' });
     }
   }
+  // erişim: misafire kapalı kategoriler (js/access.js → FEATURES)
+  const lockedScn = x => x.category === 'İleri Taktik' && window.SailAccess && !SailAccess.can('scn.ileri');
   const norm = t => t.toLocaleLowerCase('tr').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   function scenarioCard(x) {
     const [code, ttl] = splitTitle(x.title);
     const c = document.createElement('button'); c.className = 'card'; c.dataset.id = x.id;
     c.style.setProperty('--cat', CAT_COLORS[x.category] || 'var(--accent)');
     const active = state.scn && state.scn.id === x.id; c.classList.toggle('active', active);
+    const locked = lockedScn(x); c.classList.toggle('locked', locked);
     const nBoats = x.boats.length + (x.crowd || []).length;
-    c.innerHTML = `<div class="card-top"><span class="code-badge">${esc(code)}</span>${active ? '<span class="now">● Açık</span>' : ''}</div>` +
+    c.innerHTML = `<div class="card-top"><span class="code-badge">${esc(code)}</span>${active ? '<span class="now">● Açık</span>' : ''}${locked ? '<span class="lock" title="Kayıtlı kullanıcılar için">Kaydol</span>' : ''}</div>` +
       `<div class="ttl">${esc(ttl)}</div><div class="sum">${esc(x.summary)}</div>` +
       `<div class="meta"><span><svg><use href="#i-clock"/></svg>${Math.round(x.duration)} sn</span>` +
       `<span><svg><use href="#i-boat"/></svg>${nBoats} tekne</span><span><svg><use href="#i-steps"/></svg>${x.steps.length} adım</span></div>`;
-    c.onclick = () => { location.hash = x.id; openPicker(false); };
+    c.onclick = () => {
+      if (lockedScn(x)) { SailAccess.guard('scn.ileri'); return; }
+      location.hash = x.id; openPicker(false);
+    };
     return c;
   }
   function buildPicker() {
@@ -711,8 +718,18 @@
   $('chkZoom').checked = camOn();
   phoneMq.addEventListener('change', () => { if (state.zoom == null) $('chkZoom').checked = camOn(); });
 
-  const fromHash = () => SCENARIOS.find(s => s.id === location.hash.slice(1)) || SCENARIOS[0];
+  const fromHash = () => {
+    const s = SCENARIOS.find(s => s.id === location.hash.slice(1)) || SCENARIOS[0];
+    if (lockedScn(s)) { SailAccess.guard('scn.ileri'); return state.scn || SCENARIOS.find(x => !lockedScn(x)); }
+    return s;
+  };
   window.addEventListener('hashchange', () => { const s = fromHash(); if (s !== state.scn) loadScenario(s); });
+  // giriş/kayıt sonrası kilitler değişir: seçici açıksa yenile, adresteki kilitli senaryoyu aç
+  document.addEventListener('sail-access', () => {
+    if (!$('picker').classList.contains('hidden')) buildPicker();
+    const s = SCENARIOS.find(s => s.id === location.hash.slice(1));
+    if (s && s !== state.scn && !lockedScn(s)) loadScenario(s);
+  });
   const ds = document.body.dataset;
   $('versionLabel').textContent = ds.version ? `Sürüm ${ds.ver || ds.version} · ${ds.version} · ${ds.built}` : 'Geliştirme sürümü';
   fitViewBox(); loadScenario(fromHash()); setInfoOpen(true);

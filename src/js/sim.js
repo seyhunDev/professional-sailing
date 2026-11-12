@@ -549,6 +549,7 @@
     st.frames = S.runToEnd(S.newRace(st.fleet, { wind: st.wind, gusts: st.gusts, course: st.course, sea: st.sea, boat: st.boat }));
     st.playT = 0; st.sim = viewAt(0); st.mode = 'run'; st.sel = null; st.ended = false;
     st.rec = Rec.begin(setup);
+    if (window.SailTrack) SailTrack.log('race_start', { boats: st.fleet.length, cls: st.boat && st.boat.cls, gusts: st.gusts.length });
   }
   // Yarış sırasındaki değişiklikler: her biri yazılabilir bir "işlem" (op). Aynı işlem kayıtlı yarışı
   // tekrar oynatırken aynı karede yeniden uygulanır; hesap deterministik olduğu için yarış birebir aynı çıkar.
@@ -630,6 +631,8 @@
   function driveBoat() { return st.drive && driveCtx().boats.find(b => b.mine); }
   function enterDrive() {
     if (st.drive) return;
+    if (window.SailAccess && !SailAccess.guard('sim.drive')) return;
+    if (window.SailTrack) SailTrack.log('drive', { mode: st.mode });
     if (st.drawMode) endDraw(true);
     if (st.mode === 'setup') {
       const m = st.fleet.find(b => b.mine); if (!m) return;
@@ -1105,11 +1108,14 @@
     const r = st.rec;
     if (!r || !Rec.dirty(r) || r.asked === r.rev) return false;
     r.asked = r.rev;
+    if (window.SailTrack) SailTrack.log('race_end', raceSummary());
+    if (window.SailAccess && !SailAccess.can('sim.records')) return false;
     openSaveDlg(true);
     return true;
   }
   function openSaveDlg(atEnd) {
     if (!st.rec || !st.frames.length) return;
+    if (window.SailAccess && !SailAccess.guard('sim.records')) return;
     if (st.mode === 'run') st.mode = 'pause';
     const m = raceSummary();
     $('saveDlgTitle').textContent = atEnd ? 'Yarış bitti · Kaydedelim mi?' : 'Bu yarışı kaydet';
@@ -1132,6 +1138,7 @@
     r.savedRev = r.rev; r.savedId = entry.id; r.name = name;
     closeSaveDlg(); updatePanel(true);
     toast(`Kaydedildi: “${name}” · Kayıtlar'dan tekrar izleyebilirsin`);
+    if (window.SailTrack) SailTrack.log('race_save', { name });
   }
   // Kayıttaki kurulumu ekrana koy
   function useSetup(su) {
@@ -1165,7 +1172,7 @@
     setTimeout(() => { delete btn.dataset.armed; btn.innerHTML = old; btn.classList.remove('armed'); }, 3000);
     return false;
   }
-  function openRecDlg() { recRender(); $('recDlg').classList.remove('hidden'); }
+  function openRecDlg() { if (window.SailAccess && !SailAccess.guard('sim.records')) return; recRender(); $('recDlg').classList.remove('hidden'); }
   function closeRecDlg() { $('recDlg').classList.add('hidden'); }
   function recRender() {
     const races = Rec.list(), r = st.rec, can = !!(r && st.frames.length);
