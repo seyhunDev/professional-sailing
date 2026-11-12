@@ -54,6 +54,7 @@ Framework bağımlılığı yok; ileride gerekirse SVG katmanı olduğu gibi Rea
 - **Kurulum:** tekneleri sürükleyip start hattının dibine yerleştir; turuncu tekne senin teknen. Bir tekneye dokunup kontrasını (sancak/iskele), taktiğini (sol / orta / sağ / sağanak avcısı) değiştir ya da onu "benim teknem" yap. Filo 2-16 tekne.
 - **Rüzgar:** ◀ ▶ ile 5° döndür (yarış sırasında da). Hat avantajı (pin / hakem botu) ve layline'lar anında güncellenir; bütün tekneler rotasını uydurur.
 - **Sağanak (gust):** sol ya da sağ tarafa ekle, sürükleyerek taşı. İçindeki tekneler %25 hızlı; "sağanak avcısı" tekneler oraya yönelir. Sağanağa dokununca üstte çubuk açılır: büyüt / küçült / sıfırla / sil.
+- **Deniz:** akıntı (hafif/orta/güçlü) ve dalga (küçük/büyük) tekneleri rüzgaraltına kaydırır; tekne başına "Kayma" (az/çok) yalpalayan sporcuyu gösterir.
 - **Parkur:** kurulumda panelin üstündeki "Parkur" kutusundan start hattı uzunluğu ve orsa şamandırası uzaklığı ayarlanır; "Varsayılan" ile geri dönülür.
 - **Start:** 1 dakikalık geri sayım; tekneler hattın dibinde bekler, zamanı gelince doldurup hattı geçer. Erken geçen OCS olur ve geri döner. Sonra herkes orsa şamandırasına gider (layline'da tramola) ve şamandırayı iskeleden döner; sıra dönüş sırasıdır.
 - **Kurallar:** hak sahibi rotasında kalır, yol veren sakince tramola atar ya da arkadan geçer (Optimist mesafesi: ~34 px merkezden merkeze). K10, K11, K12, K13, K14, K18 (şamandırada yer ver), K22 (OCS dönen tekne yol verir). Yol veren teknenin üstünde not çıkar, olay listesine yazılır; temaslar kırmızı.

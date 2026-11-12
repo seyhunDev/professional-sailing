@@ -20,7 +20,7 @@
     sim: null, frames: [], speed: 1, lastTs: 0, acc: 0,
     show: { speed: true, shadow: false },
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
-    course: { ...S.COURSE_DEFAULT }, gsel: null, drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
+    course: { ...S.COURSE_DEFAULT }, sea: { ...S.SEA_DEFAULT }, gsel: null, drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
   };
 
   // ---------- görünüm ----------
@@ -216,6 +216,13 @@
     el('line', { x1: cx - d.x * 28, y1: cy - d.y * 28, x2: cx + d.x * 20, y2: cy + d.y * 20, stroke: '#7dd3fc', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'marker-end': 'url(#arrowHead)' }, hg);
     el('rect', { x: cx - 38, y: cy + 52, width: 76, height: 20, rx: 10, fill: 'rgba(7,18,30,0.72)' }, hg);
     el('text', { x: cx, y: cy + 66, 'text-anchor': 'middle', fill: '#fff', 'font-size': 11, 'font-weight': 600 }, hg).textContent = `Rüzgar ${Math.round(E.norm360(w))}°`;
+    const sea = v.sea || st.sea;
+    if (sea && (sea.current || sea.waves)) {
+      const txt = [sea.current ? `Akıntı ${SEA_TXT.current[sea.current]}` : '', sea.waves ? `Dalga ${SEA_TXT.waves[sea.waves]}` : ''].filter(Boolean).join(' · ');
+      const tw = txt.length * 5.9 + 18;
+      el('rect', { x: cx - 44, y: cy + 76, width: tw, height: 18, rx: 9, fill: 'rgba(7,18,30,0.72)', stroke: 'rgba(125,211,252,.4)' }, hg);
+      el('text', { x: cx - 44 + tw / 2, y: cy + 89, 'text-anchor': 'middle', fill: '#bae6fd', 'font-size': 10.5, 'font-weight': 600 }, hg).textContent = txt;
+    }
     const rem = (v.startAt - v.t) * S.CLOCK_SCALE, on = rem > 0;
     const col = on ? (rem <= 10 ? '#f87171' : '#fbbf24') : '#34d399';
     const px = cx + 58, py = cy - 26, pw = 150, ph = 52;
@@ -238,12 +245,13 @@
     updateBar(v);
   }
 
-  const speedTxt = b => (b.speedK && Math.abs(b.speedK - 1) > 1e-6 ? ` · ${b.speedK > 1 ? '+' : '−'}${Math.round(Math.abs(b.speedK - 1) * 100)}% hız` : '');
+  const speedTxt = b => (b.speedK && Math.abs(b.speedK - 1) > 1e-6 ? ` · ${b.speedK > 1 ? '+' : '−'}${Math.round(Math.abs(b.speedK - 1) * 100)}% hız` : '') + (b.drift ? (b.drift > 1 ? ' · çok kayıyor' : ' · kayıyor') : '');
+  const SEA_TXT = { current: ['yok', 'hafif', 'orta', 'güçlü'], waves: ['yok', 'küçük', 'büyük'] };
   // ---------- panel ----------
   let lastPanelKey = '';
   function updatePanel(force) {
     const v = view();
-    const key = st.mode + '|' + st.course.lineLen + 'x' + st.course.markDist + '|' + st.gsel + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + v.boats.map(b => b.id + (b.sailor || '') + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
+    const key = st.mode + '|' + st.course.lineLen + 'x' + st.course.markDist + '|' + st.gsel + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + JSON.stringify(v.sea || st.sea) + v.boats.map(b => b.id + (b.sailor || '') + (b.drift || 0) + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
     if (!force && key === lastPanelKey) return;
     lastPanelKey = key;
     courseUpdate(); gustBarUpdate();
@@ -264,10 +272,11 @@
       if (document.activeElement !== $('selName')) $('selName').value = sb.sailor || '';
       $('selTackRow').classList.toggle('hidden', !setupSel); $('selSetupRow').classList.toggle('hidden', !setupSel);
       const over = !setupSel && (sb.finish || sb.phase === 'done');
-      [...$('selPersona').children, ...$('selSpeed').children, ...$('selRules').children].forEach(x => { x.disabled = !!over; });
+      [...$('selPersona').children, ...$('selSpeed').children, ...$('selDrift').children, ...$('selRules').children].forEach(x => { x.disabled = !!over; });
       [...$('selTack').children].forEach(x => x.classList.toggle('on', x.dataset.v === sb.tack));
       [...$('selPersona').children].forEach(x => x.classList.toggle('on', x.dataset.v === sb.persona));
       [...$('selSpeed').children].forEach(x => x.classList.toggle('on', Math.abs(+x.dataset.v - (sb.speedK || 1)) < 1e-6));
+      [...$('selDrift').children].forEach(x => x.classList.toggle('on', +x.dataset.v === (sb.drift || 0)));
       [...$('selRules').children].forEach(x => x.classList.toggle('on', x.dataset.v === (sb.ignoresRules ? 'vermez' : 'uyar')));
       $('btnMakeMine').disabled = sb.mine;
     }
@@ -280,15 +289,20 @@
     $('events').innerHTML = evs.length ? evs.map(e => `<li class="${e.kind}"><span class="et">${S.fmt(Math.max(0, e.t - v.startAt))}</span>${esc(e.text)}</li>`).join('')
       : `<li class="empty">${st.mode === 'setup' ? 'Start verilince kural olayları burada görünür.' : 'Henüz olay yok.'}</li>`;
     $('btnClearSaved').disabled = st.mode !== 'setup';
+    const sea = v.sea || st.sea;
+    [...$('seaCurrent').children].forEach(x => x.classList.toggle('on', +x.dataset.v === sea.current));
+    [...$('seaWaves').children].forEach(x => x.classList.toggle('on', +x.dataset.v === sea.waves));
+    $('seaState').textContent = sea.current || sea.waves ? 'tekneler rüzgaraltına kayar' : 'sakin';
+    $('seaState').classList.toggle('changed', !!(sea.current || sea.waves));
     saveSetup();
   }
   const nameOf = b => b.sailor || (b.mine ? 'Sen' : b.name);
   // ---------- Kurulumu bu cihazda sakla (ileride Firebase'e taşınacak) ----------
   const SAVE_KEY = 'ps.sim.setup.v1';
-  const BOAT_KEYS = ['id', 'x', 'y', 'tack', 'persona', 'speedK', 'ignoresRules', 'mine', 'sailor', 'route'];
+  const BOAT_KEYS = ['id', 'x', 'y', 'tack', 'persona', 'speedK', 'drift', 'ignoresRules', 'mine', 'sailor', 'route'];
   function saveSetup() {
     if (st.mode !== 'setup') return;
-    const data = { v: 1, wind: st.wind, course: st.course, gusts: st.gusts, fleet: st.fleet.map(b => Object.fromEntries(BOAT_KEYS.map(k => [k, b[k]]))) };
+    const data = { v: 1, wind: st.wind, sea: st.sea, course: st.course, gusts: st.gusts, fleet: st.fleet.map(b => Object.fromEntries(BOAT_KEYS.map(k => [k, b[k]]))) };
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) { /* özel pencere vb. */ }
   }
   function loadSetup() {
@@ -296,6 +310,7 @@
     try { d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { d = null; }
     if (!d || d.v !== 1 || !Array.isArray(d.fleet) || d.fleet.length < 2) return false;
     st.course = { ...S.COURSE_DEFAULT, ...(d.course || {}) }; S.setCourse(st.course);
+    if (d.sea) st.sea = { current: Math.max(0, Math.min(3, d.sea.current | 0)), waves: Math.max(0, Math.min(2, d.sea.waves | 0)) };
     st.wind = +d.wind || 0; st.gusts = Array.isArray(d.gusts) ? d.gusts : [];
     const n = Math.min(16, d.fleet.length), mineIdx = Math.max(0, d.fleet.findIndex(b => b.mine));
     st.fleet = d.fleet.slice(0, n).map((o, i) => {
@@ -303,7 +318,7 @@
       if (i !== mineIdx) { b.mine = false; b.color = '#c9d6e3'; }
       b.tack = o.tack === 'port' ? 'port' : 'starboard';
       if (S.PERSONAS[o.persona]) b.persona = o.persona;
-      b.speedK = +o.speedK || 1; b.ignoresRules = !!o.ignoresRules;
+      b.speedK = +o.speedK || 1; b.drift = Math.max(0, Math.min(2, o.drift | 0)); b.ignoresRules = !!o.ignoresRules;
       if (o.sailor) b.sailor = String(o.sailor).slice(0, 18);
       if (Array.isArray(o.route) && o.route.length) b.route = o.route;
       return b;
@@ -319,7 +334,7 @@
     clearArm = 0;
     try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* yok say */ }
     st.course = { ...S.COURSE_DEFAULT }; S.setCourse(st.course);
-    st.wind = 0; st.gusts = []; st.gsel = null; st.sel = null; st.fleet = S.defaultFleet(12);
+    st.wind = 0; st.sea = { ...S.SEA_DEFAULT }; st.gusts = []; st.gsel = null; st.sel = null; st.fleet = S.defaultFleet(12);
     $('btnClearSaved').textContent = 'Kaydı sil'; $('btnClearSaved').classList.remove('warn');
     fitViewBox(); updatePanel(true); toast('Kayıt silindi: isimler, taktikler ve parkur varsayılana döndü');
   }
@@ -375,7 +390,7 @@
   }
   function lastT() { return st.frames.length ? st.frames[st.frames.length - 1].t : 0; }
   function startRace() {
-    st.frames = S.runToEnd(S.newRace(st.fleet, { wind: st.wind, gusts: st.gusts, course: st.course }));
+    st.frames = S.runToEnd(S.newRace(st.fleet, { wind: st.wind, gusts: st.gusts, course: st.course, sea: st.sea }));
     st.playT = 0; st.sim = viewAt(0); st.mode = 'run'; st.sel = null; st.ended = false;
   }
   // Şu anki kareden başlayarak değişikliği uygula ve yarışı ileriye yeniden hesapla
@@ -735,6 +750,13 @@
     else applyChange(r => S.command(r, 'speed', v));
   });
   $('selSpeed').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('speedK', +x.dataset.v, 'speed'); });
+  $('selDrift').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('drift', +x.dataset.v, 'drift'); });
+  function setSea(key, val) {
+    if (st.mode === 'setup') { st.sea = { ...st.sea, [key]: val }; updatePanel(true); return; }
+    applyChange(r => { r.sea = { ...(r.sea || S.SEA_DEFAULT), [key]: val }; r.events.push({ t: r.t, text: key === 'current' ? `Akıntı: ${SEA_TXT.current[val]}` : `Dalga: ${SEA_TXT.waves[val]}`, kind: 'wind' }); });
+  }
+  $('seaCurrent').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setSea('current', +x.dataset.v); });
+  $('seaWaves').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setSea('waves', +x.dataset.v); });
   $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('ignoresRules', x.dataset.v === 'vermez', 'rules'); });
   $('btnMineRules').addEventListener('click', () => {
     const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;

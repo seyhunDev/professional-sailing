@@ -127,6 +127,15 @@
 
 ## Oturum günlüğü (en yeni üstte)
 
+### 2026-11-12 · Simülatör: start öncesi erken çıkış, taktiğe sadakat, akıntı/dalga, kayan tekne
+- **Erken çıkış:** bekleyen tekne artık ileri sürünmüyor (bekleme hızı 0, akıntı varsa ona karşı tutar); hatta yakın bekleyen teknelerde OCS 8 → 1.
+- **Taktiğe sadakat:** yol veren tekne kaçmak için tramola seçeneğini K11/K12'de, rota çizilmişken ve Sol/Sağ taktiğinde o tarafa varmadan kullanmaz (yavaşlar / bordalar / orsalar).
+- **Deniz kutusu** (panel): Akıntı Yok/Hafif/Orta/Güçlü (3/6/10 px/s), Dalga Yok/Küçük/Büyük (2/4 px/s kayma + orsada %5/%10 yavaşlama). Yarışta da değişir. Pusulanın altında "Akıntı … · Dalga …" etiketi.
+- **Kayma (tekne başına):** Yok/Az/Çok (+3/+6 px/s, orsada %5/%10 yavaş) — yalpalayan, köre düşen sporcu. `command 'drift'`.
+- Motor: `driftOf` (toplam en fazla 13 px/s), `layAngle` (akıntıda layline açılır), `crabTo` (burnu akıntıya karşı tutma), dönüşte kayma ×0.3, rüzgarda kalınca ve şamandırayı tutmayınca tramola, hat ucu nişanında ±15° ölü bölge.
+- Testler: check-sim'e akıntı+dalga+kayan tekne senaryosu, fuzz'da her 3 yarıştan biri denizli (akıntılı yarışta TAKILDI penceresi 12 s). 60'lık fuzz temiz, 150'de 3 (önceki düzeyde).
+- Seçili tekne kutusu panelin en üstüne alındı.
+
 ### 2026-11-12 · Simülatör: sporcu isimleri, tekne başına taktik, kalıcı kurulum
 - Seçili tekne kutusunda **Sporcu** isim alanı (`b.sailor`, en fazla 18 harf); isim teknenin altında, sıralamada ve başlıkta görünür.
 - Taktik (Sol / Orta / Sağ / Sağanak), hız ve "yol vermez" artık **yarışta da** her tekne için değişir: yarışta tekneye dokun → `S.command(r, cmd, arg, id)` (id yoksa senin teknen), o andan itibaren yeniden hesaplanır.

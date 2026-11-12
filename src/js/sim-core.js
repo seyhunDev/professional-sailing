@@ -18,6 +18,24 @@
   const CLOCK_SCALE = 5;
   const TURN_RATE = 110;          // derece/sn
   const GUST_GAIN = 0.25;         // sağanakta hız artışı
+  // Deniz: akıntı ve dalga tekneleri rüzgaraltına kaydırır (px/s). Teknenin kendi sürüklenmesi (yalpalama, köre düşme) de eklenir.
+  const SEA = { current: [0, 3, 6, 10], waveDrift: [0, 2, 4], waveLoss: [0, 0.05, 0.1], boatDrift: [0, 3, 6], boatLoss: [0, 0.05, 0.1] };
+  const SEA_DEFAULT = { current: 0, waves: 0 };
+  // Akıntıda orsa: yere göre gidilen açı (COG) rüzgardan 45°'den geniş → layline'lar açılır
+  function layAngle(s, b) {
+    const D = driftOf(s, b); if (D <= 0) return 45;
+    const v = BASE * 0.9, a = 45 * E.DEG;
+    return Math.atan2(v * Math.sin(a), Math.max(1, v * Math.cos(a) - D)) / E.DEG;
+  }
+  // akıntıya karşı burun tutma: yere göre `brg` yönünde gitmek için baş açısı
+  function crabTo(brg, w, D, v) {
+    if (D <= 0) return brg;
+    return brg - Math.asin(clamp(D * Math.sin(E.norm180(w + 180 - brg) * E.DEG) / Math.max(v, 20), -0.9, 0.9)) / E.DEG;
+  }
+  function driftOf(s, b) {
+    const sea = s.sea || SEA_DEFAULT;
+    return Math.min(13, (SEA.current[sea.current] || 0) + (SEA.waveDrift[sea.waves] || 0) + (SEA.boatDrift[b.drift || 0] || 0));   // en fazla 13: orsada yine de ilerler
+  }
   const SHADOW_LEN = E.SHADOW.len;   // rüzgar gölgesi (pis rüzgar): engine.SHADOW ile ortak (~1 boy kıçtan)
   const SHADOW_LOSS = E.SHADOW.loss; // gölgenin tam ortasında hız kaybı
   const KNOTS = 3.5 / BASE;       // px/s → knot (orsada 55 px/s ≈ 3.5 kn, Optimist)
@@ -113,7 +131,7 @@
       id: opts.id || String(i + 1), name: opts.name || `Tekne ${i + 1}`,
       color: opts.mine ? MINE_COLOR : COLORS[i % COLORS.length], mine: !!opts.mine,
       x: pos.x, y: pos.y, h: 0, v: HOLD_V, tack: opts.tack || 'starboard',
-      persona: opts.persona || AUTO_PERSONAS[i % AUTO_PERSONAS.length], ignoresRules: !!opts.ignoresRules, speedK: opts.speedK || 1, penalties: 0, penaltyAt: null,
+      persona: opts.persona || AUTO_PERSONAS[i % AUTO_PERSONAS.length], ignoresRules: !!opts.ignoresRules, speedK: opts.speedK || 1, drift: opts.drift || 0, penalties: 0, penaltyAt: null,
       phase: 'wait', go: false, man: null, manUntil: -1, note: '', noteUntil: -1, noteKind: '',
       lastTack: -10, finish: null, finishT: null, inGust: 0, gone: false, doneAt: null, ocsOnce: false
     };
@@ -145,7 +163,8 @@
       lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, started: false, outside: false, penalties: 0, penaltyAt: null, penTurn: 0, penWait: false, penFinish: false, routeIdx: 0, routeFrom: null, v: HOLD_V }));
     for (const b of boats) b.h = w + (b.tack === 'starboard' ? -25 : 25);
     const course = { ...COURSE_DEFAULT, ...(opts.course || {}) }; setCourse(course);
-    return { t: 0, wind: w, gusts: (opts.gusts || []).map(g => ({ ...g })), boats, events: [], finished: 0, pairLog: {}, startAt: START_AT, course };
+    const sea = { ...SEA_DEFAULT, ...(opts.sea || {}) };
+    return { t: 0, wind: w, gusts: (opts.gusts || []).map(g => ({ ...g })), boats, events: [], finished: 0, pairLog: {}, startAt: START_AT, course, sea };
   }
 
   // ---------- Strateji: hangi kontrada olmak istiyor? ----------
@@ -155,11 +174,12 @@
     const along = dot({ x: wp.x - b.x, y: wp.y - b.y }, up);
     const lat = dot({ x: b.x - wp.x, y: b.y - wp.y }, right);   // + sağ taraf
     // layline: daha fazla gidersen şamandırayı aşarsın → dön
-    if (b.tack === 'starboard' && rel >= 46) return 'port';
-    if (b.tack === 'port' && rel <= -46) return 'starboard';
+    const L = layAngle(s, b);
+    if (b.tack === 'starboard' && rel >= L + 1) return 'port';
+    if (b.tack === 'port' && rel <= -L - 1) return 'starboard';
     // layline'dayken (şamandırayı tutuyorsa) dönme
-    if (b.tack === 'starboard' && rel <= -40) return 'starboard';
-    if (b.tack === 'port' && rel >= 40) return 'port';
+    if (b.tack === 'starboard' && rel <= -L + 5) return 'starboard';
+    if (b.tack === 'port' && rel >= L - 5) return 'port';
     if (b.x < 70 && b.tack === 'starboard') return 'port';           // parkur kenarı
     if (b.x > WORLD.w - 70 && b.tack === 'port') return 'starboard';
     if (along < 110) return b.tack;
@@ -229,6 +249,7 @@
     } else if (cmd === 'route') {
       b.route = arg && arg.length ? arg.map(p => ({ x: p.x, y: p.y })) : null; b.routeIdx = 0; b.routeFrom = { x: b.x, y: b.y };
       log(s, b.route ? `${b.id}: yeni rota çizildi` : `${b.id}: rota silindi`);
+    } else if (cmd === 'drift') { b.drift = +arg || 0; log(s, `${b.id}: sürüklenme ${['yok', 'az', 'çok'][b.drift]}`);
     } else if (cmd === 'persona') { b.persona = arg; log(s, `${b.id}: taktik → ${PERSONAS[arg]}`); }
   }
 
@@ -295,7 +316,10 @@
     for (const off of [15, 25]) cands.push({ kind: 'luff', off: -away * off, speed: 1, cost: off * 0.18 });
     cands.push({ kind: 'slow', off: 0, speed: 0.35, cost: 5 });
     cands.push({ kind: 'slow', off: away * 20, speed: 0.4, cost: 6 });
-    if (b.phase === 'race' && t - b.lastTack > 1.5 && g.rule !== 14) cands.push({ kind: 'tack', h: E.tackHeading(w, b.tack === 'starboard' ? 'port' : 'starboard'), speed: 0.6, cost: 9 });
+    // kaçmak için tramola: rota çizilmişse ya da sol/sağ taktiğinde o tarafa daha varmadıysa yok (yavaşla / bordala ile yol verir)
+    const routing = b.started && b.route && b.routeIdx < b.route.length;
+    const sideLock = (b.persona === 'sol' && !b.sideDone && b.tack === 'starboard') || (b.persona === 'sag' && !b.sideDone && b.tack === 'port');
+    if (b.phase === 'race' && t - b.lastTack > 1.5 && g.rule !== 14 && !routing && !sideLock && g.rule !== 11 && g.rule !== 12) cands.push({ kind: 'tack', h: E.tackHeading(w, b.tack === 'starboard' ? 'port' : 'starboard'), speed: 0.6, cost: 9 });
     // K18: şamandırada dönen tekneye yer ver → bordalayıp uzaklaşma, rotada yavaşla ya da hafif orsala
     if (g.rule === 18) cands.splice(0, cands.length,
       { kind: 'hold', off: 0, speed: 1, cost: 0 }, { kind: 'slow', off: 0, speed: 0.3, cost: 3 }, { kind: 'slow', off: -away * 15, speed: 0.35, cost: 4 }, { kind: 'duck', off: away * 15, speed: 0.6, cost: 5 });
@@ -337,11 +361,11 @@
     if (!b.routeFrom) b.routeFrom = { x: b.x, y: b.y };
     const nx = routeNext(b);
     if (!nx) { note(b, s, 'Rota bitti, şamandıraya', 'good', 2); log(s, `${b.id}: çizdiğin rota bitti, şamandıraya gidiyor`); return E.tackHeading(w, b.tack); }
-    const { P, A } = nx, brg = bearing(b, P), r = E.norm180(brg - w);
+    const { P, A } = nx, brg = bearing(b, P), r = E.norm180(brg - w), LA = layAngle(s, b);
     const clearFor = tk => { const nh = E.tackHeading(w, tk); let m = 1e9;
       for (const o of others) { const c = closest(b, nh, 30, o, 4); if (c.d < 220) m = Math.min(m, c.dmin); }
       return m > 24; };
-    if (Math.abs(r) >= 47) {                           // açık seyir: doğrudan noktaya
+    if (Math.abs(r) >= LA + 2) {                       // açık seyir: doğrudan noktaya
       const want = r > 0 ? 'port' : 'starboard';
       if (want !== b.tack) {
         // kontra değişecek (tramola ya da kavança): orsadaysa önce açık olmasını bekle
@@ -354,14 +378,14 @@
     const seg = { x: P.x - A.x, y: P.y - A.y }, L = Math.hypot(seg.x, seg.y) || 1;
     const lat = dot({ x: b.x - A.x, y: b.y - A.y }, { x: -seg.y / L, y: seg.x / L });
     let want = b.tack;
-    if (b.tack === 'starboard' && (lat < -ROUTE_CORR || r >= 44)) want = 'port';
-    if (b.tack === 'port' && (lat > ROUTE_CORR || r <= -44)) want = 'starboard';
+    if (b.tack === 'starboard' && (lat < -ROUTE_CORR || r >= LA - 1)) want = 'port';
+    if (b.tack === 'port' && (lat > ROUTE_CORR || r <= -LA + 1)) want = 'starboard';
     if (b.x < 60) want = 'port'; if (b.x > WORLD.w - 60) want = 'starboard';
     if (want !== b.tack && t - b.lastTack > 2.2) {
       // K13 bilinci: tramoladan sonra biriyle çakışacaksa açık olana kadar bekle (koridordan çok taşmadıkça)
       if (clearFor(want) || Math.abs(lat) > ROUTE_CORR * 3 || b.x < 40 || b.x > WORLD.w - 40) doTack(b, s, '');
     }
-    if ((b.tack === 'starboard' && r <= -44) || (b.tack === 'port' && r >= 44)) return brg;   // noktayı tutuyor
+    if ((b.tack === 'starboard' && r <= -LA + 1) || (b.tack === 'port' && r >= LA - 1)) return brg;   // noktayı tutuyor
     return E.tackHeading(w, b.tack);
   }
 
@@ -384,7 +408,8 @@
       if (b.phase === 'wait') {
         const hClose = E.tackHeading(w, b.tack);
         if (!b.go) {
-          const need = timeToCover(distToLine(b, hClose)) + 0.4;
+          const d0 = distToLine(b, hClose), dr = driftOf(s, b);
+          const need = timeToCover(d0 + dr * timeToCover(d0) * 1.2) + 0.4;   // akıntı geri iter: biraz erken kalk
           if (remain <= need) b.go = true;
         }
         const outside = (b.x < 60 && E.fwd(hClose).x < 0) || (b.x > WORLD.w - 60 && E.fwd(hClose).x > 0);
@@ -403,7 +428,7 @@
           if (Math.abs(u0 - u) > 0.01) {                   // uçların dışında: hattın içindeki bir noktaya yönel
             const P = { x: LINE.pin.x + (LINE.boat.x - LINE.pin.x) * u, y: LINE.pin.y + (LINE.boat.y - LINE.pin.y) * u - 30 };
             lineAim = { brg: bearing(b, P), rel: E.norm180(bearing(b, P) - w) };
-            wt = lineAim.rel > 0 ? 'port' : 'starboard';
+            wt = lineAim.rel > 15 ? 'port' : lineAim.rel < -15 ? 'starboard' : b.tack;   // ölü bölgede gidip gelmesin
           } else wt = b.tack;                              // uçların arasında: düz devam, hattı geç
         }
         const edge = b.x < 40 || b.x > WORLD.w - 40;
@@ -411,7 +436,7 @@
           // K13 bilinci: tramoladan sonra biriyle çakışacaksa bekle
           const nh = E.tackHeading(w, wt), others = snap.filter(o => o.ref !== b);
           const relWp = E.norm180(bearing(b, waypoint(w)) - w);
-          const must = (b.tack === 'starboard' && relWp >= 46) || (b.tack === 'port' && relWp <= -46) || b.x < 70 || b.x > WORLD.w - 70;
+          const LA = layAngle(s, b), must = (b.tack === 'starboard' && relWp >= LA + 1) || (b.tack === 'port' && relWp <= -LA - 1) || b.x < 70 || b.x > WORLD.w - 70;
           let m = 1e9;
           for (const o of others) { const c = closest(b, nh, 30, o, 4); if (c.d < 220) m = Math.min(m, c.dmin); }
           if (m > (must ? 22 : 26) || edge || t - Math.max(b.lastTack, s.startAt) > 9) doTack(b, s, '');
@@ -422,7 +447,7 @@
         // şamandırayı tutuyorsa doğrudan geçiş noktasına (orsa açısından dar değilse)
         if (lineAim) { if (Math.abs(lineAim.rel) >= 45) { target = lineAim.brg; b.tack = lineAim.rel > 0 ? 'port' : 'starboard'; } }
         else if (!b.started) { /* hattın içinde: orsa rotasında devam */ }
-        else if ((b.tack === 'starboard' && rel <= -45) || (b.tack === 'port' && rel >= 45)) target = brg;
+        else if ((b.tack === 'starboard' && rel <= -layAngle(s, b)) || (b.tack === 'port' && rel >= layAngle(s, b))) target = brg;
         else if (!lineAim && Math.abs(rel) >= 55) { target = brg; b.tack = rel > 0 ? 'port' : 'starboard'; }   // şamandıra rüzgarüstünde değil (aşmış): doğrudan git
         if (routing) target = followRoute(b, s, w, t, snap.filter(o => o.ref !== b));
         // dönüşe başla: giriş noktasına geldi ya da şamandıranın rüzgarüstü tarafında, çembere yakın.
@@ -472,6 +497,14 @@
         if (lineSide(b) === 1 && distToLine(b, w) > 8) { b.phase = 'race'; b.started = false; note(b, s, b.outside ? 'Geri döndü, şimdi hattın içinden' : 'Geri döndü, şimdi start', '', 2); }
       }
 
+      // akıntı: hedef yöne yere göre gidebilmek için burnu akıntıya karşı tut (orsa açısından dar olmadan)
+      if ((b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs') && b.started !== undefined) {
+        const D = driftOf(s, b);
+        if (D > 0) {
+          const r0 = E.norm180(target - w), h2 = crabTo(target, w, D, b.v), r2 = E.norm180(h2 - w);
+          target = Math.abs(r0) < 44 ? target : (Math.abs(r2) < 44 ? w + Math.sign(r0) * 44 : h2);
+        }
+      }
       // kurallar: yol vermesi gereken tekne, temas riskini en iyi azaltan rotayı seçer
       if (rulesOn && (b.phase === 'race' || b.phase === 'ocs') && b.ignoresRules) b.man = null;   // kural bilmeyen: yol vermez, kaçmaz
       else if (rulesOn && (b.phase === 'race' || b.phase === 'ocs')) {
@@ -516,20 +549,35 @@
         if (dir !== 0 && !b.started && Math.hypot(b.x - LINE.pin.x, b.y - LINE.pin.y) < 90 && Math.abs(E.norm180(b.h + 20 - w)) >= 32) dir = 1;
         if (dir !== 0) b.h = E.norm360(b.h + dir * 160 * DT);
         // şamandıra önündeyse hep sağa kaç: şamandıra teknenin iskelesinde (solunda) kalsın, yanlış taraftan geçilmesin
-        else if (b.phase !== 'done' && !(b.phase === 'penalty' && b.penFinish) && E.avoidDir(b.x, b.y, b.h, MARK_OBS, b.v) !== 0) b.h = E.norm360(b.h + 320 * DT);
+        else if (b.phase !== 'done' && !(b.phase === 'penalty' && b.penFinish) && E.avoidDir(b.x, b.y, b.h, MARK_OBS, b.v) !== 0) {
+          // şamandırayı tutamıyor (sağa kaçış rüzgarın içine sokuyor): rüzgarda kalmak yerine hemen tramola
+          if (b.phase === 'race' && b.started && b.tack === 'starboard' && Math.abs(E.norm180(b.h + 25 - w)) < 40 && t - b.lastTack > 2) doTack(b, s, 'Tutmuyor, tramola');
+          else b.h = E.norm360(b.h + 320 * DT);
+        }
       }
+      // rüzgarın içinde kaldı (şamandıranın altında, akıntı itiyor): tramola atıp çık
+      if (b.phase === 'race' && b.started && Math.abs(E.norm180(b.h - w)) < 30 && b.v < 15 && t - b.lastTack > 4) {
+        if (!b.stallAt) b.stallAt = t; else if (t - b.stallAt > 1.5) { doTack(b, s, 'Rüzgarda kaldı, tramola'); b.stallAt = 0; }
+      } else b.stallAt = 0;
       // hız
       const twa = Math.abs(E.norm180(b.h - w));
-      let vt = holding ? HOLD_V : E.speedFor(twa, BASE) * speedK;
+      let vt = holding ? driftOf(s, b) * 0.85 : E.speedFor(twa, BASE) * speedK;   // beklerken yerinde durmaya çalışır (akıntıya karşı az yelken)
       // sinyalden önce hatta varacaksa yavaşla (burnu hattın altında kalsın)
-      if (b.phase === 'wait' && b.go && remain > 0) vt = Math.min(vt, Math.max(HOLD_V, (distToLine(b, b.h) - 6) / remain));
+      if (b.phase === 'wait' && b.go && remain > 0) vt = Math.min(vt, Math.max(0, (distToLine(b, b.h) - 6) / remain + driftOf(s, b) * 0.9));
       if (b.phase === 'done') vt *= 0.8;
-      if (!holding) vt *= (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow) * (b.speedK || 1);   // teknenin kendi hızı (tekne/denizci farkı)
+      if (!holding) {
+        const sea = s.sea || SEA_DEFAULT, upw = twa < 75 ? 1 : 0.4;              // dalga ve yalpalama en çok orsada yavaşlatır
+        vt *= (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow) * (b.speedK || 1) * (1 - upw * ((SEA.waveLoss[sea.waves] || 0) + (SEA.boatLoss[b.drift || 0] || 0)));
+      }   // teknenin kendi hızı (tekne/denizci farkı)
       b.v += (vt - b.v) * Math.min(1, DT / TAU);
     }
 
     // hareket
-    for (const b of active) { const f = E.fwd(b.h); b.x += f.x * b.v * DT; b.y += f.y * b.v * DT; }
+    const dw = E.fwd(w + 180);                                    // rüzgaraltı yönü
+    for (const b of active) {
+      const f = E.fwd(b.h), dr = b.phase === 'done' ? 0 : driftOf(s, b) * (b.phase === 'round' ? 0.3 : 1);   // dönüşte kısa süre: az kayar
+      b.x += (f.x * b.v + dw.x * dr) * DT; b.y += (f.y * b.v + dw.y * dr) * DT;
+    }
     // temas: üst üste binmeyi engelle, kaydet
     const live = active.filter(b => b.phase !== 'done');
     for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
@@ -591,7 +639,7 @@
 
   // Durumun kopyası (geri sarma için)
   function clone(s) {
-    return { ...s, gusts: s.gusts.map(g => ({ ...g })), boats: s.boats.map(b => ({ ...b })), events: s.events.slice(), pairLog: { ...s.pairLog } };
+    return { ...s, sea: { ...(s.sea || SEA_DEFAULT) }, gusts: s.gusts.map(g => ({ ...g })), boats: s.boats.map(b => ({ ...b })), events: s.events.slice(), pairLog: { ...s.pairLog } };
   }
 
   // Yarışı bitene kadar ileri hesapla; her 0.1 s'de bir kare (durumun kopyası) döndürür
@@ -609,6 +657,6 @@
   global.SailSim = {
     runToEnd,
     DT, HULL, WORLD, LINE, MARK, BASE, START_AT, CLOCK_SCALE, PERSONAS, MINE_COLOR, OBSTACLES,
-    SHADOW_LEN, knots, defaultFleet, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
+    SHADOW_LEN, SEA, SEA_DEFAULT, knots, defaultFleet, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
 })(typeof window !== 'undefined' ? window : globalThis);
