@@ -96,7 +96,7 @@
       id: opts.id || String(i + 1), name: opts.name || `Tekne ${i + 1}`,
       color: opts.mine ? MINE_COLOR : COLORS[i % COLORS.length], mine: !!opts.mine,
       x: pos.x, y: pos.y, h: 0, v: HOLD_V, tack: opts.tack || 'starboard',
-      persona: opts.persona || AUTO_PERSONAS[i % AUTO_PERSONAS.length], ignoresRules: !!opts.ignoresRules, penalties: 0, penaltyAt: null,
+      persona: opts.persona || AUTO_PERSONAS[i % AUTO_PERSONAS.length], ignoresRules: !!opts.ignoresRules, speedK: opts.speedK || 1, penalties: 0, penaltyAt: null,
       phase: 'wait', go: false, man: null, manUntil: -1, note: '', noteUntil: -1, noteKind: '',
       lastTack: -10, finish: null, finishT: null, inGust: 0, gone: false, doneAt: null, ocsOnce: false
     };
@@ -207,6 +207,7 @@
       if (b.phase === 'race' && s.t - b.lastTack > 1) { doTack(b, s, 'Tramola!'); b.persona = 'manuel'; log(s, `${b.id}: tramola (senin kararın)`); }
       else if (b.phase === 'wait') { b.tack = b.tack === 'starboard' ? 'port' : 'starboard'; }
     } else if (cmd === 'rules') { b.ignoresRules = !!arg; log(s, `${b.id}: ${arg ? 'artık yol vermiyor (kural bilmeyen)' : 'kurallara uyuyor'}`);
+    } else if (cmd === 'speed') { b.speedK = +arg || 1; log(s, `${b.id}: hız ${b.speedK === 1 ? 'normal' : (b.speedK > 1 ? '+' : '−') + Math.round(Math.abs(b.speedK - 1) * 100) + '%'}`);
     } else if (cmd === 'route') {
       b.route = arg && arg.length ? arg.map(p => ({ x: p.x, y: p.y })) : null; b.routeIdx = 0; b.routeFrom = { x: b.x, y: b.y };
       log(s, b.route ? `${b.id}: yeni rota çizildi` : `${b.id}: rota silindi`);
@@ -504,7 +505,7 @@
       // sinyalden önce hatta varacaksa yavaşla (burnu hattın altında kalsın)
       if (b.phase === 'wait' && b.go && remain > 0) vt = Math.min(vt, Math.max(HOLD_V, (distToLine(b, b.h) - 6) / remain));
       if (b.phase === 'done') vt *= 0.8;
-      if (!holding) vt *= (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow);
+      if (!holding) vt *= (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow) * (b.speedK || 1);   // teknenin kendi hızı (tekne/denizci farkı)
       b.v += (vt - b.v) * Math.min(1, DT / TAU);
     }
 
