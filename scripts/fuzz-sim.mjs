@@ -27,7 +27,12 @@ for (let k = 0; k < N; k++) {
     b.y = Math.min(S.WORLD.h - 20, b.y);
     if (rnd() < 0.15) b.tack = 'port';
   }
-  if (k % 3 === 0) fleet[k % n].ignoresRules = true;     // her 3 yarıştan birinde bir "yol vermez" tekne
+  if (k % 3 === 0) fleet[k % n].ignoresRules = true;
+  if (k % 4 === 1) {                                    // senin teknene rastgele rota (seed dizisini bozmamak için ayrı üreteç)
+    let q = k * 7919 + 1; const r2 = () => (q = (q * 48271) % 2147483647) / 2147483647;
+    const nr = 2 + Math.floor(r2() * 3);
+    fleet.find(b => b.mine).route = Array.from({ length: nr }, (_, i) => ({ x: 120 + r2() * 760, y: 680 - (i + 1) * (560 / nr) + r2() * 60 }));
+  }     // her 3 yarıştan birinde bir "yol vermez" tekne
   const gusts = rnd() < 0.5 ? [{ x: rnd() < 0.5 ? 230 : 770, y: 250 + rnd() * 300, rx: 120, ry: 190 }] : [];
   const s = S.newRace(fleet, { wind, gusts });
   const shiftAt = rnd() < 0.5 ? 15 + rnd() * 20 : -1, shiftTo = wind + Math.round((rnd() - 0.5) * 30);

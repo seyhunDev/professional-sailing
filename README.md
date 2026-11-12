@@ -58,6 +58,7 @@ Framework bağımlılığı yok; ileride gerekirse SVG katmanı olduğu gibi Rea
 - **Kurallar:** K10, K11, K12, K13, K14, K18 (şamandırada yer ver), K22 (OCS dönen tekne yol verir). Yol veren teknenin üstünde not çıkar, olay listesine yazılır; temaslar kırmızı.
 - **Senin teknen:** otomatik gider; **Tramola** düğmesi (klavye `T`) ya da taktik seçimiyle müdahale edersin.
 - **Önceden hesaplama:** start'ta yarış sonuna kadar hesaplanır; zaman çubuğuyla ileri-geri sarılır, panelde tahmini sıra görünür. Rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır.
+- **Rota çiz:** alt çubuktaki düğmeye basıp teknenin yolunu parmakla çiz; teknen çizgiyi izler, rüzgara karşı kısımlarda zikzak atar, rota bitince şamandıraya gider. Yarışta yeni rota çizilebilir (o andan yeniden hesaplanır), × siler.
 - **Protesto ve ceza:** yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; iki tur (720°) ceza atar, cezasını atmadan bitiremez. Bir tekneyi (kurulumda "Davranış") ya da kendi tekneni (alt çubukta "Yol vermez") kural bilmeyen tekne yapabilirsin.
 - **Hız ve pis rüzgar:** teknelerin altında knot; sağanakta yeşil ↑, başka teknenin rüzgar gölgesinde kırmızı ↓ (en fazla %30 yavaş). "Pis rüzgar" düğmesi gölge konilerini gösterir.
 
