@@ -68,7 +68,7 @@
         if (!xAstern && !oAstern) {
           const windward = isWindward(X, O, windFrom);
           dec = windward
-            ? { kind: 'luff', note: 'Rüzgarüstü yol verir · K11', rule: 11 }
+            ? { kind: 'luffK11', note: 'Rüzgarüstü yol verir · K11 (orsalıyor)', rule: 11 }
             : { kind: 'row', note: 'Hak sahibi · K11', rule: 11 };
         } else if (xAstern) {
           dec = { kind: 'slow', note: 'Arkadaki yol verir · K12', rule: 12 };
@@ -76,8 +76,13 @@
           dec = { kind: 'row', note: 'Hak sahibi · K12', rule: 12 };
         }
       }
-      // Kural 14: hak sahibi olsa da temas kaçınılmazsa kaç
-      if (dec.kind === 'row' && ((a.dmin < 40 && a.tc < 2.2) || a.d < HULL * 0.8)) {
+      // Kural 14: hak sahibi olsa da temas kaçınılmazsa kaç.
+      // Rüzgaraltı tekne (K11 hak sahibi) rotasından çıkmaz: temas önleme işi rüzgarüstündedir (orsalar,
+      // yelkeni pırpırlar). Yalnız çok yakında rotasında yavaşlar. Senaryo teknesi (yol vermez) karşısında eski kural.
+      const leeK11 = dec.kind === 'row' && dec.rule === 11 && typeof O.ref !== 'string';
+      if (leeK11) {
+        if ((a.dmin < 12 && a.tc < 0.8) || a.d < HULL * 0.5) dec = { kind: 'brake', note: 'Temas önleme · K14 (rotada yavaşlıyor)', rule: 14 };
+      } else if (dec.kind === 'row' && ((a.dmin < 40 && a.tc < 2.2) || a.d < HULL * 0.8)) {
         dec = { kind: 'duck', note: 'Temas önleme · K14', rule: 14 };
       }
       // en acil olanı seç: önce manevra gerektirenler, sonra en yakın
@@ -93,6 +98,8 @@
     switch (kind) {
       case 'duck': return { h: E.tackHeading(windFrom, tack) + away * 60, speed: 1 };
       case 'luff': return { h: windFrom + away * 32, speed: 1 };          // sıkıştır (pinch): yavaşlar ama durmaz
+      case 'luffK11': return { h: windFrom + away * 28, speed: 1 };       // K11 rüzgarüstü: rüzgara döner, yelken pırpırlar, hız düşer
+      case 'brake': return { h: baseTarget, speed: 0.5 };                // rotada yavaşla (rüzgaraltı K14)
       case 'slow': return { h: baseTarget + away * 18, speed: 0.55 };
       default: return { h: baseTarget, speed: 1 };                        // 'tack': yeni kontrada orsa
     }
@@ -161,6 +168,11 @@
         if (holding) baseTarget = w + (b.tack === 'starboard' ? -25 : 25);   // orsalayıp bekle
         if (dec && dec.kind !== 'row') {
           let kind = dec.kind, note = dec.note;
+          if (kind === 'luffK11') {
+            // rüzgarüstünde de bir tekne varsa orsalayamaz (ona doğru gider): rotada yavaşlar
+            const above = othersOf(b).some(o => Math.hypot(o.x - b.x, o.y - b.y) < 45 && isWindward(o, b, w));
+            if (above) { kind = 'brake'; note = 'Rüzgarüstü yol verir · K11 (yavaşlıyor)'; }
+          }
           if (!b.man) {
             const others = othersOf(b);
             if (kind === 'duck' && dec.rule === 10) {
@@ -170,7 +182,7 @@
               const cd = clearance(b, duckH, others), ct = clearance(b, tackH, others);
               if (cd < 90 && ct > cd) { kind = 'tack'; b.tack = newTack; note = 'Yol veriyor · K10 (tramola)'; }
               else note = 'Yol veriyor · K10 (bordalıyor)';
-            } else if (dec.rule === 14) {
+            } else if (dec.rule === 14 && kind !== 'brake') {
               const duckH = maneuverTarget('duck', w, b.tack, baseTarget).h, luffH = maneuverTarget('luff', w, b.tack, baseTarget).h;
               kind = clearance(b, luffH, others) > clearance(b, duckH, others) ? 'luff' : 'duck';
             }

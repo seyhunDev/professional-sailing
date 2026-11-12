@@ -74,6 +74,9 @@
 
 - 2026-11-12 · **Rüzgarüstü/rüzgaraltı (K11) yana göre belirlenir:** `SailRules.isWindward(X, O, windFrom)` (rules.js), simülatör (`classify`) ve senaryo kalabalığı (`decide`) bunu kullanır. Rüzgarüstü = diğer teknenin rotasına dik, rüzgar tarafındaki yanda duran tekne (RRS tanımı). Eski test yalnızca rüzgar yönüne izdüşüme bakıyordu: rüzgaraltı tekne yarım boy önde olunca "daha yukarıda" görünüp yol veriyordu (simülatörde K11 yol vermelerinin ~%28'i ters). Tam rüzgara/tam pupada yan belirsizse eski teste düşer. `check-sim` bunu denetler.
 
+- 2026-11-12 · **K11 temas önleme işi rüzgarüstündedir:** rüzgaraltı (hak sahibi) tekne rotasından çıkmaz. Simülatör: rüzgarüstü yol verirken önce orsalar (10-30°, gerekirse orsalayıp yavaşlar; yelken pırpırlar), bordalamak yalnız öbür tekne açıkça öndeyse; rüzgaraltının K14'ü çok geç (dmin<9, tc<0.6) ve yalnız rotada yavaşlama. Senaryo kalabalığı (`rules.js`): rüzgarüstü `luffK11` (rüzgara 28°), üstünde de tekne varsa (45 px) `brake` (rotada yavaşla); rüzgaraltı K14 yalnız çok yakında `brake`; karşıdaki scripted tekne ise (yol vermez) eski K14. Ölçüm (12 yarış): K11'de rüzgarüstü orsalama 261→669 karar, bordalama 278→35; rüzgaraltı K14 sapma kararları 19→6. Senaryo kalabalığında K14 notu 19→11.
+- 2026-11-12 · **Pis rüzgar koninin her yerinde yavaşlatır:** `engine.shadowOf` artık koni içinde en az %30 etki verir (önce kenarda/uçta ~0). Simülatörde gölge yarış, dönüş ve OCS dönüşünde uygulanır (bekleme ve ceza turunda değil); "Pis rüzgar" katmanı varsayılan açık; hız etiketinde ↓ her gölgede. Bu yüzden A2'de 2. sıradaki filo teknesi slot 0.20→0.26 (pin dışına düşüyordu).
+
 ## Açık sorular (kullanıcıya)
 - Uygulama adı: karar bekliyor (ayrı sohbette adaylar üretilecek).
 - Hedef sınıf: Optimist mi, ILCA 4/6 mı, karışık mı? (Hız/dönüş oranları ve "tekne boyu" ölçeği buna göre ayarlanabilir.)
@@ -134,6 +137,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · Temas önlemede rüzgarüstü yol versin, pis rüzgar varsayılan açık
+- Kullanıcı: rüzgaraltı tekne sürekli temas önleyip rotadan çıkıyor; rüzgarüstü orsalayıp (yelken pırpırlar, hız düşer) yol vermeli. Pis rüzgar gösterimi varsayılan açık, gölgedeki tekne hep yavaşlasın. Ayrıntı: Kararlar (iki madde).
+- Ek düzeltme: ceza için şamandıradan uzaklaşan (`penWait`) tekne artık şamandıradan kaçınıyor (fuzz ÇARPTI). fuzz 150: 0 sorun, 300: 1 TAKILDI (önce 2-4).
+- Ekran görüntüsü: proje dosyaları `temas-onleme/`. Hızlanma zamanı ve sınıfa göre hız (ILCA/Optimist) ayrı sohbette.
 
 ### 2026-11-12 · K11 rüzgarüstü/rüzgaraltı ters çalışıyordu
 - Kullanıcı: simülatörde rüzgaraltı tekne kaçıyor, rüzgarüstü kaçması gerekirken. Sebep: rüzgarüstü testi rüzgar yönüne izdüşümdü; yan yana, yakın hatta giden teknelerde biraz önde olan rüzgaraltı tekne "yukarıda" sayılıyordu. Düzeltme: `SailRules.isWindward` (yan, rotaya dik). Simülatör ve senaryo kalabalığı (ek tekneler) ortak kullanır. Scripted senaryo tekneleri ve metinleri zaten doğruydu (kural motoru kullanmıyorlar). 15 yarışlık ölçüm: ters K11 yol verme 78/277 → ~0 (kalan birkaç sınır durumu tam yan yana). `check-sim`e K11 geometri testi eklendi. `npm run check` temiz.

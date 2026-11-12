@@ -112,7 +112,7 @@
     ],
     crowd: [
       { slot: 0.20 }, { slot: 0.44 }, { slot: 0.70 }, { slot: 0.82 }, { slot: 0.93 },
-      { slot: 0.20, row: 1 }, { slot: 0.44, row: 1 }
+      { slot: 0.26, row: 1 }, { slot: 0.44, row: 1 }
     ],
     steps: [
       { t: 0, title: 'Start\'a 20 sn: filo hattın dibinde', text: 'Gri tekneler hattın 1-1.5 boy gerisinde rüzgara baş vermiş, yelkenleri boş bekliyor. Aralarında boşluklar var: boşluk, hızlanma alanıdır. Yeşil tekne yarım hızla yerine geliyor.' },

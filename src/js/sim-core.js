@@ -304,11 +304,15 @@
       if (c.dmin > c.d - 4 && c.d > 34) continue;                       // uzaklaşıyor / paralel
       let rule = classify(b, O.ref, w, t);
       // hak sahibi rotasında kalır; yalnızca karşıdaki yol vermiyorsa (kural bilmeyen) ya da temas
-      // kaçınılmazsa son anda kaçar (K14)
-      if (!rule && ((O.ref.ignoresRules && c.dmin < 24 && c.tc < 1.4) || (c.dmin < 14 && c.tc < 0.9))) rule = 14;
+      // kaçınılmazsa son anda kaçar (K14). Rüzgaraltı tekne (K11 hak sahibi) daha da geç davranır:
+      // temas önleme işi rüzgarüstündedir (orsalar, yelkeni pırpırlar, yavaşlar)
+      const lee = !rule && classify(O.ref, b, w, t) === 11;
+      if (!rule && (lee
+        ? (O.ref.ignoresRules && c.dmin < 20 && c.tc < 1.1) || (c.dmin < 9 && c.tc < 0.6)
+        : (O.ref.ignoresRules && c.dmin < 24 && c.tc < 1.4) || (c.dmin < 14 && c.tc < 0.9))) rule = 14;
       if (!rule) continue;
       const urg = c.tc - c.dmin / 40;
-      if (!best || urg < best.urg) best = { O, rule, dmin: c.dmin, tc: c.tc, urg, mine: b.mine };
+      if (!best || urg < best.urg) best = { O, rule, lee: rule === 14 && lee, dmin: c.dmin, tc: c.tc, urg, mine: b.mine };
     }
     return best;
   }
@@ -324,6 +328,19 @@
     const routing = b.started && b.route && b.routeIdx < b.route.length;
     const sideLock = (b.persona === 'sol' && !b.sideDone && b.tack === 'starboard') || (b.persona === 'sag' && !b.sideDone && b.tack === 'port');
     if (b.phase === 'race' && !b.manual && t - b.lastTack > 1.5 && g.rule !== 14 && !routing && !sideLock && g.rule !== 11 && g.rule !== 12) cands.push({ kind: 'tack', h: E.tackHeading(w, b.tack === 'starboard' ? 'port' : 'starboard'), speed: 0.6, cost: 9 });
+    // K11: rüzgarüstü tekne orsalayarak yol verir (rüzgara döner, yelkeni pırpırlar, yavaşlar).
+    // Bordalamak (rüzgaraltındakine doğru inmek) yalnızca öbür tekne açıkça öndeyse, kıçından geçmek için
+    if (g.rule === 11) {
+      const O = g.O, ahead = dot({ x: O.x - b.x, y: O.y - b.y }, E.fwd(b.h)) > 30;
+      cands.splice(0, cands.length, { kind: 'hold', off: 0, speed: 1, cost: 0 });
+      for (const off of [10, 20, 30]) cands.push({ kind: 'luff', off: -away * off, speed: 1, cost: off * 0.06 });
+      cands.push({ kind: 'luff', off: -away * 25, speed: 0.5, cost: 3 });
+      cands.push({ kind: 'slow', off: 0, speed: 0.4, cost: 5 });
+      if (ahead) for (const off of [15, 30]) cands.push({ kind: 'duck', off: away * off, speed: 1, cost: off * 0.12 });
+    }
+    // K14, rüzgaraltı hak sahibi: rotadan çıkıp kaçmaz (rüzgarüstündekine doğru da orsalamaz), yalnız rotasında yavaşlar
+    if (g.rule === 14 && g.lee) cands.splice(0, cands.length,
+      { kind: 'hold', off: 0, speed: 1, cost: 0 }, { kind: 'slow', off: 0, speed: 0.6, cost: 2 }, { kind: 'slow', off: 0, speed: 0.35, cost: 4 });
     // K18: şamandırada dönen tekneye yer ver → bordalayıp uzaklaşma, rotada yavaşla ya da hafif orsala
     if (g.rule === 18) cands.splice(0, cands.length,
       { kind: 'hold', off: 0, speed: 1, cost: 0 }, { kind: 'slow', off: 0, speed: 0.3, cost: 3 }, { kind: 'slow', off: -away * 15, speed: 0.35, cost: 4 }, { kind: 'duck', off: away * 15, speed: 0.6, cost: 5 });
@@ -404,7 +421,7 @@
     for (const b of active) {
       const remain = s.startAt - t;
       b.inGust = gustAt(s.gusts, b, w);
-      const sh = b.phase === 'race' || b.phase === 'round' ? shadowAt(b, snap, w) : { k: 0, by: null };
+      const sh = b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs' ? shadowAt(b, snap, w) : { k: 0, by: null };   // pis rüzgar seyreden tekneyi hep yavaşlatır (OCS dönüşü dahil; start öncesi bekleme ve ceza turu hariç)
       if (b.mine && sh.k > 0.25 && !(b.shadow > 0.25) && t > s.startAt) log(s, `${b.id} pis rüzgarda kaldı (${sh.by.id} numaranın rüzgar gölgesi), yavaşladı`, 'bad', 'golge' + b.id);
       b.shadow = sh.k; b.shadowBy = sh.by ? sh.by.id : null;
       let target = b.h, speedK = 1, holding = false, turnDir = 0;
@@ -581,7 +598,7 @@
         if (dir !== 0 && !b.started && Math.hypot(b.x - LINE.pin.x, b.y - LINE.pin.y) < 90 && Math.abs(E.norm180(b.h + 20 - w)) >= 32) dir = 1;
         if (dir !== 0) b.h = E.norm360(b.h + dir * 160 * DT);
         // şamandıra önündeyse hep sağa kaç: şamandıra teknenin iskelesinde (solunda) kalsın, yanlış taraftan geçilmesin
-        else if (b.phase !== 'done' && !(b.phase === 'penalty' && b.penFinish) && E.avoidDir(b.x, b.y, b.h, MARK_OBS, b.v) !== 0) {
+        else if (b.phase !== 'done' && !(b.phase === 'penalty' && b.penFinish && !b.penWait) && E.avoidDir(b.x, b.y, b.h, MARK_OBS, b.v) !== 0) {
           // şamandırayı tutamıyor (sağa kaçış rüzgarın içine sokuyor): rüzgarda kalmak yerine hemen tramola
           if (b.phase === 'race' && b.started && !b.manual && b.tack === 'starboard' && Math.abs(E.norm180(b.h + 25 - w)) < 40 && t - b.lastTack > 2) doTack(b, s, 'Tutmuyor, tramola');
           else b.h = E.norm360(b.h + 320 * DT);

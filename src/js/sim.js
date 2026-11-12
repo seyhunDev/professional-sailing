@@ -18,7 +18,7 @@
     fleet: S.defaultFleet(12),
     wind: 0, gusts: [],
     sim: null, frames: [], speed: 1, lastTs: 0, acc: 0,
-    show: { speed: true, shadow: false },
+    show: { speed: true, shadow: true },   // pis rüzgar konileri varsayılan açık
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
     cam: { z: 1, x: null, y: null, follow: false }, base: null, pinch: null, pts: new Map(),
     course: { ...S.COURSE_DEFAULT }, sea: { ...S.SEA_DEFAULT }, gsel: null, drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
@@ -234,7 +234,7 @@
       'paint-order': 'stroke', stroke: 'rgba(2,12,22,.9)', 'stroke-width': 3 }, lab).textContent = b.sailor;
     // hız: sağanakta yeşil ↑, pis rüzgarda kırmızı ↓
     if (st.show.speed && (b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs' || b.phase === 'penalty')) {
-      const up = b.inGust > 0.25, down = b.shadow > 0.15;
+      const up = b.inGust > 0.25, down = b.shadow > 0.05;   // gölgedeki her tekne ↓ gösterir
       const col = down ? '#f87171' : up ? '#4ade80' : 'rgba(226,232,240,.85)';
       const txt = `${S.knots(b.v).toFixed(1)} kn${down ? ' ↓' : up ? ' ↑' : ''}`;
       el('text', { x: 0, y: b.sailor ? 33 : 22, 'text-anchor': 'middle', fill: col, 'font-size': 10.5, 'font-weight': down || up ? 800 : 600,
@@ -268,7 +268,7 @@
   // Rüzgar gölgesi (pis rüzgar) konileri
   function drawShadows(parent, boats, w) {
     for (const b of boats) {
-      if (!(b.phase === 'race' || b.phase === 'round')) continue;
+      if (!(b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs')) continue;
       el('polygon', { points: E.shadowPolygon(b, w), fill: 'rgba(2,10,20,.3)', stroke: 'rgba(248,113,113,.4)', 'stroke-dasharray': '3 4' }, parent);
     }
   }

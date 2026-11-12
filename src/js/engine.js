@@ -209,7 +209,8 @@
     const half = SHADOW.w0 + along * SHADOW.spread, lat = Math.abs(dx * r.x + dy * r.y);
     if (lat > half) return 0;
     const a = (along - SHADOW.from) / (SHADOW.len - SHADOW.from), l = lat / half;
-    return (1 - 0.7 * a) * (1 - l * l);
+    // koninin içindeki her tekne yavaşlar: kenarda ve uçta da en az %30 etki (en çok kıçın hemen arkasında)
+    return 0.3 + (1 - 0.3) * (1 - 0.7 * a) * (1 - l * l);
   }
   // casters: [{x,y,v?,str?,ref?}] → { k (0..1, hız kaybı = SHADOW.loss·k), by (gölgeyi yapan) }
   function shadowK(p, casters, w, base) {
