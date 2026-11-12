@@ -47,6 +47,7 @@
   <main class="stage">
     <svg id="course" viewBox="0 0 1000 900" preserveAspectRatio="xMidYMid meet">
       <defs>
+        <marker id="routeHead" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#fdba74"/></marker>
         <marker id="arrowHead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#ffffff"/></marker>
         <radialGradient id="gustFill"><stop offset="0" stop-color="#021526" stop-opacity=".55"/><stop offset=".7" stop-color="#021526" stop-opacity=".4"/><stop offset="1" stop-color="#021526" stop-opacity="0"/></radialGradient>
       </defs>
@@ -75,7 +76,7 @@
             <li><b>Dokun:</b> bir tekneyi seç; kontrasını ve taktiğini değiştir, ya da onu senin teknen yap.</li>
             <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin).</li>
             <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
-            <li><b>Rota çiz:</b> alttaki düğmeye bas, teknenin gideceği yolu parmağınla çiz. Teknen çizgiyi izler; rüzgara karşı kısımlarda kendiliğinden zikzak (tramola) atar, rota bitince şamandıraya gider. Yarışta da yeni rota çizebilirsin.</li>
+            <li><b>Rota çiz:</b> alttaki düğmeye bas. <b>Açılı</b> (varsayılan): teknenden başlayarak sürükle; her sürükleme düz bir bacaktır ve orsadan darsa orsa açısına (rüzgara 45°) oturur, sonraki bacak tramola noktasından başlar; bitince “Bitti”. <b>Serbest</b>: parmağınla istediğin gibi çiz (hatalı gidişleri göstermek için). Yarışta da yeni rota çizebilirsin.</li>
             <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
             <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
           </ol>
@@ -143,6 +144,7 @@
           <option value="orta">Orta</option><option value="sol">Sol taraf</option><option value="sag">Sağ taraf</option><option value="saganak">Sağanağa git</option><option value="manuel">Yalnız komutla</option>
         </select>
         <button class="tb tgl" id="btnRoute" title="Teknenin gideceği yolu parmakla çiz"><svg class="ci"><use href="#i-route"/></svg>Rota çiz</button>
+        <select class="tb" id="selRouteMode" title="Rota çizim biçimi"><option value="acili">Açılı</option><option value="serbest">Serbest</option></select>
         <button class="tb icon-tb" id="btnRouteClear" title="Rotayı sil"><svg><use href="#i-close"/></svg></button>
         <button class="tb tgl warn" id="btnMineRules" title="Senin teknen yol vermesin: kuralları bilmeyen tekne gibi davranır, protesto edilir">Yol vermez</button>
       </div>
