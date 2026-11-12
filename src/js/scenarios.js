@@ -298,12 +298,12 @@
     laylines: [{ x: 250, y: 440, tack: 'starboard', len: 330, from: 0, label: 'Pin layline\'ı — tramola bu çizginin ÜSTÜNDE' }],
     boats: [
       { id: 'X', name: 'Apaz gel, layline üstünde tramola', role: 'dogru', color: '#2a9d8f',
-        start: { x: 140, y: 530, h: 15 }, v0: 2,
+        start: { x: 172, y: 530, h: 15 }, v0: 2,
         segs: [
           { mode: 'hold', h: 15, dur: 9, speed: 0.05, turn: 0, note: 'Pin\'in solunda bekliyor' },
           { mode: 'heading', h: 92, dur: 5.2, turn: 1.0, note: 'Apaz: hattın altından grubun dibine' },
-          { mode: 'hold', h: 325, dur: 8.3, speed: 0.03, turn: 1.3, note: 'Tramola → layline üstü, boşluk benim' },
-          { mode: 'closehauled', tack: 'starboard', dur: 14, turn: 0.8 }
+          { mode: 'hold', h: 325, dur: 7.4, speed: 0.03, turn: 1.3, note: 'Tramola → layline üstü, boşluk benim' },
+          { mode: 'closehauled', tack: 'starboard', dur: 14.9, turn: 0.8 }
         ] },
       { id: 'Z', name: 'Layline altında tramola', role: 'hata', color: '#e76f51',
         start: { x: 118, y: 585, h: 15 }, v0: 2,

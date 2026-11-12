@@ -81,7 +81,7 @@
 | A3 | `a3-pin-favored` | ✅ | 600 px hat, 25° bias; P2 çizgi dışı (ders olarak). Fikir: P2 için de "geri dönüş" yolu. | İA1 |
 | A4 | `a4-committee-favored` | ✅ | Barging; L hakem botuna yakın (u=0.9). Fikir: hakem botunun kıçından "çit" vurgusu. | A17 |
 | A12 | `a12-flags` | ✅ | Yalnızca U bayrağı canlı; P/I/siyah varyantları ve 5-4-1-0 sırası eksik. | A2, A13 |
-| İA1 | `ia1-port-approach-pin` | ✅ | Solda bekle, apaz gel, layline üstünde tramola; Z (layline altı) ve Y (geç) hataları. Fikir: K13/K15 ihlali yapan 3. hata teknesi (ceza turu). | A3, A16 |
+| İA1 | `ia1-port-approach-pin` | ✅ | Solda bekle, apaz gel, layline üstünde tramola; X en alttaki teknenin ~1 boy altına girer (rüzgaraltında boşluk kalır), sinyalde onunla yan yana çıkar; Z (layline altı) ve Y (geç) hataları. Fikir: K13/K15 ihlali yapan 3. hata teknesi (ceza turu). | A3, A16 |
 | İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. S artık hattın uzantısında (pin dışı, hat hizası) bakıyor, sonra hattın altına inip ortaya gidiyor. Eksik: yay görseli (eğri), rüzgar gölgesi etkisi görsel değil. Fikir: "yay yok" varyantı. | A5, A6, H5 |
 | B1 | `b1-rule10` | ✅ | Tek tekne bordalama. Fikir: lee-bow varyantı. | B2 |
 | B8 | `b8-rule18` | ✅ | Zone + bindirme. Fikir: 18.3 zone içinde tramola varyantı. | B9 |
@@ -116,6 +116,10 @@
 - Yapılanlar: İA2 (600 px hat, 9 teknelik yay: `crowd[].back` px ile ortadakiler 2.5-3.5 boy geride; S pin tarafından transitle hattı görür, apaz ile ortaya gelir, boşluğa komşularından yukarı yerleşir, sinyalde 2 boy önde; "yay yoksa" adımı). Yeni: `scn.sightline` transit katmanı, `crowd[].back`. NOTLAR'a "Senaryo kartları" tablosu: her senaryo için ayrı sohbet açılabilir, kart güncellenir.
 - Yarım kalan: yayın kendisi için eğri çizim yok (tekne dizilimi yeterli görünüyor); ortadaki filo teknelerinin start sonrası K12 ile fazla yavaşlaması (f6 7 s geç).
 - Sonraki sohbete not: senaryo bazlı sohbetlerde CLAUDE.md protokolü aynen geçerli; kart satırı + oturum günlüğü güncellenir.
+
+### 2026-11-12 · İA1: X grubun en altındaki teknenin dibine daha yakın
+- Kullanıcı isteği: X apaz gelip en alttaki teknenin altına daha yakın girsin, kendi rüzgaraltında biraz boşluk kalsın. X bekleme noktası 32 px sağa (start x 172): tramola sonrası filo 1'in ~45 px (1 boy) altında; eskiden 75 px idi. X bekleme süresi 8.3 → 7.4 s (filo ile aynı anda doldurur, sinyalde yan yana; yoksa filo 1'in kıçına giriyordu), son orsa segmenti 14.9 s. `npm run check` temiz.
+- Yelken pırpırlaması (bekleyen teknelerde yelkenin rüzgara göre sallanması) ayrı sohbette, engine.js'te yapılıyor.
 
 ### 2026-11-12 · İA1 düzeltme: dışarıdan start yok, burun hattın altında
 - Kural: start edemeyen tekne hattın dışından ÇIKMAZ; ya rüzgarüstüne tramola ya da bordalayıp/kavança ile herkesin arkasından hattın içinden geçer. Z buna göre: pin'i kurtaramayınca bordalar, hattın altından sağa gider, herkesin arkasından geçer. `expectOutside` kullanımı artık yalnızca "ders olarak gösterilen" çizgi dışı için (A3 P2).
