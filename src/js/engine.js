@@ -230,7 +230,7 @@
   }
 
   // ---------- Hakem botu (start hattının sağ ucu) ----------
-  // Demirli motorlu tekne: demirde başını rüzgara verir, turuncu bayrak kıça doğru dalgalanır.
+  // Demirli motorlu tekne: demirde başını rüzgara verir; turuncu bayrak direği tam hat ucunda (0,0), bayrak rüzgaraltına dalgalanır.
   // el(tag, attrs, parent) çağıranın SVG üreticisi. Dönen grup (0,0) merkezli; konum/yön için
   // committeeBoatTransform(x, y, windFrom) kullanılır. Dalgalanma SMIL ile sürekli (oynatma dursa da).
   function flagWaveFrames(len, h, n) {
@@ -250,32 +250,33 @@
   }
   function drawCommitteeBoat(el, parent) {
     const g = el('g', { class: 'committee-boat' }, parent);
+    // (0,0) = start hattının ucu: bayrak direği burada; gövde iskele küpeştesi direğe gelecek şekilde yana kayık
+    const hg = el('g', { transform: 'translate(12,0)' }, g);
     // demir zinciri (rüzgarüstüne)
-    el('path', { d: 'M0,-30 L0,-50', stroke: 'rgba(222,226,230,.7)', 'stroke-width': 1.2, 'stroke-dasharray': '2 2' }, g);
-    el('circle', { cx: 0, cy: -51, r: 1.8, fill: 'rgba(222,226,230,.8)' }, g);
+    el('path', { d: 'M0,-30 L0,-50', stroke: 'rgba(222,226,230,.7)', 'stroke-width': 1.2, 'stroke-dasharray': '2 2' }, hg);
+    el('circle', { cx: 0, cy: -51, r: 1.8, fill: 'rgba(222,226,230,.8)' }, hg);
     // gölge ve gövde
-    el('path', { d: 'M2,-28 C10,-22 14,-11 14,1 L14,25 Q14,30 9,30 L-5,30 Q-10,30 -10,25 L-10,1 C-10,-11 -6,-22 2,-28 Z', fill: 'rgba(0,0,0,.28)' }, g);
-    el('path', { d: 'M0,-32 C8,-25 12,-13 12,0 L12,24 Q12,28 8,28 L-8,28 Q-12,28 -12,24 L-12,0 C-12,-13 -8,-25 0,-32 Z', fill: '#f8f9fa', stroke: '#1d3557', 'stroke-width': 1.6 }, g);
+    el('path', { d: 'M2,-28 C10,-22 14,-11 14,1 L14,25 Q14,30 9,30 L-5,30 Q-10,30 -10,25 L-10,1 C-10,-11 -6,-22 2,-28 Z', fill: 'rgba(0,0,0,.28)' }, hg);
+    el('path', { d: 'M0,-32 C8,-25 12,-13 12,0 L12,24 Q12,28 8,28 L-8,28 Q-12,28 -12,24 L-12,0 C-12,-13 -8,-25 0,-32 Z', fill: '#f8f9fa', stroke: '#1d3557', 'stroke-width': 1.6 }, hg);
     // güverte (iç küpeşte çizgisi)
-    el('path', { d: 'M0,-27.5 C6.4,-21.5 9.6,-11.5 9.6,0 L9.6,22 L-9.6,22 L-9.6,0 C-9.6,-11.5 -6.4,-21.5 0,-27.5 Z', fill: '#e9ecef', stroke: '#ced4da', 'stroke-width': .8 }, g);
-    el('rect', { x: -3, y: -19, width: 6, height: 5, rx: 1, fill: '#adb5bd' }, g);                 // baş kaporta
+    el('path', { d: 'M0,-27.5 C6.4,-21.5 9.6,-11.5 9.6,0 L9.6,22 L-9.6,22 L-9.6,0 C-9.6,-11.5 -6.4,-21.5 0,-27.5 Z', fill: '#e9ecef', stroke: '#ced4da', 'stroke-width': .8 }, hg);
+    el('rect', { x: -3, y: -19, width: 6, height: 5, rx: 1, fill: '#adb5bd' }, hg);                 // baş kaporta
     // kıç kokpit (tik) ve yüzme platformu
-    el('rect', { x: -9.6, y: 9, width: 19.2, height: 13, fill: '#c69c6d' }, g);
-    for (const y of [12, 15, 18]) el('line', { x1: -9.6, y1: y, x2: 9.6, y2: y, stroke: '#a47148', 'stroke-width': .6 }, g);
-    el('rect', { x: -10, y: 28, width: 20, height: 4, rx: 1, fill: '#c69c6d', stroke: '#8d6440', 'stroke-width': .7 }, g);
+    el('rect', { x: -9.6, y: 9, width: 19.2, height: 13, fill: '#c69c6d' }, hg);
+    for (const y of [12, 15, 18]) el('line', { x1: -9.6, y1: y, x2: 9.6, y2: y, stroke: '#a47148', 'stroke-width': .6 }, hg);
+    el('rect', { x: -10, y: 28, width: 20, height: 4, rx: 1, fill: '#c69c6d', stroke: '#8d6440', 'stroke-width': .7 }, hg);
     // kaptan köşkü: beyaz çatı, ön cam, yan camlar
-    el('rect', { x: -8, y: -9, width: 16, height: 17, rx: 4, fill: '#ffffff', stroke: '#868e96', 'stroke-width': 1 }, g);
-    el('path', { d: 'M-7.2,-6.5 Q0,-11 7.2,-6.5 L7.2,-3.5 Q0,-7.5 -7.2,-3.5 Z', fill: '#1d3557' }, g);
-    el('rect', { x: -8, y: -2, width: 1.6, height: 7, fill: '#1d3557' }, g);
-    el('rect', { x: 6.4, y: -2, width: 1.6, height: 7, fill: '#1d3557' }, g);
-    // kıçtaki direkten suya doğru dalgalanan turuncu bayrak
-    el('line', { x1: 0, y1: 8, x2: 0, y2: 25, stroke: '#495057', 'stroke-width': 1 }, g);       // bayrak halatı
-    const fl = el('g', { transform: 'translate(0,25) rotate(90)' }, g);
+    el('rect', { x: -8, y: -9, width: 16, height: 17, rx: 4, fill: '#ffffff', stroke: '#868e96', 'stroke-width': 1 }, hg);
+    el('path', { d: 'M-7.2,-6.5 Q0,-11 7.2,-6.5 L7.2,-3.5 Q0,-7.5 -7.2,-3.5 Z', fill: '#1d3557' }, hg);
+    el('rect', { x: -8, y: -2, width: 1.6, height: 7, fill: '#1d3557' }, hg);
+    el('rect', { x: 6.4, y: -2, width: 1.6, height: 7, fill: '#1d3557' }, hg);
+    // hat ucundaki direkten rüzgaraltına dalgalanan turuncu bayrak
+    const fl = el('g', { transform: 'rotate(90)' }, g);
     const fp = el('path', { fill: '#ff7a1a', stroke: '#c2410c', 'stroke-width': .9, 'stroke-linejoin': 'round' }, fl);
     const frames = flagWaveFrames(28, 15, 8);
     fp.setAttribute('d', frames.split(';')[0]);
     el('animate', { attributeName: 'd', values: frames, dur: '0.75s', repeatCount: 'indefinite', begin: '0s' }, fp);
-    el('circle', { cx: 0, cy: 0, r: 2.2, fill: '#343a40', stroke: '#fff', 'stroke-width': 1 }, fl);  // direk
+    el('circle', { cx: 0, cy: 0, r: 2.4, fill: '#343a40', stroke: '#fff', 'stroke-width': 1 }, fl);  // direk = hat ucu
     return g;
   }
   const committeeBoatTransform = (x, y, windFrom) => `translate(${x},${y}) rotate(${norm360(windFrom).toFixed(1)})`;

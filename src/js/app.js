@@ -194,7 +194,7 @@
       cbNode.setAttribute('transform', E.committeeBoatTransform(boat.x, boat.y, E.windAt(scn.wind, state.t)));
       // committeeLabel: 'right' → yazı hakem botunun sağına (sol tarafta bekleyen tekneyle çakışmasın)
       const cbRight = scn.committeeLabel === 'right';
-      el('text', { x: boat.x + (cbRight ? 22 : 0), y: boat.y + (cbRight ? 52 : 70), 'text-anchor': cbRight ? 'start' : 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
+      el('text', { x: boat.x + (cbRight ? 30 : 14), y: boat.y + (cbRight ? 52 : 60), 'text-anchor': cbRight ? 'start' : 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
     }
     for (const m of scn.marks || []) {
       if (m.zone) {
@@ -235,7 +235,7 @@
     const obst = [];
     for (const p of boats) { obst.push({ x: p.x - 16, y: p.y - 26, w: 32, h: 52 }); if (state.show.labels) obst.push({ x: p.x - 28, y: p.y + 26, w: 56, h: 20 }); }
     const scn = state.scn;
-    if (scn.line) { const { pin, boat: cb } = scn.line; obst.push({ x: cb.x - 40, y: cb.y - 54, w: 80, h: 130 }, { x: pin.x - 16, y: pin.y - 10, w: 32, h: 40 }); }
+    if (scn.line) { const { pin, boat: cb } = scn.line; obst.push({ x: cb.x - 40, y: cb.y - 54, w: 80, h: 122 }, { x: pin.x - 16, y: pin.y - 10, w: 32, h: 40 }); }
     for (const m of scn.marks || []) obst.push({ x: m.x - 12, y: m.y - 28, w: 24, h: 38 });
     const ov = (r, q, m) => r.x < q.x + q.w + m && q.x < r.x + r.w + m && r.y < q.y + q.h + m && q.y < r.y + r.h + m;
     const hit = (r) => placed.some(q => ov(r, q, 4)) || obst.some(q => ov(r, q, 0));
@@ -440,7 +440,7 @@
       // hazırlık bayrağı: son 1 dakikada indirilir
       if (scn.prepFlag && scn.line) {
         const up = state.t < (scn.flagDownAt != null ? scn.flagDownAt : scn.startAt);
-        const bx = scn.line.boat.x + 22, by = scn.line.boat.y - 40;
+        const bx = scn.line.boat.x + 34, by = scn.line.boat.y - 40;
         el('line', { x1: bx, y1: by + 46, x2: bx, y2: by - 6, stroke: '#fff', 'stroke-width': 2 }, g);
         if (up) {
           const col = { P: '#1f77b4', I: '#ffd166', U: '#e63946', Z: '#e63946', Siyah: '#111' }[scn.prepFlag] || '#ffd166';

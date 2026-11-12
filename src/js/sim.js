@@ -170,7 +170,7 @@
     cbNode = cbNode || E.drawCommitteeBoat(el, g);     // bir kez çizilir; bayrak dalgası kesilmesin
     g.appendChild(cbNode);
     cbNode.setAttribute('transform', E.committeeBoatTransform(boat.x, boat.y, w));
-    el('text', { x: boat.x, y: boat.y + 70, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
+    el('text', { x: boat.x + 14, y: boat.y + 60, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
     // hat avantajı (bias)
     const bias = E.norm180(w);                          // hat yatay: rüzgar sağa döndükçe hakem botu ucu avantajlı
     const bt = Math.abs(bias) < 3 ? 'Hat dik: iki uç eşit' : (bias > 0 ? `Hakem botu ucu avantajlı (${Math.round(bias)}°)` : `Pin ucu avantajlı (${Math.round(-bias)}°)`);
