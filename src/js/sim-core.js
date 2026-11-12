@@ -131,7 +131,7 @@
       id: opts.id || String(i + 1), name: opts.name || `Tekne ${i + 1}`,
       color: opts.mine ? MINE_COLOR : COLORS[i % COLORS.length], mine: !!opts.mine,
       x: pos.x, y: pos.y, h: 0, v: HOLD_V, tack: opts.tack || 'starboard',
-      persona: opts.persona || AUTO_PERSONAS[i % AUTO_PERSONAS.length], ignoresRules: !!opts.ignoresRules, speedK: opts.speedK || 1, drift: opts.drift || 0, penalties: 0, penaltyAt: null,
+      persona: opts.persona || AUTO_PERSONAS[i % AUTO_PERSONAS.length], ignoresRules: !!opts.ignoresRules, speedK: opts.speedK || 1, drift: opts.drift || 0, manual: !!opts.manual, penalties: 0, penaltyAt: null,
       phase: 'wait', go: false, man: null, manUntil: -1, note: '', noteUntil: -1, noteKind: '',
       lastTack: -10, finish: null, finishT: null, inGust: 0, gone: false, doneAt: null, ocsOnce: false
     };
@@ -242,13 +242,14 @@
   function command(s, cmd, arg, id) {           // id verilmezse senin teknen
     const b = s.boats.find(x => (id ? x.id === id : x.mine)); if (!b) return;
     if (cmd === 'tack') {
-      if (b.phase === 'race' && s.t - b.lastTack > 1) { doTack(b, s, 'Tramola!'); b.persona = 'manuel'; log(s, `${b.id}: tramola (senin kararın)`); }
+      if (b.phase === 'race' && s.t - b.lastTack > 1) { doTack(b, s, 'Tramola!'); if (!b.manual) b.persona = 'manuel'; log(s, `${b.id}: tramola (senin kararın)`); }
       else if (b.phase === 'wait') { b.tack = b.tack === 'starboard' ? 'port' : 'starboard'; }
     } else if (cmd === 'rules') { b.ignoresRules = !!arg; log(s, `${b.id}: ${arg ? 'artık yol vermiyor (kural bilmeyen)' : 'kurallara uyuyor'}`);
     } else if (cmd === 'speed') { b.speedK = +arg || 1; log(s, `${b.id}: hız ${b.speedK === 1 ? 'normal' : (b.speedK > 1 ? '+' : '−') + Math.round(Math.abs(b.speedK - 1) * 100) + '%'}`);
     } else if (cmd === 'route') {
       b.route = arg && arg.length ? arg.map(p => ({ x: p.x, y: p.y })) : null; b.routeIdx = 0; b.routeFrom = { x: b.x, y: b.y };
       log(s, b.route ? `${b.id}: yeni rota çizildi` : `${b.id}: rota silindi`);
+    } else if (cmd === 'manual') { b.manual = !!arg; if (arg) b.route = null; log(s, `${b.id}: ${arg ? 'manuel: tramolaları sen atıyorsun' : 'otomatik tramolaya döndü'}`);
     } else if (cmd === 'drift') { b.drift = +arg || 0; log(s, `${b.id}: sürüklenme ${['yok', 'az', 'çok'][b.drift]}`);
     } else if (cmd === 'persona') { b.persona = arg; log(s, `${b.id}: taktik → ${PERSONAS[arg]}`); }
   }
@@ -319,7 +320,7 @@
     // kaçmak için tramola: rota çizilmişse ya da sol/sağ taktiğinde o tarafa daha varmadıysa yok (yavaşla / bordala ile yol verir)
     const routing = b.started && b.route && b.routeIdx < b.route.length;
     const sideLock = (b.persona === 'sol' && !b.sideDone && b.tack === 'starboard') || (b.persona === 'sag' && !b.sideDone && b.tack === 'port');
-    if (b.phase === 'race' && t - b.lastTack > 1.5 && g.rule !== 14 && !routing && !sideLock && g.rule !== 11 && g.rule !== 12) cands.push({ kind: 'tack', h: E.tackHeading(w, b.tack === 'starboard' ? 'port' : 'starboard'), speed: 0.6, cost: 9 });
+    if (b.phase === 'race' && !b.manual && t - b.lastTack > 1.5 && g.rule !== 14 && !routing && !sideLock && g.rule !== 11 && g.rule !== 12) cands.push({ kind: 'tack', h: E.tackHeading(w, b.tack === 'starboard' ? 'port' : 'starboard'), speed: 0.6, cost: 9 });
     // K18: şamandırada dönen tekneye yer ver → bordalayıp uzaklaşma, rotada yavaşla ya da hafif orsala
     if (g.rule === 18) cands.splice(0, cands.length,
       { kind: 'hold', off: 0, speed: 1, cost: 0 }, { kind: 'slow', off: 0, speed: 0.3, cost: 3 }, { kind: 'slow', off: -away * 15, speed: 0.35, cost: 4 }, { kind: 'duck', off: away * 15, speed: 0.6, cost: 5 });
@@ -419,8 +420,8 @@
         if (remain <= 0) { b.phase = lineSide(b) === -1 ? 'ocs' : 'race'; if (b.phase === 'ocs') ocs(b, s); }
       }
       if (b.phase === 'race') {
-        const routing = b.started && b.route && b.routeIdx < b.route.length;
-        let wt = routing ? b.tack : wantedTack(b, s, w);
+        const routing = !b.manual && b.started && b.route && b.routeIdx < b.route.length;
+        let wt = routing || b.manual ? b.tack : wantedTack(b, s, w);   // manuel: tramolayı yalnız sen atarsın
         // start hattını henüz uçların arasından geçmediyse: önce hattın içine yönel
         let lineAim = null;
         if (!b.started) {
@@ -432,6 +433,7 @@
           } else wt = b.tack;                              // uçların arasında: düz devam, hattı geç
         }
         const edge = b.x < 40 || b.x > WORLD.w - 40;
+        if (b.manual && b.started) wt = (b.x < 25 && b.tack === 'starboard') ? 'port' : (b.x > WORLD.w - 25 && b.tack === 'port') ? 'starboard' : b.tack;   // yalnız parkurdan çıkmasın
         if (wt !== b.tack && t - b.lastTack > MIN_TACK_GAP && (t > s.startAt + 3 || edge)) {
           // K13 bilinci: tramoladan sonra biriyle çakışacaksa bekle
           const nh = E.tackHeading(w, wt), others = snap.filter(o => o.ref !== b);
@@ -448,7 +450,7 @@
         if (lineAim) { if (Math.abs(lineAim.rel) >= 45) { target = lineAim.brg; b.tack = lineAim.rel > 0 ? 'port' : 'starboard'; } }
         else if (!b.started) { /* hattın içinde: orsa rotasında devam */ }
         else if ((b.tack === 'starboard' && rel <= -layAngle(s, b)) || (b.tack === 'port' && rel >= layAngle(s, b))) target = brg;
-        else if (!lineAim && Math.abs(rel) >= 55) { target = brg; b.tack = rel > 0 ? 'port' : 'starboard'; }   // şamandıra rüzgarüstünde değil (aşmış): doğrudan git
+        else if (!lineAim && Math.abs(rel) >= 55 && (!b.manual || (rel > 0) === (b.tack === 'port'))) { target = brg; b.tack = rel > 0 ? 'port' : 'starboard'; }   // şamandıra rüzgarüstünde değil (aşmış): doğrudan git
         if (routing) target = followRoute(b, s, w, t, snap.filter(o => o.ref !== b));
         // dönüşe başla: giriş noktasına geldi ya da şamandıranın rüzgarüstü tarafında, çembere yakın.
         // Şamandıranın altından (rüzgaraltı yarısından) dönüşe başlanmaz.
@@ -551,12 +553,12 @@
         // şamandıra önündeyse hep sağa kaç: şamandıra teknenin iskelesinde (solunda) kalsın, yanlış taraftan geçilmesin
         else if (b.phase !== 'done' && !(b.phase === 'penalty' && b.penFinish) && E.avoidDir(b.x, b.y, b.h, MARK_OBS, b.v) !== 0) {
           // şamandırayı tutamıyor (sağa kaçış rüzgarın içine sokuyor): rüzgarda kalmak yerine hemen tramola
-          if (b.phase === 'race' && b.started && b.tack === 'starboard' && Math.abs(E.norm180(b.h + 25 - w)) < 40 && t - b.lastTack > 2) doTack(b, s, 'Tutmuyor, tramola');
+          if (b.phase === 'race' && b.started && !b.manual && b.tack === 'starboard' && Math.abs(E.norm180(b.h + 25 - w)) < 40 && t - b.lastTack > 2) doTack(b, s, 'Tutmuyor, tramola');
           else b.h = E.norm360(b.h + 320 * DT);
         }
       }
       // rüzgarın içinde kaldı (şamandıranın altında, akıntı itiyor): tramola atıp çık
-      if (b.phase === 'race' && b.started && Math.abs(E.norm180(b.h - w)) < 30 && b.v < 15 && t - b.lastTack > 4) {
+      if (b.phase === 'race' && b.started && !b.manual && Math.abs(E.norm180(b.h - w)) < 30 && b.v < 15 && t - b.lastTack > 4) {
         if (!b.stallAt) b.stallAt = t; else if (t - b.stallAt > 1.5) { doTack(b, s, 'Rüzgarda kaldı, tramola'); b.stallAt = 0; }
       } else b.stallAt = 0;
       // hız

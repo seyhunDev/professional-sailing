@@ -308,13 +308,13 @@
     updateBar(v);
   }
 
-  const speedTxt = b => (b.speedK && Math.abs(b.speedK - 1) > 1e-6 ? ` · ${b.speedK > 1 ? '+' : '−'}${Math.round(Math.abs(b.speedK - 1) * 100)}% hız` : '') + (b.drift ? (b.drift > 1 ? ' · çok kayıyor' : ' · kayıyor') : '');
+  const speedTxt = b => (b.speedK && Math.abs(b.speedK - 1) > 1e-6 ? ` · ${b.speedK > 1 ? '+' : '−'}${Math.round(Math.abs(b.speedK - 1) * 100)}% hız` : '') + (b.drift ? (b.drift > 1 ? ' · çok kayıyor' : ' · kayıyor') : '') + (b.manual ? ' · manuel' : '');
   const SEA_TXT = { current: ['yok', 'hafif', 'orta', 'güçlü'], waves: ['yok', 'küçük', 'büyük'] };
   // ---------- panel ----------
   let lastPanelKey = '';
   function updatePanel(force) {
     const v = view();
-    const key = st.mode + '|' + st.course.lineLen + 'x' + st.course.markDist + '|' + st.gsel + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + JSON.stringify(v.sea || st.sea) + v.boats.map(b => b.id + (b.sailor || '') + (b.drift || 0) + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
+    const key = st.mode + '|' + st.course.lineLen + 'x' + st.course.markDist + '|' + st.gsel + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + JSON.stringify(v.sea || st.sea) + v.boats.map(b => b.id + (b.sailor || '') + (b.drift || 0) + (b.manual ? 'M' : '') + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
     if (!force && key === lastPanelKey) return;
     lastPanelKey = key;
     courseUpdate(); gustBarUpdate();
@@ -362,7 +362,7 @@
   const nameOf = b => b.sailor || (b.mine ? 'Sen' : b.name);
   // ---------- Kurulumu bu cihazda sakla (ileride Firebase'e taşınacak) ----------
   const SAVE_KEY = 'ps.sim.setup.v1';
-  const BOAT_KEYS = ['id', 'x', 'y', 'tack', 'persona', 'speedK', 'drift', 'ignoresRules', 'mine', 'sailor', 'route'];
+  const BOAT_KEYS = ['id', 'x', 'y', 'tack', 'persona', 'speedK', 'drift', 'manual', 'ignoresRules', 'mine', 'sailor', 'route'];
   function saveSetup() {
     if (st.mode !== 'setup') return;
     const data = { v: 1, wind: st.wind, sea: st.sea, course: st.course, gusts: st.gusts, fleet: st.fleet.map(b => Object.fromEntries(BOAT_KEYS.map(k => [k, b[k]]))) };
@@ -381,7 +381,7 @@
       if (i !== mineIdx) { b.mine = false; b.color = '#c9d6e3'; }
       b.tack = o.tack === 'port' ? 'port' : 'starboard';
       if (S.PERSONAS[o.persona]) b.persona = o.persona;
-      b.speedK = +o.speedK || 1; b.drift = Math.max(0, Math.min(2, o.drift | 0)); b.ignoresRules = !!o.ignoresRules;
+      b.speedK = +o.speedK || 1; b.drift = Math.max(0, Math.min(2, o.drift | 0)); b.manual = !!o.manual; b.ignoresRules = !!o.ignoresRules;
       if (o.sailor) b.sailor = String(o.sailor).slice(0, 18);
       if (Array.isArray(o.route) && o.route.length) b.route = o.route;
       return b;
@@ -416,13 +416,17 @@
     const setup = st.mode === 'setup';
     ['btnFleetMinus', 'btnFleetPlus', 'btnFleetLine'].forEach(id => { $(id).disabled = !setup; });
     const mine = v.boats.find(b => b.mine);
-    $('btnTack').disabled = !mine || setup || mine.phase !== 'race';
+    $('btnTack').disabled = !mine || setup || !(mine.phase === 'race' || (mine.manual && mine.phase === 'wait'));
+    $('btnManual').classList.toggle('on', !!(mine && mine.manual));
+    $('btnManual').disabled = !mine || (!setup && !!mine.finish);
+    $('selMinePersona').disabled = !!(mine && mine.manual);
+    $('btnTack').classList.toggle('pulse', !!(mine && mine.manual && !setup && mine.phase === 'race'));
     if (mine && document.activeElement !== $('selMinePersona')) $('selMinePersona').value = mine.persona;
     if (mine && document.activeElement !== $('selMineSpeed')) $('selMineSpeed').value = String(mine.speedK || 1);
     $('selMineSpeed').disabled = !mine || (!setup && !!mine.finish);
     $('btnMineRules').classList.toggle('on', !!(mine && mine.ignoresRules));
     const hasRoute = !!(mine && mine.route && (mine.routeIdx || 0) < mine.route.length);
-    $('btnRoute').disabled = !mine || (!setup && !!mine.finish);
+    $('btnRoute').disabled = !mine || (!setup && !!mine.finish) || !!mine.manual;
     $('btnRoute').classList.toggle('has', hasRoute);
     $('btnRoute').querySelector('.lbl2').textContent = hasRoute ? 'Rota ✓' : 'Rota';
     $('btnMineRules').disabled = !mine || (!setup && (mine.phase === 'done' || !!mine.finish));
@@ -850,6 +854,14 @@
   $('seaCurrent').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setSea('current', +x.dataset.v); });
   $('seaWaves').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setSea('waves', +x.dataset.v); });
   $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('ignoresRules', x.dataset.v === 'vermez', 'rules'); });
+  function toggleManual() {
+    const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
+    const on = !mine.manual;
+    if (st.mode === 'setup') { mine.manual = on; if (on) mine.route = null; updatePanel(true); }
+    else applyChange(r => S.command(r, 'manual', on));
+    toast(on ? 'Manuel: start\'tan sonra tramolayı yalnız sen atarsın (Tramola düğmesi ya da T)' : 'Otomatik: teknen taktiğine göre kendisi tramola atar');
+  }
+  $('btnManual').addEventListener('click', toggleManual);
   $('btnMineRules').addEventListener('click', () => {
     const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
     const on = !mine.ignoresRules;
@@ -893,6 +905,7 @@
     if (e.target.closest('input, select, textarea')) return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (e.key === 't' || e.key === 'T') $('btnTack').click();
+    else if (e.key === 'm' || e.key === 'M') toggleManual();
     else if (e.key === 'Escape' && st.drawMode) endDraw(false);
     else if (e.key === 'Enter' && st.drawMode) endDraw(true);
     else if ((e.metaKey || e.ctrlKey) && e.key === 'z' && st.drawMode) { e.preventDefault(); routeUndo(); }

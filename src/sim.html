@@ -166,6 +166,7 @@
             <li><b>Yakınlaştır / kaydır:</b> parkurda iki parmakla (ya da fare tekerleğiyle) yakınlaştır, boş yeri sürükleyerek şamandıraya ya da start hattına kaydır. Sol alttaki <b>Tümü</b> bütün parkuru gösterir, <b>Takip</b> kamerayı senin teknene kilitler.</li>
             <li><b>Taktik ve isim:</b> bir tekneye dokun; <b>Sporcu</b> kutusuna sporcunun adını yaz, <b>Taktik</b>ten <b>Sol</b> (pin tarafı), <b>Orta</b>, <b>Sağ</b> (hakem botu tarafı) ya da <b>Sağanak</b> seç. Yarış sırasında da bir tekneye dokunup taktiğini değiştirebilirsin. İsimler ve kurulum bu cihazda (tarayıcıda) saklanır; sayfayı yeniden açınca aynen gelir.</li>
             <li><b>Akıntı ve dalga:</b> panelin <b>Deniz</b> kutusundan akıntıyı (hafif / orta / güçlü) ve dalgayı (küçük / büyük) seç; tekneler rüzgaraltına kayar, orsada yavaş yükselir, layline'lar açılır. Yalpalayan, köre düşen bir sporcuyu göstermek için tekneye dokunup <b>Kayma</b>yı <b>Az</b> ya da <b>Çok</b> yap. Yarışta da değiştirebilirsin.</li>
+            <li><b>Manuel:</b> alttaki <b>Manuel</b> açıkken senin teknen start'tan sonra kendi kendine hiç tramola atmaz; ne zaman dönüleceğine sen <b>Tramola</b> (ya da T tuşu) ile karar verirsin. Start'a yaklaşma ve şamandırayı dönme yine otomatiktir. Kapalıyken tekne taktiğine göre kendisi karar verir.</li>
             <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>
             <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
             <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
@@ -215,9 +216,10 @@
       <section class="cg cg-mine" aria-label="Senin teknen">
         <div class="cg-lbl mine-lbl">Senin teknen</div>
         <div class="cg-body">
+          <button class="tb tgl" id="btnManual" title="Manuel: start'tan sonra tekne kendi kendine tramola atmaz, tramolayı sen atarsın (M)">Manuel</button>
           <button class="tb accent" id="btnTack" title="Tramola (T)"><svg class="ci"><use href="#i-tack"/></svg>Tramola</button>
           <select class="tb" id="selMinePersona" title="Taktik">
-            <option value="orta">Taktik: Orta</option><option value="sol">Taktik: Sol taraf</option><option value="sag">Taktik: Sağ taraf</option><option value="saganak">Taktik: Sağanağa git</option><option value="manuel">Taktik: Yalnız komutla</option>
+            <option value="orta">Taktik: Orta</option><option value="sol">Taktik: Sol</option><option value="sag">Taktik: Sağ</option><option value="saganak">Taktik: Sağanak</option><option value="manuel" hidden>Taktik: Komutla</option>
           </select>
           <select class="tb" id="selMineSpeed" title="Teknenin hızı (tekne ve denizci farkı)">
             <option value="0.9">Hız −10%</option><option value="0.95">Hız −5%</option><option value="1">Hız normal</option><option value="1.05">Hız +5%</option><option value="1.1">Hız +10%</option>
