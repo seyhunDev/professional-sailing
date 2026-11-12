@@ -20,7 +20,7 @@
     sim: null, frames: [], speed: 1, lastTs: 0, acc: 0,
     show: { speed: true, shadow: false },
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
-    drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
+    course: { ...S.COURSE_DEFAULT }, gsel: null, drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
   };
 
   // ---------- görünüm ----------
@@ -72,7 +72,8 @@
     v.gusts.forEach((gu, i) => {
       const gg = el('g', { transform: `translate(${gu.x.toFixed(1)},${gu.y.toFixed(1)}) rotate(${v.wind.toFixed(1)})`, class: 'gust', 'data-gust': i }, g);
       el('ellipse', { rx: gu.rx, ry: gu.ry, fill: 'url(#gustFill)' }, gg);
-      el('ellipse', { rx: gu.rx, ry: gu.ry, fill: 'none', stroke: 'rgba(125,211,252,.45)', 'stroke-width': 1.5, 'stroke-dasharray': '3 7' }, gg);
+      const on = st.gsel === i;
+      el('ellipse', { rx: gu.rx, ry: gu.ry, fill: 'none', stroke: on ? '#38bdf8' : 'rgba(125,211,252,.45)', 'stroke-width': on ? 2.5 : 1.5, 'stroke-dasharray': on ? '' : '3 7' }, gg);
       // kedi pençesi (cat's paw) çizgileri: rüzgarla akar
       for (let k = 0; k < 9; k++) {
         const ax = ((k * 53) % (gu.rx * 1.2)) - gu.rx * 0.6, base = ((k * 97) % (gu.ry * 1.4)) - gu.ry * 0.7;
@@ -80,7 +81,7 @@
         el('path', { d: `M${ax - 9},${ay} q 4,-3 9,0 t 9,0`, fill: 'none', stroke: 'rgba(186,230,253,.35)', 'stroke-width': 1.4 }, gg);
       }
       const lab = el('g', { transform: `rotate(${-v.wind.toFixed(1)})` }, gg);
-      el('text', { y: -gu.ry * 0.15, 'text-anchor': 'middle', fill: '#bae6fd', 'font-size': 14, 'font-weight': 700, 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.8)', 'stroke-width': 4 }, lab).textContent = 'SAĞANAK';
+      el('text', { y: -gu.ry * 0.15, 'text-anchor': 'middle', fill: '#bae6fd', 'font-size': 14, 'font-weight': 700, 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.8)', 'stroke-width': 4 }, lab).textContent = v.gusts.length > 1 ? `SAĞANAK ${i + 1}` : 'SAĞANAK';
       el('text', { y: -gu.ry * 0.15 + 17, 'text-anchor': 'middle', fill: '#7dd3fc', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.8)', 'stroke-width': 4 }, lab).textContent = 'tekneler %25 hızlı';
     });
   }
@@ -239,9 +240,10 @@
   let lastPanelKey = '';
   function updatePanel(force) {
     const v = view();
-    const key = st.mode + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + v.boats.map(b => b.id + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
+    const key = st.mode + '|' + st.course.lineLen + 'x' + st.course.markDist + '|' + st.gsel + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + v.boats.map(b => b.id + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
     if (!force && key === lastPanelKey) return;
     lastPanelKey = key;
+    courseUpdate(); gustBarUpdate();
     const label = { setup: 'Kurulum', run: v.t < v.startAt ? "Start'a geri sayım" : 'Yarış', pause: 'Duraklatıldı', end: 'Yarış bitti' }[st.mode];
     $('phaseLabel').textContent = label;
     const mine = v.boats.find(b => b.mine);
@@ -322,7 +324,7 @@
   }
   function lastT() { return st.frames.length ? st.frames[st.frames.length - 1].t : 0; }
   function startRace() {
-    st.frames = S.runToEnd(S.newRace(st.fleet, { wind: st.wind, gusts: st.gusts }));
+    st.frames = S.runToEnd(S.newRace(st.fleet, { wind: st.wind, gusts: st.gusts, course: st.course }));
     st.playT = 0; st.sim = viewAt(0); st.mode = 'run'; st.sel = null; st.ended = false;
   }
   // Şu anki kareden başlayarak değişikliği uygula ve yarışı ileriye yeniden hesapla
@@ -369,14 +371,64 @@
     if (st.mode === 'setup') st.wind = E.norm180(st.wind + delta);
     else applyChange(r => { r.wind = E.norm180(r.wind + delta); r.events.push({ t: r.t, text: `Rüzgar ${delta > 0 ? 'sağa' : 'sola'} döndü → ${Math.round(E.norm360(r.wind))}°`, kind: 'wind' }); });
   }
+  // ---------- Sağanak düzenleme: dokun → seç, boyut −/+, sıfırla, sil ----------
+  const GUST_BASE = { rx: 120, ry: 190 };
+  function gustEdit(fn, text) {
+    const i = st.gsel; if (i == null) return;
+    if (st.mode === 'setup') { if (st.gusts[i]) fn(st.gusts, i); }
+    else applyChange(r => { if (r.gusts[i]) { fn(r.gusts, i); r.events.push({ t: r.t, text, kind: 'wind' }); } });
+    gustBarUpdate(); updatePanel(true);
+  }
+  function gustScale(k) {
+    gustEdit((a, i) => { const g = a[i], f = Math.max(0.4, Math.min(2.5, (g.rx / GUST_BASE.rx) * k)); g.rx = GUST_BASE.rx * f; g.ry = GUST_BASE.ry * f; },
+      `Sağanak ${st.gsel + 1} ${k > 1 ? 'büyüdü' : 'küçüldü'}`);
+  }
+  function gustReset() { gustEdit((a, i) => { a[i].rx = GUST_BASE.rx; a[i].ry = GUST_BASE.ry; }, `Sağanak ${st.gsel + 1} ilk boyutuna döndü`); }
+  function gustDelete() { const n = st.gsel + 1; gustEdit((a, i) => a.splice(i, 1), `Sağanak ${n} geçti`); st.gsel = null; gustBarUpdate(); }
+  function gustBarUpdate() {
+    const list = st.mode === 'setup' || st.sim ? gustList() : [];
+    if (st.gsel != null && !list[st.gsel]) st.gsel = null;
+    $('gustBar').classList.toggle('hidden', st.gsel == null);
+    if (st.gsel == null) return;
+    const g = list[st.gsel], pct = Math.round(g.rx / GUST_BASE.rx * 100);
+    $('gbTitle').textContent = list.length > 1 ? `Sağanak ${st.gsel + 1}` : 'Sağanak';
+    $('gbSize').textContent = `boyut %${pct}`;
+    $('gbMinus').disabled = pct <= 40; $('gbPlus').disabled = pct >= 250; $('gbReset').disabled = pct === 100;
+  }
+  // ---------- Parkur: start hattı boyu ve şamandıra uzaklığı (yalnız kurulumda) ----------
+  const COURSE_LIM = { lineLen: [200, 1000, 50], markDist: [400, 1500, 50] };
+  function changeCourse(next) {
+    if (st.mode !== 'setup') return;
+    const c = { lineLen: Math.max(COURSE_LIM.lineLen[0], Math.min(COURSE_LIM.lineLen[1], next.lineLen)), markDist: Math.max(COURSE_LIM.markDist[0], Math.min(COURSE_LIM.markDist[1], next.markDist)) };
+    const o = { cx: S.MARK.x, ly: S.LINE.pin.y, my: S.MARK.y, L: S.LINE.boat.x - S.LINE.pin.x };
+    st.course = c; S.setCourse(c);
+    const n = { cx: S.MARK.x, ly: S.LINE.pin.y, my: S.MARK.y, L: S.LINE.boat.x - S.LINE.pin.x };
+    // tekneler hatta göre yerini korur (hat boyunca orantılı), sağanaklar parkura göre
+    for (const b of st.fleet) { b.x = n.cx + (b.x - o.cx) * (n.L / o.L); b.y = b.y - o.ly + n.ly; if (b.route) b.route = null; }
+    for (const g of st.gusts) { g.x = n.cx + (g.x - o.cx); g.y = n.my + (g.y - o.my) * ((n.ly - n.my) / (o.ly - o.my)); }
+    fitViewBox(); updatePanel(true);
+  }
+  const boyTxt = px => `${(px / S.HULL).toFixed(px % S.HULL ? 1 : 0).replace('.', ',')} boy`;
+  function courseUpdate() {
+    const c = st.course, setup = st.mode === 'setup', D = S.COURSE_DEFAULT;
+    $('lineVal').textContent = boyTxt(c.lineLen); $('markVal').textContent = boyTxt(c.markDist);
+    $('btnLineMinus').disabled = !setup || c.lineLen <= COURSE_LIM.lineLen[0]; $('btnLinePlus').disabled = !setup || c.lineLen >= COURSE_LIM.lineLen[1];
+    $('btnMarkMinus').disabled = !setup || c.markDist <= COURSE_LIM.markDist[0]; $('btnMarkPlus').disabled = !setup || c.markDist >= COURSE_LIM.markDist[1];
+    const def = c.lineLen === D.lineLen && c.markDist === D.markDist;
+    $('btnCourseReset').disabled = !setup || def;
+    $('courseState').textContent = def ? 'Varsayılan parkur' : 'Değiştirildi';
+    $('courseState').classList.toggle('changed', !def);
+    $('courseBox').classList.toggle('hidden', !setup);
+  }
+
   function gustList() { return st.mode === 'setup' ? st.gusts : st.sim.gusts; }
   function addGust(side) {
-    const g = { x: side === 'L' ? 230 : 770, y: 430, rx: 120, ry: 190 };
+    const g = { x: S.MARK.x + (side === 'L' ? -270 : 270), y: (S.MARK.y + S.LINE.pin.y) / 2, rx: 120, ry: 190 };
     if (st.mode === 'setup') st.gusts.push(g);
     else applyChange(r => { r.gusts.push(g); r.events.push({ t: r.t, text: `${side === 'L' ? 'Sol' : 'Sağ'} tarafa sağanak geldi`, kind: 'wind' }); });
     toast(`${side === 'L' ? 'Sol' : 'Sağ'} tarafa sağanak eklendi · sürükleyerek taşıyabilirsin`);
   }
-  function clearGusts() { if (st.mode === 'setup') st.gusts.length = 0; else applyChange(r => { r.gusts.length = 0; r.events.push({ t: r.t, text: 'Sağanak geçti', kind: 'wind' }); }); }
+  function clearGusts() { st.gsel = null; if (st.mode === 'setup') st.gusts.length = 0; else applyChange(r => { r.gusts.length = 0; r.events.push({ t: r.t, text: 'Sağanak geçti', kind: 'wind' }); }); }
   function renumber() {
     let k = 1;
     for (const b of st.fleet) if (!b.mine) { b.id = String(k); b.name = `Tekne ${k}`; k++; }
@@ -443,7 +495,7 @@
     } else {
       const g = hitGust(p);
       if (g) st.drag = { kind: 'gust', obj: g, x1: g.x, y1: g.y, dx: g.x - p.x, dy: g.y - p.y, moved: false, x0: ev.clientX, y0: ev.clientY };
-      else if (st.mode === 'setup' && st.sel) { st.sel = null; updatePanel(true); }
+      else { if (st.mode === 'setup' && st.sel) st.sel = null; if (st.gsel != null) st.gsel = null; gustBarUpdate(); updatePanel(true); }
     }
     if (st.drag) { $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); }
   }
@@ -469,6 +521,7 @@
       d.obj.x = d.x1; d.obj.y = d.y1;                 // eski karedeki konumu geri koy; değişiklik bu andan itibaren
       if (idx >= 0) applyChange(r => { Object.assign(r.gusts[idx], pos); r.events.push({ t: r.t, text: 'Sağanak taşındı', kind: 'wind' }); });
     }
+    if (d.kind === 'gust' && (!d.moved || st.mode === 'setup')) { const i = gustList().indexOf(d.obj); if (i >= 0) { st.gsel = i; st.sel = null; } }
     if (d.kind === 'boat' && !d.moved) { st.sel = st.sel === d.obj.id ? null : d.obj.id; if (phoneMq.matches) setPanelOpen(true); }
     if (d.kind === 'boat' && d.moved) settleBoat(d.obj);
     if (d.kind === 'boat' && d.moved && S.lineSide(d.obj) === -1) toast('Bu tekne hattın üstünde: start\'ta erken (OCS) sayılır, geri dönmek zorunda kalır.');
@@ -602,6 +655,17 @@
   $('btnFleetPlus').addEventListener('click', () => { addOne(); updatePanel(true); });
   $('btnFleetLine').addEventListener('click', () => { setFleetSize(st.fleet.length); updatePanel(true); toast('Tekneler hattın dibine yeniden dizildi'); });
   $('selTack').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.tack = x.dataset.v; updatePanel(true); } });
+  const LS = COURSE_LIM.lineLen[2], MS = COURSE_LIM.markDist[2];
+  $('btnLineMinus').addEventListener('click', () => changeCourse({ ...st.course, lineLen: st.course.lineLen - LS }));
+  $('btnLinePlus').addEventListener('click', () => changeCourse({ ...st.course, lineLen: st.course.lineLen + LS }));
+  $('btnMarkMinus').addEventListener('click', () => changeCourse({ ...st.course, markDist: st.course.markDist - MS }));
+  $('btnMarkPlus').addEventListener('click', () => changeCourse({ ...st.course, markDist: st.course.markDist + MS }));
+  $('btnCourseReset').addEventListener('click', () => { changeCourse({ ...S.COURSE_DEFAULT }); toast('Parkur varsayılana döndü'); });
+  $('gbMinus').addEventListener('click', () => gustScale(1 / 1.2));
+  $('gbPlus').addEventListener('click', () => gustScale(1.2));
+  $('gbReset').addEventListener('click', gustReset);
+  $('gbDelete').addEventListener('click', gustDelete);
+  $('gbClose').addEventListener('click', () => { st.gsel = null; gustBarUpdate(); updatePanel(true); });
   $('btnRoute').addEventListener('click', () => (st.drawMode ? endDraw(true) : startDraw()));
   $('rbMode').addEventListener('click', e => { const x = e.target.closest('button'); if (x) { st.routeMode = x.dataset.v; routeBarUpdate(); } });
   $('rbUndo').addEventListener('click', routeUndo);

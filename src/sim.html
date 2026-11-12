@@ -69,6 +69,17 @@
       </div>
     </div>
 
+    <div id="gustBar" class="gust-bar hidden" role="toolbar" aria-label="Sağanak">
+      <div class="rb-head"><span class="gb-dot"></span><div class="rb-text"><b id="gbTitle">Sağanak</b><span id="gbSize"></span></div></div>
+      <div class="rb-actions">
+        <button class="tb" id="gbMinus" title="Sağanağı küçült">−&nbsp;Küçült</button>
+        <button class="tb" id="gbPlus" title="Sağanağı büyüt">+&nbsp;Büyüt</button>
+        <button class="tb" id="gbReset" title="İlk boyuta döndür"><svg class="ci"><use href="#i-undo"/></svg>Sıfırla</button>
+        <button class="tb gb-del" id="gbDelete" title="Bu sağanağı sil">Sil</button>
+        <button class="icon sm" id="gbClose" title="Seçimi kaldır"><svg><use href="#i-close"/></svg></button>
+      </div>
+    </div>
+
     <aside id="panel" class="info-card sim-panel">
       <div class="info-head" id="panelHead">
         <button class="handle" id="btnCollapse" title="Daralt / genişlet"><span></span></button>
@@ -79,11 +90,23 @@
         <button id="btnPanelClose" class="icon" title="Kapat"><svg><use href="#i-close"/></svg></button>
       </div>
       <div class="panel-scroll">
+        <section id="courseBox" class="sel-box course-box">
+          <div class="box-head"><span>Parkur <small id="courseState"></small></span><button class="tb sm" id="btnCourseReset" title="Varsayılan parkura dön">Varsayılan</button></div>
+          <div class="sel-row">
+            <span class="lbl">Start hattı</span>
+            <div class="stepper"><button id="btnLineMinus" title="Hattı kısalt">−</button><span class="val" id="lineVal"></span><button id="btnLinePlus" title="Hattı uzat">+</button></div>
+          </div>
+          <div class="sel-row">
+            <span class="lbl">Şamandıra uzaklığı</span>
+            <div class="stepper"><button id="btnMarkMinus" title="Şamandırayı yaklaştır">−</button><span class="val" id="markVal"></span><button id="btnMarkPlus" title="Şamandırayı uzaklaştır">+</button></div>
+          </div>
+        </section>
         <section id="howto" class="howto">
           <ol>
             <li><b>Sürükle:</b> tekneleri hattın dibine yerleştir. Turuncu tekne <b>senin teknen</b>; bir boşluğa koy.</li>
             <li><b>Dokun:</b> bir tekneyi seç; kontrasını ve taktiğini değiştir, ya da onu senin teknen yap.</li>
-            <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin).</li>
+            <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin). Sağanağa dokununca üstte bir çubuk açılır: <b>Büyüt / Küçült</b>, <b>Sıfırla</b> (ilk boyut) ve <b>Sil</b>; birden çok sağanaktan istediğini ayrı ayrı düzenlersin.</li>
+            <li><b>Parkur:</b> panelin üstündeki <b>Parkur</b> kutusundan start hattının uzunluğunu ve orsa şamandırasının uzaklığını değiştir; hız, rüzgar gölgesi ve kurallar yeni parkura göre hesaplanır. <b>Varsayılan</b> ile tek dokunuşla geri dönersin.</li>
             <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
             <li><b>Rota:</b> alttaki <b>Rota</b> düğmesine bas; üstte rota çubuğu açılır. <b>Açılı</b> (varsayılan): teknenden başlayarak sürükle; her sürükleme düz bir bacaktır ve orsadan darsa orsa açısına (rüzgara 45°) oturur. <b>Serbest</b>: parmağınla istediğin gibi çiz (hatalı gidişleri göstermek için). <b>Geri al</b> son bacağı siler; bitince yeşil <b>Tamam</b>. Yarışta da rotayı düzenleyebilirsin.</li>
             <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>

@@ -127,6 +127,12 @@
 
 ## Oturum günlüğü (en yeni üstte)
 
+### 2026-11-12 · Simülatör parkur ayarı ve sağanak düzenleme
+- **Parkur** kutusu (panelin üstü, yalnız kurulumda): start hattı 4-20 boy, orsa şamandırası uzaklığı 8-30 boy (50 px adım), "Varsayılan" (8 boy hat, 13 boy şamandıra) ve "Değiştirildi" uyarısı. `sim-core.js` → `setCourse({lineLen, markDist})` WORLD/LINE/MARK/engel dizilerini yerinde günceller; `newRace({course})` durumda tutar, `step` her karede uygular (hesaplar yeni parkura göre). Hat değişince tekneler hat boyunca orantılı kayar, rotalar silinir, sağanaklar parkurla taşınır; görüş alanı yeni boyuta uyar.
+- **Sağanak düzenleme:** sağanağa dokun → üstte mavi çubuk: Küçült / Büyüt (%40-250), Sıfırla (ilk boyut), Sil, ×. Birden çok sağanak "Sağanak 1, 2…" diye numaralanır; seçili olan mavi çizgili. Yarışta da çalışır (o andan itibaren yeniden hesaplanır, olaylara yazılır).
+- Testler: check-sim'e kısa/uzun parkur senaryoları, fuzz'da her 5 yarıştan 2'si rastgele parkur. `npm run check` temiz.
+- Sonraki sohbete not: parkur yarış sırasında değiştirilemez (bilerek); istenirse ileride "geri dön → değiştir" akışı yeterli.
+
 ### 2026-11-12 · Simülatör üst çubuğu, Simülatör düğmesi, tam ekran
 - Simülatör üst çubuğu sadeleşti: logo, SİM rozeti ve alt yazı kalktı; solda çerçeveli "← Senaryolar" düğmesi + "Yarış Simülatörü" başlığı, sağda Sıralama ve tam ekran.
 - Ana sayfadaki Simülatör bağlantısı diğer araç düğmeleriyle aynı yapıda, turuncu zemin + çerçeve; tablette de yazısı görünür (≤420 px'te yalnız simge).
