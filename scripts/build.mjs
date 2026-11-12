@@ -31,10 +31,17 @@ for (const file of walk(DIST)) {
 let commit = 'local';
 try { commit = execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
 const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+// Görünen sürüm numarası: v1.<main'deki commit sayısı>. Her main gönderimi (squash merge = 1 commit) bir artırır.
+// GitHub Actions'ta checkout fetch-depth: 0 olmalı (tüm geçmiş), yoksa sayı 1 çıkar.
+let count = '';
+try { count = execSync('git rev-list --count HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim(); } catch {}
+const version = count ? `v1.${count}` : 'geliştirme';
 for (const page of readdirSync(DIST).filter(f => f.endsWith('.html'))) {
   let html = readFileSync(join(DIST, page), 'utf8');
   for (const [from, to] of hashed) html = html.replaceAll(`"${from}"`, `"${to}"`);
-  html = html.replace(/<body([^>]*)>/, `<body$1 data-version="${commit}" data-built="${stamp}">`);
+  html = html.replace(/<body([^>]*)>/, `<body$1 data-version="${commit}" data-built="${stamp}" data-ver="${version}">`);
+  // her sayfada sağ alt köşede sürüm etiketi (stil: style.css → .ver-badge)
+  html = html.replace('</body>', `<div class="ver-badge" title="Sürüm ${version} · ${commit} · ${stamp}">${version}</div>\n</body>`);
   writeFileSync(join(DIST, page), html);
 }
 // Jekyll'ı kapat (GitHub Pages dosyaları olduğu gibi sunsun)
@@ -42,4 +49,4 @@ writeFileSync(join(DIST, '.nojekyll'), '');
 
 console.log('Derlendi →', DIST);
 for (const [from, to] of hashed) console.log('  ', from, '→', to);
-console.log('  sürüm:', commit, stamp);
+console.log('  sürüm:', version, commit, stamp);

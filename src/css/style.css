@@ -321,3 +321,7 @@ a.sim-link:hover { background: rgba(251,146,60,.26); border-color: #fb923c; colo
 @media (max-width: 420px) { a.sim-link.tool { width: var(--tap); padding: 0; } a.sim-link .lbl { display: none; } }
 /* Tam ekranda (iPad Safari) sol üstte sistemin kapatma (X) düğmesi çıkar: üst çubuğun solunu boş bırak */
 html.is-fs .topbar { padding-left: 76px; }
+
+/* sürüm etiketi (build.mjs her sayfaya ekler): sağ alt köşe, tıklamaları engellemez */
+.ver-badge { position: fixed; right: calc(6px + env(safe-area-inset-right, 0px)); bottom: calc(1px + env(safe-area-inset-bottom, 0px)); z-index: 50; pointer-events: none;
+  font: 600 10px/1 system-ui, -apple-system, sans-serif; color: rgba(226,232,240,.55); background: rgba(7,18,30,.7); padding: 2px 5px; border-radius: 6px; letter-spacing: .2px; font-variant-numeric: tabular-nums; }

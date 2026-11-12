@@ -160,7 +160,7 @@
     opts = opts || {};
     const w = opts.wind != null ? opts.wind : 0;
     const boats = fleet.map(b => ({ ...b, phase: 'wait', go: false, man: null, manUntil: -1, note: '', noteUntil: -1,
-      lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, started: false, outside: false, penalties: 0, penaltyAt: null, penTurn: 0, penWait: false, penFinish: false, routeIdx: 0, routeFrom: null, v: HOLD_V }));
+      lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, started: false, outside: false, penalties: 0, penaltyAt: null, penTurn: 0, penWait: false, penAway: null, penFinish: false, routeIdx: 0, routeFrom: null, v: HOLD_V }));
     for (const b of boats) b.h = w + (b.tack === 'starboard' ? -25 : 25);
     const course = { ...COURSE_DEFAULT, ...(opts.course || {}) }; setCourse(course);
     const sea = { ...SEA_DEFAULT, ...(opts.sea || {}) };
@@ -490,10 +490,25 @@
       // ceza turu şamandıradan ve hattan uzakta atılır (K44.2: "diğer teknelerden ve şamandıradan uzaklaşıp")
       if (b.phase === 'race' && b.started && b.penaltyAt != null && t >= b.penaltyAt &&
           Math.hypot(b.x - MARK.x, b.y - MARK.y) > 140 && lineSide(b) === -1 && distToLine(b, w) > 40) {
-        b.phase = 'penalty'; b.penWait = false; b.penTurn = 0; b.penaltyAt = null; b.man = null;
-        log(s, `${b.id} iki tur ceza atıyor (K${b.penaltyRule})`, 'bad');
+        // K44.2: önce diğer teknelerden uzaklaş, sonra dön. Yön: teknenin gitmek istediği (avantajlı) taraf;
+        // o taraf kalabalıksa öbür taraf. Hafif apaz (rüzgara ~100°) ile yana açılır.
+        const pref = b.manual ? b.tack : wantedTack(b, s, w), others = snap.filter(o => o.ref !== b);
+        const cand = ['starboard', 'port'].map(tk => {
+          const h = w + (tk === 'starboard' ? -100 : 100); let m = 1e9;
+          for (const o of others) { const c = closest(b, h, 40, o, 3); if (c.d < 260) m = Math.min(m, c.dmin); }
+          const edgeBad = (tk === 'starboard' && b.x < 140) || (tk === 'port' && b.x > WORLD.w - 140);
+          return { tk, h, score: Math.min(m, 120) + (tk === pref ? 45 : 0) - (edgeBad ? 200 : 0) };
+        }).sort((a, c) => c.score - a.score)[0];
+        b.phase = 'penalty'; b.penWait = true; b.penAway = { h: cand.h, t0: t }; b.penTurn = 0; b.penaltyAt = null; b.man = null;
+        note(b, s, `Ceza için ${cand.tk === 'starboard' ? 'sola' : 'sağa'} açılıyor`, 'bad', 2.5);
+        log(s, `${b.id} ceza turu için diğer teknelerden ${cand.tk === 'starboard' ? 'sola' : 'sağa'} uzaklaşıyor (K44.2)`, 'bad');
       }
-      if (b.phase === 'penalty' && b.penWait) {
+      if (b.phase === 'penalty' && b.penWait && b.penAway) {
+        target = b.penAway.h;
+        let near = 1e9; for (const o of snap) if (o.ref !== b) near = Math.min(near, Math.hypot(o.x - b.x, o.y - b.y));
+        const dt0 = t - b.penAway.t0, atEdge = b.x < 50 || b.x > WORLD.w - 50 || lineSide(b) !== -1 && distToLine(b, w) < 30;
+        if ((near > 85 && dt0 > 1.2) || dt0 > 5 || atEdge) { b.penWait = false; b.penAway = null; b.penTurn = 0; log(s, `${b.id} iki tur ceza atıyor (K${b.penaltyRule})`, 'bad'); }
+      } else if (b.phase === 'penalty' && b.penWait) {
         target = w + 180 + 25;                                              // şamandıradan uzaklaş
         if (Math.hypot(b.x - MARK.x, b.y - MARK.y) > 110) { b.penWait = false; b.penTurn = 0; log(s, `${b.id} iki tur ceza atıyor (K${b.penaltyRule})`, 'bad'); }
       } else if (b.phase === 'penalty') {
