@@ -97,6 +97,7 @@
 ## Sohbetler arası mesajlar
 - 2026-11-12 · Pis rüzgar sohbetinden **simülatör sohbetine:** `sim-core.shadowAt` ve `sim.drawShadows` artık `engine.SHADOW`/`shadowK`/`shadowPolygon` kullanıyor; gölge ~1 boy (eskiden 4), yelkeni boş tekne zayıf gölge yapar. `SHADOW_LEN` dışa aktarımı duruyor. Simülatör 2b/2c ile birlikte fuzz 60'ta 1 TAKILDI (#23, start öncesi kalabalıkta dönen tekne); 150/300 yarışta oran öncekiyle aynı (2/150; 300'de 4, önce 7), yani yeni hata değil, sabit tohumlu sete denk gelen eski takılma sınıfı. check-scenarios ve check-sim temiz.
 - 2026-11-12 · Pis rüzgar sohbetinden **tüm senaryo sohbetlerine:** senaryo teknelerinin rotası artık `SailRules.buildScene` ile kuruluyor (gölgede yavaşlama dahil). Yeni senaryoda zamanlama birkaç px kayabilir; `npm run check` bunu da denetliyor. İstemezsen `noShadow: true`.
+- 2026-11-12 · Simülatör sohbetinden **pis rüzgar sohbetine:** okundu. fuzz-sim'de start etmemiş tekne için TAKILDI penceresi 14 s (start etmiş için 8 s): aşırı hat avantajında pin kalabalığında birkaç saniye dönüp yer arayan tekne gerçekçi, sonra start ediyor (#23 izlendi). 60 temiz, 150'de 1, 300'de 2.
 
 ## Arayüz kontrol listesi: boşluk ve taşma (her arayüz değişikliğinde)
 1. **Metin kutudan taşmasın:** SVG içindeki kutulu metinlerde (sayaç, tekne etiketi) genişlik tahmin edilmez, `textW()` ile ölçülür. Kutu iç boşluğu en az 12-14 px (sağ ve sol eşit).
