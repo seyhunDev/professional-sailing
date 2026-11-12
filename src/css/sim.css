@@ -42,6 +42,7 @@ a.brand, a.tool { color: inherit; text-decoration: none; }
 .events li.rule { border-color: var(--yol); }
 .events li.bad { border-color: var(--hata); color: #fecaca; }
 .events li.good { border-color: var(--hak); color: #bbf7d0; }
+.events li.protest { border-color: #f87171; background: rgba(248,113,113,.1); color: #fecaca; font-weight: 600; border-radius: 0 6px 6px 0; padding: 3px 6px 3px 8px; }
 .events li.wind { border-color: #7dd3fc; color: #bae6fd; }
 .events li.empty { border: 0; padding: 0; color: var(--muted); }
 .events .et { display: inline-block; min-width: 34px; color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 4px; }
@@ -84,3 +85,6 @@ a.brand, a.tool { color: inherit; text-decoration: none; }
   .sim-panel { max-height: 46%; }
 }
 .tb.tgl.on { background: var(--accent-soft); border-color: rgba(56,189,248,.45); color: var(--accent); }
+.tb.tgl.warn.on { background: rgba(248,113,113,.16); border-color: rgba(248,113,113,.55); color: #fecaca; }
+.seg#selRules button[data-v="vermez"].on { background: rgba(248,113,113,.18); color: #fca5a5; }
+.standings li.pen .stt { color: #fca5a5; }

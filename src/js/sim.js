@@ -125,6 +125,7 @@
     const op = b.phase === 'done' ? Math.max(0.15, 1 - (t - b.doneAt) / 5) : 1;
     const wrap = el('g', { opacity: op.toFixed(2), 'data-boat': b.id, class: 'boat' }, parent);
     if (b.mine || sel) el('circle', { cx: b.x.toFixed(1), cy: b.y.toFixed(1), r: 31, fill: b.mine ? 'rgba(251,146,60,.12)' : 'rgba(56,189,248,.1)', stroke: sel ? '#38bdf8' : 'rgba(251,146,60,.7)', 'stroke-width': sel ? 2 : 1.5, 'stroke-dasharray': sel ? '' : '4 4' }, wrap);
+    if (b.phase === 'penalty') el('circle', { cx: b.x.toFixed(1), cy: b.y.toFixed(1), r: 29, fill: 'none', stroke: '#f87171', 'stroke-width': 2, 'stroke-dasharray': '6 4' }, wrap);
     if (b.inGust > 0.2 && b.phase !== 'wait') el('circle', { cx: b.x.toFixed(1), cy: b.y.toFixed(1), r: 26, fill: 'none', stroke: 'rgba(125,211,252,.6)', 'stroke-width': 1.5 }, wrap);
     const g = el('g', { transform: `translate(${b.x.toFixed(1)},${b.y.toFixed(1)}) rotate(${b.h.toFixed(1)})` }, wrap);
     el('path', { d: 'M0,-25 C 9,-16 11,2 9,22 L -9,22 C -11,2 -9,-16 0,-25 Z', fill: b.color, stroke: '#fff', 'stroke-width': 1.5 }, g);
@@ -137,13 +138,14 @@
     // etiket
     const tk = sail.tack === 'starboard' ? 'S' : 'İ';
     const lab = el('g', { transform: `translate(${b.x.toFixed(1)},${(b.y + 36).toFixed(1)})` }, wrap);
-    const wTxt = 7.4 * b.id.length + 26;
-    el('rect', { x: -wTxt / 2, y: -10, width: wTxt, height: 19, rx: 9, fill: b.mine ? 'rgba(124,45,18,.9)' : 'rgba(7,18,30,.78)', stroke: b.mine ? '#fb923c' : 'rgba(255,255,255,.25)' }, lab);
+    const wTxt = 7.4 * b.id.length + 26 + (b.ignoresRules ? 12 : 0);
+    el('rect', { x: -wTxt / 2, y: -10, width: wTxt, height: 19, rx: 9, fill: b.mine ? 'rgba(124,45,18,.9)' : 'rgba(7,18,30,.78)', stroke: b.ignoresRules ? '#f87171' : b.mine ? '#fb923c' : 'rgba(255,255,255,.25)' }, lab);
     el('text', { x: -wTxt / 2 + 7, y: 4, fill: '#fff', 'font-size': 11.5, 'font-weight': 700 }, lab).textContent = b.id;
+    if (b.ignoresRules) el('text', { x: -wTxt / 2 + 9 + 7.4 * b.id.length, y: 4, fill: '#f87171', 'font-size': 12, 'font-weight': 900 }, lab).textContent = '!';
     el('rect', { x: wTxt / 2 - 17, y: -7, width: 13, height: 13, rx: 3.5, fill: tk === 'S' ? '#22c55e' : '#ef4444' }, lab);
     el('text', { x: wTxt / 2 - 10.5, y: 3.5, 'text-anchor': 'middle', fill: '#fff', 'font-size': 9.5, 'font-weight': 800 }, lab).textContent = tk;
     // hız: sağanakta yeşil ↑, pis rüzgarda kırmızı ↓
-    if (st.show.speed && (b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs')) {
+    if (st.show.speed && (b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs' || b.phase === 'penalty')) {
       const up = b.inGust > 0.25, down = b.shadow > 0.15;
       const col = down ? '#f87171' : up ? '#4ade80' : 'rgba(226,232,240,.85)';
       const txt = `${S.knots(b.v).toFixed(1)} kn${down ? ' ↓' : up ? ' ↑' : ''}`;
@@ -212,7 +214,7 @@
   let lastPanelKey = '';
   function updatePanel(force) {
     const v = view();
-    const key = st.mode + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + v.boats.map(b => b.id + b.tack + b.persona + b.mine).join();
+    const key = st.mode + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + v.boats.map(b => b.id + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.penalties || 0) + b.phase).join();
     if (!force && key === lastPanelKey) return;
     lastPanelKey = key;
     const label = { setup: 'Kurulum', run: v.t < v.startAt ? "Start'a geri sayım" : 'Yarış', pause: 'Duraklatıldı', end: 'Yarış bitti' }[st.mode];
@@ -230,11 +232,12 @@
       $('selTitle').textContent = sb.mine ? 'Senin teknen' : `Tekne ${sb.id}`;
       [...$('selTack').children].forEach(x => x.classList.toggle('on', x.dataset.v === sb.tack));
       [...$('selPersona').children].forEach(x => x.classList.toggle('on', x.dataset.v === sb.persona));
+      [...$('selRules').children].forEach(x => x.classList.toggle('on', x.dataset.v === (sb.ignoresRules ? 'vermez' : 'uyar')));
       $('btnMakeMine').disabled = sb.mine;
     }
     // sıralama
-    const rows = st.mode === 'setup' ? st.fleet.map(b => ({ b, status: S.PERSONAS[b.persona] + ' · ' + (b.tack === 'starboard' ? 'sancak' : 'iskele') })) : S.standings(v);
-    $('standings').innerHTML = rows.map((r, i) => `<li class="${r.b.mine ? 'me' : ''} ${r.b.finish ? 'fin' : ''}"><span class="pos">${st.mode === 'setup' ? '' : i + 1}</span>` +
+    const rows = st.mode === 'setup' ? st.fleet.map(b => ({ b, status: S.PERSONAS[b.persona] + ' · ' + (b.tack === 'starboard' ? 'sancak' : 'iskele') + (b.ignoresRules ? ' · yol vermez' : '') })) : S.standings(v);
+    $('standings').innerHTML = rows.map((r, i) => `<li class="${r.b.mine ? 'me' : ''} ${r.b.finish ? 'fin' : ''} ${r.b.phase === 'penalty' ? 'pen' : ''}"><span class="pos">${st.mode === 'setup' ? '' : i + 1}</span>` +
       `<span class="boat-id" style="background:${r.b.color}">${esc(r.b.id)}</span><span class="nm">${esc(r.b.mine ? 'Sen' : r.b.name)}</span><span class="stt">${esc(r.status)}</span></li>`).join('');
     // olaylar
     const evs = v.events.filter(e => !st.mineOnly || /(^|\s)SEN\b/.test(e.text)).slice(-40).reverse();
@@ -258,6 +261,8 @@
     const mine = v.boats.find(b => b.mine);
     $('btnTack').disabled = !mine || setup || mine.phase !== 'race';
     if (mine && document.activeElement !== $('selMinePersona')) $('selMinePersona').value = mine.persona;
+    $('btnMineRules').classList.toggle('on', !!(mine && mine.ignoresRules));
+    $('btnMineRules').disabled = !mine || (!setup && (mine.phase === 'done' || !!mine.finish));
     updatePanel();
   }
 
@@ -348,7 +353,7 @@
     const mineAt = st.fleet.find(b => b.mine);
     const fresh = S.defaultFleet(n);
     // senin teknenin yerini koru
-    if (mineAt) { const m = fresh.find(b => b.mine); m.x = mineAt.x; m.y = mineAt.y; m.tack = mineAt.tack; m.persona = mineAt.persona; }
+    if (mineAt) { const m = fresh.find(b => b.mine); m.x = mineAt.x; m.y = mineAt.y; m.tack = mineAt.tack; m.persona = mineAt.persona; m.ignoresRules = mineAt.ignoresRules; }
     st.fleet = fresh; st.sel = null;
   }
   function addOne() {
@@ -476,6 +481,14 @@
   $('btnFleetPlus').addEventListener('click', () => { addOne(); updatePanel(true); });
   $('btnFleetLine').addEventListener('click', () => { setFleetSize(st.fleet.length); updatePanel(true); toast('Tekneler hattın dibine yeniden dizildi'); });
   $('selTack').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.tack = x.dataset.v; updatePanel(true); } });
+  $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.ignoresRules = x.dataset.v === 'vermez'; updatePanel(true); } });
+  $('btnMineRules').addEventListener('click', () => {
+    const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
+    const on = !mine.ignoresRules;
+    if (st.mode === 'setup') { mine.ignoresRules = on; updatePanel(true); }
+    else applyChange(r => S.command(r, 'rules', on));
+    toast(on ? 'Senin teknen artık yol vermiyor: hak sahibi kaçmak zorunda kalırsa protesto edilirsin' : 'Senin teknen yine kurallara uyuyor');
+  });
   $('selPersona').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.persona = x.dataset.v; updatePanel(true); } });
   $('btnMakeMine').addEventListener('click', () => { if (st.sel) { makeMine(st.sel); updatePanel(true); } });
   $('btnRemoveBoat').addEventListener('click', () => { if (st.sel) { removeOne(st.sel); updatePanel(true); } });

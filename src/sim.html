@@ -74,6 +74,7 @@
             <li><b>Dokun:</b> bir tekneyi seç; kontrasını ve taktiğini değiştir, ya da onu senin teknen yap.</li>
             <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin).</li>
             <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
+            <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
             <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
           </ol>
         </section>
@@ -86,6 +87,10 @@
           <div class="sel-row wrap">
             <span class="lbl">Taktik</span>
             <div class="seg" id="selPersona"><button data-v="sol">Sol</button><button data-v="orta">Orta</button><button data-v="sag">Sağ</button><button data-v="saganak">Sağanak</button></div>
+          </div>
+          <div class="sel-row">
+            <span class="lbl">Davranış</span>
+            <div class="seg" id="selRules"><button data-v="uyar">Kurallara uyar</button><button data-v="vermez">Yol vermez</button></div>
           </div>
           <div class="sel-row">
             <button id="btnMakeMine" class="tb grow">Bu benim teknem</button>
@@ -135,6 +140,7 @@
         <select class="tb" id="selMinePersona" title="Taktik">
           <option value="orta">Orta</option><option value="sol">Sol taraf</option><option value="sag">Sağ taraf</option><option value="saganak">Sağanağa git</option><option value="manuel">Yalnız komutla</option>
         </select>
+        <button class="tb tgl warn" id="btnMineRules" title="Senin teknen yol vermesin: kuralları bilmeyen tekne gibi davranır, protesto edilir">Yol vermez</button>
       </div>
       <div class="ctl">
         <span class="ctl-lbl">Göster</span>
