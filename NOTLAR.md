@@ -117,6 +117,12 @@
 
 ## Oturum günlüğü (en yeni üstte)
 
+### 2026-11-12 · Simülatör: alt çubuk düzeni ve rota düzenleyici
+- Kullanıcı (iPad'den): alt düğmeler düzensiz, 3 satıra taşıyordu; rota çizerken bitirmek belirsizdi, bıraktıktan sonra fazladan bacaklar ekleniyordu, geri alma yoktu.
+- Alt çubuk: denetim grupları (`.cg`: büyük harf etiket üstte, gövde altta, aynı 38 px yükseklik, aralarında ince çizgi). Rüzgar ve Filo "stepper" (− değer +), Sağanak ve Göster segment. Masaüstünde tek satır; tablette (641-1279 px, dikey ve yatay) üst satır "Senin teknen", alt satır diğer dört grup; telefonda yana kayan tek satır, "Senin teknen" başta.
+- Rota düzenleyici: "Rota" düğmesi sahnenin üstünde turuncu **rota çubuğu** açar (yanıp sönen nokta, "N bacak · devam et ya da Tamam'a bas"; Açılı/Serbest; Geri al (Ctrl+Z); Temizle; Vazgeç (Esc); yeşil, nabız atan **Tamam** (Enter)). Taslak Tamam'a kadar uygulanmaz; var olan rota taslağa yüklenir (geri alarak düzeltilir). Çizim açıkken oynat → rota kaydedilir. Çizim sırasında diğer gruplar soluklaşır. Rota varsa düğme "Rota ✓".
+- Panel açıkken (masaüstü) rota çubuğu panelin solunda ortalanır (`:has`).
+
 ### 2026-11-12 · Simülatör: açılı rota, sakin yol verme, yakın mesafe
 - Kullanıcı isteği: rota varsayılan olarak orsa açısında düz bacaklarla çizilsin (serbest çizim de kalsın); hak sahibi her zaman rotasında kalsın, yol veren sakince tramola ya da arkadan geçsin; Optimist'ler daha yakın geçebilsin; pis rüzgar ortak yerden yönetilsin.
 - `sim.js`: "Açılı / Serbest" seçimi (varsayılan Açılı). Açılı: her sürükleme bir bacak; yön orsadan darsa rüzgara 45°'ye (sancak/iskele), değilse 5° adımlara oturur; ok uçlu önizleme + "orsa · sancak kontra / apaz / pupa" etiketi; sonraki bacak öncekinin ucundan; düğme "Bitti" olur. Her bacak hemen uygulanır.

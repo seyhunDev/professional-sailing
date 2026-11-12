@@ -20,7 +20,7 @@
     sim: null, frames: [], speed: 1, lastTs: 0, acc: 0,
     show: { speed: true, shadow: false },
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
-    drawMode: false, drawPts: null, routeMode: 'acili', legs: null, legPrev: null
+    drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
   };
 
   // ---------- görünüm ----------
@@ -158,14 +158,18 @@
   function drawRoute(parent, v) {
     const pts2 = a => a.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
     const m = v.boats.find(b => b.mine);
-    if (m && m.route && (m.routeIdx || 0) < m.route.length && !m.finish) {
+    if (!st.drawMode && m && m.route && (m.routeIdx || 0) < m.route.length && !m.finish) {
       const rest = m.route.slice(m.routeIdx || 0), all = st.mode === 'setup' ? rest : [{ x: m.x, y: m.y }, ...rest];
       el('polyline', { points: pts2(all), fill: 'none', stroke: 'rgba(251,146,60,.85)', 'stroke-width': 2.5, 'stroke-dasharray': '8 6', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, parent);
       const end = rest[rest.length - 1];
       el('circle', { cx: end.x.toFixed(1), cy: end.y.toFixed(1), r: 6, fill: '#fb923c', stroke: '#fff', 'stroke-width': 1.5 }, parent);
     }
-    if (st.legs && st.legs.length > 1) el('polyline', { points: pts2(st.legs), fill: 'none', stroke: '#fdba74', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, parent);
-    if (st.legs) { const o = st.legs[st.legs.length - 1]; el('circle', { cx: o.x.toFixed(1), cy: o.y.toFixed(1), r: 5, fill: '#fdba74' }, parent); }
+    if (st.drawMode) {
+      const o = (() => { const m = mineNow(); return m ? { x: m.x, y: m.y } : null; })();
+      const pts = o ? [o, ...st.draft] : st.draft;
+      if (pts.length > 1) el('polyline', { points: pts2(pts), fill: 'none', stroke: '#fdba74', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, parent);
+      for (const p of st.draft) el('circle', { cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: 4, fill: '#fdba74', stroke: 'rgba(0,0,0,.5)' }, parent);
+    }
     if (st.legPrev) {
       const { from: a, to: b, label } = st.legPrev;
       el('line', { x1: a.x.toFixed(1), y1: a.y.toFixed(1), x2: b.x.toFixed(1), y2: b.y.toFixed(1), stroke: '#fdba74', 'stroke-width': 3, 'stroke-dasharray': '10 6', 'marker-end': 'url(#routeHead)' }, parent);
@@ -284,7 +288,8 @@
     $('btnMineRules').classList.toggle('on', !!(mine && mine.ignoresRules));
     const hasRoute = !!(mine && mine.route && (mine.routeIdx || 0) < mine.route.length);
     $('btnRoute').disabled = !mine || (!setup && !!mine.finish);
-    $('btnRouteClear').disabled = !hasRoute || (!setup && !!mine.finish);
+    $('btnRoute').classList.toggle('has', hasRoute);
+    $('btnRoute').querySelector('.lbl2').textContent = hasRoute ? 'Rota ✓' : 'Rota';
     $('btnMineRules').disabled = !mine || (!setup && (mine.phase === 'done' || !!mine.finish));
     updatePanel();
   }
@@ -341,6 +346,7 @@
     requestAnimationFrame(tick);
   }
   function togglePlay() {
+    if (st.drawMode) endDraw(true);                      // çizim açıkken oynat: rotayı kaydet, sonra devam
     if (st.mode === 'setup') startRace();
     else if (st.mode === 'run') st.mode = 'pause';
     else if (st.mode === 'pause') st.mode = 'run';
@@ -451,7 +457,7 @@
   }
   function onUp() {
     if (st.legPrev) { legCommit(); return; }
-    if (st.drawPts) { finishRoute(st.drawPts); st.drawPts = null; return; }
+    if (st.drawPts) { strokeCommit(st.drawPts); st.drawPts = null; return; }
     const d = st.drag; st.drag = null;
     if (!d) return;
     if (d.kind === 'gust' && d.moved && st.mode !== 'setup') {
@@ -470,24 +476,16 @@
     updatePanel(true);
   }
 
-  // Çizgiyi seyrelt (≈40 px aralık), senin teknene rota olarak ver
-  function finishRoute(raw) {
-    setDrawMode(false);
-    const pts = [raw[0]];
-    for (const p of raw) { const q = pts[pts.length - 1]; if (Math.hypot(p.x - q.x, p.y - q.y) >= 40) pts.push(p); }
-    const last = raw[raw.length - 1]; if (pts[pts.length - 1] !== last) pts.push(last);
-    const clean = pts.map(p => ({ x: Math.max(20, Math.min(W.w - 20, p.x)), y: Math.max(20, Math.min(W.h - 10, p.y)) }));
-    let len = 0; for (let i = 1; i < clean.length; i++) len += Math.hypot(clean[i].x - clean[i - 1].x, clean[i].y - clean[i - 1].y);
-    if (len < 60) { toast('Rota çok kısa; teknenin gideceği yolu biraz daha uzun çiz.'); return; }
-    applyRoute(clean);
-  }
-  // Açılı rota: her sürükleme bir bacak. Yön orsadan darsa orsa açısına (rüzgara 45°) oturur,
-  // değilse 5°'lik adımlara; bacak bir öncekinin bittiği yerden (ilk bacak teknenden) başlar.
+  // ---------- Rota düzenleyici ----------
+  // Çizim modunda rota bir taslaktır (st.draft: noktalar, st.steps: geri alma için her adımda eklenen nokta sayısı).
+  // "Tamam" ile uygulanır, "Vazgeç" ile eski rota kalır. Açılı modda her sürükleme bir bacak: yön orsadan
+  // darsa orsa açısına (rüzgara 45°) oturur, değilse 5° adımlara. Serbest modda parmakla çizilen çizgi ≈40 px'e seyreltilir.
+  function mineNow() { return (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); }
   function legOrigin() {
-    if (st.legs && st.legs.length) return st.legs[st.legs.length - 1];
-    const m = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine);
-    return m ? { x: m.x, y: m.y } : null;
+    if (st.draft.length) return st.draft[st.draft.length - 1];
+    const m = mineNow(); return m ? { x: m.x, y: m.y } : null;
   }
+  const clampW = p => ({ x: Math.max(20, Math.min(W.w - 20, p.x)), y: Math.max(20, Math.min(W.h - 10, p.y)) });
   function legAim(p) {
     const a = legOrigin(); if (!a) return;
     const w = view().wind, dx = p.x - a.x, dy = p.y - a.y;
@@ -497,36 +495,67 @@
     if (Math.abs(rel) < 45) { const tack = rel < 0 ? 'starboard' : 'port'; h = E.tackHeading(w, tack); label = `orsa · ${tack === 'starboard' ? 'sancak' : 'iskele'} kontra`; }
     else { h = Math.round(brg / 5) * 5; const r = Math.abs(E.norm180(h - w)); label = r > 150 ? 'pupa' : r > 100 ? 'geniş apaz' : r > 70 ? 'apaz' : 'dar apaz'; }
     const f = E.fwd(h), len = Math.max(0, dx * f.x + dy * f.y);
-    const to = { x: Math.max(20, Math.min(W.w - 20, a.x + f.x * len)), y: Math.max(20, Math.min(W.h - 10, a.y + f.y * len)) };
-    st.legPrev = { from: a, to, label };
+    st.legPrev = { from: a, to: clampW({ x: a.x + f.x * len, y: a.y + f.y * len }), label };
   }
   function legCommit() {
     const { from: a, to } = st.legPrev; st.legPrev = null;
     if (Math.hypot(to.x - a.x, to.y - a.y) < 25) return;
-    if (!st.legs) st.legs = [a];
-    st.legs.push(to);
-    applyRoute(st.legs.slice(1), true);
+    st.draft.push(to); st.steps.push(1); routeBarUpdate();
   }
-  function applyRoute(pts, quiet) {
+  function strokeCommit(raw) {
+    const pts = [raw[0]];
+    for (const p of raw) { const q = pts[pts.length - 1]; if (Math.hypot(p.x - q.x, p.y - q.y) >= 40) pts.push(p); }
+    const last = raw[raw.length - 1]; if (pts[pts.length - 1] !== last) pts.push(last);
+    let len = 0; for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+    if (len < 40) return;
+    st.draft.push(...pts.map(clampW)); st.steps.push(pts.length); routeBarUpdate();
+  }
+  function routeUndo() { const n = st.steps.pop(); if (n) st.draft.splice(st.draft.length - n, n); routeBarUpdate(); }
+  function routeWipe() { st.draft = []; st.steps = []; routeBarUpdate(); }
+  function applyRoute(pts) {
     if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.route = pts; }
     else applyChange(r => S.command(r, 'route', pts));
-    if (!quiet) toast('Rota hazır: teknen çizgiyi izler, rüzgara karşı kısımlarda zikzak (tramola) atar, sonra şamandıraya gider.');
     updatePanel(true);
   }
-  function setDrawMode(on) {
-    st.drawMode = on; $('btnRoute').classList.toggle('on', on);
-    $('btnRoute').lastChild.textContent = on ? 'Bitti' : 'Rota çiz';
-    $('course').style.cursor = on ? 'crosshair' : '';
-    if (on && st.mode === 'run') st.mode = 'pause';
-    if (!on) { if (st.legs && st.legs.length > 1) toast('Rota hazır: teknen bacakları izler, sonra şamandıraya gider.'); st.legs = null; st.legPrev = null; }
-    if (on) toast(st.routeMode === 'acili'
-      ? 'Teknenden başlayarak sürükle: her sürükleme bir bacak, orsadan darsa orsa açısına oturur. Bitince “Bitti”.'
-      : 'Parmağınla (ya da fareyle) teknenin gideceği yolu serbestçe çiz.');
+  function startDraw() {
+    const m = mineNow(); if (!m) return;
+    if (st.mode === 'run') st.mode = 'pause';
+    // var olan rotanın kalanı taslağa yüklenir: istersen geri alarak düzeltirsin
+    const rest = m.route ? m.route.slice(m.routeIdx || 0) : [];
+    st.draft = rest.map(p => ({ x: p.x, y: p.y })); st.steps = rest.map(() => 1);
+    st.drawMode = true; st.legPrev = null; st.drawPts = null;
+    document.body.classList.add('drawing');
+    $('course').style.cursor = 'crosshair';
+    routeBarUpdate(); updatePanel(true);
   }
-  function clearRoute() {
-    if (st.mode === 'setup') { const m = st.fleet.find(b => b.mine); if (m) m.route = null; }
-    else applyChange(r => S.command(r, 'route', null));
+  function endDraw(apply) {
+    if (!st.drawMode) return;
+    st.drawMode = false; st.legPrev = null; st.drawPts = null;
+    document.body.classList.remove('drawing');
+    $('course').style.cursor = '';
+    routeBarUpdate();
+    if (apply) {
+      const m = mineNow(), before = m && m.route ? m.route.slice(m.routeIdx || 0) : [];
+      const same = before.length === st.draft.length && before.every((p, i) => p.x === st.draft[i].x && p.y === st.draft[i].y);
+      if (!same) {
+        applyRoute(st.draft.length ? st.draft.slice() : null);
+        toast(st.draft.length ? 'Rota kaydedildi: teknen bacakları izler, rüzgara karşı kısımda zikzak atar, sonra şamandıraya gider.' : 'Rota silindi.');
+      }
+    }
+    st.draft = []; st.steps = [];
     updatePanel(true);
+  }
+  function routeBarUpdate() {
+    const bar = $('routeBar'); bar.classList.toggle('hidden', !st.drawMode);
+    $('btnRoute').classList.toggle('on', st.drawMode);
+    if (!st.drawMode) return;
+    [...$('rbMode').children].forEach(x => x.classList.toggle('on', x.dataset.v === st.routeMode));
+    const n = st.steps.length;
+    $('rbHint').textContent = n === 0
+      ? (st.routeMode === 'acili' ? 'Teknenden başlayarak sürükle: her sürükleme bir bacak' : 'Parmağınla teknenin gideceği yolu çiz')
+      : `${n} ${st.routeMode === 'acili' ? 'bacak' : 'parça'} · devam et ya da Tamam’a bas`;
+    $('rbUndo').disabled = !n; $('rbWipe').disabled = !st.draft.length;
+    $('rbDone').classList.toggle('ready', n > 0);
   }
 
   // Bırakılan tekne başka bir teknenin, pin'in ya da hakem botunun üstüne düştüyse en yakın boş yere kaydır
@@ -569,9 +598,12 @@
   $('btnFleetPlus').addEventListener('click', () => { addOne(); updatePanel(true); });
   $('btnFleetLine').addEventListener('click', () => { setFleetSize(st.fleet.length); updatePanel(true); toast('Tekneler hattın dibine yeniden dizildi'); });
   $('selTack').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.tack = x.dataset.v; updatePanel(true); } });
-  $('btnRoute').addEventListener('click', () => setDrawMode(!st.drawMode));
-  $('btnRouteClear').addEventListener('click', () => { if (st.drawMode) setDrawMode(false); clearRoute(); });
-  $('selRouteMode').addEventListener('change', e => { st.routeMode = e.target.value; if (st.drawMode) { setDrawMode(false); setDrawMode(true); } });
+  $('btnRoute').addEventListener('click', () => (st.drawMode ? endDraw(true) : startDraw()));
+  $('rbMode').addEventListener('click', e => { const x = e.target.closest('button'); if (x) { st.routeMode = x.dataset.v; routeBarUpdate(); } });
+  $('rbUndo').addEventListener('click', routeUndo);
+  $('rbWipe').addEventListener('click', routeWipe);
+  $('rbCancel').addEventListener('click', () => endDraw(false));
+  $('rbDone').addEventListener('click', () => endDraw(true));
   $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); const b = st.fleet.find(q => q.id === st.sel); if (x && b) { b.ignoresRules = x.dataset.v === 'vermez'; updatePanel(true); } });
   $('btnMineRules').addEventListener('click', () => {
     const mine = (st.mode === 'setup' ? st.fleet : view().boats).find(b => b.mine); if (!mine) return;
@@ -598,7 +630,9 @@
     if (e.target.closest('input, select, textarea')) return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (e.key === 't' || e.key === 'T') $('btnTack').click();
-    else if (e.key === 'Escape' && st.drawMode) { st.drawPts = null; st.legPrev = null; setDrawMode(false); }
+    else if (e.key === 'Escape' && st.drawMode) endDraw(false);
+    else if (e.key === 'Enter' && st.drawMode) endDraw(true);
+    else if ((e.metaKey || e.ctrlKey) && e.key === 'z' && st.drawMode) { e.preventDefault(); routeUndo(); }
     else if (e.key === 'ArrowLeft') setWind(-5);
     else if (e.key === 'ArrowRight') setWind(5);
   });
