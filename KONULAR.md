@@ -9,17 +9,12 @@ SailZing skills kit, HKSSA Optimist Skipper kursu, World Sailing RRS 2025-2028 (
 
 Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 
-## A. Start
+Üç ana bölüm (uygulamadaki kategorilerle aynı):
+- **I. KURALLAR** – RRS 2025-2028 Bölüm 2 (B)
+- **II. TAKTİK** – Start (A), rüzgar/orsa (C), pupa (D), şamandıra/finiş (E), parkur (F)
+- **III. TEKNİK** – tekne kontrolü ve hızı (G); Aşama 1 ile birlikte ele alınacak
 
-| # | Konu | Animasyonda ne gösterilecek | Durum |
-|---|------|-----------------------------|-------|
-| A1 | Start çizgisi avantajı (line bias) | Rüzgar yönüne göre hangi uç (hakem botu / orsa şamandırası) öndedir? Rüzgara dik "merdiven basamağı" çizgisiyle fark görselleştirilir. | ✅ |
-| A2 | Zamanlama: zaman–mesafe, hızlanma | Geri sayım, çizgiye yaklaşma, orsalayarak bekleme (hold), bordayarak hızlanma, "erken start (OCS)" ve "geç kalan" tekne. | ✅ |
-| A3 | Hakem botu ucunda "barging" | Rüzgarüstünden sokulan teknenin hakkı yoktur; rüzgaraltı tekne orsa edebilir (RRS 11). | 🔜 |
-| A4 | İskele kontra start | Çizgi iskeleye avantajlı ve filo seyrekse iskele kontrayla orsa şamandırasından çıkış. | ⬜ |
-| A5 | Start sonrası ilk 2 dakika: temiz hava | Rüzgar gölgesi (dirty air) ve "boşluk bulmak için erken tramola". | ⬜ |
-| A6 | Transit (kerteriz) ile çizgiyi görme | Kıyıdaki sabit nokta ile çizgi hizası. | ⬜ |
-| A7 | Bayrak ve ses sinyalleri (5-4-1-0), I / U / siyah bayrak | Zaman çizelgesi animasyonu. | ⬜ |
+# I. KURALLAR
 
 ## B. Yarış Kuralları (RRS Bölüm 2 – temel hak kuralları)
 
@@ -37,6 +32,20 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | B10 | Kural 19/20 – Engel ve "yer istiyorum" (room to tack) | Kıyı / demirli tekne önünde seslenme. | ⬜ |
 | B11 | Kural 31 / 44 – Şamandıraya temas, tek tur ceza, iki tur ceza | Ceza turu animasyonu. | ⬜ |
 | B12 | Kural 42 – İtme/pompalama yasağı (temel) | Hangi hareketler yasak. | ⬜ |
+
+# II. TAKTİK
+
+## A. Start
+
+| # | Konu | Animasyonda ne gösterilecek | Durum |
+|---|------|-----------------------------|-------|
+| A1 | Start çizgisi avantajı (line bias) | Rüzgar yönüne göre hangi uç (hakem botu / orsa şamandırası) öndedir? Rüzgara dik "merdiven basamağı" çizgisiyle fark görselleştirilir. | ✅ |
+| A2 | Zamanlama: zaman–mesafe, hızlanma | Geri sayım, çizgiye yaklaşma, orsalayarak bekleme (hold), bordayarak hızlanma, "erken start (OCS)" ve "geç kalan" tekne. | ✅ |
+| A3 | Hakem botu ucunda "barging" | Rüzgarüstünden sokulan teknenin hakkı yoktur; rüzgaraltı tekne orsa edebilir (RRS 11). | 🔜 |
+| A4 | İskele kontra start | Çizgi iskeleye avantajlı ve filo seyrekse iskele kontrayla orsa şamandırasından çıkış. | ⬜ |
+| A5 | Start sonrası ilk 2 dakika: temiz hava | Rüzgar gölgesi (dirty air) ve "boşluk bulmak için erken tramola". | ⬜ |
+| A6 | Transit (kerteriz) ile çizgiyi görme | Kıyıdaki sabit nokta ile çizgi hizası. | ⬜ |
+| A7 | Bayrak ve ses sinyalleri (5-4-1-0), I / U / siyah bayrak | Zaman çizelgesi animasyonu. | ⬜ |
 
 ## C. Rüzgar ve Orsa Stratejisi (upwind)
 
@@ -74,6 +83,20 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 |---|------|-----------------------------|-------|
 | F1 | Parkur tipleri: sosis, trapez, üçgen | Üstten görünüş, şamandıra sırası. | ⬜ |
 | F2 | Yarış komitesi sinyalleri: erteleme (AP), genel geri çağırma, kısaltma (S), parkur değişikliği (C) | Bayraklar ve anlamları. | ⬜ |
+
+# III. TEKNİK
+
+## G. Teknik (Aşama 1 ile birlikte – şimdilik planlandı)
+
+| # | Konu | Animasyonda ne gösterilecek | Durum |
+|---|------|-----------------------------|-------|
+| G1 | 5 temel: yelken trimi, salma, ağırlık dengesi, rota, trim (ön-arka) | Her birinin hıza etkisi, yan yana iki tekne. | ⬜ |
+| G2 | Tramola tekniği: giriş hızı, dümen, ağırlık geçişi, çıkış | Adım adım yavaşlatılmış tramola. | ⬜ |
+| G3 | Kavança tekniği: bumba kontrolü, rüzgar açısı | Güvenli kavança açısı, bumbanın geçişi. | ⬜ |
+| G4 | Orsa trimi: pinching vs footing | TWA 40 / 45 / 50 ile hız-VMG karşılaştırması. | ⬜ |
+| G5 | Pupa: ağırlık ve yelken açısı, "by the lee" | Yelken açısı ve dengenin görünümü. | ⬜ |
+| G6 | Hızlanma ve durma (start için) | Orsalayarak durma, bordalayarak hızlanma; A2 ile ilişkili. | ⬜ |
+| G7 | Sağanakta tekne dengesi ve dümen | Sağanak gelince ne yapılır. | ⬜ |
 
 ## Öncelik sırası (ilk 10 animasyon)
 1. A1 Line bias ✅  2. A2 Zamanlama ✅  3. B1 Kural 10 ✅  4. C1 Header'da tramola ✅  5. B8 Kural 18 ✅

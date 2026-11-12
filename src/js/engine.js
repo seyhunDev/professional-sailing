@@ -104,7 +104,7 @@
     while (hi - lo > 1) { const m = (lo + hi) >> 1; if (track[m].t <= t) lo = m; else hi = m; }
     const a = track[lo], b = track[hi];
     const k = (t - a.t) / (b.t - a.t);
-    return { t, x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), h: lerpAngle(a.h, b.h, k) };
+    return { t, x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), h: lerpAngle(a.h, b.h, k), v: a.v != null && b.v != null ? lerp(a.v, b.v, k) : a.v, note: a.note };
   }
 
   // ---------- Yelken geometrisi ----------

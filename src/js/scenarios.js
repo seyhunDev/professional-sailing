@@ -9,7 +9,7 @@
   // ---------- A1: Start çizgisi avantajı ----------
   S.push({
     id: 'a1-line-bias',
-    category: 'Start',
+    category: 'Taktik', topic: 'Start',
     title: 'A1 · Start çizgisi avantajı (line bias)',
     summary: 'Çizgi rüzgara tam dik değilse bir uç diğerinden daha "rüzgarüstünde"dir. O uçtan start alan tekne, aynı kontrada aynı hızla gitse bile öndedir.',
     duration: 13,
@@ -41,7 +41,7 @@
   // ---------- A2: Zamanlama ve hızlanma ----------
   S.push({
     id: 'a2-timing',
-    category: 'Start',
+    category: 'Taktik', topic: 'Start',
     title: 'A2 · Zamanlama: bekleme, hızlanma, erken/geç start',
     summary: 'İyi start = sinyal anında çizgide, tam hızda ve temiz havada olmak. Bunun için çizginin gerisinde "bekleyip" sinyalden ~5 saniye önce bordalayıp hızlanmak gerekir.',
     duration: 30,
@@ -58,11 +58,11 @@
           { mode: 'closehauled', tack: 'starboard', dur: 13.9, turn: 1.0 } // ~5 sn kala bordala, hızlan
         ] },
       { id: 'E', name: 'Erken (OCS)', color: '#e76f51',
-        start: { x: 600, y: 560, h: 340 }, v0: 5,
+        start: { x: 640, y: 560, h: 340 }, v0: 5,
         segs: [
           { mode: 'hold', h: 340, dur: 12, speed: 0.1, turn: 0 },
           { mode: 'closehauled', tack: 'starboard', dur: 8, turn: 1.0 },   // çok erken bordaladı
-          { mode: 'heading', h: 185, dur: 3.6, turn: 1.6 },                 // geri dönüp çizginin altına
+          { mode: 'heading', h: 150, dur: 3.6, turn: 1.6 },                 // geri dönüp çizginin altına
           { mode: 'closehauled', tack: 'starboard', dur: 6.4, turn: 1.6 }
         ] },
       { id: 'G', name: 'Geç kalan', color: '#8d99ae',
@@ -81,13 +81,13 @@
       { t: 20.2, title: 'START', text: 'Yeşil tekne tam bu anda, tam hızla çizgide. Gri tekne ise hızlanmaya yeni başlıyor: çizgiyi 3-4 saniye sonra, yavaş geçecek ve öndekilerin rüzgar gölgesinde kalacak.' },
       { t: 25, title: 'Sonuç', text: 'İyi start için formül: zaman–mesafe hissi (kaç saniyede kaç tekne boyu?), çizginin gerisinde güvenli bekleme, ve sinyalden ~5 sn önce tam hıza çıkma. Antrenmanda 1 dakikalık "box start" ve "kaç saniyede çizgiye varırım" egzersizleri yapın.' }
     ],
-    addBoat: { pin: { x: 290, y: 560 }, middle: { x: 520, y: 600 }, committee: { x: 720, y: 560 } }
+    addBoat: { pin: { x: 290, y: 560 }, middle: { x: 390, y: 640 }, committee: { x: 720, y: 560 } }
   });
 
   // ---------- B1: Kural 10 ----------
   S.push({
     id: 'b1-rule10',
-    category: 'Kurallar',
+    category: 'Kurallar', topic: 'Temel hak kuralları',
     title: 'B1 · Kural 10: İskele kontra, sancak kontraya yol verir',
     summary: 'Zıt kontralardaki iki tekne kesişirken rüzgarı iskeleden alan (bumbası sancakta olan) tekne yol vermek zorundadır. Yol vermenin iki yolu vardır: arkasından geç (duck) ya da tramola at.',
     duration: 14,
@@ -106,7 +106,6 @@
           { mode: 'closehauled', tack: 'port', dur: 7.6, turn: 1.2 }
         ] }
     ],
-    autoRules: ['r10'],
     steps: [
       { t: 0, title: 'İki tekne kesişiyor', text: 'Yeşil tekne rüzgarı SANCAK tarafından alıyor (bumba iskelede): sancak kontra. Turuncu tekne rüzgarı iskeleden alıyor: iskele kontra. Kural 10: iskele kontralı tekne yol verir.' },
       { t: 3, title: 'Karar anı', text: 'Turuncu, çarpışma rotasında olduğunu erken görmeli. Seçenekler: (1) bordalayıp yeşilin kıçından geçmek (duck), (2) yeşilin rüzgaraltına tramola atmak (lee-bow), (3) erken tramola atıp uzaklaşmak.' },
@@ -120,7 +119,7 @@
   // ---------- C1: Header'da tramola ----------
   S.push({
     id: 'c1-header-tack',
-    category: 'Rüzgar',
+    category: 'Taktik', topic: 'Rüzgar ve orsa',
     title: 'C1 · Salınımlı rüzgar: kapatmada (header) tramola at',
     summary: 'Rüzgar birkaç dakikada bir sağa-sola salınıyorsa, sizi orsadan "kapatan" dönüşte tramola atıp "açan" (lift) kontrada kalmak, hiç tramola atmayan tekneye kıyasla ciddi kazanç sağlar.',
     duration: 38,
@@ -158,7 +157,7 @@
   // ---------- B8: Kural 18 ----------
   S.push({
     id: 'b8-rule18',
-    category: 'Kurallar',
+    category: 'Kurallar', topic: 'Şamandıra',
     title: 'B8 · Kural 18: Şamandıra yeri (zone ve bindirme)',
     summary: 'Şamandıranın 3 tekne boyu çevresi "zone"dur. İlk tekne zone\'a girdiği anda içte bindirmesi olan tekne "şamandıra yeri" (mark-room) kazanır; dıştaki tekne ona dönüş için yer vermek zorundadır.',
     duration: 17.5,

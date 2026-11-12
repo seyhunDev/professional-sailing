@@ -29,6 +29,7 @@ Canlı site: https://seyhundev.github.io/professional-sailing/ (main'e push → 
 - Kaynak `src/`, çıktı `dist/` (git'e girmez). `docs/` klasörü kullanılmaz.
 - Koordinat alanı 1000×680, pusula: 0° ekranın üstü. Rüzgar `windFrom` = geldiği yön.
   TWA < 0 → sancak kontra. Tekne boyu 50 px, zone = 3 tekne boyu.
+- Kategoriler sabit: **Kurallar / Taktik / Teknik** (`category`), alt konu `topic` (ör. Start, Rüzgar ve orsa, Şamandıra).
 - Senaryo eklemek: `src/js/scenarios.js` içine `S.push({...})`. Format README'de. Yeni senaryo
   eklenince `KONULAR.md` tablosunda durum ✅ yapılır ve rota `node`'da simüle edilip ekran dışına
   çıkmadığı / teknelerin çakışmadığı kontrol edilir (bkz. NOTLAR.md → "Senaryo kontrol listesi").
@@ -37,6 +38,6 @@ Canlı site: https://seyhundev.github.io/professional-sailing/ (main'e push → 
 - Eski depo `seyhunDev/python_deneme` kullanılmaz.
 
 ## Dosya haritası
-- `src/index.html` arayüz · `src/css/style.css` · `src/js/engine.js` motor · `src/js/scenarios.js` senaryolar · `src/js/app.js` arayüz mantığı
+- `src/index.html` arayüz · `src/css/style.css` · `src/js/engine.js` motor · `src/js/rules.js` kural motoru (ek tekneler) · `src/js/scenarios.js` senaryolar · `src/js/app.js` arayüz mantığı
 - `scripts/build.mjs` derleme · `.github/workflows/deploy.yml` yayın
 - `KONULAR.md` müfredat ve durumları · `NOTLAR.md` sohbetler arası hafıza · `README.md` kullanım ve geliştirme

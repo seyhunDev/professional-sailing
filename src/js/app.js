@@ -72,49 +72,22 @@
   }
   function setInfoOpen(open) { state.infoOpen = open; $('infoCard').classList.toggle('hidden', !open); $('btnInfo').classList.toggle('on', open); }
 
-  // ---------- Ek tekne (kullanıcı ekler): basit kurallı simülasyon ----------
-  function buildAutoTrack(scn, pos, tack, others) {
-    const DT = 0.05, base = scn.baseSpeed || 55, TAU = 1.5;
-    let x = pos.x, y = pos.y, t = 0, v = 0;
-    let h = E.tackHeading(E.windAt(scn.wind, 0), tack);
-    const samples = [{ t: 0, x, y, h }];
-    const goAt = scn.startAt ? Math.max(0, scn.startAt - 4.5) : 0;
-    let avoidUntil = -1;
-    while (t < scn.duration) {
-      const w = E.windAt(scn.wind, t);
-      let target = E.tackHeading(w, tack), vt;
-      if (t < goAt) { target = w + (tack === 'starboard' ? -20 : 20); vt = base * 0.1; }
-      else {
-        if ((scn.autoRules || []).includes('r10') && tack === 'port') {
-          const f = E.fwd(h);
-          for (const o of others) {
-            const s = E.sampleTrack(o.track, t);
-            if (E.sailState(s.h, w).tack !== 'starboard') continue;
-            const dx = s.x - x, dy = s.y - y, d = Math.hypot(dx, dy);
-            const ahead = (dx * f.x + dy * f.y) / (d || 1);
-            if (d < 110 && ahead > 0.2) { avoidUntil = t + 2.0; break; }
-          }
-          if (t < avoidUntil) target = E.tackHeading(w, tack) + 50;
-        }
-        vt = E.speedFor(Math.abs(E.norm180(h - w)), base);
-      }
-      h = E.lerpAngle(h, target, Math.min(1, DT / 0.6));
-      v += (vt - v) * Math.min(1, DT / TAU);
-      const f = E.fwd(h); x += f.x * v * DT; y += f.y * v * DT; t += DT;
-      samples.push({ t, x, y, h });
-    }
-    return samples;
+  // ---------- Ek tekneler: kural motoruyla birlikte simüle edilir ----------
+  function simulateExtras() {
+    const scn = state.scn;
+    const tracks = SailRules.simulate(scn, state.extras.map(b => ({ pos: b.pos, tack: b.tack })), state.boats);
+    state.extras.forEach((b, i) => b.track = tracks[i]);
   }
   function addBoat() {
     const scn = state.scn; if (!scn.addBoat) return;
     const side = $('selSide').value, tack = $('selTack').value;
     const pos = scn.addBoat[side]; const n = state.extras.length;
-    const jitter = { x: pos.x + (n % 3 - 1) * 22, y: pos.y + Math.floor(n / 3) * 40 };
-    const boat = { id: 'X' + (n + 1), name: `Tekne ${n + 1} (${tack === 'starboard' ? 'sancak' : 'iskele'})`,
-      color: EXTRA_COLORS[n % EXTRA_COLORS.length], track: buildAutoTrack(scn, jitter, tack, [...state.boats, ...state.extras]), extra: true };
-    state.extras.push(boat); buildLegend(); render();
+    const jitter = { x: pos.x + (n % 3 - 1) * 26, y: pos.y + Math.floor(n / 3) * 44 };
+    state.extras.push({ id: 'X' + (n + 1), name: `Tekne ${n + 1} (${tack === 'starboard' ? 'sancak' : 'iskele'})`,
+      color: EXTRA_COLORS[n % EXTRA_COLORS.length], pos: jitter, tack, extra: true });
+    simulateExtras(); buildLegend(); render();
   }
-  function removeBoat() { state.extras.pop(); buildLegend(); render(); }
+  function removeBoat() { state.extras.pop(); simulateExtras(); buildLegend(); render(); }
 
   // ---------- Sabit parkur ----------
   function drawCourse() {
@@ -169,6 +142,11 @@
         'paint-order': 'stroke', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 3 }, parent);
       lbl.textContent = `${b.id} · ${sail.tack === 'starboard' ? 'sancak' : 'iskele'}`;
     }
+    if (s.note) {
+      const n = el('text', { x: s.x.toFixed(1), y: (s.y - 36).toFixed(1), 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12, 'font-weight': 700,
+        'paint-order': 'stroke', stroke: 'rgba(0,0,0,.7)', 'stroke-width': 3 }, parent);
+      n.textContent = s.note;
+    }
   }
 
   function drawWind(w) {
@@ -197,7 +175,7 @@
       const p = E.fwd(w + 90);
       el('line', { x1: s.x - p.x * 1500, y1: s.y - p.y * 1500, x2: s.x + p.x * 1500, y2: s.y + p.y * 1500,
         stroke: b.color, 'stroke-width': 1.5, 'stroke-dasharray': '8 6', opacity: .8 }, g);
-      for (const o of [...state.boats, ...state.extras]) {
+      for (const o of state.boats) {
         if (o === b) continue;
         const so = E.sampleTrack(o.track, state.t);
         const up = E.fwd(w);
@@ -230,7 +208,7 @@
       const txt = el('text', { x: cx + 60, y: cy + 10, fill: rem > 0 ? '#ffd166' : '#2a9d8f', 'font-size': 26, 'font-weight': 700, 'font-variant-numeric': 'tabular-nums' }, g);
       txt.textContent = rem > 0 ? `Start'a ${rem.toFixed(1)} s` : 'START ✔';
     }
-    el('text', { x: vb.x + 16, y: vb.y + vb.h - 12, fill: 'rgba(255,255,255,0.45)', 'font-size': 12 }, g).textContent = scn.category + ' · ' + scn.title;
+    el('text', { x: vb.x + 16, y: vb.y + vb.h - 12, fill: 'rgba(255,255,255,0.45)', 'font-size': 12 }, g).textContent = scn.category + (scn.topic ? ' › ' + scn.topic : '') + ' · ' + scn.title;
   }
 
   function render() {
@@ -288,11 +266,11 @@
 
   // ---------- Senaryo seçici ----------
   (function buildSelect() {
-    const sel = $('selScenario'); const cats = [];
-    for (const s of SCENARIOS) if (!cats.includes(s.category)) cats.push(s.category);
-    for (const c of cats) {
-      const og = document.createElement('optgroup'); og.label = c;
-      for (const s of SCENARIOS.filter(x => x.category === c)) { const o = document.createElement('option'); o.value = s.id; o.textContent = s.title; og.appendChild(o); }
+    const sel = $('selScenario');
+    for (const c of ['Kurallar', 'Taktik', 'Teknik']) {
+      const list = SCENARIOS.filter(x => x.category === c);
+      const og = document.createElement('optgroup'); og.label = c + (list.length ? '' : ' (yakında)');
+      for (const s of list) { const o = document.createElement('option'); o.value = s.id; o.textContent = (s.topic ? s.topic + ' › ' : '') + s.title; og.appendChild(o); }
       sel.appendChild(og);
     }
     sel.onchange = () => { location.hash = sel.value; };

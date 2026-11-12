@@ -33,7 +33,7 @@ npm run preview    # http://localhost:8080  (dist/ ile aynı yayın hâli)
 | Tekne / yelken / rüzgar vektör olarak çizilsin, ölçeklenince bozulmasın | **SVG** (Canvas değil: her tekne bir DOM nesnesi, tıklanabilir, CSS ile stillenebilir) |
 | Zamanda ileri-geri sarılabilsin, adımlara atlanabilsin | Senaryolar önceden **örneklenmiş rota** (track) üretir; her kare `t` ile örneklenir |
 | Senaryo yazmak kolay olsun (kod değil, tanım) | `docs/js/scenarios.js` içinde segment tabanlı tanım: `closehauled / run / heading / hold` |
-| Tekne ekle/çıkar, uç seçimi (pin / orta / hakem botu), kontra seçimi | Arayüzden; eklenen tekneler kurallı basit simülasyonla seyreder (ör. Kural 10'da iskele tekne bordalar) |
+| Tekne ekle/çıkar, uç seçimi (pin / orta / hakem botu), kontra seçimi | Arayüzden; eklenen tekneler `rules.js` ile birlikte simüle edilir ve karşılaştıklarında RRS 10/11/12/14'e göre kendiliğinden manevra yapar (bordalama, tramola, orsalama, yavaşlama); uygulanan kural teknenin üstünde yazar |
 | Ücretsiz yayın | GitHub Pages |
 | Python gerekli mi? | Hayır. Python yalnızca ileride veri (sporcu kayıtları, sonuçlar) tarafı için; animasyon tarafı tarayıcıda |
 
@@ -54,6 +54,7 @@ src/
   index.html          arayüz iskeleti
   css/style.css
   js/engine.js        rüzgar, kontra, yelken açısı, hız modeli, rota üretici (buildTrack)
+  js/rules.js         kural motoru: eklenen tekneler K10/K11/K12/K14'e göre manevra yapar
   js/scenarios.js     senaryo tanımları (A1, A2, B1, B8, C1 ...)
   js/app.js           çizim (SVG), zaman döngüsü, kontroller, bilgi kartı, tekne ekleme
 scripts/build.mjs     derleme: hash'li dosya adları + sürüm damgası → dist/
@@ -67,7 +68,7 @@ KONULAR.md            müfredat / konu listesi ve durumları
 
 ```js
 S.push({
-  id: 'b2-rule11', category: 'Kurallar', title: 'B2 · Kural 11 ...', summary: '...',
+  id: 'b2-rule11', category: 'Kurallar', topic: 'Temel hak kuralları', title: 'B2 · Kural 11 ...', summary: '...',
   duration: 15, baseSpeed: 50,
   wind: 0,                                    // ya da [{t:0,from:0},{t:10,from:-15}] (salınım)
   line: { pin:{x:250,y:420}, boat:{x:750,y:420} },   // isteğe bağlı start çizgisi
