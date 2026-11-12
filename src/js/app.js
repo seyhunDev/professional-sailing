@@ -182,7 +182,7 @@
   function drawOverlays(w) {
     const g = $('overlayLayer'); g.innerHTML = '';
     const scn = state.scn;
-    if (state.show.rungs && scn.rungs && state.t >= scn.rungs.from) {
+    if (state.show.rungs && scn.rungs && state.t >= scn.rungs.from && (scn.rungs.to == null || state.t <= scn.rungs.to)) {
       const b = state.boats.find(x => x.id === scn.rungs.boat);
       const s = E.sampleTrack(b.track, state.t);
       const p = E.fwd(w + 90);
@@ -198,6 +198,21 @@
           txt.textContent = `${gain > 0 ? '+' : ''}${gain.toFixed(1)} tekne boyu`;
         }
       }
+    }
+    // layline'lar: şamandıradan/uçtan geriye, orsa rotası boyunca
+    for (const L of scn.laylines || []) {
+      if (state.t < (L.from || 0) || (L.to != null && state.t > L.to)) continue;
+      const hd = E.tackHeading(w, L.tack), f = E.fwd(hd), len = L.len || 500;
+      el('line', { x1: L.x, y1: L.y, x2: L.x - f.x * len, y2: L.y - f.y * len, stroke: L.color || '#4cc9f0', 'stroke-width': 1.5, 'stroke-dasharray': '4 6', opacity: .8 }, g);
+      if (L.label) el('text', { x: L.x - f.x * len * 0.55 + 10, y: L.y - f.y * len * 0.55, fill: L.color || '#4cc9f0', 'font-size': 12 }, g).textContent = L.label;
+    }
+    // okumalar: teknenin rüzgar açısı
+    for (const R of scn.readouts || []) {
+      if (state.t < (R.from || 0) || (R.to != null && state.t > R.to)) continue;
+      const b = state.boats.find(x => x.id === R.boat); if (!b) continue;
+      const s = E.sampleTrack(b.track, state.t), st = E.sailState(s.h, w);
+      const tx = el('text', { x: s.x + 34, y: s.y - 10, fill: '#fff', 'font-size': 13, 'font-weight': 600, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 3 }, g);
+      tx.textContent = `Rota ${Math.round(E.norm360(s.h))}° · Rüzgar açısı ${Math.round(st.abs)}°`;
     }
     if (state.show.trails) {
       for (const b of [...state.boats, ...state.extras]) {

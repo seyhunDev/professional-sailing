@@ -89,7 +89,7 @@
         const f = fwd(h);
         x += f.x * v * DT; y += f.y * v * DT;
         t += DT;
-        samples.push({ t, x, y, h, v });
+        samples.push({ t, x, y, h, v, note: seg.note || '' });
       }
     }
     return samples;

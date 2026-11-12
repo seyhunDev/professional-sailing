@@ -39,10 +39,10 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 
 | # | Konu | Animasyonda ne gösterilecek | Durum |
 |---|------|-----------------------------|-------|
-| A1 | Hat avantajını ölçme (line bias) | Rüzgara karşı durup burnun gösterdiği taraf; iki uca aynı kontrada seyredip karşılaştırma; pusula ile hat yönü vs rüzgar yönü. Merdiven basamağıyla kazanç. | ✅ (ölçüm yöntemleri eklenecek) |
+| A1 | Hat avantajını ölçme (line bias) | Rüzgara karşı durup burnun gösterdiği taraf; iki uca aynı kontrada seyredip karşılaştırma; pusula ile hat yönü vs rüzgar yönü. Merdiven basamağıyla kazanç. | ✅ (A1 + A1b) |
 | A2 | Zaman–mesafe: bekleme, hızlanma, OCS | Geri sayım, hold, 4-5 sn kala bordalama; erken ve geç tekne. | ✅ |
-| A3 | Pin ucu avantajlıysa | Pin'e yakın ama pin'e "layline"ı kaçırmadan start; pin'e sıkışma riski (pin'i dönemeyen tekne); alternatif: iskele kontra start (A10). | 🔜 |
-| A4 | Hakem botu ucu avantajlıysa | Birinci sıra için erken yer alma, barging yasağı (rüzgarüstünden sokulamazsın), hakem botunun kıçını "çiti" olarak kullanma; kalabalıksa hakem botundan 3-5 tekne aşağısı. | 🔜 |
+| A3 | Pin ucu avantajlıysa | Pin'e yakın ama pin'e "layline"ı kaçırmadan start; pin'e sıkışma riski (pin'i dönemeyen tekne); alternatif: iskele kontra start (A10). | ✅ |
+| A4 | Hakem botu ucu avantajlıysa | Birinci sıra için erken yer alma, barging yasağı (rüzgarüstünden sokulamazsın), hakem botunun kıçını "çiti" olarak kullanma; kalabalıksa hakem botundan 3-5 tekne aşağısı. | ✅ |
 | A5 | Hat yayı (line sag) ve ortadan start | Filo ortada hattın gerisinde yay yapar; transit ile hattı gören tekne 1-2 boy önde çıkar. | 🔜 |
 | A6 | Transit (kerteriz) ile hattı görme | Pin–hakem botu hizasının kıyıdaki sabit noktası; "transit kapanınca hattasın". Pin'den ve hakem botundan iki yönlü transit. | 🔜 |
 | A7 | Rüzgaraltına boşluk yaratma (hole) | Son 60 sn: rüzgaraltındaki boşluğu açma (bear away, sonra orsa), boşluğu rüzgarüstü teknelerden koruma; boşluk = hızlanma alanı. | 🔜 |
