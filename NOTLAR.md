@@ -8,7 +8,7 @@
 - Start senaryolarında (A1, A2, A3, A4) kalabalık filo var; A3 hattı 600 px (12 boy), rüzgar 335°.
 - Yeni kategori **İleri Taktik** (4. sekme; `category: 'İleri Taktik'`), KONULAR.md → H bölümü. İlk senaryo İA1.
 - Senaryo alanları: `clockScale` (sayaç gerçek zaman çarpanı, ör. 4 → 30 s animasyon = 2 dk), `prepFlag` ('P','I','U','Siyah') + `flagDownAt` (1 dk kala bayrak iner).
-- Hazır senaryolar (11): A12 bayraklar, İA1 pin dışında bekleme, İA2 hat yayı dahil; A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
+- Hazır senaryolar (12): A12 bayraklar, İA1 pin dışında bekleme, İA2 hat yayı, İA2b yay yok dahil; A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
 - Arayüz (v3, 2026-11-12): tam ekran sahne; üst çubukta logo + **senaryo düğmesi** (kategori renkli kod rozeti, kategori · konu, başlık), SVG simgeli Bilgi / Katmanlar / tam ekran. **Senaryo seçici** ortada modal (telefonda tam ekran): arama, kategori sekmeleri (renk noktası + sayı), konu başlıklı 2-3 sütunlu kart ızgarası (kod, başlık, özet, süre/tekne/adım). Alt çubuk: yuvarlak oynat, başa al, **adım işaretli zaman çizelgesi** (işarete tıkla → o ana git), dk:sn, hız düğmeleri (telefonda tek düğme, dokundukça değişir). Bilgi kartı: adım çubuğu (tıklanabilir), Canlı anahtarı, simgeli Önceki / Bu ana git / Sonraki, **Tekneler** listesi (renkli kimlik + kısa ad + rol rozeti). Sürüm damgası Katmanlar menüsünün altında.
 - **Tekne etiketi** (sahnede): küçük rozet = [rol simgesi] KİMLİK [S/İ kutusu]. Rol (`boats[].role`: `hak` hak sahibi ✓ yeşil, `yol` yol verir ! sarı, `dogru` doğru ✓ yeşil, `hata` hata ✕ kırmızı) etiket kenarı ve simgesiyle; kontra yeşil S (sancak) / kırmızı İ (iskele) kutusuyla (seyir feneri renkleri). Tekne adları kısa (≤25 harf); uzun açıklama adımlara.
 - **Duyarlı düzen** (3 sınıf): bilgisayar (>1100 px: kart sağ üstte, tekne ekle alt çubukta), tablet (≤1100: ikon düğmeler; dikeyde kart SAĞ ÜSTTE geniş (64vw, maks %44 yükseklik), parkur ekranın alt kısmına kaydırılır: `fitViewBox` dikey fazlalığın %68'ini üste verir; telefonda tersi %22), telefon (≤640 px ya da yükseklik ≤460: kart alttan açılır sayfa + daraltma tutamacı, tekne ekle popover'da, seçici tam ekran). Dokunma hedefleri ≥44 px, iOS güvenli alan payları.
@@ -85,7 +85,8 @@
 | A4 | `a4-committee-favored` | ✅ | Barging; L hakem botuna yakın (u=0.9). Fikir: hakem botunun kıçından "çit" vurgusu. | A17 |
 | A12 | `a12-flags` | ✅ | Yalnızca U bayrağı canlı; P/I/siyah varyantları ve 5-4-1-0 sırası eksik. | A2, A13 |
 | İA1 | `ia1-port-approach-pin` | ✅ | Solda bekle, apaz gel, layline üstünde tramola; X en alttaki teknenin ~1 boy altına girer (rüzgaraltında boşluk kalır), sinyalde onunla yan yana çıkar; Z (layline altı) ve Y (geç) hataları. Fikir: K13/K15 ihlali yapan 3. hata teknesi (ceza turu). | A3, A16 |
-| İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. S artık hattın uzantısında (pin dışı, hat hizası) bakıyor, sonra hattın altına inip ortaya gidiyor. Eksik: yay görseli (eğri), rüzgar gölgesi etkisi görsel değil. Fikir: "yay yok" varyantı. | A5, A6, H5 |
+| İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. S hattın uzantısında (pin dışı, hat hizası) bakar, sonra hattın altından ortaya gider. Yay eğrisi (`sag`) ve pis rüzgar konileri (`shadows`) çiziliyor. Eksik: S'nin hızı gölgede gerçekten düşmüyor (yalnızca not). | A5, A6, H5 |
+| İA2b | `ia2b-no-sag` | ✅ | İA2'nin "yay yok" eşi: 8 tekne hattın dibinde, S 0.28-0.50 arasındaki boşluğa herkesle aynı hizada girer, aynı anda çıkar. | A5, H5 |
 | B1 | `b1-rule10` | ✅ | Tek tekne bordalama. Fikir: lee-bow varyantı. | B2 |
 | B8 | `b8-rule18` | ✅ | Zone + bindirme. Fikir: 18.3 zone içinde tramola varyantı. | B9 |
 | C1 | `c1-header-tack` | ✅ | Salınımlı rüzgar. Fikir: pusula okuması katmanı. | C2, C3 |
@@ -110,6 +111,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · İA2: yay eğrisi, pis rüzgar, İA2b
+- Yapılanlar: Yeni senaryo katmanları `sag` (filo burunlarından Catmull-Rom eğri + taralı alan + "ortada N boy geride" etiketi) ve `shadows` (filo teknelerinin 4 boyluk rüzgar gölgesi konisi, sim.js ile aynı geometri; koniye giren senaryo teknesine "Pis rüzgar" notu). İA2'ye eklendi. Yeni senaryo İA2b `ia2b-no-sag`: yay yok, S boşluğa herkesle aynı hizada. README'ye katman formatı yazıldı. `npm run check` temiz.
+- Yarım kalan: S'nin hızı gölgede gerçekten düşmüyor (buildTrack filoyu bilmiyor).
 
 ### 2026-11-12 · Simülatör 2a: önceden hesaplama, hız, pis rüzgar
 - Start'ta `SailSim.runToEnd` yarışı sonuna kadar hesaplar (0.1 s kareler); `sim.js` kareler arasını ara değerleyerek oynatır. Değişiklik (`applyChange`: rüzgar, sağanak ekle/taşı/temizle, Tramola, taktik) o karenin kopyasından ileriye yeniden hesaplar. Zaman çubuğu ileri de sarar; panelde "Tahmin: senin teknen N. olacak".

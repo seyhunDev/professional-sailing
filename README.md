@@ -103,6 +103,10 @@ Segment modları: `closehauled` (rüzgara 45°, kontrayı takip eder; rüzgar d�
 `run` (pupa 150°), `heading` (sabit pusula), `hold` (orsalayıp bekleme, yelken boş).
 `turn` dönüş süresi (s), `speed` hız çarpanı, `v0` başlangıç hızı.
 
+İsteğe bağlı görsel katmanlar (hepsi `from`/`to` sn aralığında görünür): `sightline` (pin'den hakem botuna transit),
+`sag` (filonun burunlarından geçen hat yayı eğrisi; `label` içinde `{d}` = en derin nokta, boy),
+`shadows` (filo teknelerinin rüzgaraltında 4 boyluk pis rüzgar konisi; koninin içine giren senaryo teknesine `note` yazılır).
+
 ## Yol haritası
 
 Konu listesi ve öncelikler için `KONULAR.md`. Sıradaki: Kural 11 (rüzgaraltı/rüzgarüstü), layline ve overstand,

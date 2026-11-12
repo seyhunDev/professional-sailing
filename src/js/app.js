@@ -219,7 +219,8 @@
     el('line', { x1: 0, y1: my, x2: sh.tip.x.toFixed(1), y2: sh.tip.y.toFixed(1), stroke: '#222', 'stroke-width': 1.5 }, g);
     el('circle', { cx: 0, cy: my, r: 1.8, fill: '#222' }, g);
     if (state.show.labels) drawLabel(parent, b, s, sail);
-    if (s.note) frameNotes.push({ x: s.x, y: s.y, text: s.note, color: b.color });
+    const note = state.shadowed && state.shadowed.has(b.id) && !b.extra ? (state.scn.shadows.note || 'Pis rüzgar: hız düşüyor') : s.note;
+    if (note) frameNotes.push({ x: s.x, y: s.y, text: note, color: b.color });
   }
 
   // Tekne notları: kutulu rozet, tekne üstünde. Üst üste binerse yukarı (sonra aşağı) kaydırılır, ince çizgiyle tekneye bağlanır.
@@ -329,7 +330,50 @@
       const ux = dx / L, uy = dy / L;
       el('line', { x1: pin.x - ux * 120, y1: pin.y - uy * 120, x2: boat.x + ux * 160, y2: boat.y + uy * 160, stroke: '#fff', 'stroke-width': 2, 'stroke-dasharray': '2 6', opacity: .9 }, g);
       el('circle', { cx: pin.x - ux * 120, cy: pin.y - uy * 120, r: 6, fill: 'none', stroke: '#fff', 'stroke-width': 2 }, g);
-      el('text', { x: pin.x - ux * 120, y: pin.y - uy * 120 - 12, 'text-anchor': 'middle', fill: '#fff', 'font-size': 12, 'font-weight': 600 }, g).textContent = scn.sightline.label || 'Transit: pin → hakem botu hizası';
+      el('text', { x: pin.x - ux * 120 - 10, y: pin.y - uy * 120 - 14, 'text-anchor': 'start', fill: '#fff', 'font-size': 12, 'font-weight': 600 }, g).textContent = scn.sightline.label || 'Transit: pin → hakem botu hizası';
+    }
+    const inWin = o => o && state.t >= (o.from || 0) && (o.to == null || state.t <= o.to);
+    const crowdNow = () => state.extras.filter(b => b.crowd).map(b => E.sampleTrack(b.track, state.t));
+    // hat yayı (line sag): filonun burunlarından geçen eğri, hat ile arası taralı
+    if (scn.sag && scn.line && inWin(scn.sag)) {
+      const { pin, boat } = scn.line; const lx0 = boat.x - pin.x, ly0 = boat.y - pin.y, L = Math.hypot(lx0, ly0), ux = lx0 / L, uy = ly0 / L;
+      const bows = crowdNow().map(s => { const f = E.fwd(s.h); return { x: s.x + f.x * 25, y: s.y + f.y * 25 }; })
+        .map(p => ({ ...p, u: (p.x - pin.x) * ux + (p.y - pin.y) * uy })).filter(p => p.u > 0 && p.u < L).sort((a, b) => a.u - b.u);
+      const pts = [{ x: pin.x, y: pin.y }, ...bows, { x: boat.x, y: boat.y }];
+      let d = `M${pts[0].x},${pts[0].y}`;
+      for (let i = 0; i < pts.length - 1; i++) {        // Catmull-Rom → kübik Bezier
+        const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+        const c1 = { x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6 }, c2 = { x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6 };
+        d += ` C${c1.x.toFixed(1)},${c1.y.toFixed(1)} ${c2.x.toFixed(1)},${c2.y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+      }
+      el('path', { d: d + ' Z', fill: 'rgba(255,140,66,.10)', stroke: 'none' }, g);
+      el('path', { d, fill: 'none', stroke: '#ff8c42', 'stroke-width': 2, 'stroke-dasharray': '7 5', opacity: .9 }, g);
+      let deep = null;
+      for (const p of bows) { const dep = (p.x - pin.x) * -uy + (p.y - pin.y) * ux; if (!deep || dep > deep.dep) deep = { ...p, dep }; }
+      if (deep && deep.dep > 8) {
+        const inside = deep.dep > 2 * HULL;                 // derin yayda etiket taralı alanın içine, sığda teknelerin altına
+        const k = inside ? 0.5 : 0.62, off = inside ? deep.dep * 0.45 : -16;   // derin: hattın ortası, taralı alanın içi · sığ: hattın sağ yarısı, üstü
+        const lx = pin.x + lx0 * k - uy * off, ly = pin.y + ly0 * k + ux * off;
+        const tx = el('text', { x: lx, y: ly, 'text-anchor': 'middle', fill: '#ff8c42', 'font-size': 12, 'font-weight': 700, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.7)', 'stroke-width': 3 }, g);
+        tx.textContent = (scn.sag.label || 'Hat yayı (line sag): ortada {d} boy geride').replace('{d}', (deep.dep / HULL).toFixed(1));
+      }
+    }
+    // rüzgar gölgesi (pis rüzgar): filo teknelerinin rüzgaraltında 4 boyluk koni; içine giren senaryo teknesine not
+    state.shadowed = new Set();
+    if (scn.shadows && inWin(scn.shadows)) {
+      const down = E.fwd(w + 180), right = E.fwd(w + 90), SL = 4 * HULL;
+      const src = crowdNow();
+      for (const b of src) {
+        const p = (a, l) => `${(b.x + down.x * a + right.x * l).toFixed(1)},${(b.y + down.y * a + right.y * l).toFixed(1)}`;
+        el('polygon', { points: [p(12, -16), p(12, 16), p(SL, 16 + SL * 0.22), p(SL, -16 - SL * 0.22)].join(' '), fill: 'rgba(2,10,20,.28)', stroke: 'rgba(248,113,113,.3)', 'stroke-dasharray': '3 5' }, g);
+      }
+      for (const sb of state.boats) {
+        const s = E.sampleTrack(sb.track, state.t);
+        for (const b of src) {
+          const dx = s.x - b.x, dy = s.y - b.y, along = dx * down.x + dy * down.y, lat = Math.abs(dx * right.x + dy * right.y);
+          if (along > 12 && along < SL && lat < 16 + along * 0.22) { state.shadowed.add(sb.id); break; }
+        }
+      }
     }
     // okumalar: teknenin rüzgar açısı
     for (const R of scn.readouts || []) {

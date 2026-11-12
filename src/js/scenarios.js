@@ -358,6 +358,8 @@
     startAt: 24,
     rungs: { boat: 'S', from: 24.5 },
     sightline: { from: 0, to: 6, label: 'Transit: pin\'den hakem botuna bak — hat burada' },
+    sag: { from: 0, to: 21.5 },
+    shadows: { from: 7, to: 16 },
     boats: [
       { id: 'S', name: 'Yayı gören, ortada yukarı', role: 'dogru', color: '#2a9d8f',
         start: { x: 88, y: 452, h: 90 }, v0: 2,
@@ -384,7 +386,52 @@
       { t: 17.5, title: 'Yerini koru, hattı kontrol et', text: 'Rüzgara baş vermiş bekliyor; rüzgaraltında boşluğu var. Son 30 sn\'de transiti bir kez daha kontrol et: pin ile hakem botu hizası nerede, burnun ona göre nerede?' },
       { t: 21.5, title: '2.5 sn kala doldur', text: 'Komşular 3 boy geriden hızlanacak; S 1 boydan. Sinyalde S hatta, onlar değil.' },
       { t: 24, title: 'START: 2 boy önde, temiz hava', text: 'S tam hatta, tam hızda. Ortadaki tekneler 2-3 saniye sonra geçecek. Basamak çizgisi farkı gösteriyor. Üstelik S\'nin rüzgarüstünde kimse yok: temiz hava.' },
-      { t: 28, title: 'Yay yoksa?', text: 'Hatta baktın, yay yok: herkes hattın dibinde. O zaman "yukarı durmak" diye bir şey yok: herhangi bir boşluğa, herkesle aynı hizada dur; zamanlamaya ve rüzgaraltı boşluğuna odaklan. Her iki durumda da kural aynı: kargaşadan uzak dur, uzaktan bak, planla, son dakikada gir.' }
+      { t: 28, title: 'Yay yoksa?', text: 'Hatta baktın, yay yok: herkes hattın dibinde. O zaman "yukarı durmak" diye bir şey yok: herhangi bir boşluğa, herkesle aynı hizada dur; zamanlamaya ve rüzgaraltı boşluğuna odaklan. Her iki durumda da kural aynı: kargaşadan uzak dur, uzaktan bak, planla, son dakikada gir. Bu durumu İA2b\'de izleyebilirsin.' }
+    ],
+    addBoat: { pin: { x: 290, y: 560 }, middle: { x: 500, y: 560 }, committee: { x: 720, y: 560 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
+  // ---------- İA2b: yay yok ----------
+  S.push({
+    id: 'ia2b-no-sag',
+    category: 'İleri Taktik', topic: 'Start',
+    title: 'İA2b · Yay yok: hattı gör, boşluğa herkesle aynı hizada gir',
+    summary: 'İA2\'nin eşi: bu kez filo hattın dibinde, yay yok. Pin tarafından transitle bakan tekne bunu görür; ortaya gelir, bir boşluğa komşularıyla AYNI hizada yerleşir. Avantaj yukarı durmaktan değil, zamanlamadan ve rüzgaraltındaki boşluktan gelir. Yay yokken yukarı durmaya çalışan, erken çıkar (OCS).',
+    duration: 32,
+    baseSpeed: 40, tau: 1.0, goBefore: 2.5,
+    clockScale: 3,
+    wind: 0,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 24,
+    rungs: { boat: 'S', from: 24.5 },
+    sightline: { from: 0, to: 6, label: 'Transit: pin\'den hakem botuna bak — hat burada' },
+    sag: { from: 0, to: 21.5, label: 'Yay yok: filo hattın dibinde (en fazla {d} boy)' },
+    shadows: { from: 7, to: 16 },
+    boats: [
+      { id: 'S', name: 'Hattı gören, boşlukta aynı hizada', role: 'dogru', color: '#2a9d8f',
+        start: { x: 88, y: 452, h: 90 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 90, dur: 4, speed: 0.04, turn: 0 },
+          { mode: 'heading', h: 160, dur: 3.2, turn: 0.8, note: 'Hattın altına iniyor' },
+          { mode: 'heading', h: 90, dur: 6.2, turn: 1.0, note: 'Apaz: hattın altından ortaya' },
+          { mode: 'heading', h: 35, dur: 2.3, turn: 1.0, speed: 1, note: 'Boşluğa gir, komşulardan YUKARI' },
+          { mode: 'hold', h: 340, dur: 6.8, speed: 0.04, turn: 1.0, note: 'Herkesle aynı hiza: 1 boy geride' },
+          { mode: 'closehauled', tack: 'starboard', dur: 9.5, turn: 0.8 }
+        ] }
+    ],
+    // yay yok: herkes hattın dibinde; S için 0.28-0.50 arasında boşluk (S hattı ≈0.39'da geçer)
+    crowd: [
+      { slot: 0.10, back: 0 }, { slot: 0.19, back: 5 }, { slot: 0.28, back: 0 }, { slot: 0.50, back: 5 },
+      { slot: 0.59, back: 0 }, { slot: 0.68, back: 5 }, { slot: 0.77, back: 0 }, { slot: 0.87, back: 0 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 72 sn: yine önce hatta bak', text: 'S yine pin\'in dışında, hattın uzantısında: pin ile hakem botunu aynı hizaya getirip hatta bakıyor (transit). Bu kez gördüğü şey farklı: filo hattın dibinde dizilmiş, yay yok. Turuncu çizgi neredeyse hattın üstünde.' },
+      { t: 4, title: 'Yay yoksa plan değişir', text: 'Ortaya gidip "herkesten yukarı durmak" diye bir avantaj yok: yukarı duran erken çıkar (OCS). Avantaj artık iki şeyden gelir: doğru zamanda doğru boşluk ve rüzgaraltında açık su. S yine hattın altından, apaz ile ortaya gidiyor.' },
+      { t: 8, title: 'Rüzgar gölgesi', text: 'Filonun rüzgaraltından geçerken her teknenin arkasında 4 boyluk bir pis rüzgar konisi var. S bunların içinden geçerken yavaşlar: ortaya gitme süreni buna göre hesapla, son anda değil, erken yola çık.' },
+      { t: 13.5, title: 'Boşluğa gir, herkesle AYNI hizada', text: 'S iki tekne arasındaki boşluğa giriyor ve komşularıyla aynı hizada, hattın 1 boy altında duruyor. Yukarı çıkmıyor; çünkü komşular zaten hattın dibinde. Rüzgaraltındaki boşluğu korumak önemli: sinyalde oraya doğru doldurup hızlanacak.' },
+      { t: 21.5, title: '2.5 sn kala doldur', text: 'Herkes aynı mesafeden hızlanıyor. Fark zamanlamada: geç kalan ya da boşluğu kapatılan geride kalır. S rüzgaraltındaki boşluk sayesinde temiz hızlanıyor.' },
+      { t: 24, title: 'START: aynı hizada, temiz', text: 'S komşularıyla aynı anda hatta. İA2\'deki gibi 2 boy önde değil, ama temiz havada ve tam hızda. Yay yoksa amaç öne geçmek değil, kötü start yapmamak.' }
     ],
     addBoat: { pin: { x: 290, y: 560 }, middle: { x: 500, y: 560 }, committee: { x: 720, y: 560 } },
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
