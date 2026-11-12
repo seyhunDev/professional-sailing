@@ -255,6 +255,7 @@ body.sim { position: fixed; inset: 0; overscroll-behavior: none; }
 @media (min-width: 641px) and (max-width: 1100px) {
   .mode-strip { top: auto; bottom: 14px; left: 110px; right: 14px; justify-content: flex-start; margin: 0; }
   .toast { bottom: 56px; }
+  .gust-bar:not(.hidden) ~ .mode-strip { display: none; }   /* sağanak kartı aynı köşede: kart zaten seçimi söylüyor */
 }
 /* telefon: pusulanın altında, alt alta */
 @media (max-width: 640px) {
