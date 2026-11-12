@@ -13,6 +13,32 @@
 
   const dot = (a, b) => a.x * b.x + a.y * b.y;
 
+  /* Kural tepki eşikleri ("his"). STRICT: kuralın ilk sezildiği an tepki (eski davranış, decide() varsayılanı).
+     SCENARIO: senaryolardaki filo ve ek tekneler için gevşek ayar (kullanıcı isteği 2026-11-12): senaryo
+     kuralı değil taktiği anlatır, gri tekneler erken orsalayıp / kafa açıp rotadan çıkmasın, olay kesintisiz
+     oynasın. Tekneler ancak gerçekten yakınlaşınca (≈0.7 boy) ve kısa süre tepki verir.
+     Senaryo bazında `scn.ruleFeel: {...}` ile tek tek değerler değiştirilebilir. Simülatör (sim-core.js)
+     kendi kaçış seçicisini kullanır, bu ayardan etkilenmez. */
+  const STRICT = {
+    look: 260,        // bu mesafeden uzaktaki tekneye bakma (px)
+    riskD: 58,        // öngörülen en yakın yaklaşma bunun altındaysa risk (px)
+    riskT: 8,         // ... ve bu kadar saniye içindeyse
+    nearD: HULL * 0.85,   // şu an bu kadar yakınsa risk
+    k14D: 40, k14T: 2.2, k14Near: HULL * 0.8,   // hak sahibinin temas önleme (K14) eşiği
+    hold: 1.2,        // manevra tetiklenince en az bu kadar sürer (s)
+    luffK11: 28,      // K11 rüzgarüstü orsalama: rüzgara açı (küçük = daha çok orsa, pırpır)
+    slow: 0.55, slowTurn: 18,   // K12 arkadaki: hız çarpanı, bordalama açısı
+    duck: 60,         // bordalama açısı (orsa rotasından)
+  };
+  const SCENARIO = {
+    ...STRICT,
+    look: 160, riskD: 34, riskT: 2.5, nearD: 30,
+    k14D: 20, k14T: 1.0, k14Near: 26,
+    hold: 0.6, luffK11: 36, slow: 0.8, slowTurn: 8, duck: 40,
+    // senaryo teknesi (dersin kendisi, rotasını değiştirmez) karşısında biraz daha erken: çarpışma olmasın
+    lesson: { riskD: 44, riskT: 3.5, nearD: 31, k14D: 36, k14T: 2.0, k14Near: 36 },
+  };
+
   // X, O'nun "net arkasında" mı? (X'in merkezi O'nun kıç hattının gerisinde)
   function clearAstern(X, O) {
     const f = E.fwd(O.h);
@@ -49,13 +75,15 @@
   }
 
   // X için karar: {kind, note, rule} | null
-  function decide(X, others, windFrom) {
+  function decide(X, others, windFrom, feel) {
+    const F0 = feel || STRICT;
     let best = null;
     for (const O of others) {
       const a = approach(X, O);
-      if (a.d > 260) continue;
-      const risk = a.dmin < 58 && a.tc < 8 && a.dmin < a.d - 6;   // yakınsıyor olmalı; paralel seyir risk değil
-      const nearNow = a.d < HULL * 0.85;
+      if (a.d > F0.look) continue;
+      const F = typeof O.ref === 'string' && F0.lesson ? { ...F0, ...F0.lesson } : F0;
+      const risk = a.dmin < F.riskD && a.tc < F.riskT && a.dmin < a.d - 6;   // yakınsıyor olmalı; paralel seyir risk değil
+      const nearNow = a.d < F.nearD;
       if (!risk && !nearNow) continue;
       const sX = E.sailState(X.h, windFrom), sO = E.sailState(O.h, windFrom);
       let dec;
@@ -82,25 +110,27 @@
       const leeK11 = dec.kind === 'row' && dec.rule === 11 && typeof O.ref !== 'string';
       if (leeK11) {
         if ((a.dmin < 12 && a.tc < 0.8) || a.d < HULL * 0.5) dec = { kind: 'brake', note: 'Temas önleme · K14 (rotada yavaşlıyor)', rule: 14 };
-      } else if (dec.kind === 'row' && ((a.dmin < 40 && a.tc < 2.2) || a.d < HULL * 0.8)) {
+      } else if (dec.kind === 'row' && ((a.dmin < F.k14D && a.tc < F.k14T) || a.d < F.k14Near)) {
         dec = { kind: 'duck', note: 'Temas önleme · K14', rule: 14 };
       }
       // en acil olanı seç: önce manevra gerektirenler, sonra en yakın
       const prio = (dec.kind === 'row' ? 0 : 10) + (8 - a.tc);
-      if (!best || prio > best.prio) best = { ...dec, prio, tc: a.tc };
+      // çok yakında (gevşek ayarda geç kalınmışsa) manevra tam açıyla yapılır
+      const urgent = F !== STRICT && (a.d < F.nearD + 4 || a.dmin < F.riskD * 0.6);
+      if (!best || prio > best.prio) best = { ...dec, prio, tc: a.tc, urgent };
     }
     return best;
   }
 
   // Manevraya göre hedef rota ve hız çarpanı
-  function maneuverTarget(kind, windFrom, tack, baseTarget) {
+  function maneuverTarget(kind, windFrom, tack, baseTarget, F = STRICT) {
     const away = tack === 'starboard' ? -1 : 1;    // rüzgardan uzaklaşma yönü (bordalama)
     switch (kind) {
-      case 'duck': return { h: E.tackHeading(windFrom, tack) + away * 60, speed: 1 };
+      case 'duck': return { h: E.tackHeading(windFrom, tack) + away * F.duck, speed: 1 };
       case 'luff': return { h: windFrom + away * 32, speed: 1 };          // sıkıştır (pinch): yavaşlar ama durmaz
-      case 'luffK11': return { h: windFrom + away * 28, speed: 1 };       // K11 rüzgarüstü: rüzgara döner, yelken pırpırlar, hız düşer
+      case 'luffK11': return { h: windFrom + away * F.luffK11, speed: 1 }; // K11 rüzgarüstü: rüzgara döner, yelken pırpırlar, hız düşer
       case 'brake': return { h: baseTarget, speed: 0.5 };                // rotada yavaşla (rüzgaraltı K14)
-      case 'slow': return { h: baseTarget + away * 18, speed: 0.55 };
+      case 'slow': return { h: baseTarget + away * F.slowTurn, speed: F.slow };
       default: return { h: baseTarget, speed: 1 };                        // 'tack': yeni kontrada orsa
     }
   }
@@ -141,6 +171,7 @@
     const HOLD_V = base * 0.04;
     const obstacles = E.obstaclesOf(scn);
     const shadowsOn = scn.shadows !== false;
+    const F = { ...SCENARIO, ...(scn.ruleFeel || {}) };   // senaryoda gevşek kural tepkisi
     const boats = specs.map(s => {
       const h0 = E.tackHeading(w0, s.tack);
       let pos = s.pos;
@@ -160,7 +191,7 @@
       const scriptedNow = scripted.map((b, i) => { const s = E.sampleTrack(b.track, t); return { x: s.x, y: s.y, h: s.h, v: s.v != null ? s.v : base, ref: 's' + i }; });
       const casters = shadowsOn ? [...scriptedNow, ...boats.map(o => ({ x: o.x, y: o.y, v: o.v, ref: o }))] : [];
       const othersOf = b => [...scriptedNow, ...boats.filter(o => o !== b).map(o => ({ x: o.x, y: o.y, h: o.h, v: o.v }))];
-      const decisions = boats.map(b => (t < rulesFrom ? null : decide(b, othersOf(b), w)));   // start patlamasında kural manevrası yok (yalnızca engel kaçınma)
+      const decisions = boats.map(b => (t < rulesFrom ? null : decide(b, othersOf(b), w, F)));   // start patlamasında kural manevrası yok (yalnızca engel kaçınma)
       boats.forEach((b, i) => {
         const dec = decisions[i];
         const holding = t < goAt;
@@ -176,22 +207,23 @@
           if (!b.man) {
             const others = othersOf(b);
             if (kind === 'duck' && dec.rule === 10) {
-              const duckH = maneuverTarget('duck', w, b.tack, baseTarget).h;
+              const duckH = maneuverTarget('duck', w, b.tack, baseTarget, F).h;
               const newTack = b.tack === 'starboard' ? 'port' : 'starboard';
               const tackH = E.tackHeading(w, newTack);
               const cd = clearance(b, duckH, others), ct = clearance(b, tackH, others);
               if (cd < 90 && ct > cd) { kind = 'tack'; b.tack = newTack; note = 'Yol veriyor · K10 (tramola)'; }
               else note = 'Yol veriyor · K10 (bordalıyor)';
             } else if (dec.rule === 14 && kind !== 'brake') {
-              const duckH = maneuverTarget('duck', w, b.tack, baseTarget).h, luffH = maneuverTarget('luff', w, b.tack, baseTarget).h;
+              const duckH = maneuverTarget('duck', w, b.tack, baseTarget, F).h, luffH = maneuverTarget('luff', w, b.tack, baseTarget, F).h;
               kind = clearance(b, luffH, others) > clearance(b, duckH, others) ? 'luff' : 'duck';
             }
           }
           if (b.man !== kind && !(b.man === 'tack' && kind === 'duck')) b.man = kind;
-          b.manUntil = t + 1.2; b.note = note; b.noteUntil = t + 2.5;
+          b.manF = dec.urgent ? STRICT : F;
+          b.manUntil = t + F.hold; b.note = note; b.noteUntil = t + 2.5;
         } else if (b.man && t > b.manUntil) b.man = null;
         let target = holding ? baseTarget : E.tackHeading(w, b.tack);
-        if (b.man && !holding) { const m = maneuverTarget(b.man, w, b.tack, target); target = m.h; speed *= m.speed; }
+        if (b.man && !holding) { const m = maneuverTarget(b.man, w, b.tack, target, b.manF || F); target = m.h; speed *= m.speed; }
         b.h = E.lerpAngle(b.h, target, Math.min(1, DT / 0.6));
         const dir = E.avoidDir(b.x, b.y, b.h, obstacles, b.v);
         if (dir !== 0) b.h += dir * 160 * DT;                       // engelden yana kaç (rota hedefi sonra geri çeker)
@@ -255,5 +287,5 @@
     return { scripted: scripted.map(s => s.track), extras };
   }
 
-  global.SailRules = { simulate, buildScene, warpForShadows, decide, clearAstern, isWindward, approach, lineSide, lineParam };
+  global.SailRules = { FEEL: { STRICT, SCENARIO }, simulate, buildScene, warpForShadows, decide, clearAstern, isWindward, approach, lineSide, lineParam };
 })(typeof window !== 'undefined' ? window : globalThis);

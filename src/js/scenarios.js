@@ -112,7 +112,7 @@
     ],
     crowd: [
       { slot: 0.20 }, { slot: 0.44 }, { slot: 0.70 }, { slot: 0.82 }, { slot: 0.93 },
-      { slot: 0.26, row: 1 }, { slot: 0.44, row: 1 }
+      { slot: 0.22, row: 1 }, { slot: 0.44, row: 1 }
     ],
     steps: [
       { t: 0, title: 'Start\'a 20 sn: filo hattın dibinde', text: 'Gri tekneler hattın 1-1.5 boy gerisinde rüzgara baş vermiş, yelkenleri boş bekliyor. Aralarında boşluklar var: boşluk, hızlanma alanıdır. Yeşil tekne yarım hızla yerine geliyor.' },
@@ -544,7 +544,7 @@
     // pin tarafında kalabalık (0.06-0.27); 0.36 ile W (0.56) arası boş: S W'nin hemen rüzgaraltına (~44 px)
     // yanaşır. Sağda L (scripted, 0.75) ve onun hemen rüzgarüstüne yanaşan H.
     crowd: [
-      { slot: 0.03, back: 0 }, { slot: 0.12, back: 5 }, { slot: 0.21, back: 0 }, { slot: 0.30, back: 5 },
+      { slot: 0.03, back: 0 }, { slot: 0.13, back: 5 }, { slot: 0.21, back: 0 }, { slot: 0.30, back: 5 },
       { slot: 0.58, back: 0, id: 'W', name: 'Rüzgarüstü komşu' }
     ],
     steps: [
