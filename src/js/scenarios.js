@@ -365,14 +365,14 @@
           { mode: 'hold', h: 25, dur: 7, speed: 0.05, turn: 0, note: 'Pin tarafından hatta bakıyor' },
           { mode: 'heading', h: 90, dur: 6.9, turn: 1.0, note: 'Apaz: hattın altından ortaya' },
           { mode: 'heading', h: 35, dur: 2.3, turn: 1.0, speed: 1, note: 'Boşluğa gir, komşulardan YUKARI' },
-          { mode: 'hold', h: 340, dur: 5.9, speed: 0.04, turn: 1.0, note: 'Hattı biliyorum: 1 boy geride' },
-          { mode: 'closehauled', tack: 'starboard', dur: 9.9, turn: 0.8 }
+          { mode: 'hold', h: 340, dur: 6.3, speed: 0.04, turn: 1.0, note: 'Hattı biliyorum: 1 boy geride' },
+          { mode: 'closehauled', tack: 'starboard', dur: 9.5, turn: 0.8 }
         ] }
     ],
     // yay: uçlar hatta yakın, orta 2.5-3 boy geride
     crowd: [
       { slot: 0.10, back: 0 }, { slot: 0.20, back: 30 }, { slot: 0.30, back: 95 }, { slot: 0.40, back: 130 },
-      { slot: 0.50, back: 145 }, { slot: 0.60, back: 135 }, { slot: 0.70, back: 100 }, { slot: 0.80, back: 45 }, { slot: 0.86, back: 0 }
+      { slot: 0.50, back: 145 }, { slot: 0.60, back: 135 }, { slot: 0.69, back: 95 }, { slot: 0.76, back: 50 }, { slot: 0.87, back: 0 }
     ],
     steps: [
       { t: 0, title: 'Start\'a 72 sn: pin tarafından hatta bak', text: 'Yeşil S pin\'in dışında, hattın hizasında duruyor ve hakem botuna bakıyor: pin ile hakem botunu aynı hizaya getirince hat tam olarak görünür (transit). Gördüğü şey: uçlardaki tekneler hatta yakın, ortadakiler 2-3 boy geride. Bu bir hat yayı (line sag).' },
