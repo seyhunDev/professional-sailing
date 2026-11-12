@@ -8,7 +8,10 @@
   const E = global.SailEngine, R = global.SailRules;
   const DT = 0.05, HULL = 50;
   const WORLD = { w: 1000, h: 900 };
-  const LINE = { pin: { x: 290, y: 740 }, boat: { x: 710, y: 740 } };
+  // Parkur: start hattı boyu ve orsa şamandırasının hatta uzaklığı ayarlanabilir (setCourse).
+  // Nesneler yerinde güncellenir; arayüz aynı nesneleri (S.LINE, S.MARK, S.WORLD) okur.
+  const COURSE_DEFAULT = { lineLen: 400, markDist: 650 };
+  const LINE = { pin: { x: 300, y: 740 }, boat: { x: 700, y: 740 } };
   const MARK = { x: 500, y: 90, label: 'Orsa şamandırası' };
   const BASE = 55, TAU = 1.2, HOLD_V = BASE * 0.04;
   const START_AT = 12;            // sn (simülasyon); sayaç clockScale ile 1:00 gösterir
@@ -25,6 +28,20 @@
   const OBSTACLES = E.obstaclesOf({ marks: [MARK], line: LINE });
   const LINE_OBS = E.obstaclesOf({ line: LINE });           // pin + hakem botu
   const MARK_OBS = [{ x: MARK.x, y: MARK.y, r: 14 }];
+  let courseKey = '';
+  function setCourse(c) {
+    const L = Math.round((c && c.lineLen) || COURSE_DEFAULT.lineLen), D = Math.round((c && c.markDist) || COURSE_DEFAULT.markDist);
+    const key = L + 'x' + D; if (key === courseKey) return; courseKey = key;
+    WORLD.w = Math.max(1000, L + 520); WORLD.h = 90 + D + 160;
+    const cx = WORLD.w / 2, ly = 90 + D;
+    LINE.pin.x = cx - L / 2; LINE.pin.y = ly; LINE.boat.x = cx + L / 2; LINE.boat.y = ly;
+    MARK.x = cx; MARK.y = 90;
+    const refill = (a, b) => { a.length = 0; a.push(...b); };
+    refill(OBSTACLES, E.obstaclesOf({ marks: [MARK], line: LINE }));
+    refill(LINE_OBS, E.obstaclesOf({ line: LINE }));
+    refill(MARK_OBS, [{ x: MARK.x, y: MARK.y, r: 14 }]);
+  }
+  setCourse(COURSE_DEFAULT);
 
   const PERSONAS = {
     sol: 'Sol taraf', orta: 'Orta', sag: 'Sağ taraf', saganak: 'Sağanak avcısı', manuel: 'Senin kararın'
@@ -127,7 +144,8 @@
     const boats = fleet.map(b => ({ ...b, phase: 'wait', go: false, man: null, manUntil: -1, note: '', noteUntil: -1,
       lastTack: -10, finish: null, finishT: null, gone: false, doneAt: null, ocsOnce: false, sideDone: false, started: false, outside: false, penalties: 0, penaltyAt: null, penTurn: 0, penWait: false, penFinish: false, routeIdx: 0, routeFrom: null, v: HOLD_V }));
     for (const b of boats) b.h = w + (b.tack === 'starboard' ? -25 : 25);
-    return { t: 0, wind: w, gusts: (opts.gusts || []).map(g => ({ ...g })), boats, events: [], finished: 0, pairLog: {}, startAt: START_AT };
+    const course = { ...COURSE_DEFAULT, ...(opts.course || {}) }; setCourse(course);
+    return { t: 0, wind: w, gusts: (opts.gusts || []).map(g => ({ ...g })), boats, events: [], finished: 0, pairLog: {}, startAt: START_AT, course };
   }
 
   // ---------- Strateji: hangi kontrada olmak istiyor? ----------
@@ -349,6 +367,7 @@
 
   // ---------- Bir adım ----------
   function step(s) {
+    if (s.course) setCourse(s.course);                      // parkur bu yarışınki (değişmediyse işlem yok)
     const w = s.wind, t = s.t, active = s.boats.filter(b => !b.gone);
     const racing = b => b.phase === 'race' || b.phase === 'ocs' || b.phase === 'round';
     const snap = active.filter(b => b.phase !== 'done').map(b => ({ ref: b, x: b.x, y: b.y, h: b.h, v: b.v }));
@@ -590,6 +609,6 @@
   global.SailSim = {
     runToEnd,
     DT, HULL, WORLD, LINE, MARK, BASE, START_AT, CLOCK_SCALE, PERSONAS, MINE_COLOR, OBSTACLES,
-    SHADOW_LEN, knots, defaultFleet, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
+    SHADOW_LEN, knots, defaultFleet, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
 })(typeof window !== 'undefined' ? window : globalThis);

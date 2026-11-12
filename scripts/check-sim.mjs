@@ -11,14 +11,17 @@ const cases = [
   { name: 'rüzgar -15° (pin avantajlı)', wind: -15 },
   { name: 'sağda sağanak', wind: 0, gusts: [{ x: 760, y: 450, rx: 130, ry: 200 }] },
   { name: 'yarışta rüzgar 12° sağa döner', wind: 0, shift: { at: 25, to: 12 } },
+  { name: 'kısa hat (5 boy), yakın şamandıra (8 boy)', wind: 0, course: { lineLen: 250, markDist: 400 } },
+  { name: 'uzun hat (16 boy), uzak şamandıra (24 boy)', wind: 8, course: { lineLen: 800, markDist: 1200 } },
   { name: 'senin teknen sağa rota çizdi', wind: 0, route: [{ x: 560, y: 700 }, { x: 800, y: 560 }, { x: 820, y: 300 }, { x: 600, y: 150 }] },
   { name: 'senin teknen düz yukarı rota (zikzak)', wind: 10, route: [{ x: 500, y: 600 }, { x: 500, y: 200 }] },
 ];
 let problems = 0;
 const verbose = process.argv.includes('-v');
 for (const c of cases) {
+  S.setCourse(c.course || S.COURSE_DEFAULT);
   const fleet = S.defaultFleet(12); if (c.route) fleet.find(b => b.mine).route = c.route;
-  const s = S.newRace(fleet, { wind: c.wind, gusts: c.gusts });
+  const s = S.newRace(fleet, { wind: c.wind, gusts: c.gusts, course: c.course });
   let out = 0; const near = c.route ? c.route.map(() => 1e9) : [];
   while (s.t < 150 && s.boats.some(b => !b.finish)) {
     if (c.shift && Math.abs(s.t - c.shift.at) < 1e-6) s.wind = c.shift.to;

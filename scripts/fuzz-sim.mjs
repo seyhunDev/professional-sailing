@@ -18,6 +18,10 @@ const stat = { protest: 0, penalty: 0, done: 0, why: {} };
 const hit = (kind, msg) => { counts[kind] = (counts[kind] || 0) + 1; (samples[kind] = samples[kind] || []).length < 4 && samples[kind].push(msg); };
 for (let k = 0; k < N; k++) {
   const n = 4 + Math.floor(rnd() * 12);
+  // her 5 yarıştan ikisinde farklı parkur (hat 5-20 boy, şamandıra 8-28 boy); ayrı üreteç
+  let qc = k * 104729 + 7; const rc = () => (qc = (qc * 48271) % 2147483647) / 2147483647;
+  const course = k % 5 === 2 || k % 5 === 4 ? { lineLen: 250 + Math.round(rc() * 15) * 50, markDist: 400 + Math.round(rc() * 10) * 100 } : S.COURSE_DEFAULT;
+  S.setCourse(course);
   const fleet = S.defaultFleet(n);
   const wind = Math.round((rnd() - 0.5) * 70);   // ±35°
   // rastgele yerleşim: hattın altında 0-400 px, hat boyunca ±150 px taşma; bazen kontra iskele
@@ -34,7 +38,7 @@ for (let k = 0; k < N; k++) {
     fleet.find(b => b.mine).route = Array.from({ length: nr }, (_, i) => ({ x: 120 + r2() * 760, y: 680 - (i + 1) * (560 / nr) + r2() * 60 }));
   }     // her 3 yarıştan birinde bir "yol vermez" tekne
   const gusts = rnd() < 0.5 ? [{ x: rnd() < 0.5 ? 230 : 770, y: 250 + rnd() * 300, rx: 120, ry: 190 }] : [];
-  const s = S.newRace(fleet, { wind, gusts });
+  const s = S.newRace(fleet, { wind, gusts, course });
   const shiftAt = rnd() < 0.5 ? 15 + rnd() * 20 : -1, shiftTo = wind + Math.round((rnd() - 0.5) * 30);
   const tr = {};
   for (const b of s.boats) tr[b.id] = { maxAbove: -1e9, wrong: 0, minMark: 1e9, prog: [], out: false, flagged: {} };
