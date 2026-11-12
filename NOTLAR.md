@@ -130,6 +130,10 @@
 
 ## Oturum günlüğü (en yeni üstte)
 
+### 2026-11-12 · Sürüm etiketi (tüm site) ve ceza turunda uzaklaşma
+- **Sürüm:** `build.mjs` her HTML sayfasına sağ alt köşede `.ver-badge` (`v1.<main commit sayısı>`) ekler; stil `style.css`. deploy.yml checkout `fetch-depth: 0`. Kural CLAUDE.md'de: her main gönderiminden sonra yeni numara kullanıcıya söylenir.
+- **Ceza turu (K44.2):** tekne önce diğer teknelerden uzaklaşır: gitmek istediği (avantajlı) tarafa doğru rüzgara ~100° açılır; o taraf kalabalıksa ya da kenardaysa öbür tarafa. 85 px açıklık bulunca (en az 1,2 s, en çok 5 s) iki turu atar. Dönmeye başladığı anda en yakın tekne: ortanca 26 px → 84 px.
+
 ### 2026-11-12 · Manuel modda start'ta kendiliğinden tramola düzeltmesi
 - Sebep: start'tan sonra hattı henüz geçmemiş tekne, hattın uçlarına %12 yakınsa "uçların dışında" sayılıp hattın içine dönmek için tramola atıyordu (`lineAim`). Sancakta sola giden teknede pin tarafında hep oluyordu.
 - Manuelde artık yalnız gerçekten dışarıdaysa (%2) uyarı verir ("Hattın dışındasın: tramola at"), kendisi dönmez. Otomatikte %11 pay kaldı (pin'e sıkışmasın).

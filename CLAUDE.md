@@ -37,6 +37,7 @@ Canlı site: https://seyhundev.github.io/professional-sailing/ (main'e push → 
 - Her senaryo değişikliğinden sonra `npm run check` (sıfır uyarı) ve Playwright ekran görüntüsü (masaüstü 1400×800).
 - Kullanıcının isteği farklı bir çalışma alanına giriyorsa (motor / senaryo içeriği / arayüz / yayın altyapısı) bunu söyle ve büyükse yeni sohbet öner; küçükse yap ve NOTLAR'a yaz.
 - Commit mesajları Türkçe, kısa başlık + madde listesi. Doğrudan `main`'e push edilir.
+- **Sürüm numarası (zorunlu):** her sayfanın sağ alt köşesinde `v1.N` görünür; N = `main`'deki commit sayısı, `scripts/build.mjs` otomatik hesaplar (elle artırma yok, çakışma olmaz). `main`'e her gönderimden sonra `git fetch origin main && git rev-list --count origin/main` ile yeni numarayı bul ve kullanıcıya cevabında "Sürüm v1.N" diye söyle; kullanıcı sitenin güncellenip güncellenmediğini bu numaradan anlar. (Yayın birkaç dakika sürer.)
 - Eski depo `seyhunDev/python_deneme` kullanılmaz.
 
 ## Dosya haritası
