@@ -131,6 +131,12 @@
 - Hakem botu gerçekçi motorlu tekne olarak yeniden çizildi, tek kod (`engine.js`) iki sayfada kullanılıyor; turuncu bayrak belirgin dalgalanıyor, rüzgarla dönüyor.
 - Sonraki sohbete not: bayrak/gövde rüzgar yönüne göre döndüğünden çok büyük rüzgar dönüşlerinde etiket ile çakışma kontrol edilebilir.
 
+### 2026-11-12 · Simülatör: sabit sayfa, yakınlaştırma / kaydırma / takip kamerası
+- Sayfa sabit: `body.sim { position: fixed; overscroll-behavior: none }`, panel kaydırması sayfaya taşmaz, iPad'de sayfa yakınlaşması (gesturestart) engellendi.
+- **Kamera** (`sim.js` → `st.cam {z,x,y,follow}`, `applyCam`, `zoomTo`, `panBy`): iki parmak (pinch) ve fare tekerleği ile yakınlaştırma (1–5×), boş yeri sürükleyince kaydırma (dokunmak hâlâ seçimi kaldırır), sol altta + / − / Tümü / Takip (telefonda sağ üstte). Takip kamerayı senin teknene kilitler; kaydırınca bırakır. Klavye: + − 0 F.
+- Düğmeyle yakınlaştırma teknen ekrandaysa onu sabit tutar; tüm parkurdayken teknene yaklaşır. Telefonda alt sayfanın kapattığı kısım hesaba katılır.
+- Pinch testi sentetik PointerEvent ile yapıldı (gerçek iPad'de denenmeli).
+
 ### 2026-11-12 · Simülatör: start öncesi erken çıkış, taktiğe sadakat, akıntı/dalga, kayan tekne
 - **Erken çıkış:** bekleyen tekne artık ileri sürünmüyor (bekleme hızı 0, akıntı varsa ona karşı tutar); hatta yakın bekleyen teknelerde OCS 8 → 1.
 - **Taktiğe sadakat:** yol veren tekne kaçmak için tramola seçeneğini K11/K12'de, rota çizilmişken ve Sol/Sağ taktiğinde o tarafa varmadan kullanmaz (yavaşlar / bordalar / orsalar).

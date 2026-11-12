@@ -20,6 +20,7 @@
     sim: null, frames: [], speed: 1, lastTs: 0, acc: 0,
     show: { speed: true, shadow: false },
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
+    cam: { z: 1, x: null, y: null, follow: false }, base: null, pinch: null, pts: new Map(),
     course: { ...S.COURSE_DEFAULT }, sea: { ...S.SEA_DEFAULT }, gsel: null, drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
   };
 
@@ -34,9 +35,71 @@
     if (Wa / Hd > V.w / V.h) w = V.h * Wa / Hd; else h = V.w * Hd / Wa;
     const k = w / Wa, wTot = Wd * k;                      // ekran pikseli başına birim
     const topShare = phoneMq.matches ? 0.12 : 0.5;          // telefonda parkur üstte, alt sayfa altta kalsın
-    st.vb = { x: V.x - (w - V.w) / 2, y: V.y - (h - V.h) * topShare, w: wTot, h };
-    w = wTot;
-    svg.setAttribute('viewBox', `${st.vb.x} ${st.vb.y} ${w} ${h}`);
+    st.base = { x: V.x - (w - V.w) / 2, y: V.y - (h - V.h) * topShare, w: wTot, h, vis: Wa / Wd };
+    applyCam();
+  }
+  // ---------- Kamera: yakınlaştır / kaydır / teknemi takip et ----------
+  const Z_MAX = 5;
+  const clampN = (v, a, b) => (a > b ? (a + b) / 2 : Math.max(a, Math.min(b, v)));
+  function applyCam() {
+    const B = st.base, c = st.cam; if (!B) return;
+    if (c.z <= 1.001 && !c.follow) { c.z = 1; c.x = null; st.vb = { x: B.x, y: B.y, w: B.w, h: B.h }; }
+    else {
+      c.z = Math.max(1, Math.min(Z_MAX, c.z));
+      const w = B.w / c.z, h = B.h / c.z, vw = w * B.vis;      // görünen genişlik (masaüstünde panel sağı kapatır)
+      let cx = c.x == null ? B.x + B.w * B.vis / 2 : c.x, cy = c.y == null ? B.y + B.h / 2 : c.y;
+      if (c.follow) { const m = view().boats.find(b => b.mine && !b.gone); if (m) { cx += (m.x - cx) * 0.18; cy += (m.y - h * 0.08 - cy) * 0.18; } }
+      const ex = sheetCover() * h;                              // telefonda alt sayfanın kapattığı kısım: parkur onun üstüne kaydırılabilsin
+      cx = clampN(cx, B.x + vw / 2, B.x + B.w * B.vis - vw / 2); cy = clampN(cy, B.y + h / 2, B.y + B.h - h / 2 + ex);
+      c.x = cx; c.y = cy;
+      st.vb = { x: cx - vw / 2, y: cy - h / 2, w, h };
+    }
+    $('course').setAttribute('viewBox', `${st.vb.x.toFixed(1)} ${st.vb.y.toFixed(1)} ${st.vb.w.toFixed(1)} ${st.vb.h.toFixed(1)}`);
+    camUi();
+  }
+  function sheetCover() {
+    if (!phoneMq.matches || $('panel').classList.contains('hidden')) return 0;
+    const r = $('course').getBoundingClientRect(), p = $('panel').getBoundingClientRect();
+    return r.height ? Math.max(0, Math.min(0.7, (r.bottom - p.top) / r.height)) : 0;
+  }
+  // ekrandaki (clientX, clientY) noktası altındaki dünya noktası yerinde kalacak şekilde yakınlaştır
+  function zoomTo(z, clientX, clientY, anchorW) {
+    const B = st.base, c = st.cam, r = $('course').getBoundingClientRect();
+    z = Math.max(1, Math.min(Z_MAX, z));
+    const fx = r.width ? (clientX - r.left) / r.width : 0.5, fy = r.height ? (clientY - r.top) / r.height : 0.5;
+    const P = anchorW || { x: st.vb.x + fx * st.vb.w, y: st.vb.y + fy * st.vb.h };
+    const w = B.w / z, h = B.h / z;
+    c.z = z; c.x = P.x - fx * w + w * B.vis / 2; c.y = P.y - fy * h + h / 2;
+    applyCam();
+  }
+  function zoomBy(k) {
+    const r = $('course').getBoundingClientRect(), sx = r.left + r.width * st.base.vis / 2, sy = r.top + r.height / 2;
+    // tüm parkur görünürken ilk yakınlaştırma senin teknene (yoksa ekran ortasına)
+    const m = st.cam.z <= 1.001 && k > 1 && view().boats.find(b => b.mine && !b.gone);
+    if (m) { zoomTo(st.cam.z * k, sx, sy, null); const B = st.base, h = B.h / st.cam.z; st.cam.x = m.x; st.cam.y = m.y + h * (0.5 - 0.6 * (1 - sheetCover())); applyCam(); return; /* tekne görünen alanın %60 aşağısında */ }
+    // teknen ekrandaysa onu sabit tutarak yakınlaştır (filo kaybolmasın)
+    const me = view().boats.find(b => b.mine && !b.gone), vb = st.vb;
+    if (me && me.x > vb.x && me.x < vb.x + vb.w * st.base.vis && me.y > vb.y && me.y < vb.y + vb.h) {
+      zoomTo(st.cam.z * k, r.left + (me.x - vb.x) / vb.w * r.width, r.top + (me.y - vb.y) / vb.h * r.height, { x: me.x, y: me.y }); return;
+    }
+    zoomTo(st.cam.z * k, sx, sy);
+  }
+  function panBy(dxPx, dyPx) {
+    const r = $('course').getBoundingClientRect(), u = st.vb.w / (r.width || 1);
+    st.cam.follow = false; st.cam.x = (st.cam.x == null ? st.base.x + st.base.w * st.base.vis / 2 : st.cam.x) - dxPx * u; st.cam.y = (st.cam.y == null ? st.base.y + st.base.h / 2 : st.cam.y) - dyPx * u;
+    applyCam();
+  }
+  function camFit() { st.cam.z = 1; st.cam.follow = false; applyCam(); }
+  function camFollow() {
+    const c = st.cam; c.follow = !c.follow;
+    if (c.follow && c.z < 2.2) c.z = 2.2;
+    applyCam(); toast(c.follow ? 'Kamera senin tekneni takip ediyor · kaydırınca bırakır' : 'Takip kapandı');
+  }
+  function camUi() {
+    const c = st.cam, zb = $('zoomVal'); if (!zb) return;
+    zb.textContent = `${Math.round(c.z * 100)}%`;
+    $('btnZoomOut').disabled = c.z <= 1.001; $('btnZoomIn').disabled = c.z >= Z_MAX - 0.001; $('btnZoomFit').disabled = c.z <= 1.001 && !c.follow;
+    $('btnFollow').classList.toggle('on', !!c.follow);
   }
   function toWorld(ev) {
     const svg = $('course'), p = svg.createSVGPoint();
@@ -231,6 +294,7 @@
   }
 
   function render() {
+    if (st.cam.follow) applyCam();
     const v = view(), w = v.wind;
     drawWind(w, st.mode === 'setup' ? performance.now() / 1000 : v.t);
     drawGusts(v); drawCourse(v);
@@ -553,10 +617,19 @@
     }
     return null;
   }
+  function capture(ev) { try { $('course').setPointerCapture(ev.pointerId); } catch (e) { /* sentetik olay */ } }
+  function pinchStart() {
+    const [a, b] = [...st.pts.values()];
+    st.pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, z0: st.cam.z, W: toWorld({ clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 }) };
+    st.drag = null; st.drawPts = null; st.legPrev = null; st.cam.follow = false;
+  }
   function onDown(ev) {
+    st.pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (st.pts.size === 2) { pinchStart(); capture(ev); ev.preventDefault(); return; }
+    if (st.pts.size > 2 || st.pinch) return;
     const p = toWorld(ev);
-    if (st.drawMode && st.routeMode === 'acili') { legAim(p); $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); return; }
-    if (st.drawMode) { st.drawPts = [p]; $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); return; }
+    if (st.drawMode && st.routeMode === 'acili') { legAim(p); capture(ev); ev.preventDefault(); return; }
+    if (st.drawMode) { st.drawPts = [p]; capture(ev); ev.preventDefault(); return; }
     const b = hitBoat(p);
     if (b && st.mode !== 'setup') st.drag = { kind: 'pick', obj: b, moved: false, x0: ev.clientX, y0: ev.clientY };
     else if (b) {
@@ -565,11 +638,24 @@
     } else {
       const g = hitGust(p);
       if (g) st.drag = { kind: 'gust', obj: g, x1: g.x, y1: g.y, dx: g.x - p.x, dy: g.y - p.y, moved: false, x0: ev.clientX, y0: ev.clientY };
-      else { if (st.sel) st.sel = null; if (st.gsel != null) st.gsel = null; gustBarUpdate(); updatePanel(true); }
+      else st.drag = { kind: 'pan', moved: false, x0: ev.clientX, y0: ev.clientY, lx: ev.clientX, ly: ev.clientY };   // boşluk: dokun → seçimi kaldır, sürükle → kaydır
     }
-    if (st.drag) { $('course').setPointerCapture(ev.pointerId); ev.preventDefault(); }
+    if (st.drag) { capture(ev); ev.preventDefault(); }
   }
   function onMove(ev) {
+    if (st.pts.has(ev.pointerId)) st.pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (st.pinch) {
+      if (st.pts.size < 2) return;
+      const [a, b] = [...st.pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+      zoomTo(st.pinch.z0 * d / st.pinch.d0, (a.x + b.x) / 2, (a.y + b.y) / 2, st.pinch.W);
+      return;
+    }
+    if (st.drag && st.drag.kind === 'pan') {
+      const d = st.drag;
+      if (Math.hypot(ev.clientX - d.x0, ev.clientY - d.y0) > 4) d.moved = true;
+      if (d.moved) { panBy(ev.clientX - d.lx, ev.clientY - d.ly); $('course').style.cursor = 'grabbing'; }
+      d.lx = ev.clientX; d.ly = ev.clientY; return;
+    }
     if (st.legPrev) { legAim(toWorld(ev)); return; }
     if (st.drawPts) { const p = toWorld(ev), q = st.drawPts[st.drawPts.length - 1]; if (Math.hypot(p.x - q.x, p.y - q.y) > 8) st.drawPts.push(p); return; }
     const d = st.drag;
@@ -581,7 +667,14 @@
     d.obj.y = Math.max(20, Math.min(W.h - 10, p.y + d.dy));
     $('course').style.cursor = 'grabbing';
   }
-  function onUp() {
+  function onUp(ev) {
+    if (ev && ev.pointerId != null) st.pts.delete(ev.pointerId);
+    if (st.pinch) { if (st.pts.size < 2) st.pinch = null; return; }
+    if (st.drag && st.drag.kind === 'pan') {
+      const d = st.drag; st.drag = null; $('course').style.cursor = '';
+      if (!d.moved) { if (st.sel) st.sel = null; if (st.gsel != null) st.gsel = null; gustBarUpdate(); updatePanel(true); }
+      return;
+    }
     if (st.legPrev) { legCommit(); return; }
     if (st.drawPts) { strokeCommit(st.drawPts); st.drawPts = null; return; }
     const d = st.drag; st.drag = null;
@@ -803,9 +896,20 @@
     else if (e.key === 'Escape' && st.drawMode) endDraw(false);
     else if (e.key === 'Enter' && st.drawMode) endDraw(true);
     else if ((e.metaKey || e.ctrlKey) && e.key === 'z' && st.drawMode) { e.preventDefault(); routeUndo(); }
+    else if (e.key === '+' || e.key === '=') zoomBy(1.4);
+    else if (e.key === '-') zoomBy(1 / 1.4);
+    else if (e.key === '0') camFit();
+    else if (e.key === 'f' || e.key === 'F') camFollow();
     else if (e.key === 'ArrowLeft') setWind(-5);
     else if (e.key === 'ArrowRight') setWind(5);
   });
+  svg.addEventListener('wheel', e => { e.preventDefault(); zoomTo(st.cam.z * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0022)), e.clientX, e.clientY); }, { passive: false });
+  // iPad Safari: sayfanın kendisi yakınlaşmasın (parmak hareketi parkuru yakınlaştırır)
+  ['gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+  $('btnZoomIn').addEventListener('click', () => zoomBy(1.4));
+  $('btnZoomOut').addEventListener('click', () => zoomBy(1 / 1.4));
+  $('btnZoomFit').addEventListener('click', camFit);
+  $('btnFollow').addEventListener('click', camFollow);
   window.addEventListener('resize', fitViewBox);
   phoneMq.addEventListener('change', fitViewBox);
 
