@@ -6,17 +6,23 @@ değişimleri basit ama doğru bir modelle canlandırılır; her senaryo zamanl�
 
 ## Canlı görüntüleme (GitHub Pages)
 
-Uygulama tamamen statiktir (derleme yok, sunucu yok). Yayınlamak için:
+Site: **https://seyhundev.github.io/professional-sailing/**
 
-1. GitHub'da depo adını değiştir: **Settings → General → Repository name → `professional-sailing`**.
-2. Bu dalı `main` ile birleştir (ya da Pages kaynağı olarak bu dalı seç).
-3. **Settings → Pages → Build and deployment → Source: "Deploy from a branch" → Branch: `main`, Folder: `/docs`** → Save.
-4. 1-2 dakika sonra adres: `https://<kullanıcı-adı>.github.io/professional-sailing/`
+Yayın otomatiktir: `main` dalına her push'ta GitHub Actions (`.github/workflows/deploy.yml`)
+`scripts/build.mjs` ile `src/` klasörünü derleyip Pages'e yükler. Tek seferlik ayar:
+**Settings → Pages → Source: "GitHub Actions"**.
 
-Yerelde görmek için `docs/index.html` dosyasını tarayıcıda açmak yeterli; ya da:
+### Önbellek sorunu neden yaşanmaz?
+Derleme, her CSS/JS dosyasının adına içerik özetini ekler (`app.e629d783.js` gibi) ve `index.html`
+içindeki bağlantıları günceller. İçerik değişince dosya adı da değişir; tarayıcı eski dosyayı
+asla yeni HTML ile eşleştiremez. Sayfanın sağ altındaki sürüm damgası (commit + tarih) hangi
+sürümün yüklendiğini gösterir.
 
+### Yerelde çalıştırma
 ```bash
-cd docs && python3 -m http.server 8000   # http://localhost:8000
+npm run dev        # http://localhost:8000  (src/ doğrudan, derleme gerekmez)
+npm run build      # dist/ üretir
+npm run preview    # http://localhost:8080  (dist/ ile aynı yayın hâli)
 ```
 
 ## Teknoloji kararı ve gereksinimler
@@ -44,18 +50,20 @@ Framework bağımlılığı yok; ileride gerekirse SVG katmanı olduğu gibi Rea
 ## Dosya yapısı
 
 ```
-docs/
+src/
   index.html          arayüz iskeleti
   css/style.css
   js/engine.js        rüzgar, kontra, yelken açısı, hız modeli, rota üretici (buildTrack)
   js/scenarios.js     senaryo tanımları (A1, A2, B1, B8, C1 ...)
-  js/app.js           çizim (SVG), zaman döngüsü, kontroller, tekne ekleme
+  js/app.js           çizim (SVG), zaman döngüsü, kontroller, bilgi kartı, tekne ekleme
+scripts/build.mjs     derleme: hash'li dosya adları + sürüm damgası → dist/
+.github/workflows/    main'e push → otomatik yayın
 KONULAR.md            müfredat / konu listesi ve durumları
 ```
 
 ## Yeni senaryo eklemek
 
-`docs/js/scenarios.js` içine bir nesne ekleyin:
+`src/js/scenarios.js` içine bir nesne ekleyin:
 
 ```js
 S.push({

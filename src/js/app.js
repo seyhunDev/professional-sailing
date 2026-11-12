@@ -300,6 +300,8 @@
 
   const fromHash = () => SCENARIOS.find(s => s.id === location.hash.slice(1)) || SCENARIOS[0];
   window.addEventListener('hashchange', () => { const s = fromHash(); if (s !== state.scn) loadScenario(s); });
+  const ds = document.body.dataset;
+  $('versionLabel').textContent = ds.version ? `sürüm ${ds.version} · ${ds.built}` : 'geliştirme sürümü';
   fitViewBox(); setInfoOpen(true); loadScenario(fromHash());
   requestAnimationFrame(ts => { state.lastTs = ts; requestAnimationFrame(tick); });
 })();

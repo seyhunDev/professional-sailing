@@ -1,0 +1,13 @@
+{
+  "name": "professional-sailing",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Yarış hazırlığı için etkileşimli yelken taktik animasyonları",
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 8000 --directory src",
+    "build": "node scripts/build.mjs",
+    "preview": "python3 -m http.server 8080 --directory dist"
+  },
+  "license": "MIT"
+}
