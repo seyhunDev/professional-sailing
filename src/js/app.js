@@ -172,7 +172,8 @@
       if (b.crowd) { lbl.setAttribute('font-size', 10); lbl.setAttribute('font-weight', 400); lbl.setAttribute('y', (s.y + 36).toFixed(1)); }
     }
     if (s.note) {
-      const n = el('text', { x: s.x.toFixed(1), y: (s.y - 36).toFixed(1), 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12, 'font-weight': 700,
+      const fault = /^HATA/.test(s.note);
+      const n = el('text', { x: s.x.toFixed(1), y: (s.y - 36).toFixed(1), 'text-anchor': 'middle', fill: fault ? '#ff5d5d' : '#ffd166', 'font-size': 12, 'font-weight': 700,
         'paint-order': 'stroke', stroke: 'rgba(0,0,0,.7)', 'stroke-width': 3 }, parent);
       n.textContent = s.note;
     }

@@ -73,6 +73,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 · İA1 yeniden: solda bekle, apaz gel, hatalı davranışlar
+- Kullanıcı düzeltmesi: X pin'in SOLUNDA bekler, apaz (heading ~92°) ile hattın altından gelir, rüzgara baş vermiş grubun en alttaki teknesinin rüzgaraltına tramola atar. Pin layline'ı baştan görünür ("tramola bu çizginin ÜSTÜNDE"). Hatalı tekneler: Z layline'ın altında tramola → pin'i kurtaramaz, çizgi dışı; Y geç gelir (25 s kala) → boşluk yok, herkesin altından, 15-20 s geç. "HATA:" ile başlayan notlar kırmızı çizilir.
+- Öğrenilen: apaz yaklaşımında ivme (tau 1.0) hesaba katılmalı; 5.2 s'de ~195 px. Tramola dönüşü (turn 1.3 s) tekneyi ~(+24,−26) px taşır; bekleme konumu buna göre geriden seçilmeli.
+- Sonraki sohbete not: hatalı davranış rozeti ("HATA:") artık standart; Start paketi 5'te kullanılsın. Layline etiketi uzun; kalabalıkta teknelerle çakışabilir.
+
 ### 2026-11-12 · Fodepar hafif, start bayrakları (A12), İleri Taktik grubu (İA1)
 - Yapılanlar: A2'de erken tekne yarım boy geçip duruyor ve geri dönüyor; A12 (U bayrağı, 1 dk kala bayrak iner, burnu çizgide olan UFD; P/I/siyah farkları adımlarda; clockScale 4); yeni kategori İleri Taktik + İA1 (pin dışında iskele bekleme, grubun altına tramola, K10/13/15/11; clockScale 3). HUD: hazırlık bayrağı çizimi ve dakika:saniye sayaç.
 - Yarım kalan: A12'de yalnızca U bayrağı canlandırılıyor; P/I/siyah için ayrı varyant (ya da bayrak seçici) istenebilir. 5-4-1-0 sinyal sırası ve AP/Birinci Tekrar ayrı senaryo.

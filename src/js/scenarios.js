@@ -282,41 +282,60 @@
     expectEarly: ['F']
   });
 
-  // ---------- İA1: Pin'in dışında bekleyip grubun altına tramola ----------
+  // ---------- İA1: Pin'in dışında bekleyip apaz gel, grubun altına tramola ----------
   S.push({
     id: 'ia1-port-approach-pin',
     category: 'İleri Taktik', topic: 'Start',
-    title: 'İA1 · Pin\'in dışında bekle, son 40 sn\'de grubun altına tramola',
-    summary: 'Pin avantajlıysa pin grubu erken oluşur ve içinde yer kalmaz. İleri taktik: kavgaya girmeden pin\'in dışında, iskele kontrada bekle; son 40 saniyede grubun altından iskele ile gel, pin\'e en yakın teknenin rüzgaraltındaki boşluğa tramola at, rüzgaraltı hakkıyla yerini koru, pin\'den çık.',
-    duration: 27,
+    title: 'İA1 · Pin\'in dışında bekle, apaz gel, grubun en altına tramola',
+    summary: 'Pin avantajlıysa pin grubu erken oluşur. İleri taktik: pin\'in SOLUNDA, kavganın dışında bekle; son 45 sn\'de apaz ile hattın altından gel, rüzgara baş vermiş grubun en alttaki teknesinin rüzgaraltındaki boşluğa tramola at. Tek şart: tramola noktası pin layline\'ının ÜSTÜNDE olmalı; boşluk kapalıysa ya da pin\'i kurtarmıyorsan girmenin anlamı yok.',
+    duration: 33,
     baseSpeed: 40, tau: 1.0, goBefore: 2.5,
     clockScale: 3,
     wind: 350,
     line: { pin: { x: 250, y: 440 }, boat: { x: 750, y: 440 } },
     startAt: 24,
     rungs: { boat: 'X', from: 25.5 },
-    laylines: [{ x: 250, y: 440, tack: 'starboard', len: 260, from: 10, to: 24, label: 'Pin layline\'ı' }],
+    laylines: [{ x: 250, y: 440, tack: 'starboard', len: 330, from: 0, label: 'Pin layline\'ı — tramola bu çizginin ÜSTÜNDE' }],
     boats: [
-      { id: 'X', name: 'X – Dışarıda bekleyen (iskele)', color: '#2a9d8f',
-        start: { x: 239, y: 637, h: 15 }, v0: 2,
+      { id: 'X', name: 'X – Doğru: dışarıda bekle, apaz gel, layline\'ın üstünde tramola', color: '#2a9d8f',
+        start: { x: 125, y: 514, h: 15 }, v0: 2,
         segs: [
-          { mode: 'hold', h: 15, dur: 9, speed: 0.05, turn: 0, note: 'Pin\'in dışında, iskele kontrada bekliyor' },
-          { mode: 'closehauled', tack: 'port', dur: 4.5, turn: 1.0, note: 'İskele ile grubun altından yaklaş' },
-          { mode: 'hold', h: 325, dur: 8.5, speed: 0.05, turn: 1.3, note: 'Tramola → boşluğa yerleş' },
-          { mode: 'closehauled', tack: 'starboard', dur: 8.0, turn: 0.8 }
+          { mode: 'hold', h: 15, dur: 9, speed: 0.05, turn: 0, note: 'Pin\'in solunda bekliyor' },
+          { mode: 'heading', h: 92, dur: 5.2, turn: 1.0, note: 'Apaz: hattın altından grubun dibine' },
+          { mode: 'hold', h: 325, dur: 8.0, speed: 0.05, turn: 1.3, note: 'Tramola → layline üstü, boşluk benim' },
+          { mode: 'closehauled', tack: 'starboard', dur: 11.8, turn: 0.8 }
+        ] },
+      { id: 'Z', name: 'Z – HATA: layline\'ın altında tramola', color: '#e76f51',
+        start: { x: 118, y: 585, h: 15 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 15, dur: 9.6, speed: 0.05, turn: 0 },
+          { mode: 'heading', h: 92, dur: 4.6, turn: 1.0, note: 'Apaz ile geliyor' },
+          { mode: 'hold', h: 325, dur: 7.3, speed: 0.05, turn: 1.3, note: 'HATA: layline\'ın altında tramola' },
+          { mode: 'closehauled', tack: 'starboard', dur: 12.5, turn: 0.8, note: 'HATA: pin\'i kurtarmıyor → çizgi dışı' }
+        ] },
+      { id: 'Y', name: 'Y – HATA: geç geldi, boşluk kapandı', color: '#c77dff',
+        start: { x: 70, y: 600, h: 15 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 15, dur: 14.5, speed: 0.05, turn: 0 },
+          { mode: 'heading', h: 95, dur: 5.0, turn: 1.0, note: 'Geç: 25 sn kala geliyor' },
+          { mode: 'heading', h: 90, dur: 6.4, turn: 0.8, note: 'HATA: boşluk yok → herkesin altından' },
+          { mode: 'closehauled', tack: 'starboard', dur: 7.1, turn: 1.2 }
         ] }
     ],
-    crowd: [{ slot: 0.2 }, { slot: 0.34 }, { slot: 0.48 }, { slot: 0.62 }, { slot: 0.34, row: 1 }, { slot: 0.62, row: 1 }, { slot: 0.82 }],
+    crowd: [{ slot: 0.2 }, { slot: 0.34 }, { slot: 0.5 }, { slot: 0.66 }, { slot: 0.86 }],
+    expectOutside: ['Z'],
     steps: [
-      { t: 0, title: 'Start\'a 72 sn: pin grubu oluştu', text: 'Rüzgar 350°: pin hafif avantajlı. Gri tekneler pin\'e yakın yerleri çoktan almış, hattın dibinde rüzgara baş vermiş bekliyor. Yeşil X ise kavganın dışında: pin\'in solunda, iskele kontrada, yelkeni boş.' },
-      { t: 4, title: 'Neden dışarıda?', text: 'Grubun içinde 70 saniye yer tutmak zordur: sürüklenirsin, rüzgarüstünden biri sokulur, boşluğun kapanır. Dışarıda beklerken hattı, rüzgarı ve boşlukları rahat görürsün; sonra karar verirsin.' },
-      { t: 9, title: 'Son 45 sn: iskele ile gel', text: 'X yelkenini doldurup iskele kontrada grubun ALTINDAN geliyor. Dikkat: iskele kontra herkese yol verir (Kural 10); bu yüzden sancak teknelerin rüzgaraltından, onların burnuna girmeden geçer.' },
-      { t: 13, title: 'Boşluğu seç', text: 'Hedef: pin\'e en yakın teknenin hemen rüzgaraltındaki boşluk. Gerekli yer: tramola bitince gövde o tekneye değmeyecek kadar; yani en az 1 boy.' },
-      { t: 15, title: 'Tramola: Kural 13 ve 15', text: 'Tramola atarken X herkese yol verir (Kural 13). Tramola bitip sancak kontrada rüzgaraltı tekne olunca hak sahibidir ama Kural 15: yeni kazandığı hakla rüzgarüstündeki tekneye başta kaçınma yeri vermek zorunda. Yani tramolayı dibine değil, yarım boy aşağısına at.' },
-      { t: 17, title: 'Yerini koru', text: 'Artık X rüzgaraltı tekne: rüzgarüstündeki gri tekne ona yol vermek zorunda (Kural 11). Start öncesi uygun rota sınırı yoktur; biri sokulmaya kalkarsa orsa edip kapatabilir. Rüzgaraltında kimse yok: boşluk X\'in.' },
-      { t: 21.5, title: '2.5 sn kala doldur', text: 'Pin layline\'ının üstünde, boşluğu var: bordalayıp hızlanıyor.' },
-      { t: 24, title: 'START: pin\'den temiz çıkış', text: 'X pin\'in hemen yanından, tam hızla, temiz havada. Grup içinde 70 saniye itişen tekneler çoğu zaman bu kadar temiz çıkamaz.' },
-      { t: 26, title: 'Riskler', text: 'Çok erken gelirsen boşluk henüz yok ya da sürüklenip pin\'e düşersin. Çok geç gelirsen boşluk kapanmıştır; herkesin kıçından geçmek zorunda kalırsın. Pin çok avantajlıysa grup sıkışır, boşluk daralır. Hafif rüzgarda tramola çok yavaştır: 50 sn kala gel.' }
+      { t: 0, title: 'Start\'a 72 sn: pin grubu oluştu', text: 'Rüzgar 350°: pin hafif avantajlı. Gri tekneler pin\'e yakın yerleri almış, hattın dibinde rüzgara baş vermiş bekliyor. Mavi kesikli çizgi pin layline\'ı: sancak orsa ile pin\'e varan son rota. Yeşil X kavganın dışında, pin\'in SOLUNDA bekliyor.' },
+      { t: 4, title: 'Neden dışarıda, neden solda?', text: 'Grubun içinde 70 saniye yer tutmak zor: sürüklenirsin, biri rüzgarüstünden sokulur, boşluğun kapanır. Pin\'in solunda beklerken hattı, layline\'ı ve boşlukları yandan görürsün; apaz ile hızlı ve kontrollü girersin.' },
+      { t: 9, title: 'Son 45 sn: apaz ile gel', text: 'X yelkenini doldurup apaz (yarım rüzgar) ile hattın hemen altından, pin\'in altından geçip gruba doğru gidiyor. İskele kontrada: herkese yol verir (Kural 10); sancak teknelerin burnuna girmeden, altlarından geçer.' },
+      { t: 12.5, title: 'KARAR: boşluk var mı, layline\'ın üstünde mi?', text: 'İki soru: (1) Grubun en alttaki teknesinin rüzgaraltında 1 boy boşluk var mı? (2) Tramola noktası pin layline\'ının ÜSTÜNDE mi? İkisi de evetse gir. Boşluk kapalıysa ya da layline\'ın altındaysan girme: pin\'i kurtaramazsın, çizgi dışından geçersin.' },
+      { t: 14.5, title: 'X tramola: Kural 13 ve 15', text: 'X layline\'ın üstünde, grubun en altındaki teknenin rüzgaraltına tramola atıyor. Tramola sırasında herkese yol verir (Kural 13). Sancak kontraya geçip rüzgaraltı tekne olunca hak sahibi; ama Kural 15: rüzgarüstündekine başta kaçınma yeri ver. O yüzden tramola dibine değil, yarım boy aşağısına.' },
+      { t: 16.5, title: 'Z HATA: layline\'ın altında tramola', text: 'Turuncu Z aynı hamleyi layline\'ın ALTINDA yaptı. Sancak orsa ile pin\'e varamaz: burnu pin\'in soluna düşer. Ya herkese yol verip tramola atacak ya da pin\'in dışından geçip geri dönecek. Boşluk bulsan bile layline\'ın altındaysan girmenin anlamı yok.' },
+      { t: 19.5, title: 'Y HATA: geç geldi', text: 'Mor Y 25 saniye kala geldi; X boşluğu almış, grup sıkışmış. Girecek yer yok: herkesin altından, kirli havada, 3-4 boy geride başlayacak. Zamanlama: hafif rüzgarda 50 sn, kuvvetlide 35-40 sn kala gel.' },
+      { t: 21.5, title: '2.5 sn kala doldur', text: 'X rüzgaraltı hakkıyla yerini korudu (Kural 11); pin layline\'ının üstünde, boşluğu var: bordalayıp hızlanıyor.' },
+      { t: 24, title: 'START', text: 'X pin\'in hemen yanından, tam hızla, temiz havada. Z pin\'i kurtaramadı: çizgi dışından geçecek, geri dönmek zorunda. Y hâlâ herkesin altında sağa doğru gidiyor.' },
+      { t: 28.5, title: 'Y: 15-20 saniye geç', text: 'Y boşluk bulamayınca filonun altından geçip ancak herkesten sonra, kirli havada çıkabiliyor. Geç gelmenin maliyeti bu.' },
+      { t: 30, title: 'Özet', text: 'Dışarıda bekle → apaz ile gel → boşluk + layline kontrolü → en alttaki teknenin rüzgaraltına tramola → yerini koru. Erken gelirsen boşluk yok ya da sürüklenirsin; geç gelirsen kapanmıştır; layline\'ın altında tramola pin\'i kaybettirir.' }
     ],
     addBoat: { pin: { x: 290, y: 560 }, middle: { x: 500, y: 560 }, committee: { x: 720, y: 560 } },
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }

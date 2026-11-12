@@ -98,7 +98,7 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 
 | # | Konu | Animasyonda ne gösterilecek | Durum |
 |---|------|-----------------------------|-------|
-| H1 | Pin'in dışında bekle, son 40 sn'de grubun altına tramola | İskele kontrada dışarıda bekleme, grubun altından yaklaşma (K10), boşluğa tramola (K13, K15), rüzgaraltı hakkıyla yeri koruma (K11), pin'den temiz çıkış; riskler. | ✅ (İA1) |
+| H1 | Pin'in solunda bekle, apaz gel, grubun en altına tramola | Pin'in solunda iskele bekleme, apaz ile hattın altından yaklaşma (K10), pin layline'ı kontrolü, boşluğa tramola (K13, K15), rüzgaraltı hakkıyla yeri koruma (K11); HATALAR: layline altında tramola (pin'i kurtaramaz), geç gelme (boşluk kapanır). | ✅ (İA1) |
 | H2 | Hakem botunda ikinci sıradan erken tramola ile sağa kaçış | Birinci sıra gölgesinden kurtulma, sağ tarafın temiz havası. | ⬜ |
 | H3 | Rüzgaraltına boşluk açma ve "kapı" kapatma (son 30 sn) | Bordalayıp rüzgaraltındaki tekneyi uzaklaştırma, sonra orsa edip boşluğu koruma; K11/K16 sınırları. | ⬜ |
 | H4 | Start öncesi rakibi "sürükleme": orsa ile hattın üstüne itme | Rüzgaraltı tekne orsa eder, rüzgarüstündeki fodepar riskine girer; K11, K16, sportmenlik sınırı. | ⬜ |
