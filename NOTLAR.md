@@ -75,7 +75,7 @@
 | A4 | `a4-committee-favored` | ✅ | Barging; L hakem botuna yakın (u=0.9). Fikir: hakem botunun kıçından "çit" vurgusu. | A17 |
 | A12 | `a12-flags` | ✅ | Yalnızca U bayrağı canlı; P/I/siyah varyantları ve 5-4-1-0 sırası eksik. | A2, A13 |
 | İA1 | `ia1-port-approach-pin` | ✅ | Solda bekle, apaz gel, layline üstünde tramola; Z (layline altı) ve Y (geç) hataları. Fikir: K13/K15 ihlali yapan 3. hata teknesi (ceza turu). | A3, A16 |
-| İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. Eksik: yay görseli (eğri), rüzgar gölgesi etkisi görsel değil. Fikir: "yay yok" varyantı. | A5, A6, H5 |
+| İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. S artık hattın uzantısında (pin dışı, hat hizası) bakıyor, sonra hattın altına inip ortaya gidiyor. Eksik: yay görseli (eğri), rüzgar gölgesi etkisi görsel değil. Fikir: "yay yok" varyantı. | A5, A6, H5 |
 | B1 | `b1-rule10` | ✅ | Tek tekne bordalama. Fikir: lee-bow varyantı. | B2 |
 | B8 | `b8-rule18` | ✅ | Zone + bindirme. Fikir: 18.3 zone içinde tramola varyantı. | B9 |
 | C1 | `c1-header-tack` | ✅ | Salınımlı rüzgar. Fikir: pusula okuması katmanı. | C2, C3 |
@@ -91,6 +91,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · İA2: S hattın uzantısından bakar
+- Yapılanlar: Kullanıcı geri bildirimi: S çok aşağıda bekliyordu. S artık (88,452) noktasında, pin dışında tam hattın uzantısında, hakem botuna dönük 4 sn bakıyor; sonra 160° ile hattın altına iniyor, apaz ile ortaya gidiyor. Ortadaki boşluk ve start anı (t=24, ≈ 446,458) eskisiyle aynı. Adımlar t=2 ve t=4'e çekildi, transit katmanı 0-6 sn. `npm run check` temiz.
+- Yarım kalan: yay eğrisi görseli, rüzgar gölgesi görseli, "yay yok" varyantı.
 ### 2026-11-12 · İA2 hat yayı + senaryo kartları
 - Yapılanlar: İA2 (600 px hat, 9 teknelik yay: `crowd[].back` px ile ortadakiler 2.5-3.5 boy geride; S pin tarafından transitle hattı görür, apaz ile ortaya gelir, boşluğa komşularından yukarı yerleşir, sinyalde 2 boy önde; "yay yoksa" adımı). Yeni: `scn.sightline` transit katmanı, `crowd[].back`. NOTLAR'a "Senaryo kartları" tablosu: her senaryo için ayrı sohbet açılabilir, kart güncellenir.
 - Yarım kalan: yayın kendisi için eğri çizim yok (tekne dizilimi yeterli görünüyor); ortadaki filo teknelerinin start sonrası K12 ile fazla yavaşlaması (f6 7 s geç).
