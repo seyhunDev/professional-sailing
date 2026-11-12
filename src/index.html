@@ -4,23 +4,51 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0f1b2a">
+  <meta name="theme-color" content="#0b1724">
   <title>Professional Sailing · Taktik Animasyonları</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- SİMGELER (tek yerde; <use href="#i-..."> ile kullanılır) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-logo" viewBox="0 0 24 24"><path d="M12 2.5 L12 17 L4.5 17 Z" fill="currentColor"/><path d="M13.5 5 C17 8 18.5 12 18.5 17 L13.5 17 Z" fill="currentColor" opacity=".6"/><path d="M3 19 C 7 21.5 17 21.5 21 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6.5" y="5.5" width="4" height="13" rx="1" fill="currentColor"/><rect x="13.5" y="5.5" width="4" height="13" rx="1" fill="currentColor"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M4.5 4.5v4h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 11v5.5M12 7.6v.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3.5 21 8.5 12 13.5 3 8.5z M3.5 12.5 12 17.3l8.5-4.8 M3.5 16.3 12 21l8.5-4.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-boat" viewBox="0 0 24 24"><path d="M12 3c3 3.5 4 8 3.5 15h-7C8 11 9 6.5 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-steps" viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  </svg>
+
   <!-- ÜST ÇUBUK -->
   <header class="topbar">
-    <div class="brand">⛵ <span class="brand-text">Professional <em>Sailing</em></span></div>
-    <button id="btnScenarios" class="tb scn-btn" title="Senaryo seç">
-      <span class="scn-cat" id="curCat"></span>
-      <span class="scn-title" id="curTitle">Senaryo seç</span>
-      <span class="chev">▾</span>
+    <div class="brand" title="Professional Sailing">
+      <span class="brand-mark"><svg><use href="#i-logo"/></svg></span>
+      <span class="brand-text">Professional <em>Sailing</em></span>
+    </div>
+    <button id="btnScenarios" class="scn-btn" title="Senaryo seç" aria-haspopup="dialog">
+      <span class="code-badge" id="curCode"></span>
+      <span class="scn-text">
+        <span class="scn-cat" id="curCat"></span>
+        <span class="scn-title" id="curTitle">Senaryo seç</span>
+      </span>
+      <svg class="chev"><use href="#i-chev-down"/></svg>
     </button>
     <div class="spacer"></div>
-    <button id="btnInfo" class="tb icon-btn" title="Bilgi kartı"><span class="ic">ℹ</span><span class="lbl">Bilgi</span></button>
-    <button id="btnLayers" class="tb icon-btn" title="Katmanlar"><span class="ic">◫</span><span class="lbl">Katmanlar</span></button>
-    <button id="btnFull" class="tb icon-btn" title="Tam ekran"><span class="ic">⛶</span></button>
+    <div class="tool-group">
+      <button id="btnInfo" class="tool" title="Bilgi kartı (i)"><svg><use href="#i-info"/></svg><span class="lbl">Bilgi</span></button>
+      <button id="btnLayers" class="tool" title="Katmanlar"><svg><use href="#i-layers"/></svg><span class="lbl">Katmanlar</span></button>
+      <button id="btnFull" class="tool" title="Tam ekran"><svg><use href="#i-expand"/></svg></button>
+    </div>
   </header>
 
   <!-- SAHNE -->
@@ -42,38 +70,47 @@
     <aside id="infoCard" class="info-card">
       <div class="info-head" id="infoHead">
         <button class="handle" id="btnCollapse" title="Daralt / genişlet"><span></span></button>
-        <div class="info-title-wrap"><div class="info-scn" id="scnTitle"></div></div>
-        <label class="follow" title="Açıkken kart animasyonla birlikte ilerler">
-          <input type="checkbox" id="chkFollow" checked> <span>Canlı takip</span>
+        <div class="info-title-wrap">
+          <div class="step-meta"><span id="stepIdx"></span><span class="dot">·</span><span id="stepTime"></span></div>
+          <div class="info-scn" id="scnTitle"></div>
+        </div>
+        <label class="switch" title="Açıkken kart animasyonla birlikte ilerler">
+          <input type="checkbox" id="chkFollow" checked><span class="track"><span class="knob"></span></span><span class="sw-lbl">Canlı</span>
         </label>
-        <button id="btnInfoClose" class="icon" title="Kapat">✕</button>
+        <button id="btnInfoClose" class="icon" title="Kapat"><svg><use href="#i-close"/></svg></button>
       </div>
+      <div class="step-bar" id="stepBar"></div>
       <div class="info-body">
-        <div class="step-meta"><span id="stepIdx"></span> · <span id="stepTime"></span></div>
         <h3 id="stepTitle"></h3>
         <p id="stepText"></p>
       </div>
       <div class="info-foot">
-        <button id="btnPrev" class="tb">‹ Önceki</button>
-        <button id="btnGoto" class="tb" title="Animasyonu bu adımın anına götür">⤓ Bu ana git</button>
-        <button id="btnNext" class="tb">Sonraki ›</button>
+        <button id="btnPrev" class="nav-btn" title="Önceki adım (←)"><svg><use href="#i-prev"/></svg><span>Önceki</span></button>
+        <button id="btnGoto" class="nav-btn goto" title="Animasyonu bu adımın anına götür"><svg><use href="#i-target"/></svg><span>Bu ana git</span></button>
+        <button id="btnNext" class="nav-btn" title="Sonraki adım (→)"><span>Sonraki</span><svg><use href="#i-next"/></svg></button>
+      </div>
+      <div class="boats-box">
+        <div class="box-head">Tekneler</div>
+        <div class="legend" id="legend"></div>
+        <div class="key" id="roleKey"></div>
       </div>
       <details class="summary-box">
-        <summary>Senaryo özeti ve tekneler</summary>
+        <summary>Senaryo özeti</summary>
         <p id="scnSummary"></p>
-        <div class="legend" id="legend"></div>
       </details>
     </aside>
 
     <!-- KATMANLAR -->
-    <div id="layersMenu" class="popover hidden">
-      <label><input type="checkbox" id="chkWind" checked> Rüzgar çizgileri</label>
-      <label><input type="checkbox" id="chkRungs" checked> Merdiven basamağı</label>
-      <label><input type="checkbox" id="chkLabels" checked> Tekne isimleri</label>
-      <label><input type="checkbox" id="chkTrails"> Tekne izleri</label>
+    <div id="layersMenu" class="popover layers hidden">
+      <div class="pop-title">Katmanlar</div>
+      <label class="switch row-sw"><span class="sw-lbl">Rüzgar çizgileri</span><input type="checkbox" id="chkWind" checked><span class="track"><span class="knob"></span></span></label>
+      <label class="switch row-sw"><span class="sw-lbl">Merdiven basamağı</span><input type="checkbox" id="chkRungs" checked><span class="track"><span class="knob"></span></span></label>
+      <label class="switch row-sw"><span class="sw-lbl">Tekne etiketleri</span><input type="checkbox" id="chkLabels" checked><span class="track"><span class="knob"></span></span></label>
+      <label class="switch row-sw"><span class="sw-lbl">Tekne izleri</span><input type="checkbox" id="chkTrails"><span class="track"><span class="knob"></span></span></label>
+      <div class="pop-foot version" id="versionLabel"></div>
     </div>
 
-    <!-- TEKNE EKLE (telefonda popover) -->
+    <!-- TEKNE EKLE (şimdilik kapalı; kod duruyor) -->
     <div id="addMenu" class="popover add-popover hidden">
       <div class="row">
         <select id="selSide" class="tb"></select>
@@ -92,10 +129,16 @@
     <div id="picker" class="picker hidden" role="dialog" aria-label="Senaryo seç">
       <div class="picker-panel">
         <div class="picker-head">
-          <h2>Senaryolar</h2>
-          <button id="btnPickerClose" class="icon" title="Kapat">✕</button>
+          <div>
+            <h2>Senaryolar</h2>
+            <div class="picker-sub" id="pickerSub"></div>
+          </div>
+          <button id="btnPickerClose" class="icon" title="Kapat (Esc)"><svg><use href="#i-close"/></svg></button>
         </div>
-        <div class="picker-tabs" id="pickerTabs"></div>
+        <div class="picker-tools">
+          <label class="search"><svg><use href="#i-search"/></svg><input id="pickerSearch" type="search" placeholder="Ara: kural, start, layline…" autocomplete="off"></label>
+          <div class="picker-tabs" id="pickerTabs" role="tablist"></div>
+        </div>
         <div class="picker-list" id="pickerList"></div>
       </div>
     </div>
@@ -104,17 +147,19 @@
   <!-- ALT ÇUBUK -->
   <footer class="bottombar">
     <div class="row main-row">
-      <button id="btnPlay" class="primary">▶ Oynat</button>
-      <button id="btnReset" class="tb" title="Başa al">↺</button>
-      <select id="selSpeed" class="tb" title="Hız">
-        <option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option>
-      </select>
-      <input type="range" id="scrub" min="0" max="100" step="0.05" value="0">
-      <span class="time" id="timeLabel">0.0 s</span>
+      <button id="btnPlay" class="play" title="Oynat / duraklat (boşluk)"><svg><use href="#i-play"/></svg></button>
+      <button id="btnReset" class="tool" title="Başa al"><svg><use href="#i-reset"/></svg></button>
+      <div class="timeline">
+        <input type="range" id="scrub" min="0" max="100" step="0.05" value="0" aria-label="Zaman">
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <span class="time" id="timeLabel">0:00</span>
+      <div class="speed" id="speedSeg" role="radiogroup" aria-label="Hız">
+        <button data-v="0.5">0.5×</button><button data-v="1" class="on">1×</button><button data-v="2">2×</button>
+      </div>
       <button id="btnAddMenu" class="tb add-btn" title="Tekne ekle / çıkar">⛵ +</button>
     </div>
     <div class="row add-row" id="addRow"></div>
-    <div class="row version-row"><span class="version" id="versionLabel"></span></div>
   </footer>
 
   <script src="js/engine.js"></script>

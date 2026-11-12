@@ -19,13 +19,13 @@
     startAt: 0,
     rungs: { boat: 'B', from: 1.5 },
     boats: [
-      { id: 'A', name: 'A – Pin ucu', color: '#e4572e',
+      { id: 'A', name: 'Pin ucu', color: '#e4572e',
         start: { x: 336, y: 614, h: 330 },
         segs: [
           { mode: 'closehauled', tack: 'starboard', dur: 5, turn: 0 },
           { mode: 'closehauled', tack: 'port', dur: 8, turn: 1.5 }
         ], v0: 48 },
-      { id: 'B', name: 'B – Hakem botu ucu', color: '#1f77b4',
+      { id: 'B', name: 'Hakem botu ucu', role: 'dogru', color: '#1f77b4',
         start: { x: 644, y: 614, h: 330 },
         segs: [{ mode: 'closehauled', tack: 'starboard', dur: 13, turn: 0 }], v0: 48 }
     ],
@@ -52,7 +52,7 @@
     rungs: { boat: 'M', from: 1.5, to: 7.5 },
     readouts: [{ boat: 'M', from: 7.5, to: 19 }],
     boats: [
-      { id: 'M', name: 'Ölçüm yapan tekne', color: '#2a9d8f',
+      { id: 'M', name: 'Ölçüm yapan', color: '#2a9d8f',
         start: { x: 500, y: 440, h: 15 }, v0: 2,
         segs: [
           { mode: 'hold', h: 15, dur: 7.5, speed: 0.02, turn: 0, note: 'Rüzgara karşı duruyor' },
@@ -87,14 +87,14 @@
     line: { pin: { x: 250, y: 420 }, boat: { x: 750, y: 420 } },
     startAt: 20,
     boats: [
-      { id: 'D', name: 'Doğru zamanlama', color: '#2a9d8f',
+      { id: 'D', name: 'Doğru zamanlama', role: 'dogru', color: '#2a9d8f',
         start: { x: 700, y: 540, h: 290 }, v0: 25,
         segs: [
           { mode: 'heading', h: 290, dur: 4, speed: 0.5, turn: 0 },         // hattın dibine yarım hızla gel
           { mode: 'hold', h: 340, dur: 12.9, speed: 0.05, turn: 1.0 },      // rüzgara baş ver, bekle
           { mode: 'closehauled', tack: 'starboard', dur: 11.1, turn: 0.8 }  // 3 s kala doldur, hızlan
         ] },
-      { id: 'E', name: 'Erken (OCS)', color: '#e76f51',
+      { id: 'E', name: 'Erken (fodepar)', role: 'hata', color: '#e76f51',
         start: { x: 455, y: 492, h: 340 }, v0: 2,
         segs: [
           { mode: 'hold', h: 340, dur: 17.2, speed: 0.05, turn: 0 },
@@ -103,7 +103,7 @@
           { mode: 'heading', h: 180, dur: 2.4, turn: 1.2, note: 'Geri dön' },                  // çizginin altına in
           { mode: 'closehauled', tack: 'starboard', dur: 3.6, turn: 1.2 }
         ] },
-      { id: 'G', name: 'Geç kalan', color: '#8d99ae',
+      { id: 'G', name: 'Geç kalan', role: 'hata', color: '#8d99ae',
         start: { x: 335, y: 495, h: 340 }, v0: 2,
         segs: [
           { mode: 'hold', h: 340, dur: 19.5, speed: 0.05, turn: 0 },
@@ -142,14 +142,14 @@
     rungs: { boat: 'P1', from: 8 },
     laylines: [{ x: 200, y: 480, tack: 'starboard', len: 400, from: 2, label: 'Pin layline\'ı (sancak)' }],
     boats: [
-      { id: 'P1', name: 'P1 – Pin\'de tam zamanında', color: '#2a9d8f',
+      { id: 'P1', name: 'Pin\'de tam zamanında', role: 'dogru', color: '#2a9d8f',
         start: { x: 324, y: 507, h: 310 }, v0: 2,
         segs: [
           { mode: 'hold', h: 310, dur: 3.8, speed: 0.05, turn: 0 },
           { mode: 'closehauled', tack: 'starboard', dur: 3.2, turn: 0.8 },
           { mode: 'closehauled', tack: 'port', dur: 9.5, turn: 1.4, note: 'Tramola → filoyu önden kes' }
         ] },
-      { id: 'P2', name: 'P2 – Layline\'ın altında (sıkışan)', color: '#e76f51',
+      { id: 'P2', name: 'Layline altında, sıkışan', role: 'hata', color: '#e76f51',
         start: { x: 290, y: 546, h: 310 }, v0: 2,
         segs: [
           { mode: 'hold', h: 310, dur: 3.8, speed: 0.05, turn: 0 },
@@ -158,7 +158,7 @@
           { mode: 'heading', h: 118, dur: 4.6, turn: 1.4, note: 'Çizgi dışı → geri dönüyor' },
           { mode: 'closehauled', tack: 'starboard', dur: 3.6, turn: 1.4 }
         ] },
-      { id: 'P3', name: 'P3 – Ortadan güvenli', color: '#1f77b4',
+      { id: 'P3', name: 'Ortadan güvenli', role: 'dogru', color: '#1f77b4',
         start: { x: 684, y: 507, h: 310 }, v0: 2,
         segs: [
           { mode: 'hold', h: 310, dur: 3.8, speed: 0.05, turn: 0 },
@@ -197,21 +197,21 @@
     rungs: { boat: 'L', from: 9 },
     laylines: [{ x: 612, y: 400, tack: 'starboard', len: 330, from: 1, label: 'Hakem botu layline\'ı' }],
     boats: [
-      { id: 'L', name: 'L – Rüzgaraltı, layline\'da (hak sahibi)', color: '#2a9d8f',
+      { id: 'L', name: 'Rüzgaraltı · layline\'da', role: 'hak', color: '#2a9d8f',
         start: { x: 706, y: 612, h: 330 }, v0: 40,
         segs: [
           { mode: 'closehauled', tack: 'starboard', dur: 2.5, turn: 0 },
           { mode: 'hold', h: 355, dur: 1.3, speed: 0.15, turn: 0.8, note: 'Orsa ediyor: "Yer yok!"' },
           { mode: 'closehauled', tack: 'starboard', dur: 14.2, turn: 1.0 }
         ] },
-      { id: 'W', name: 'W – Barging (rüzgarüstünden sokulan)', color: '#e76f51',
+      { id: 'W', name: 'Rüzgarüstü · barging', role: 'hata', color: '#e76f51',
         start: { x: 841, y: 545, h: 285 }, v0: 46,
         segs: [
           { mode: 'heading', h: 285, dur: 2.5, turn: 0, note: 'Barging' },
           { mode: 'heading', h: 240, dur: 2.2, turn: 1.0, note: 'Yol veriyor · K11' },
           { mode: 'closehauled', tack: 'starboard', dur: 13.3, turn: 1.2 }
         ] },
-      { id: 'C', name: 'C – Güvenli: 4 boy aşağıda', color: '#1f77b4',
+      { id: 'C', name: '4 boy aşağıda, güvenli', role: 'dogru', color: '#1f77b4',
         start: { x: 455, y: 462, h: 340 }, v0: 2,
         segs: [
           { mode: 'hold', h: 340, dur: 5, speed: 0.05, turn: 0 },
@@ -249,7 +249,7 @@
     line: { pin: { x: 250, y: 440 }, boat: { x: 750, y: 440 } },
     startAt: 30,
     boats: [
-      { id: 'F', name: 'F – Burnu son dakikada çizgide', color: '#e76f51',
+      { id: 'F', name: 'Burnu çizgide', role: 'hata', color: '#e76f51',
         start: { x: 520, y: 520, h: 340 }, v0: 2,
         segs: [
           { mode: 'hold', h: 340, dur: 12, speed: 0.05, turn: 0 },
@@ -259,7 +259,7 @@
           { mode: 'hold', h: 340, dur: 4.5, speed: 0.05, turn: 1.0 },
           { mode: 'closehauled', tack: 'starboard', dur: 8.5, turn: 0.8 }
         ] },
-      { id: 'T', name: 'T – Temiz: hattın dibinde ama altında', color: '#2a9d8f',
+      { id: 'T', name: 'Hattın dibinde, altında', role: 'dogru', color: '#2a9d8f',
         start: { x: 440, y: 524, h: 340 }, v0: 2,
         segs: [
           { mode: 'hold', h: 340, dur: 27.5, speed: 0.05, turn: 0 },
@@ -297,7 +297,7 @@
     rungs: { boat: 'X', from: 25.5 },
     laylines: [{ x: 250, y: 440, tack: 'starboard', len: 330, from: 0, label: 'Pin layline\'ı — tramola bu çizginin ÜSTÜNDE' }],
     boats: [
-      { id: 'X', name: 'X – Doğru: dışarıda bekle, apaz gel, layline\'ın üstünde tramola', color: '#2a9d8f',
+      { id: 'X', name: 'Apaz gel, layline üstünde tramola', role: 'dogru', color: '#2a9d8f',
         start: { x: 140, y: 530, h: 15 }, v0: 2,
         segs: [
           { mode: 'hold', h: 15, dur: 9, speed: 0.05, turn: 0, note: 'Pin\'in solunda bekliyor' },
@@ -305,7 +305,7 @@
           { mode: 'hold', h: 325, dur: 8.3, speed: 0.03, turn: 1.3, note: 'Tramola → layline üstü, boşluk benim' },
           { mode: 'closehauled', tack: 'starboard', dur: 14, turn: 0.8 }
         ] },
-      { id: 'Z', name: 'Z – HATA: layline\'ın altında tramola', color: '#e76f51',
+      { id: 'Z', name: 'Layline altında tramola', role: 'hata', color: '#e76f51',
         start: { x: 118, y: 585, h: 15 }, v0: 2,
         segs: [
           { mode: 'hold', h: 15, dur: 9.6, speed: 0.05, turn: 0 },
@@ -316,7 +316,7 @@
           { mode: 'heading', h: 95, dur: 2.4, turn: 1.0, note: 'Bordala → herkesin arkasından' },
           { mode: 'closehauled', tack: 'starboard', dur: 10.5, turn: 1.2 }
         ] },
-      { id: 'Y', name: 'Y – HATA: geç geldi, boşluk kapandı', color: '#c77dff',
+      { id: 'Y', name: 'Geç geldi, boşluk kapandı', role: 'hata', color: '#c77dff',
         start: { x: 70, y: 600, h: 15 }, v0: 2,
         segs: [
           { mode: 'hold', h: 15, dur: 14.5, speed: 0.05, turn: 0 },
@@ -359,7 +359,7 @@
     rungs: { boat: 'S', from: 24.5 },
     sightline: { from: 0, to: 9, label: 'Transit: pin\'den hakem botuna bak — hat burada' },
     boats: [
-      { id: 'S', name: 'S – Yayı gören: ortada herkesten yukarı', color: '#2a9d8f',
+      { id: 'S', name: 'Yayı gören, ortada yukarı', role: 'dogru', color: '#2a9d8f',
         start: { x: 115, y: 575, h: 25 }, v0: 2,
         segs: [
           { mode: 'hold', h: 25, dur: 7, speed: 0.05, turn: 0, note: 'Pin tarafından hatta bakıyor' },
@@ -400,10 +400,10 @@
     wind: 0,
     marks: [{ x: 500, y: 90, label: 'Orsa şamandırası', zone: false }],
     boats: [
-      { id: 'S', name: 'Sancak kontra (hak sahibi)', color: '#2a9d8f',
+      { id: 'S', name: 'Sancak kontra', role: 'hak', color: '#2a9d8f',
         start: { x: 760, y: 620, h: 315 }, v0: 55,
         segs: [{ mode: 'closehauled', tack: 'starboard', dur: 14, turn: 0 }] },
-      { id: 'P', name: 'İskele kontra (yol verir)', color: '#e76f51',
+      { id: 'P', name: 'İskele kontra', role: 'yol', color: '#e76f51',
         start: { x: 240, y: 620, h: 45 }, v0: 55,
         segs: [
           { mode: 'closehauled', tack: 'port', dur: 3.6, turn: 0 },
@@ -436,14 +436,14 @@
     rungs: { boat: 'T', from: 12 },
     showWindTrace: true,
     boats: [
-      { id: 'T', name: 'Tramola atan', color: '#2a9d8f',
+      { id: 'T', name: 'Kapatmada tramola atan', role: 'dogru', color: '#2a9d8f',
         start: { x: 680, y: 650, h: 315 }, v0: 20,
         segs: [
           { mode: 'closehauled', tack: 'starboard', dur: 10, turn: 0 },
           { mode: 'closehauled', tack: 'port', dur: 12, turn: 1.5 },
           { mode: 'closehauled', tack: 'starboard', dur: 16, turn: 1.5 }
         ] },
-      { id: 'K', name: 'Devam eden', color: '#e76f51',
+      { id: 'K', name: 'Kontrada devam eden', color: '#e76f51',
         start: { x: 560, y: 650, h: 315 }, v0: 20,
         segs: [{ mode: 'closehauled', tack: 'starboard', dur: 38, turn: 0 }] }
     ],
@@ -470,14 +470,14 @@
     wind: 0,
     marks: [{ x: 450, y: 168, label: 'Orsa şamandırası (iskelede bırak)', zone: true }],
     boats: [
-      { id: 'I', name: 'İçteki (şamandıra yeri hakkı)', color: '#2a9d8f',
+      { id: 'I', name: 'İçteki · yer hakkı', role: 'hak', color: '#2a9d8f',
         start: { x: 830, y: 460, h: 315 }, v0: 40,
         segs: [
           { mode: 'closehauled', tack: 'starboard', dur: 9.3, turn: 0 },
           { mode: 'heading', h: 250, dur: 1.4, turn: 1.4 },
           { mode: 'run', tack: 'starboard', dur: 6.8, turn: 1.8 }
         ] },
-      { id: 'O', name: 'Dıştaki (yer verir)', color: '#e76f51',
+      { id: 'O', name: 'Dıştaki · yer verir', role: 'yol', color: '#e76f51',
         start: { x: 876, y: 420, h: 315 }, v0: 40,
         segs: [
           { mode: 'closehauled', tack: 'starboard', dur: 12.2, turn: 0 },

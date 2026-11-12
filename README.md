@@ -73,8 +73,10 @@ S.push({
   wind: 0,                                    // ya da [{t:0,from:0},{t:10,from:-15}] (salınım)
   line: { pin:{x:250,y:420}, boat:{x:750,y:420} },   // isteğe bağlı start çizgisi
   marks: [{ x:480, y:170, label:'...', zone:true }],  // isteğe bağlı şamandıra (+zone)
-  boats: [{ id:'L', name:'Rüzgaraltı', color:'#2a9d8f', start:{x:600,y:600,h:315}, v0:50,
+  boats: [{ id:'L', name:'Rüzgaraltı', role:'hak', color:'#2a9d8f', start:{x:600,y:600,h:315}, v0:50,
             segs:[{mode:'closehauled',tack:'starboard',dur:6},{mode:'heading',h:300,dur:4,turn:1}] }],
+  // name: kısa (≤ 25 harf), uzun açıklama adımlarda. role: 'hak' (hak sahibi) | 'yol' (yol verir)
+  //        | 'dogru' (doğru örnek) | 'hata' (hatalı) — sahnede etiket rengi + simge, kartta rozet olur.
   steps: [{ t:0, title:'...', text:'...' }],
   addBoat: { pin:{x:..,y:..}, middle:{..}, committee:{..} }
 });
