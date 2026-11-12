@@ -117,6 +117,11 @@
 
 ## Oturum günlüğü (en yeni üstte)
 
+### 2026-11-12 · Simülatör: tekne hızı ayarı
+- Kullanıcı: seçilen teknenin (kendi teknesi dahil) hızını kolayca ayarlamak, hızlı teknenin önemini göstermek istedi.
+- `speedK` (0.9 / 0.95 / 1 / 1.05 / 1.1): `makeBoat` alanı, `step` hızında çarpan (sağanak ve pis rüzgarla birlikte), `command('speed')`. Kurulumda tekne seçince "Hız" segmenti; kendi teknen için alt çubukta "Hız" seçimi (yarışta da, o andan yeniden hesaplanır). Sıralamada "+10% hız". Tekne seçiliyken panelde nasıl kullanılır listesi gizlenir, ayarlar üstte görünür.
+- Etki (12 tekne, 3 rüzgar): +10% genellikle ilk 1-5, −10% 7-8. Sıra kalabalık yüzünden gürültülü.
+
 ### 2026-11-12 · Simülatör: alt çubuk düzeni ve rota düzenleyici
 - Kullanıcı (iPad'den): alt düğmeler düzensiz, 3 satıra taşıyordu; rota çizerken bitirmek belirsizdi, bıraktıktan sonra fazladan bacaklar ekleniyordu, geri alma yoktu.
 - Alt çubuk: denetim grupları (`.cg`: büyük harf etiket üstte, gövde altta, aynı 38 px yükseklik, aralarında ince çizgi). Rüzgar ve Filo "stepper" (− değer +), Sağanak ve Göster segment. Masaüstünde tek satır; tablette (641-1279 px, dikey ve yatay) üst satır "Senin teknen", alt satır diğer dört grup; telefonda yana kayan tek satır, "Senin teknen" başta.

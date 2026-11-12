@@ -59,6 +59,7 @@ Framework bağımlılığı yok; ileride gerekirse SVG katmanı olduğu gibi Rea
 - **Senin teknen:** otomatik gider; **Tramola** düğmesi (klavye `T`) ya da taktik seçimiyle müdahale edersin.
 - **Önceden hesaplama:** start'ta yarış sonuna kadar hesaplanır; zaman çubuğuyla ileri-geri sarılır, panelde tahmini sıra görünür. Rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır.
 - **Rota çiz:** alt çubuktaki **Rota** düğmesine bas; sahnenin üstünde rota çubuğu açılır (Geri al, Temizle, Vazgeç, yeşil Tamam). Taslak Tamam'a kadar uygulanmaz. **Açılı** (varsayılan): her sürükleme düz bir bacak, orsadan darsa rüzgara 45°'ye oturur, sonraki bacak tramola noktasından başlar; "Bitti" ile bitir. **Serbest**: parmakla istediğin gibi çiz; teknen çizgiyi izler, rüzgara karşı kısımlarda zikzak atar, rota bitince şamandıraya gider. Yarışta yeni rota çizilebilir (o andan yeniden hesaplanır), × siler.
+- **Tekne hızı:** bir tekneye dokunup Hız satırından −10% … +10% seç; kendi teknen için alt çubuktaki Hız seçimi yarışta da çalışır.
 - **Protesto ve ceza:** yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; iki tur (720°) ceza atar, cezasını atmadan bitiremez. Bir tekneyi (kurulumda "Davranış") ya da kendi tekneni (alt çubukta "Yol vermez") kural bilmeyen tekne yapabilirsin.
 - **Hız ve pis rüzgar:** teknelerin altında knot; sağanakta yeşil ↑, başka teknenin rüzgar gölgesinde kırmızı ↓ (en fazla %30 yavaş). "Pis rüzgar" düğmesi gölge konilerini gösterir.
 

@@ -93,6 +93,7 @@
             <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin).</li>
             <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
             <li><b>Rota:</b> alttaki <b>Rota</b> düğmesine bas; üstte rota çubuğu açılır. <b>Açılı</b> (varsayılan): teknenden başlayarak sürükle; her sürükleme düz bir bacaktır ve orsadan darsa orsa açısına (rüzgara 45°) oturur. <b>Serbest</b>: parmağınla istediğin gibi çiz (hatalı gidişleri göstermek için). <b>Geri al</b> son bacağı siler; bitince yeşil <b>Tamam</b>. Yarışta da rotayı düzenleyebilirsin.</li>
+            <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>
             <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
             <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
           </ol>
@@ -106,6 +107,10 @@
           <div class="sel-row wrap">
             <span class="lbl">Taktik</span>
             <div class="seg" id="selPersona"><button data-v="sol">Sol</button><button data-v="orta">Orta</button><button data-v="sag">Sağ</button><button data-v="saganak">Sağanak</button></div>
+          </div>
+          <div class="sel-row wrap">
+            <span class="lbl">Hız</span>
+            <div class="seg" id="selSpeed" title="Teknenin hızı (tekne ve denizci farkı)"><button data-v="0.9">−10%</button><button data-v="0.95">−5%</button><button data-v="1">Normal</button><button data-v="1.05">+5%</button><button data-v="1.1">+10%</button></div>
           </div>
           <div class="sel-row">
             <span class="lbl">Davranış</span>
@@ -163,6 +168,9 @@
           <button class="tb accent" id="btnTack" title="Tramola (T)"><svg class="ci"><use href="#i-tack"/></svg>Tramola</button>
           <select class="tb" id="selMinePersona" title="Taktik">
             <option value="orta">Taktik: Orta</option><option value="sol">Taktik: Sol taraf</option><option value="sag">Taktik: Sağ taraf</option><option value="saganak">Taktik: Sağanağa git</option><option value="manuel">Taktik: Yalnız komutla</option>
+          </select>
+          <select class="tb" id="selMineSpeed" title="Teknenin hızı (tekne ve denizci farkı)">
+            <option value="0.9">Hız −10%</option><option value="0.95">Hız −5%</option><option value="1">Hız normal</option><option value="1.05">Hız +5%</option><option value="1.1">Hız +10%</option>
           </select>
           <button class="tb" id="btnRoute" title="Teknenin rotasını çiz / düzenle"><svg class="ci"><use href="#i-route"/></svg><span class="lbl2">Rota</span></button>
           <button class="tb tgl warn" id="btnMineRules" title="Senin teknen yol vermesin: kuralları bilmeyen tekne gibi davranır, protesto edilir">Yol vermez</button>
