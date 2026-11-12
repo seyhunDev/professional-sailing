@@ -20,6 +20,7 @@
 - Ek tekneler start senaryolarında **hat üstünde slot** alır (`scn.startSlots`, 0=pin 1=hakem botu; slotlar dolunca 2. sıra 70 px geride). Hızlanma mesafesi hesaplanıp bekleme konumu geriye yerleştirilir; sinyalde hattı uçlar arasından geçerler. Erken geçen "ERKEN · OCS", uçların dışından geçen "Çizgi dışından geçti!" notu alır. Beklerken kural manevrası yapılmaz.
 - Ek tekneler: kullanıcı ekler; `rules.js` tüm ek tekneleri birlikte simüle eder. Karşılaşmalarda RRS 10 (bordalama ya da yetmezse tramola), 11 (rüzgarüstü orsalar), 12 (arkadaki yavaşlar), 14 (hak sahibi de temas önler) uygulanır; manevra notu teknenin üstünde 2.5 s görünür. Scripted tekneler rotalarını değiştirmez (ders onlar).
 - Kategoriler: Kurallar / Taktik / Teknik; KONULAR.md de bu üç bölüme ayrıldı (Teknik = G1-G7, Aşama 1 ile).
+- **Yarış simülatörü** (`src/sim.html`, ana sayfada üst çubukta "Simülatör"): kullanıcı tekneleri sürükleyip yerleştirir, rüzgarı ±5° döndürür, sol/sağ sağanak ekler, start verir; tekneler orsa şamandırasına gidip iskeleden döner, sıralanır. Çekirdek `js/sim-core.js` (canlı adım, DOM yok), arayüz `js/sim.js`. Kurallar kendi "kaçış seçici"siyle (aday rotalar arasında en güvenlisi): K10/11/12/13/14/18/22. Kişilikler: sol/orta/sağ/sağanak avcısı/manuel. Geri sarma: 0.1 s kareler. Denetim: `scripts/check-sim.mjs` (5 durum, herkes bitirmeli, temas ≤6).
 
 ## Sıradaki işler (öncelik sırasıyla, her biri bir sohbete uygun)
 > Karar (2026-11-12): **Önce Taktik → Start (A) bitirilecek, sonra Kurallar, sonra Teknik.** Liste: KONULAR.md → A1–A15.
@@ -31,6 +32,8 @@
   - **A8 · Bekleme teknikleri** (bu paketle birleşsin): orsalayıp durma, yelkeni boşaltma, geri yelken (backing) ile yavaşlama/geri gitme, ikili tramola, hattın 2-4 boy gerisinde yer tutma; hızlanma mesafesi.
   - **Motor gereksinimleri:** scripted teknelere bekleme (`hold`) var; eklenecekler: `backing` (yelken geri basılı, tekne geri gidiyor; yelken karnı ters), rüzgara baş vermişken yelkenin tamamen boş çizilmesi (var), 8-10 tekne için etiket seyrekleştirme (yalnızca manevra yapanın notu), kırmızı "hatalı hareket" rozeti (`note` için `kind:'fault'`), daha geniş hat için `addBoat` slotları, Kural 13 ve 22 kural motoruna (ek tekneler) eklenmeli.
   - Teslim: 3 senaryo (A16, A17, A8) + KONULAR.md ✅ + `npm run check` temiz + ekran görüntüleri.
+- [x] **Yarış simülatörü – 1. aşama** (2026-11-12): sayfa, sürükle-bırak, rüzgar, sağanak, start/OCS, layline tramolası, şamandıra dönüşü, sıralama, olay listesi, Tramola komutu, geri sarma.
+- [ ] **Yarış simülatörü – 2. aşama:** rüzgar gölgesi (dirty air) etkisi, salınımlı rüzgar (otomatik kayma), sağanağın rüzgarla sürüklenmesi, şamandırada tam K18 (zone, iç tekneye yer), pupa ayağı ve bitiş hattı, senaryoyu linkle paylaşma, tekne döndürerek yerleştirme. Şamandırada 12 teknede 3-6 temas oluyor; zone mantığıyla azaltılabilir.
 - [ ] **Uygulama adı (ayrı sohbet):** "Professional Sailing" muhtemelen kullanımda. Yeni isim kriterleri: kısa, akılda kalıcı, Türkçe sporcuya da uluslararası kitleye de uyan, alan adı / GitHub adı boş, "taktik + yelken + öğrenme" çağrışımı. 10-15 aday üret, 3'e indir, kullanıcıya sun. Seçilince: GitHub depo adı, site adresi, `index.html` başlığı, README, CLAUDE.md, NOTLAR.md güncellenir (yayın adresi değişeceği için kullanıcıya haber verilir).
 - [ ] **Start paketi 2:** A5 hat yayı (line sag) ve transit (A6) · A7 rüzgaraltına boşluk (hole) · A8 bekleme teknikleri.
 - [ ] **Start paketi 3:** A9 start sonrası ilk 2 dk (temiz hava, lane) · A10 iskele kontra start · A11 Vanderbilt yaklaşması.
@@ -46,6 +49,7 @@
 - [ ] **Kullanıcı senaryoları (sonraki aşama):** Firebase Auth + Firestore, link ile paylaşım, Firebase Hosting.
 
 ## Kararlar
+- 2026-11-12 · **Simülatör ayrı sayfa, ayrı çekirdek.** `sim-core.js` canlı (adım adım) çalışır çünkü rüzgar/sağanak yarış sırasında değişir; `rules.js` önceden hesaplı rota üretir ve senaryolar için aynen kalır (`approach`, `clearAstern`, `lineSide` paylaşılır). Simülatörde yol veren tekne aday rotalar (bordala, orsala, yavaşla, tramola) arasından temas riskini en iyi azaltanı seçer; hak sahibi rotasını korur, yalnızca temas kaçınılmazsa (K14) yavaşlar. Şamandıra iskeleden dönülür; sıra = dönüş sırası. Derleme tüm `src/*.html` sayfalarını işler.
 - 2026-11-12 · **Tekne rolü yazıyla değil rozetle:** `boats[].role` alanı (hak/yol/dogru/hata) eklendi, adlardaki "(hak sahibi)", "X –" önekleri kaldırıldı. Sebep: kullanıcı rüzgarüstü/rüzgaraltı, hak sahibi gibi bilgilerin daha az yazıyla, görsel verilmesini istedi. Yeni senaryolarda `name` kısa tutulur, `role` verilir.
 - 2026-11-12 · **Arayüz yeniden tasarım (v3):** simgeler `index.html` başındaki SVG `<symbol>` setinden (`#i-play` vb.), bağımlılık/yazı tipi eklenmedi. Renk belirteçleri `:root` içinde (`--c-taktik`, `--hak`, …). Animasyon/motor koduna dokunulmadı; yalnızca etiket ve HUD çizimi (`drawLabel`, `drawHud`) değişti. HUD (pusula + sayaç) ekran boyuna göre ölçeklenir.
 - 2026-11-12 · **Yığın: vanilla HTML/SVG/JS.** Next.js/Tailwind şimdilik yok: motor framework'ten bağımsız, GitHub Pages statik, SSR gereksiz, SVG+rAF React'te gereksiz karmaşıklık. Editör aşamasında Vite+React yeniden değerlendirilecek. Firebase, Next.js gerektirmez.
@@ -94,6 +98,12 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · Yarış simülatörü (1. aşama)
+- Kullanıcı isteği: hazır animasyonlardan ayrı, kendi kurduğu yarış. Karar (kullanıcı): senin teknen otomatik gider + Tramola / taktik komutları.
+- Yapılanlar: `sim.html` + `css/sim.css` + `js/sim-core.js` + `js/sim.js`; ana sayfaya "Simülatör" bağlantısı; `build.mjs` çoklu sayfa; `scripts/check-sim.mjs` `npm run check`e eklendi. Masaüstü 1400×800, iPhone 13, iPad Pro 11 ekran görüntüleri kontrol edildi.
+- Yarım kalan: 2. aşama listesi "Sıradaki işler"de. Kalabalık şamandıra dönüşünde birkaç temas oluyor (olay listesinde kırmızı).
+- Sonraki sohbete not: simülatör parametreleri `sim-core.js` başında (hat, şamandıra, START_AT=12 s × CLOCK_SCALE 5 = 1:00, GUST_GAIN). Varsayılan filo `defaultFleet`.
 ### 2026-11-12 · Arayüz tasarımı v3 (profesyonelleştirme)
 - Yapılanlar: üst çubuk, senaryo seçici (arama + ızgara kartlar + meta), alt çubuk (adım işaretli zaman çizelgesi, hız düğmeleri), bilgi kartı (adım çubuğu, Tekneler + rol rozetleri), Katmanlar menüsü (anahtarlar + sürüm), HUD (pusula çentikleri, sayaç kutusu, 5 sn kala kırmızı). Sahnede tekne etiketi kompakt rozet. Tüm senaryolarda tekne adları kısaltıldı + `role`. Masaüstü 1400×800, iPad Pro 11 yatay/dikey, iPhone 13 dikey/yatay ekran görüntüleriyle kontrol edildi; `npm run check` temiz.
 - Yarım kalan: dikey telefonda parkur hâlâ küçük (eski konu); B8'de şamandıra etiketi "Orsa şamandırası (…)" senaryo metninde. Sahnedeki adım notları (ör. "Yol veriyor · K11") aynı sarı yazı; istenirse onlar da rozet yapılabilir.

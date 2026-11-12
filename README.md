@@ -47,6 +47,18 @@ Framework bağımlılığı yok; ileride gerekirse SVG katmanı olduğu gibi Rea
 - Bilgi kartı: **Canlı takip** açıkken animasyonla birlikte adım adım ilerler. Önceki/Sonraki ile kendiniz gezerseniz canlı takip kapanır; **Bu ana git** animasyonu o adımın anına götürür.
 - Klavye: Boşluk oynat/duraklat, ← → adımlar arasında gezinme, `i` bilgi kartı.
 
+### Yarış simülatörü (`sim.html`)
+
+Üst çubuktaki **Simülatör** bağlantısıyla açılır. Hazır animasyonlardan bağımsızdır:
+
+- **Kurulum:** tekneleri sürükleyip start hattının dibine yerleştir; turuncu tekne senin teknen. Bir tekneye dokunup kontrasını (sancak/iskele), taktiğini (sol / orta / sağ / sağanak avcısı) değiştir ya da onu "benim teknem" yap. Filo 2-16 tekne.
+- **Rüzgar:** ◀ ▶ ile 5° döndür (yarış sırasında da). Hat avantajı (pin / hakem botu) ve layline'lar anında güncellenir; bütün tekneler rotasını uydurur.
+- **Sağanak (gust):** sol ya da sağ tarafa ekle, sürükleyerek taşı. İçindeki tekneler %25 hızlı; "sağanak avcısı" tekneler oraya yönelir.
+- **Start:** 1 dakikalık geri sayım; tekneler hattın dibinde bekler, zamanı gelince doldurup hattı geçer. Erken geçen OCS olur ve geri döner. Sonra herkes orsa şamandırasına gider (layline'da tramola) ve şamandırayı iskeleden döner; sıra dönüş sırasıdır.
+- **Kurallar:** K10, K11, K12, K13, K14, K18 (şamandırada yer ver), K22 (OCS dönen tekne yol verir). Yol veren teknenin üstünde not çıkar, olay listesine yazılır; temaslar kırmızı.
+- **Senin teknen:** otomatik gider; **Tramola** düğmesi (klavye `T`) ya da taktik seçimiyle müdahale edersin.
+- **Geri sar:** zaman çubuğuyla herhangi bir ana dön; oradan rüzgarı/sağanağı değiştirip yeniden oynat.
+
 ## Dosya yapısı
 
 ```
@@ -57,6 +69,10 @@ src/
   js/rules.js         kural motoru: eklenen tekneler K10/K11/K12/K14'e göre manevra yapar
   js/scenarios.js     senaryo tanımları (A1, A2, B1, B8, C1 ...)
   js/app.js           çizim (SVG), zaman döngüsü, kontroller, bilgi kartı, tekne ekleme
+  sim.html            yarış simülatörü sayfası (css/sim.css)
+  js/sim-core.js      simülatör çekirdeği (DOM yok): canlı adım, taktik, yol hakları, sıralama
+  js/sim.js           simülatör arayüzü: sürükle-bırak, rüzgar/sağanak, geri sarma, panel
+scripts/check-sim.mjs simülatör denetimi (npm run check içinde)
 scripts/build.mjs     derleme: hash'li dosya adları + sürüm damgası → dist/
 .github/workflows/    main'e push → otomatik yayın
 KONULAR.md            müfredat / konu listesi ve durumları
