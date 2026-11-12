@@ -9,7 +9,8 @@
 - Yeni kategori **İleri Taktik** (4. sekme; `category: 'İleri Taktik'`), KONULAR.md → H bölümü. İlk senaryo İA1.
 - Senaryo alanları: `clockScale` (sayaç gerçek zaman çarpanı, ör. 4 → 30 s animasyon = 2 dk), `prepFlag` ('P','I','U','Siyah') + `flagDownAt` (1 dk kala bayrak iner).
 - Hazır senaryolar (11): A12 bayraklar, İA1 pin dışında bekleme, İA2 hat yayı dahil; A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
-- Arayüz: tam ekran sahne; üst çubukta **senaryo seçici** (kategori sekmeleri Taktik/Kurallar/Teknik, alt konu başlıkları, özetli kartlar), Bilgi, Katmanlar, tam ekran; alt çubuk (oynat, hız, zaman çubuğu, tekne ekle/çıkar); canlı takipli bilgi kartı.
+- Arayüz (v3, 2026-11-12): tam ekran sahne; üst çubukta logo + **senaryo düğmesi** (kategori renkli kod rozeti, kategori · konu, başlık), SVG simgeli Bilgi / Katmanlar / tam ekran. **Senaryo seçici** ortada modal (telefonda tam ekran): arama, kategori sekmeleri (renk noktası + sayı), konu başlıklı 2-3 sütunlu kart ızgarası (kod, başlık, özet, süre/tekne/adım). Alt çubuk: yuvarlak oynat, başa al, **adım işaretli zaman çizelgesi** (işarete tıkla → o ana git), dk:sn, hız düğmeleri (telefonda tek düğme, dokundukça değişir). Bilgi kartı: adım çubuğu (tıklanabilir), Canlı anahtarı, simgeli Önceki / Bu ana git / Sonraki, **Tekneler** listesi (renkli kimlik + kısa ad + rol rozeti). Sürüm damgası Katmanlar menüsünün altında.
+- **Tekne etiketi** (sahnede): küçük rozet = [rol simgesi] KİMLİK [S/İ kutusu]. Rol (`boats[].role`: `hak` hak sahibi ✓ yeşil, `yol` yol verir ! sarı, `dogru` doğru ✓ yeşil, `hata` hata ✕ kırmızı) etiket kenarı ve simgesiyle; kontra yeşil S (sancak) / kırmızı İ (iskele) kutusuyla (seyir feneri renkleri). Tekne adları kısa (≤25 harf); uzun açıklama adımlara.
 - **Duyarlı düzen** (3 sınıf): bilgisayar (>1100 px: kart sağ üstte, tekne ekle alt çubukta), tablet (≤1100: ikon düğmeler; dikeyde kart SAĞ ÜSTTE geniş (64vw, maks %44 yükseklik), parkur ekranın alt kısmına kaydırılır: `fitViewBox` dikey fazlalığın %68'ini üste verir; telefonda tersi %22), telefon (≤640 px ya da yükseklik ≤460: kart alttan açılır sayfa + daraltma tutamacı, tekne ekle popover'da, seçici tam ekran). Dokunma hedefleri ≥44 px, iOS güvenli alan payları.
 - **Engel kaçınma** (`engine.avoidDir`): şamandıra, pin ve hakem botu engeldir; önünde engel olan tekne (scripted ya da eklenen) kendiliğinden yana kaçıp rotaya döner. `npm run check` (`scripts/check-scenarios.mjs`) her senaryoda alan dışı, çarpışma, engele yaklaşma ve start hattı geçişini denetler; `expectOutside` / `expectEarly` ile bilinçli istisnalar.
 - Terim: start hattının şamandıra ucu **pin**; "orsa şamandırası" yalnızca parkurun rüzgarüstü şamandırası için.
@@ -45,6 +46,8 @@
 - [ ] **Kullanıcı senaryoları (sonraki aşama):** Firebase Auth + Firestore, link ile paylaşım, Firebase Hosting.
 
 ## Kararlar
+- 2026-11-12 · **Tekne rolü yazıyla değil rozetle:** `boats[].role` alanı (hak/yol/dogru/hata) eklendi, adlardaki "(hak sahibi)", "X –" önekleri kaldırıldı. Sebep: kullanıcı rüzgarüstü/rüzgaraltı, hak sahibi gibi bilgilerin daha az yazıyla, görsel verilmesini istedi. Yeni senaryolarda `name` kısa tutulur, `role` verilir.
+- 2026-11-12 · **Arayüz yeniden tasarım (v3):** simgeler `index.html` başındaki SVG `<symbol>` setinden (`#i-play` vb.), bağımlılık/yazı tipi eklenmedi. Renk belirteçleri `:root` içinde (`--c-taktik`, `--hak`, …). Animasyon/motor koduna dokunulmadı; yalnızca etiket ve HUD çizimi (`drawLabel`, `drawHud`) değişti. HUD (pusula + sayaç) ekran boyuna göre ölçeklenir.
 - 2026-11-12 · **Yığın: vanilla HTML/SVG/JS.** Next.js/Tailwind şimdilik yok: motor framework'ten bağımsız, GitHub Pages statik, SSR gereksiz, SVG+rAF React'te gereksiz karmaşıklık. Editör aşamasında Vite+React yeniden değerlendirilecek. Firebase, Next.js gerektirmez.
 - 2026-11-12 · **Yayın: GitHub Actions + hash'li derleme.** Sebep: Pages'in 10 dk önbelleği yeni HTML'i eski CSS/JS ile eşleştirdi. `scripts/build.mjs` dosya adına içerik özeti ekler.
 - 2026-11-12 · **Yeni depo** `seyhunDev/professional-sailing`; eski `python_deneme` terk edildi.
@@ -91,6 +94,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 · Arayüz tasarımı v3 (profesyonelleştirme)
+- Yapılanlar: üst çubuk, senaryo seçici (arama + ızgara kartlar + meta), alt çubuk (adım işaretli zaman çizelgesi, hız düğmeleri), bilgi kartı (adım çubuğu, Tekneler + rol rozetleri), Katmanlar menüsü (anahtarlar + sürüm), HUD (pusula çentikleri, sayaç kutusu, 5 sn kala kırmızı). Sahnede tekne etiketi kompakt rozet. Tüm senaryolarda tekne adları kısaltıldı + `role`. Masaüstü 1400×800, iPad Pro 11 yatay/dikey, iPhone 13 dikey/yatay ekran görüntüleriyle kontrol edildi; `npm run check` temiz.
+- Yarım kalan: dikey telefonda parkur hâlâ küçük (eski konu); B8'de şamandıra etiketi "Orsa şamandırası (…)" senaryo metninde. Sahnedeki adım notları (ör. "Yol veriyor · K11") aynı sarı yazı; istenirse onlar da rozet yapılabilir.
+- Sonraki sohbete not: yeni senaryoda her scripted tekneye kısa `name` + `role` ver; kalabalık (`crowd`) teknelerinde rol yok, gri numara.
 
 ### 2026-11-12 · İA2: S hattın uzantısından bakar
 - Yapılanlar: Kullanıcı geri bildirimi: S çok aşağıda bekliyordu. S artık (88,452) noktasında, pin dışında tam hattın uzantısında, hakem botuna dönük 4 sn bakıyor; sonra 160° ile hattın altına iniyor, apaz ile ortaya gidiyor. Ortadaki boşluk ve start anı (t=24, ≈ 446,458) eskisiyle aynı. Adımlar t=2 ve t=4'e çekildi, transit katmanı 0-6 sn. `npm run check` temiz.

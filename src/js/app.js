@@ -12,6 +12,17 @@
   const HULL = 50;                 // tekne boyu (px)
   const COURSE = { w: 1000, h: 680 };   // senaryo koordinat alanı
   const EXTRA_COLORS = ['#ffd166', '#c77dff', '#90be6d', '#f9844a', '#48cae4', '#f94144', '#b5e48c'];
+  const CAT_COLORS = { 'Taktik': 'var(--c-taktik)', 'İleri Taktik': 'var(--c-ileri)', 'Kurallar': 'var(--c-kural)', 'Teknik': 'var(--c-teknik)' };
+  // tekne rolleri: sahnede etiket kenarı + simge, kartta rozet
+  const ROLES = {
+    hak:   { label: 'Hak sahibi', glyph: '✓', color: '#34d399' },
+    yol:   { label: 'Yol verir',  glyph: '!', color: '#fbbf24' },
+    dogru: { label: 'Doğru',      glyph: '✓', color: '#34d399' },
+    hata:  { label: 'Hata',       glyph: '✕', color: '#f87171' }
+  };
+  const splitTitle = t => { const m = t.match(/^(\S+?\d+[a-z]?)\s*·\s*(.*)$/); return m ? [m[1], m[2]] : ['', t]; };
+  const fmtClock = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const CROWD_COLORS = ['#c9d6e3', '#b8c7d6', '#aab9c9', '#d5dde6', '#bfcbd8', '#a3b3c4', '#cdd7e1', '#b0bfcf', '#dbe3ea', '#9fb0c3'];
 
   const state = {
@@ -52,16 +63,47 @@
     $('scrub').max = scn.duration;
     $('scnTitle').textContent = scn.title;
     $('scnSummary').textContent = scn.summary;
-    $('curTitle').textContent = scn.title; $('curCat').textContent = scn.category + (scn.topic ? ' › ' + scn.topic : '');
+    const [code, ttl] = splitTitle(scn.title);
+    $('curCode').textContent = code; $('curTitle').textContent = ttl;
+    $('curCat').textContent = scn.category + (scn.topic ? ' · ' + scn.topic : '');
+    $('btnScenarios').style.setProperty('--cat', CAT_COLORS[scn.category] || 'var(--accent)');
+    document.title = `${scn.title} · Professional Sailing`;
     document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', c.dataset.id === scn.id));
-    buildLegend(); buildSideOptions(); drawCourse(); updatePlayButton();
+    buildLegend(); buildTimeline(); buildSideOptions(); drawCourse(); updatePlayButton();
     showStep(0, false); render();
   }
+  // Tekne listesi: renkli kimlik + kısa ad + rol rozeti; filo tek satırda özetlenir
   function buildLegend() {
     const c = $('legend'); c.innerHTML = '';
-    for (const b of [...state.boats, ...state.extras]) {
-      const s = document.createElement('span'); s.style.setProperty('--c', b.color); s.textContent = b.name; c.appendChild(s);
+    const used = new Set();
+    for (const b of state.boats) {
+      const r = ROLES[b.role]; if (r) used.add(b.role);
+      const row = document.createElement('div'); row.className = 'boat-row'; row.title = b.name + (r ? ' · ' + r.label : '');
+      row.innerHTML = `<span class="boat-id" style="--c:${b.color}">${esc(b.id)}</span><span class="boat-name">${esc(b.name)}</span>` +
+        (r ? `<span class="role" style="--r:${r.color}"><i>${r.glyph}</i>${r.label}</span>` : '');
+      c.appendChild(row);
     }
+    const crowd = state.extras.filter(b => b.crowd).length;
+    if (crowd) {
+      const row = document.createElement('div'); row.className = 'boat-row crowd-row';
+      row.innerHTML = `<span class="boat-id">1–${crowd}</span><span class="boat-name">Filo: kurallara göre hareket eden ${crowd} tekne</span>`;
+      c.appendChild(row);
+    }
+    const key = $('roleKey');
+    key.innerHTML = state.show.labels ? '<span><b class="k s">S</b> sancak kontra</span><span><b class="k i">İ</b> iskele kontra</span><span>etiket kenarı = rol</span>' : '';
+  }
+  // Zaman çizelgesi: her adım için tıklanabilir işaret; kartta adım çubuğu
+  function buildTimeline() {
+    const scn = state.scn, ticks = $('ticks'), bar = $('stepBar');
+    ticks.innerHTML = ''; bar.innerHTML = '';
+    scn.steps.forEach((st, i) => {
+      const t = document.createElement('button'); t.style.left = (st.t / scn.duration * 100) + '%'; t.title = `${i + 1}. ${st.title}`;
+      t.onclick = () => { state.t = st.t; state.playing = false; updatePlayButton(); if (!state.follow) showStep(i, false); render(); };
+      ticks.appendChild(t);
+      const b = document.createElement('button'); b.title = `${i + 1}. ${st.title}`; b.setAttribute('aria-label', `Adım ${i + 1}`);
+      b.onclick = () => browse(i);
+      bar.appendChild(b);
+    });
   }
   function buildSideOptions() {
     const sel = $('selSide'); sel.innerHTML = '';
@@ -79,8 +121,9 @@
     const steps = state.scn.steps; i = Math.max(0, Math.min(steps.length - 1, i));
     const changed = i !== state.stepIdx; state.stepIdx = i;
     const s = steps[i];
-    $('stepIdx').textContent = `Adım ${i + 1}/${steps.length}`;
-    $('stepTime').textContent = `t = ${s.t.toFixed(1)} s`;
+    $('stepIdx').textContent = `Adım ${i + 1} / ${steps.length}`;
+    $('stepTime').textContent = `${s.t.toFixed(1)} sn`;
+    [...$('stepBar').children].forEach((b, k) => { b.classList.toggle('cur', k === i); b.classList.toggle('done', k < i); });
     $('stepTitle').textContent = s.title; $('stepText').textContent = s.text;
     $('btnPrev').disabled = i === 0; $('btnNext').disabled = i === steps.length - 1;
     if (flash && changed) { const c = $('infoCard'); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
@@ -165,18 +208,38 @@
       fill: 'rgba(255,255,255,0.85)', stroke: '#fff', 'stroke-width': 1 }, g);
     el('line', { x1: 0, y1: my, x2: tipX.toFixed(1), y2: tipY.toFixed(1), stroke: '#222', 'stroke-width': 1.5 }, g);
     el('circle', { cx: 0, cy: my, r: 1.8, fill: '#222' }, g);
-    if (state.show.labels) {
-      const lbl = el('text', { x: s.x.toFixed(1), y: (s.y + 40).toFixed(1), 'text-anchor': 'middle', fill: '#fff', 'font-size': 12, 'font-weight': 600,
-        'paint-order': 'stroke', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 3 }, parent);
-      lbl.textContent = b.crowd ? b.id : `${b.id} · ${sail.tack === 'starboard' ? 'sancak' : 'iskele'}`;
-      if (b.crowd) { lbl.setAttribute('font-size', 10); lbl.setAttribute('font-weight', 400); lbl.setAttribute('y', (s.y + 36).toFixed(1)); }
-    }
+    if (state.show.labels) drawLabel(parent, b, s, sail);
     if (s.note) {
       const fault = /^HATA/.test(s.note);
       const n = el('text', { x: s.x.toFixed(1), y: (s.y - 36).toFixed(1), 'text-anchor': 'middle', fill: fault ? '#ff5d5d' : '#ffd166', 'font-size': 12, 'font-weight': 700,
         'paint-order': 'stroke', stroke: 'rgba(0,0,0,.7)', 'stroke-width': 3 }, parent);
       n.textContent = s.note;
     }
+  }
+
+  // Etiket: tekne altında küçük rozet. [rol simgesi] KİMLİK | S/İ (kontra). Kenar rengi rolü gösterir.
+  function drawLabel(parent, b, s, sail) {
+    const x = s.x, y = s.y + 36;
+    if (b.crowd) {
+      el('text', { x: x.toFixed(1), y: y.toFixed(1), 'text-anchor': 'middle', fill: 'rgba(255,255,255,.75)', 'font-size': 10,
+        'paint-order': 'stroke', stroke: 'rgba(0,0,0,.55)', 'stroke-width': 3 }, parent).textContent = b.id;
+      return;
+    }
+    const r = ROLES[b.role], tack = sail.tack === 'starboard' ? 'S' : 'İ';
+    const idW = 7.6 * b.id.length, gW = r ? 15 : 0, w = 8 + gW + idW + 5 + 14 + 3, h = 20;
+    const g = el('g', { transform: `translate(${(x - w / 2).toFixed(1)},${(y - h / 2).toFixed(1)})` }, parent);
+    el('rect', { width: w, height: h, rx: 9, fill: 'rgba(7,18,30,.82)', stroke: r ? r.color : 'rgba(255,255,255,.35)', 'stroke-width': r ? 1.5 : 1 }, g);
+    let cx = 8;
+    if (r) {
+      el('circle', { cx: cx + 5.5, cy: h / 2, r: 6, fill: r.color }, g);
+      el('text', { x: cx + 5.5, y: h / 2 + 3.5, 'text-anchor': 'middle', fill: '#071522', 'font-size': 9, 'font-weight': 800 }, g).textContent = r.glyph;
+      cx += gW;
+    }
+    el('text', { x: cx, y: h / 2 + 4, fill: '#fff', 'font-size': 12, 'font-weight': 700 }, g).textContent = b.id;
+    cx += idW + 5;                                          // kontra: küçük renkli kutu (sancak yeşil, iskele kırmızı — seyir feneri gibi)
+    el('rect', { x: cx, y: 3, width: 14, height: h - 6, rx: 4, fill: tack === 'S' ? '#22c55e' : '#ef4444' }, g);
+    el('text', { x: cx + 7, y: h / 2 + 3.5, 'text-anchor': 'middle', fill: '#fff', 'font-size': 10, 'font-weight': 800 }, g).textContent = tack;
+    el('title', {}, g).textContent = `${b.id} · ${b.name} · ${sail.tack === 'starboard' ? 'sancak' : 'iskele'} kontra` + (r ? ` · ${r.label}` : '');
   }
 
   function drawWind(w) {
@@ -251,16 +314,28 @@
   function drawHud(w) {
     const g = $('hudLayer'); g.innerHTML = '';
     const scn = state.scn, vb = state.vb;
-    const cx = vb.x + 70, cy = vb.y + 70;                       // rüzgar oku sol üst
-    el('circle', { cx, cy, r: 42, fill: 'rgba(0,0,0,0.35)', stroke: 'rgba(255,255,255,0.3)' }, g);
+    // sol üst gösterge (pusula + sayaç): ekranda hep aynı boyda görünsün diye ölçeklenir
+    const svg = $('course'), upp = vb.w / (svg.clientWidth || vb.w);       // ekran pikseli başına SVG birimi
+    const k = Math.max(0.8, Math.min(1.6, upp * 0.95));
+    const hg = el('g', { transform: `translate(${vb.x.toFixed(1)},${vb.y.toFixed(1)}) scale(${k.toFixed(3)})` }, g);
+    const cx = 64, cy = 64;
+    el('circle', { cx, cy, r: 44, fill: 'rgba(7,18,30,0.72)', stroke: 'rgba(255,255,255,0.18)', 'stroke-width': 1 }, hg);
+    for (let a = 0; a < 360; a += 30) {                           // pusula çentikleri
+      const f = E.fwd(a), r1 = a % 90 ? 39 : 35;
+      el('line', { x1: cx + f.x * r1, y1: cy + f.y * r1, x2: cx + f.x * 42, y2: cy + f.y * 42, stroke: 'rgba(255,255,255,.35)', 'stroke-width': a % 90 ? 1 : 1.5 }, hg);
+    }
     const d = E.fwd(w + 180);
-    el('line', { x1: cx - d.x * 30, y1: cy - d.y * 30, x2: cx + d.x * 22, y2: cy + d.y * 22, stroke: '#fff', 'stroke-width': 3, 'marker-end': 'url(#arrowHead)' }, g);
-    el('text', { x: cx, y: cy + 60, 'text-anchor': 'middle', fill: '#fff', 'font-size': 12 }, g).textContent = `Rüzgar ${Math.round(E.norm360(w))}°`;
+    el('line', { x1: cx - d.x * 28, y1: cy - d.y * 28, x2: cx + d.x * 20, y2: cy + d.y * 20, stroke: '#7dd3fc', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'marker-end': 'url(#arrowHead)' }, hg);
+    el('rect', { x: cx - 38, y: cy + 52, width: 76, height: 20, rx: 10, fill: 'rgba(7,18,30,0.72)' }, hg);
+    el('text', { x: cx, y: cy + 66, 'text-anchor': 'middle', fill: '#fff', 'font-size': 11, 'font-weight': 600 }, hg).textContent = `Rüzgar ${Math.round(E.norm360(w))}°`;
     if (scn.startAt != null && scn.startAt > 0) {
       const rem = (scn.startAt - state.t) * (scn.clockScale || 1);
-      const fmt = r => scn.clockScale ? `${Math.floor(r / 60)}:${String(Math.floor(r % 60)).padStart(2, '0')}` : `${r.toFixed(1)} s`;
-      const txt = el('text', { x: cx + 60, y: cy + 10, fill: rem > 0 ? '#ffd166' : '#2a9d8f', 'font-size': 26, 'font-weight': 700, 'font-variant-numeric': 'tabular-nums' }, g);
-      txt.textContent = rem > 0 ? `Start'a ${fmt(rem)}` : 'START ✔';
+      const fmt = r => scn.clockScale ? fmtClock(r) : `${r.toFixed(1)} sn`;
+      const on = rem > 0, col = on ? (rem <= 5 * (scn.clockScale || 1) ? '#f87171' : '#fbbf24') : '#34d399';
+      const px = cx + 58, py = cy - 26, pw = on ? 132 : 176, ph = 52;
+      el('rect', { x: px, y: py, width: pw, height: ph, rx: 14, fill: 'rgba(7,18,30,0.78)', stroke: col, 'stroke-opacity': .55, 'stroke-width': 1.5 }, hg);
+      el('text', { x: px + 14, y: py + 17, fill: 'rgba(255,255,255,.6)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': 1 }, hg).textContent = on ? "START'A" : 'START VERİLDİ';
+      el('text', { x: px + 14, y: py + 42, fill: col, 'font-size': 22, 'font-weight': 800, 'font-variant-numeric': 'tabular-nums' }, hg).textContent = on ? fmt(rem) : '✔ Yarış başladı';
       // hazırlık bayrağı: son 1 dakikada indirilir
       if (scn.prepFlag && scn.line) {
         const up = state.t < (scn.flagDownAt != null ? scn.flagDownAt : scn.startAt);
@@ -274,7 +349,6 @@
         el('text', { x: bx + 36, y: by + 8, fill: '#ffd166', 'font-size': 11 }, g).textContent = up ? `Hazırlık bayrağı: ${scn.prepFlag}` : 'Bayrak indi: son 1 dk';
       }
     }
-    el('text', { x: vb.x + 16, y: vb.y + vb.h - 12, fill: 'rgba(255,255,255,0.45)', 'font-size': 12 }, g).textContent = scn.category + (scn.topic ? ' › ' + scn.topic : '') + ' · ' + scn.title;
   }
 
   function render() {
@@ -284,7 +358,9 @@
     const bl = $('boatLayer'); bl.innerHTML = '';
     for (const b of [...state.boats, ...state.extras]) drawBoat(bl, b, E.sampleTrack(b.track, state.t), w);
     drawHud(w);
-    $('scrub').value = state.t; $('timeLabel').textContent = `${state.t.toFixed(1)} / ${scn.duration} s`;
+    const sc = $('scrub'); sc.value = state.t; sc.style.setProperty('--p', (state.t / scn.duration * 100) + '%');
+    $('timeLabel').innerHTML = `${fmtClock(state.t)}<span class="tot"> / ${fmtClock(scn.duration)}</span>`;
+    [...$('ticks').children].forEach((b, k) => b.classList.toggle('done', scn.steps[k].t <= state.t + 1e-6));
     if (state.follow) showStep(stepAt(state.t), true);
   }
 
@@ -297,39 +373,48 @@
     }
     state.lastTs = ts; requestAnimationFrame(tick);
   }
-  function updatePlayButton() { $('btnPlay').textContent = state.playing ? '❚❚ Duraklat' : '▶ Oynat'; }
+  function updatePlayButton() {
+    const b = $('btnPlay'); b.querySelector('use').setAttribute('href', state.playing ? '#i-pause' : '#i-play');
+    b.setAttribute('aria-label', state.playing ? 'Duraklat' : 'Oynat');
+  }
   function togglePlay() { if (state.t >= state.scn.duration) state.t = 0; state.playing = !state.playing; updatePlayButton(); }
 
   // ---------- Olaylar ----------
   $('btnPlay').onclick = togglePlay;
   $('btnReset').onclick = () => { state.t = 0; state.playing = false; updatePlayButton(); render(); if (!state.follow) showStep(0, false); };
-  $('selSpeed').onchange = e => state.speed = +e.target.value;
+  // hız: masaüstünde üç düğme; telefonda yalnız seçili görünür, dokununca sıradakine geçer
+  $('speedSeg').onclick = e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const all = [...$('speedSeg').children];
+    const next = phoneMq.matches && btn.classList.contains('on') ? all[(all.indexOf(btn) + 1) % all.length] : btn;
+    all.forEach(x => x.classList.toggle('on', x === next)); state.speed = +next.dataset.v;
+  };
   $('scrub').oninput = e => { state.t = +e.target.value; render(); };
   $('btnAdd').onclick = addBoat; $('btnRemove').onclick = removeBoat;
   $('chkWind').onchange = e => { state.show.wind = e.target.checked; render(); };
   $('chkRungs').onchange = e => { state.show.rungs = e.target.checked; render(); };
-  $('chkLabels').onchange = e => { state.show.labels = e.target.checked; render(); };
+  $('chkLabels').onchange = e => { state.show.labels = e.target.checked; buildLegend(); render(); };
   $('chkTrails').onchange = e => { state.show.trails = e.target.checked; render(); };
-  $('btnLayers').onclick = () => $('layersMenu').classList.toggle('hidden');
+  $('btnLayers').onclick = () => { const m = $('layersMenu'); m.classList.toggle('hidden'); $('btnLayers').classList.toggle('on', !m.classList.contains('hidden')); };
   $('btnFull').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); };
   $('btnInfo').onclick = () => setInfoOpen(!state.infoOpen);
   $('btnInfoClose').onclick = () => setInfoOpen(false);
   $('chkFollow').onchange = e => { state.follow = e.target.checked; if (state.follow) showStep(stepAt(state.t), true); };
   // Önceki/Sonraki: kullanıcı kendi gezerse canlı takip kapanır, "Bu ana git" ile animasyon o adıma gider
-  const browse = i => { state.follow = false; $('chkFollow').checked = false; showStep(i, false); };
+  function browse(i) { state.follow = false; $('chkFollow').checked = false; showStep(i, false); }
   $('btnPrev').onclick = () => browse(state.stepIdx - 1);
   $('btnNext').onclick = () => browse(state.stepIdx + 1);
   $('btnGoto').onclick = () => { state.t = state.scn.steps[state.stepIdx].t; state.playing = false; updatePlayButton(); render(); };
   document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { openPicker(false); $('layersMenu').classList.add('hidden'); return; }
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (e.code === 'ArrowRight') browse(state.stepIdx + 1);
     else if (e.code === 'ArrowLeft') browse(state.stepIdx - 1);
     else if (e.key === 'i' || e.key === 'ı') setInfoOpen(!state.infoOpen);
-    else if (e.key === 'Escape') openPicker(false);
   });
   document.addEventListener('click', e => {
-    if (!e.target.closest('#layersMenu') && !e.target.closest('#btnLayers')) $('layersMenu').classList.add('hidden');
+    if (!e.target.closest('#layersMenu') && !e.target.closest('#btnLayers')) { $('layersMenu').classList.add('hidden'); $('btnLayers').classList.remove('on'); }
     if (phoneMq.matches && !e.target.closest('#addMenu') && !e.target.closest('#btnAddMenu')) $('addMenu').classList.add('hidden');
   });
   window.addEventListener('resize', () => { fitViewBox(); render(); });
@@ -337,35 +422,57 @@
   // ---------- Senaryo seçici (kategori sekmeleri + kartlar) ----------
   const CATS = ['Taktik', 'İleri Taktik', 'Kurallar', 'Teknik'];
   let pickerCat = 'Taktik';
+  let query = '';
   function openPicker(open) {
     $('picker').classList.toggle('hidden', !open);
-    if (open) { pickerCat = state.scn ? state.scn.category : pickerCat; buildPicker(); }
+    if (open) {
+      pickerCat = state.scn ? state.scn.category : pickerCat; query = ''; $('pickerSearch').value = ''; buildPicker();
+      if (!phoneMq.matches) setTimeout(() => $('pickerSearch').focus(), 50);
+      const a = $('pickerList').querySelector('.card.active'); if (a) a.scrollIntoView({ block: 'nearest' });
+    }
+  }
+  const norm = t => t.toLocaleLowerCase('tr').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  function scenarioCard(x) {
+    const [code, ttl] = splitTitle(x.title);
+    const c = document.createElement('button'); c.className = 'card'; c.dataset.id = x.id;
+    c.style.setProperty('--cat', CAT_COLORS[x.category] || 'var(--accent)');
+    const active = state.scn && state.scn.id === x.id; c.classList.toggle('active', active);
+    const nBoats = x.boats.length + (x.crowd || []).length;
+    c.innerHTML = `<div class="card-top"><span class="code-badge">${esc(code)}</span>${active ? '<span class="now">● Açık</span>' : ''}</div>` +
+      `<div class="ttl">${esc(ttl)}</div><div class="sum">${esc(x.summary)}</div>` +
+      `<div class="meta"><span><svg><use href="#i-clock"/></svg>${Math.round(x.duration)} sn</span>` +
+      `<span><svg><use href="#i-boat"/></svg>${nBoats} tekne</span><span><svg><use href="#i-steps"/></svg>${x.steps.length} adım</span></div>`;
+    c.onclick = () => { location.hash = x.id; openPicker(false); };
+    return c;
   }
   function buildPicker() {
+    $('pickerSub').textContent = `${SCENARIOS.length} animasyon · konu seç ya da ara`;
     const tabs = $('pickerTabs'); tabs.innerHTML = '';
     for (const c of CATS) {
       const n = SCENARIOS.filter(x => x.category === c).length;
-      const b = document.createElement('button'); b.innerHTML = `${c}<span class="count">${n}</span>`;
-      b.classList.toggle('active', c === pickerCat); b.onclick = () => { pickerCat = c; buildPicker(); }; tabs.appendChild(b);
+      const b = document.createElement('button'); b.setAttribute('role', 'tab'); b.style.setProperty('--cat', CAT_COLORS[c]);
+      b.innerHTML = `${c}<span class="count">${n}</span>`;
+      b.classList.toggle('active', !query && c === pickerCat); b.classList.toggle('empty', !n);
+      b.onclick = () => { pickerCat = c; query = ''; $('pickerSearch').value = ''; buildPicker(); }; tabs.appendChild(b);
     }
     const list = $('pickerList'); list.innerHTML = '';
-    const items = SCENARIOS.filter(x => x.category === pickerCat);
-    if (!items.length) { const d = document.createElement('div'); d.className = 'picker-empty'; d.textContent = 'Bu bölümün animasyonları henüz hazırlanmadı. Konu listesi için KONULAR.md.'; list.appendChild(d); return; }
-    const topics = [];
-    for (const x of items) if (!topics.includes(x.topic || 'Genel')) topics.push(x.topic || 'Genel');
-    for (const tp of topics) {
-      const h = document.createElement('div'); h.className = 'picker-topic'; h.textContent = tp; list.appendChild(h);
-      for (const x of items.filter(i => (i.topic || 'Genel') === tp)) {
-        const m = x.title.match(/^([A-Z]\d+[a-z]?)\s*·\s*(.*)$/);
-        const code = m ? m[1] : '', ttl = m ? m[2] : x.title;
-        const c = document.createElement('button'); c.className = 'card'; c.dataset.id = x.id;
-        c.classList.toggle('active', state.scn && state.scn.id === x.id);
-        c.innerHTML = `<div><span class="code">${code}</span><span class="ttl">${ttl}</span></div><div class="sum">${x.summary}</div>`;
-        c.onclick = () => { location.hash = x.id; openPicker(false); };
-        list.appendChild(c);
-      }
+    const q = norm(query.trim());
+    const items = q ? SCENARIOS.filter(x => norm([x.title, x.summary, x.topic || '', x.category].join(' ')).includes(q))
+                    : SCENARIOS.filter(x => x.category === pickerCat);
+    if (!items.length) {
+      const d = document.createElement('div'); d.className = 'picker-empty';
+      d.textContent = q ? `"${query}" için sonuç yok.` : 'Bu bölümün animasyonları hazırlanıyor.';
+      list.appendChild(d); return;
+    }
+    const groups = [];
+    for (const x of items) { const k = q ? x.category : (x.topic || 'Genel'); if (!groups.includes(k)) groups.push(k); }
+    for (const gname of groups) {
+      const h = document.createElement('div'); h.className = 'picker-topic'; h.textContent = gname; list.appendChild(h);
+      const grid = document.createElement('div'); grid.className = 'picker-grid'; list.appendChild(grid);
+      for (const x of items.filter(i => (q ? i.category : (i.topic || 'Genel')) === gname)) grid.appendChild(scenarioCard(x));
     }
   }
+  $('pickerSearch').addEventListener('input', e => { query = e.target.value; buildPicker(); });
   $('btnScenarios').onclick = () => openPicker(true);
   $('btnPickerClose').onclick = () => openPicker(false);
   $('picker').addEventListener('click', e => { if (e.target === $('picker')) openPicker(false); });
@@ -393,7 +500,7 @@
   const fromHash = () => SCENARIOS.find(s => s.id === location.hash.slice(1)) || SCENARIOS[0];
   window.addEventListener('hashchange', () => { const s = fromHash(); if (s !== state.scn) loadScenario(s); });
   const ds = document.body.dataset;
-  $('versionLabel').textContent = ds.version ? `sürüm ${ds.version} · ${ds.built}` : 'geliştirme sürümü';
+  $('versionLabel').textContent = ds.version ? `Sürüm ${ds.version} · ${ds.built}` : 'Geliştirme sürümü';
   fitViewBox(); setInfoOpen(true); loadScenario(fromHash());
   requestAnimationFrame(ts => { state.lastTs = ts; requestAnimationFrame(tick); });
 })();
