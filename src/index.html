@@ -2,19 +2,25 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f1b2a">
   <title>Professional Sailing · Taktik Animasyonları</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <!-- ÜST ÇUBUK -->
   <header class="topbar">
-    <div class="brand">⛵ Professional <span>Sailing</span></div>
-    <select id="selScenario" class="scenario-select" title="Senaryo seç"></select>
+    <div class="brand">⛵ <span class="brand-text">Professional <em>Sailing</em></span></div>
+    <button id="btnScenarios" class="tb scn-btn" title="Senaryo seç">
+      <span class="scn-cat" id="curCat"></span>
+      <span class="scn-title" id="curTitle">Senaryo seç</span>
+      <span class="chev">▾</span>
+    </button>
     <div class="spacer"></div>
-    <button id="btnInfo" class="tb" title="Bilgi kartını aç/kapat">ℹ Bilgi</button>
-    <button id="btnLayers" class="tb" title="Katmanlar">◫ Katmanlar</button>
-    <button id="btnFull" class="tb" title="Tam ekran">⛶</button>
+    <button id="btnInfo" class="tb icon-btn" title="Bilgi kartı"><span class="ic">ℹ</span><span class="lbl">Bilgi</span></button>
+    <button id="btnLayers" class="tb icon-btn" title="Katmanlar"><span class="ic">◫</span><span class="lbl">Katmanlar</span></button>
+    <button id="btnFull" class="tb icon-btn" title="Tam ekran"><span class="ic">⛶</span></button>
   </header>
 
   <!-- SAHNE -->
@@ -32,12 +38,11 @@
       <g id="hudLayer"></g>
     </svg>
 
-    <!-- BİLGİ KARTI (sahnenin üstünde yüzer) -->
+    <!-- BİLGİ KARTI -->
     <aside id="infoCard" class="info-card">
-      <div class="info-head">
-        <div class="info-title-wrap">
-          <div class="info-scn" id="scnTitle"></div>
-        </div>
+      <div class="info-head" id="infoHead">
+        <button class="handle" id="btnCollapse" title="Daralt / genişlet"><span></span></button>
+        <div class="info-title-wrap"><div class="info-scn" id="scnTitle"></div></div>
         <label class="follow" title="Açıkken kart animasyonla birlikte ilerler">
           <input type="checkbox" id="chkFollow" checked> <span>Canlı takip</span>
         </label>
@@ -60,38 +65,56 @@
       </details>
     </aside>
 
-    <!-- KATMANLAR MENÜSÜ -->
-    <div id="layersMenu" class="layers-menu hidden">
+    <!-- KATMANLAR -->
+    <div id="layersMenu" class="popover hidden">
       <label><input type="checkbox" id="chkWind" checked> Rüzgar çizgileri</label>
       <label><input type="checkbox" id="chkRungs" checked> Merdiven basamağı</label>
       <label><input type="checkbox" id="chkLabels" checked> Tekne isimleri</label>
       <label><input type="checkbox" id="chkTrails"> Tekne izleri</label>
     </div>
+
+    <!-- TEKNE EKLE (telefonda popover) -->
+    <div id="addMenu" class="popover add-popover hidden">
+      <div class="row">
+        <select id="selSide" class="tb"></select>
+        <select id="selTack" class="tb">
+          <option value="starboard">Sancak kontra</option>
+          <option value="port">İskele kontra</option>
+        </select>
+      </div>
+      <div class="row">
+        <button id="btnAdd" class="tb grow">+ Tekne ekle</button>
+        <button id="btnRemove" class="tb grow">− Son tekneyi çıkar</button>
+      </div>
+    </div>
+
+    <!-- SENARYO SEÇİCİ -->
+    <div id="picker" class="picker hidden" role="dialog" aria-label="Senaryo seç">
+      <div class="picker-panel">
+        <div class="picker-head">
+          <h2>Senaryolar</h2>
+          <button id="btnPickerClose" class="icon" title="Kapat">✕</button>
+        </div>
+        <div class="picker-tabs" id="pickerTabs"></div>
+        <div class="picker-list" id="pickerList"></div>
+      </div>
+    </div>
   </main>
 
   <!-- ALT ÇUBUK -->
   <footer class="bottombar">
-    <div class="row">
+    <div class="row main-row">
       <button id="btnPlay" class="primary">▶ Oynat</button>
-      <button id="btnReset" class="tb">↺</button>
+      <button id="btnReset" class="tb" title="Başa al">↺</button>
       <select id="selSpeed" class="tb" title="Hız">
         <option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option>
       </select>
-      <span class="time" id="timeLabel">0.0 s</span>
       <input type="range" id="scrub" min="0" max="100" step="0.05" value="0">
+      <span class="time" id="timeLabel">0.0 s</span>
+      <button id="btnAddMenu" class="tb add-btn" title="Tekne ekle / çıkar">⛵ +</button>
     </div>
-    <div class="row add-row">
-      <span class="lbl">Tekne ekle</span>
-      <select id="selSide" class="tb"></select>
-      <select id="selTack" class="tb">
-        <option value="starboard">Sancak kontra</option>
-        <option value="port">İskele kontra</option>
-      </select>
-      <button id="btnAdd" class="tb">+ Ekle</button>
-      <button id="btnRemove" class="tb">− Çıkar</button>
-      <span class="spacer"></span>
-      <span class="version" id="versionLabel"></span>
-    </div>
+    <div class="row add-row" id="addRow"></div>
+    <div class="row version-row"><span class="version" id="versionLabel"></span></div>
   </footer>
 
   <script src="js/engine.js"></script>

@@ -38,7 +38,8 @@
     $('scrub').max = scn.duration;
     $('scnTitle').textContent = scn.title;
     $('scnSummary').textContent = scn.summary;
-    $('selScenario').value = scn.id;
+    $('curTitle').textContent = scn.title; $('curCat').textContent = scn.category + (scn.topic ? ' › ' + scn.topic : '');
+    document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', c.dataset.id === scn.id));
     buildLegend(); buildSideOptions(); drawCourse(); updatePlayButton();
     showStep(0, false); render();
   }
@@ -288,21 +289,68 @@
     else if (e.code === 'ArrowRight') browse(state.stepIdx + 1);
     else if (e.code === 'ArrowLeft') browse(state.stepIdx - 1);
     else if (e.key === 'i' || e.key === 'ı') setInfoOpen(!state.infoOpen);
+    else if (e.key === 'Escape') openPicker(false);
   });
-  document.addEventListener('click', e => { if (!e.target.closest('#layersMenu') && !e.target.closest('#btnLayers')) $('layersMenu').classList.add('hidden'); });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#layersMenu') && !e.target.closest('#btnLayers')) $('layersMenu').classList.add('hidden');
+    if (phoneMq.matches && !e.target.closest('#addMenu') && !e.target.closest('#btnAddMenu')) $('addMenu').classList.add('hidden');
+  });
   window.addEventListener('resize', () => { fitViewBox(); render(); });
 
-  // ---------- Senaryo seçici ----------
-  (function buildSelect() {
-    const sel = $('selScenario');
-    for (const c of ['Kurallar', 'Taktik', 'Teknik']) {
-      const list = SCENARIOS.filter(x => x.category === c);
-      const og = document.createElement('optgroup'); og.label = c + (list.length ? '' : ' (yakında)');
-      for (const s of list) { const o = document.createElement('option'); o.value = s.id; o.textContent = (s.topic ? s.topic + ' › ' : '') + s.title; og.appendChild(o); }
-      sel.appendChild(og);
+  // ---------- Senaryo seçici (kategori sekmeleri + kartlar) ----------
+  const CATS = ['Taktik', 'Kurallar', 'Teknik'];
+  let pickerCat = 'Taktik';
+  function openPicker(open) {
+    $('picker').classList.toggle('hidden', !open);
+    if (open) { pickerCat = state.scn ? state.scn.category : pickerCat; buildPicker(); }
+  }
+  function buildPicker() {
+    const tabs = $('pickerTabs'); tabs.innerHTML = '';
+    for (const c of CATS) {
+      const n = SCENARIOS.filter(x => x.category === c).length;
+      const b = document.createElement('button'); b.innerHTML = `${c}<span class="count">${n}</span>`;
+      b.classList.toggle('active', c === pickerCat); b.onclick = () => { pickerCat = c; buildPicker(); }; tabs.appendChild(b);
     }
-    sel.onchange = () => { location.hash = sel.value; };
-  })();
+    const list = $('pickerList'); list.innerHTML = '';
+    const items = SCENARIOS.filter(x => x.category === pickerCat);
+    if (!items.length) { const d = document.createElement('div'); d.className = 'picker-empty'; d.textContent = 'Bu bölümün animasyonları henüz hazırlanmadı. Konu listesi için KONULAR.md.'; list.appendChild(d); return; }
+    const topics = [];
+    for (const x of items) if (!topics.includes(x.topic || 'Genel')) topics.push(x.topic || 'Genel');
+    for (const tp of topics) {
+      const h = document.createElement('div'); h.className = 'picker-topic'; h.textContent = tp; list.appendChild(h);
+      for (const x of items.filter(i => (i.topic || 'Genel') === tp)) {
+        const m = x.title.match(/^([A-Z]\d+[a-z]?)\s*·\s*(.*)$/);
+        const code = m ? m[1] : '', ttl = m ? m[2] : x.title;
+        const c = document.createElement('button'); c.className = 'card'; c.dataset.id = x.id;
+        c.classList.toggle('active', state.scn && state.scn.id === x.id);
+        c.innerHTML = `<div><span class="code">${code}</span><span class="ttl">${ttl}</span></div><div class="sum">${x.summary}</div>`;
+        c.onclick = () => { location.hash = x.id; openPicker(false); };
+        list.appendChild(c);
+      }
+    }
+  }
+  $('btnScenarios').onclick = () => openPicker(true);
+  $('btnPickerClose').onclick = () => openPicker(false);
+  $('picker').addEventListener('click', e => { if (e.target === $('picker')) openPicker(false); });
+
+  // ---------- Tekne ekle denetimlerinin yeri: telefonda popover, geniş ekranda alt çubuk ----------
+  const phoneMq = window.matchMedia('(max-width: 640px), (max-height: 460px)');
+  function placeAddControls() {
+    const menu = $('addMenu'), row = $('addRow');
+    const nodes = ['selSide', 'selTack', 'btnAdd', 'btnRemove'].map($);
+    if (phoneMq.matches) {
+      const rows = menu.querySelectorAll('.row');
+      rows[0].append(nodes[0], nodes[1]); rows[1].append(nodes[2], nodes[3]);
+    } else {
+      if (!row.querySelector('.lbl')) { const l = document.createElement('span'); l.className = 'lbl'; l.textContent = 'Tekne ekle'; row.appendChild(l); }
+      row.append(...nodes); menu.classList.add('hidden');
+    }
+  }
+  phoneMq.addEventListener('change', placeAddControls);
+  placeAddControls();
+  $('btnAddMenu').onclick = () => $('addMenu').classList.toggle('hidden');
+  $('btnCollapse').onclick = () => $('infoCard').classList.toggle('collapsed');
+  $('infoHead').addEventListener('click', e => { if (phoneMq.matches && e.target.closest('.info-title-wrap')) $('infoCard').classList.toggle('collapsed'); });
 
   const fromHash = () => SCENARIOS.find(s => s.id === location.hash.slice(1)) || SCENARIOS[0];
   window.addEventListener('hashchange', () => { const s = fromHash(); if (s !== state.scn) loadScenario(s); });
