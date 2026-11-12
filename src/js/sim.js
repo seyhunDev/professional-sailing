@@ -86,6 +86,7 @@
     });
   }
 
+  let cbNode = null;
   function drawCourse(v) {
     const g = $('courseLayer'); g.innerHTML = '';
     const { pin, boat } = S.LINE, M = S.MARK, w = v.wind;
@@ -103,12 +104,10 @@
     el('line', { x1: pin.x, y1: pin.y, x2: boat.x, y2: boat.y, stroke: '#ffd166', 'stroke-width': 2, 'stroke-dasharray': '10 8', opacity: .9 }, g);
     el('circle', { cx: pin.x, cy: pin.y, r: 7, fill: '#ff8c42', stroke: '#fff', 'stroke-width': 1.5 }, g);
     el('text', { x: pin.x, y: pin.y + 24, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12 }, g).textContent = 'Pin';
-    const cb = el('g', { transform: `translate(${boat.x},${boat.y})` }, g);
-    el('path', { d: 'M-12,-30 C 2,-26 12,-12 12,0 L 12,28 L -12,28 Z', fill: '#e9ecef', stroke: '#6c757d', 'stroke-width': 1.5 }, cb);
-    el('rect', { x: -7, y: -4, width: 14, height: 18, fill: '#adb5bd' }, cb);
-    el('line', { x1: 0, y1: -30, x2: 0, y2: -52, stroke: '#fff', 'stroke-width': 2 }, cb);
-    el('path', { d: 'M0,-52 L 16,-46 L 0,-40 Z', fill: '#ff8c42' }, cb);
-    el('text', { x: boat.x, y: boat.y + 44, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12 }, g).textContent = 'Hakem botu';
+    cbNode = cbNode || E.drawCommitteeBoat(el, g);     // bir kez çizilir; bayrak dalgası kesilmesin
+    g.appendChild(cbNode);
+    cbNode.setAttribute('transform', E.committeeBoatTransform(boat.x, boat.y, w));
+    el('text', { x: boat.x, y: boat.y + 70, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
     // hat avantajı (bias)
     const bias = E.norm180(w);                          // hat yatay: rüzgar sağa döndükçe hakem botu ucu avantajlı
     const bt = Math.abs(bias) < 3 ? 'Hat dik: iki uç eşit' : (bias > 0 ? `Hakem botu ucu avantajlı (${Math.round(bias)}°)` : `Pin ucu avantajlı (${Math.round(-bias)}°)`);

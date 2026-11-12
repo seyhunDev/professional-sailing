@@ -181,20 +181,18 @@
   function removeBoat() { state.extras.pop(); simulateExtras(); buildLegend(); render(); }
 
   // ---------- Sabit parkur ----------
+  let cbNode = null;                                   // hakem botu: rüzgarla döner (demirde başı rüzgarda)
   function drawCourse() {
-    const g = $('courseLayer'); g.innerHTML = '';
+    const g = $('courseLayer'); g.innerHTML = ''; cbNode = null;
     const scn = state.scn;
     if (scn.line) {
       const { pin, boat } = scn.line;
       el('line', { x1: pin.x, y1: pin.y, x2: boat.x, y2: boat.y, stroke: '#ffd166', 'stroke-width': 2, 'stroke-dasharray': '10 8', opacity: .9 }, g);
       el('circle', { cx: pin.x, cy: pin.y, r: 7, fill: '#ff8c42', stroke: '#fff', 'stroke-width': 1.5 }, g);
       el('text', { x: pin.x, y: pin.y + 24, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12 }, g).textContent = 'Pin';
-      const cb = el('g', { transform: `translate(${boat.x},${boat.y})` }, g);
-      el('path', { d: 'M-12,-30 C 2,-26 12,-12 12,0 L 12,28 L -12,28 Z', fill: '#e9ecef', stroke: '#6c757d', 'stroke-width': 1.5 }, cb);
-      el('rect', { x: -7, y: -4, width: 14, height: 18, fill: '#adb5bd' }, cb);
-      el('line', { x1: 0, y1: -30, x2: 0, y2: -52, stroke: '#fff', 'stroke-width': 2 }, cb);
-      el('path', { d: 'M0,-52 L 16,-46 L 0,-40 Z', fill: '#ff8c42' }, cb);
-      el('text', { x: boat.x, y: boat.y + 44, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12 }, g).textContent = 'Hakem botu';
+      cbNode = E.drawCommitteeBoat(el, g);
+      cbNode.setAttribute('transform', E.committeeBoatTransform(boat.x, boat.y, E.windAt(scn.wind, state.t)));
+      el('text', { x: boat.x, y: boat.y + 70, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
     }
     for (const m of scn.marks || []) {
       if (m.zone) {
@@ -235,7 +233,7 @@
     const obst = [];
     for (const p of boats) { obst.push({ x: p.x - 16, y: p.y - 26, w: 32, h: 52 }); if (state.show.labels) obst.push({ x: p.x - 28, y: p.y + 26, w: 56, h: 20 }); }
     const scn = state.scn;
-    if (scn.line) { const { pin, boat: cb } = scn.line; obst.push({ x: cb.x - 40, y: cb.y - 54, w: 80, h: 104 }, { x: pin.x - 16, y: pin.y - 10, w: 32, h: 40 }); }
+    if (scn.line) { const { pin, boat: cb } = scn.line; obst.push({ x: cb.x - 40, y: cb.y - 54, w: 80, h: 130 }, { x: pin.x - 16, y: pin.y - 10, w: 32, h: 40 }); }
     for (const m of scn.marks || []) obst.push({ x: m.x - 12, y: m.y - 28, w: 24, h: 38 });
     const ov = (r, q, m) => r.x < q.x + q.w + m && q.x < r.x + r.w + m && r.y < q.y + q.h + m && q.y < r.y + r.h + m;
     const hit = (r) => placed.some(q => ov(r, q, 4)) || obst.some(q => ov(r, q, 0));
@@ -455,6 +453,7 @@
   function render() {
     const scn = state.scn; if (!scn) return;
     const w = E.windAt(scn.wind, state.t);
+    if (cbNode) cbNode.setAttribute('transform', E.committeeBoatTransform(scn.line.boat.x, scn.line.boat.y, w));
     drawWind(w); drawOverlays(w);
     const bl = $('boatLayer'); bl.innerHTML = '';
     frameNotes = [];

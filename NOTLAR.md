@@ -13,6 +13,7 @@
 - **Tekne etiketi** (sahnede): küçük rozet = [rol simgesi] KİMLİK [S/İ kutusu]. Rol (`boats[].role`: `hak` hak sahibi ✓ yeşil, `yol` yol verir ! sarı, `dogru` doğru ✓ yeşil, `hata` hata ✕ kırmızı) etiket kenarı ve simgesiyle; kontra yeşil S (sancak) / kırmızı İ (iskele) kutusuyla (seyir feneri renkleri). Tekne adları kısa (≤25 harf); uzun açıklama adımlara.
 - **Duyarlı düzen** (3 sınıf): bilgisayar (>1100 px: kart sağ üstte, tekne ekle alt çubukta), tablet (≤1100: ikon düğmeler; dikeyde kart SAĞ ÜSTTE geniş (64vw, maks %44 yükseklik), parkur ekranın alt kısmına kaydırılır: `fitViewBox` dikey fazlalığın %68'ini üste verir; telefonda tersi %22), telefon (≤640 px ya da yükseklik ≤460: kart alttan açılır sayfa + daraltma tutamacı, tekne ekle popover'da, seçici tam ekran). Dokunma hedefleri ≥44 px, iOS güvenli alan payları.
 - **Engel kaçınma** (`engine.avoidDir`): şamandıra, pin ve hakem botu engeldir; önünde engel olan tekne (scripted ya da eklenen) kendiliğinden yana kaçıp rotaya döner. `npm run check` (`scripts/check-scenarios.mjs`) her senaryoda alan dışı, çarpışma, engele yaklaşma ve start hattı geçişini denetler; `expectOutside` / `expectEarly` ile bilinçli istisnalar.
+- **Hakem botu** (2026-11-12): ortak çizim `engine.drawCommitteeBoat(el, parent)` + `committeeBoatTransform(x,y,windFrom)` (senaryolar ve simülatör). Demirli motorlu tekne (kaptan köşkü, tik kokpit, yüzme platformu, demir zinciri), başı rüzgara döner; kıçtan turuncu bayrak rüzgaraltına SMIL ile sürekli dalgalanır (oynatma dursa da). "Hakem botu" yazısı +70 px altta.
 - Terim: start hattının şamandıra ucu **pin**; "orsa şamandırası" yalnızca parkurun rüzgarüstü şamandırası için.
 - **Pis rüzgar (rüzgar gölgesi) ortak** (2026-11-12): `engine.js` → `SHADOW` (kıçtan ~1 boy, en fazla %30 hız kaybı), `shadowK`, `shadowPolygon`. Senaryolar, kural motoru ve simülatör aynı hesabı kullanır. Her senaryoda otomatik: tüm teknelerin konisi çizilir (yelkeni boş bekleyen tekne daha zayıf/soluk gölge, `shadowStrength`), filo (`rules.simulate`) gölgede yavaşlar, senaryo tekneleri `SailRules.buildScene` → `warpForShadows` ile zamanda esnetilir (gölgede yavaş ilerler, gecikme beklerken kapanır; start zamanlaması bozulmaz). Seyreden senaryo teknesinde mor "Pis rüzgar · hız −N%" rozeti. Katmanlar → "Pis rüzgar (gölge)". Kapatma: `shadows: false`, tekne bazında `noShadow`.
 - Senaryo katmanları: `gaps {from,to,items:[{a,b,label,color}]}` (filo boşluklarını hattın üstünde köşeli parantezle işaretler), `rungs {boat, from, to}`, `laylines [{x,y,tack,len,from,to,label}]`, `readouts [{boat,from,to}]` (rota + rüzgar açısı), segment `note` (scripted tekne üstünde yazı).
@@ -126,6 +127,9 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 – Hakem botu çizimi
+- Hakem botu gerçekçi motorlu tekne olarak yeniden çizildi, tek kod (`engine.js`) iki sayfada kullanılıyor; turuncu bayrak belirgin dalgalanıyor, rüzgarla dönüyor.
+- Sonraki sohbete not: bayrak/gövde rüzgar yönüne göre döndüğünden çok büyük rüzgar dönüşlerinde etiket ile çakışma kontrol edilebilir.
 
 ### 2026-11-12 · Simülatör: start öncesi erken çıkış, taktiğe sadakat, akıntı/dalga, kayan tekne
 - **Erken çıkış:** bekleyen tekne artık ileri sürünmüyor (bekleme hızı 0, akıntı varsa ona karşı tutar); hatta yakın bekleyen teknelerde OCS 8 → 1.
