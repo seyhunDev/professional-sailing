@@ -39,7 +39,7 @@
     for (const O of others) {
       const a = approach(X, O);
       if (a.d > 260) continue;
-      const risk = a.dmin < 58 && a.tc < 8;
+      const risk = a.dmin < 58 && a.tc < 8 && a.dmin < a.d - 6;   // yakınsıyor olmalı; paralel seyir risk değil
       const nearNow = a.d < HULL * 0.85;
       if (!risk && !nearNow) continue;
       const sX = E.sailState(X.h, windFrom), sO = E.sailState(O.h, windFrom);
@@ -77,7 +77,7 @@
     const away = tack === 'starboard' ? -1 : 1;    // rüzgardan uzaklaşma yönü (bordalama)
     switch (kind) {
       case 'duck': return { h: E.tackHeading(windFrom, tack) + away * 60, speed: 1 };
-      case 'luff': return { h: windFrom + away * 22, speed: 1 };          // orsala: hız kendiliğinden düşer
+      case 'luff': return { h: windFrom + away * 32, speed: 1 };          // sıkıştır (pinch): yavaşlar ama durmaz
       case 'slow': return { h: baseTarget + away * 18, speed: 0.55 };
       default: return { h: baseTarget, speed: 1 };                        // 'tack': yeni kontrada orsa
     }

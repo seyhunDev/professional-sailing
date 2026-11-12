@@ -73,6 +73,12 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 · İA1 düzeltme: dışarıdan start yok, burun hattın altında
+- Kural: start edemeyen tekne hattın dışından ÇIKMAZ; ya rüzgarüstüne tramola ya da bordalayıp/kavança ile herkesin arkasından hattın içinden geçer. Z buna göre: pin'i kurtaramayınca bordalar, hattın altından sağa gider, herkesin arkasından geçer. `expectOutside` kullanımı artık yalnızca "ders olarak gösterilen" çizgi dışı için (A3 P2).
+- Bekleyen teknenin burnu sinyalden önce hattı geçmemeli (X: tramola noktası 15 px aşağı, bekleme sürüklenmesi 0.03).
+- Kural motoru: risk için yakınsama şartı (`dmin < d−6`; paralel seyir risk değil); "luff" manevrası artık w±32° (sıkıştırma; tekne durmuyor). Sebep: tek bir orsalama zincirleme yavaşlamaya ve kalabalığın birbirine girmesine yol açıyordu.
+- A1 filo konumları A'nın iskele rotasına göre yeniden (basamak farkı ≥1 boy olacak şekilde).
+
 ### 2026-11-12 · İA1 yeniden: solda bekle, apaz gel, hatalı davranışlar
 - Kullanıcı düzeltmesi: X pin'in SOLUNDA bekler, apaz (heading ~92°) ile hattın altından gelir, rüzgara baş vermiş grubun en alttaki teknesinin rüzgaraltına tramola atar. Pin layline'ı baştan görünür ("tramola bu çizginin ÜSTÜNDE"). Hatalı tekneler: Z layline'ın altında tramola → pin'i kurtaramaz, çizgi dışı; Y geç gelir (25 s kala) → boşluk yok, herkesin altından, 15-20 s geç. "HATA:" ile başlayan notlar kırmızı çizilir.
 - Öğrenilen: apaz yaklaşımında ivme (tau 1.0) hesaba katılmalı; 5.2 s'de ~195 px. Tramola dönüşü (turn 1.3 s) tekneyi ~(+24,−26) px taşır; bekleme konumu buna göre geriden seçilmeli.
