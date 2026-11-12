@@ -90,35 +90,6 @@
         <button id="btnPanelClose" class="icon" title="Kapat"><svg><use href="#i-close"/></svg></button>
       </div>
       <div class="panel-scroll">
-        <section id="courseBox" class="sel-box course-box">
-          <div class="box-head"><span>Parkur <small id="courseState"></small></span><button class="tb sm" id="btnCourseReset" title="Varsayılan parkura dön">Varsayılan</button></div>
-          <div class="sel-row">
-            <span class="lbl">Start hattı</span>
-            <div class="stepper"><button id="btnLineMinus" title="Hattı kısalt">−</button><span class="val" id="lineVal"></span><button id="btnLinePlus" title="Hattı uzat">+</button></div>
-          </div>
-          <div class="sel-row">
-            <span class="lbl">Şamandıra uzaklığı</span>
-            <div class="stepper"><button id="btnMarkMinus" title="Şamandırayı yaklaştır">−</button><span class="val" id="markVal"></span><button id="btnMarkPlus" title="Şamandırayı uzaklaştır">+</button></div>
-          </div>
-        </section>
-        <section id="saveBox" class="save-box">
-          <span id="saveTxt">Kurulum bu cihazda saklanır</span>
-          <button class="tb sm" id="btnClearSaved" title="İsimler, taktikler, parkur ve sağanaklar silinir">Kaydı sil</button>
-        </section>
-        <section id="howto" class="howto">
-          <ol>
-            <li><b>Sürükle:</b> tekneleri hattın dibine yerleştir. Turuncu tekne <b>senin teknen</b>; bir boşluğa koy.</li>
-            <li><b>Dokun:</b> bir tekneyi seç; kontrasını ve taktiğini değiştir, ya da onu senin teknen yap.</li>
-            <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin). Sağanağa dokununca üstte bir çubuk açılır: <b>Büyüt / Küçült</b>, <b>Sıfırla</b> (ilk boyut) ve <b>Sil</b>; birden çok sağanaktan istediğini ayrı ayrı düzenlersin.</li>
-            <li><b>Parkur:</b> panelin üstündeki <b>Parkur</b> kutusundan start hattının uzunluğunu ve orsa şamandırasının uzaklığını değiştir; hız, rüzgar gölgesi ve kurallar yeni parkura göre hesaplanır. <b>Varsayılan</b> ile tek dokunuşla geri dönersin.</li>
-            <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
-            <li><b>Rota:</b> alttaki <b>Rota</b> düğmesine bas; üstte rota çubuğu açılır. <b>Açılı</b> (varsayılan): teknenden başlayarak sürükle; her sürükleme düz bir bacaktır ve orsadan darsa orsa açısına (rüzgara 45°) oturur. <b>Serbest</b>: parmağınla istediğin gibi çiz (hatalı gidişleri göstermek için). <b>Geri al</b> son bacağı siler; bitince yeşil <b>Tamam</b>. Yarışta da rotayı düzenleyebilirsin.</li>
-            <li><b>Taktik ve isim:</b> bir tekneye dokun; <b>Sporcu</b> kutusuna sporcunun adını yaz, <b>Taktik</b>ten <b>Sol</b> (pin tarafı), <b>Orta</b>, <b>Sağ</b> (hakem botu tarafı) ya da <b>Sağanak</b> seç. Yarış sırasında da bir tekneye dokunup taktiğini değiştirebilirsin. İsimler ve kurulum bu cihazda (tarayıcıda) saklanır; sayfayı yeniden açınca aynen gelir.</li>
-            <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>
-            <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
-            <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
-          </ol>
-        </section>
         <section id="selBox" class="sel-box hidden">
           <div class="box-head"><span id="selTitle">Seçili tekne</span><button id="btnSelClose" class="icon sm" title="Seçimi kaldır"><svg><use href="#i-close"/></svg></button></div>
           <div class="sel-row">
@@ -137,6 +108,10 @@
             <span class="lbl">Hız</span>
             <div class="seg" id="selSpeed" title="Teknenin hızı (tekne ve denizci farkı)"><button data-v="0.9">−10%</button><button data-v="0.95">−5%</button><button data-v="1">Normal</button><button data-v="1.05">+5%</button><button data-v="1.1">+10%</button></div>
           </div>
+          <div class="sel-row wrap">
+            <span class="lbl">Kayma</span>
+            <div class="seg" id="selDrift" title="Yalpalayan, köre düşen tekne rüzgaraltına kayar ve daha yavaş yükselir"><button data-v="0">Yok</button><button data-v="1">Az</button><button data-v="2">Çok</button></div>
+          </div>
           <div class="sel-row">
             <span class="lbl">Davranış</span>
             <div class="seg" id="selRules"><button data-v="uyar">Kurallara uyar</button><button data-v="vermez">Yol vermez</button></div>
@@ -145,6 +120,47 @@
             <button id="btnMakeMine" class="tb grow">Bu benim teknem</button>
             <button id="btnRemoveBoat" class="tb">Çıkar</button>
           </div>
+        </section>
+        <section id="courseBox" class="sel-box course-box">
+          <div class="box-head"><span>Parkur <small id="courseState"></small></span><button class="tb sm" id="btnCourseReset" title="Varsayılan parkura dön">Varsayılan</button></div>
+          <div class="sel-row">
+            <span class="lbl">Start hattı</span>
+            <div class="stepper"><button id="btnLineMinus" title="Hattı kısalt">−</button><span class="val" id="lineVal"></span><button id="btnLinePlus" title="Hattı uzat">+</button></div>
+          </div>
+          <div class="sel-row">
+            <span class="lbl">Şamandıra uzaklığı</span>
+            <div class="stepper"><button id="btnMarkMinus" title="Şamandırayı yaklaştır">−</button><span class="val" id="markVal"></span><button id="btnMarkPlus" title="Şamandırayı uzaklaştır">+</button></div>
+          </div>
+        </section>
+        <section id="seaBox" class="sel-box course-box sea-box">
+          <div class="box-head"><span>Deniz <small id="seaState"></small></span></div>
+          <div class="sel-row wrap">
+            <span class="lbl">Akıntı</span>
+            <div class="seg" id="seaCurrent" title="Tekneleri rüzgaraltına iter"><button data-v="0">Yok</button><button data-v="1">Hafif</button><button data-v="2">Orta</button><button data-v="3">Güçlü</button></div>
+          </div>
+          <div class="sel-row wrap">
+            <span class="lbl">Dalga</span>
+            <div class="seg" id="seaWaves" title="Orsada yavaşlatır ve rüzgaraltına kaydırır"><button data-v="0">Yok</button><button data-v="1">Küçük</button><button data-v="2">Büyük</button></div>
+          </div>
+        </section>
+        <section id="saveBox" class="save-box">
+          <span id="saveTxt">Kurulum bu cihazda saklanır</span>
+          <button class="tb sm" id="btnClearSaved" title="İsimler, taktikler, parkur ve sağanaklar silinir">Kaydı sil</button>
+        </section>
+        <section id="howto" class="howto">
+          <ol>
+            <li><b>Sürükle:</b> tekneleri hattın dibine yerleştir. Turuncu tekne <b>senin teknen</b>; bir boşluğa koy.</li>
+            <li><b>Dokun:</b> bir tekneyi seç; kontrasını ve taktiğini değiştir, ya da onu senin teknen yap.</li>
+            <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin). Sağanağa dokununca üstte bir çubuk açılır: <b>Büyüt / Küçült</b>, <b>Sıfırla</b> (ilk boyut) ve <b>Sil</b>; birden çok sağanaktan istediğini ayrı ayrı düzenlersin.</li>
+            <li><b>Parkur:</b> panelin üstündeki <b>Parkur</b> kutusundan start hattının uzunluğunu ve orsa şamandırasının uzaklığını değiştir; hız, rüzgar gölgesi ve kurallar yeni parkura göre hesaplanır. <b>Varsayılan</b> ile tek dokunuşla geri dönersin.</li>
+            <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
+            <li><b>Rota:</b> alttaki <b>Rota</b> düğmesine bas; üstte rota çubuğu açılır. <b>Açılı</b> (varsayılan): teknenden başlayarak sürükle; her sürükleme düz bir bacaktır ve orsadan darsa orsa açısına (rüzgara 45°) oturur. <b>Serbest</b>: parmağınla istediğin gibi çiz (hatalı gidişleri göstermek için). <b>Geri al</b> son bacağı siler; bitince yeşil <b>Tamam</b>. Yarışta da rotayı düzenleyebilirsin.</li>
+            <li><b>Taktik ve isim:</b> bir tekneye dokun; <b>Sporcu</b> kutusuna sporcunun adını yaz, <b>Taktik</b>ten <b>Sol</b> (pin tarafı), <b>Orta</b>, <b>Sağ</b> (hakem botu tarafı) ya da <b>Sağanak</b> seç. Yarış sırasında da bir tekneye dokunup taktiğini değiştirebilirsin. İsimler ve kurulum bu cihazda (tarayıcıda) saklanır; sayfayı yeniden açınca aynen gelir.</li>
+            <li><b>Akıntı ve dalga:</b> panelin <b>Deniz</b> kutusundan akıntıyı (hafif / orta / güçlü) ve dalgayı (küçük / büyük) seç; tekneler rüzgaraltına kayar, orsada yavaş yükselir, layline'lar açılır. Yalpalayan, köre düşen bir sporcuyu göstermek için tekneye dokunup <b>Kayma</b>yı <b>Az</b> ya da <b>Çok</b> yap. Yarışta da değiştirebilirsin.</li>
+            <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>
+            <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
+            <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
+          </ol>
         </section>
         <section class="boats-box">
           <div class="box-head">Sıralama</div>

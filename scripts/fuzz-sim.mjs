@@ -38,7 +38,10 @@ for (let k = 0; k < N; k++) {
     fleet.find(b => b.mine).route = Array.from({ length: nr }, (_, i) => ({ x: 120 + r2() * 760, y: 680 - (i + 1) * (560 / nr) + r2() * 60 }));
   }     // her 3 yarıştan birinde bir "yol vermez" tekne
   const gusts = rnd() < 0.5 ? [{ x: rnd() < 0.5 ? 230 : 770, y: 250 + rnd() * 300, rx: 120, ry: 190 }] : [];
-  const s = S.newRace(fleet, { wind, gusts, course });
+  // her 3 yarıştan birinde akıntı / dalga ve sürüklenen bir tekne (ayrı üreteç)
+  const sea = k % 3 === 1 ? { current: (k * 7) % 4, waves: (k * 5) % 3 } : null;
+  if (sea) fleet[(k * 3) % n].drift = 1 + (k % 2);
+  const s = S.newRace(fleet, { wind, gusts, course, sea });
   const shiftAt = rnd() < 0.5 ? 15 + rnd() * 20 : -1, shiftTo = wind + Math.round((rnd() - 0.5) * 30);
   const tr = {};
   for (const b of s.boats) tr[b.id] = { maxAbove: -1e9, wrong: 0, minMark: 1e9, prog: [], out: false, flagged: {} };
@@ -65,7 +68,8 @@ for (let k = 0; k < N; k++) {
       if (b.phase === 'penalty' && s.t - T.penStart > 20 && !T.flagged.pen) { T.flagged.pen = 1; hit('CEZA_TAKILDI', `${tag} ${b.id} (${b.x.toFixed(0)},${b.y.toFixed(0)}) t=${s.t.toFixed(1)}`); }
       if (b.phase === 'race') {
         // start etmemiş tekne kalabalık uçta (aşırı hat avantajı) birkaç saniye dönüp yer arayabilir: ona 14 s pay
-        const win = b.started ? 8 : 14;
+        // akıntılı yarışta kalabalık şamandırada yol verirken geri kayar: 12 s pay
+        const win = b.started ? (s.sea && (s.sea.current || s.sea.waves) ? 12 : 8) : 14;
         T.prog.push({ t: s.t, x: b.x, y: b.y }); while (T.prog.length && T.prog[0].t < s.t - win) T.prog.shift();
         if (T.prog.length > win * 19 && Math.hypot(b.x - T.prog[0].x, b.y - T.prog[0].y) < 25 && !T.flagged.stuck) { T.flagged.stuck = 1; hit('TAKILDI', `${tag} ${b.id} (${b.x.toFixed(0)},${b.y.toFixed(0)}) t=${s.t.toFixed(1)}`); }
         if ((b.x < -30 || b.x > S.WORLD.w + 30 || b.y < -40 || b.y > S.WORLD.h + 30) && !T.out) { T.out = true; hit('ALAN_DIŞI', `${tag} ${b.id} (${b.x.toFixed(0)},${b.y.toFixed(0)}) ${b.persona}`); }
