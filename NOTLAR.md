@@ -33,7 +33,7 @@
   - **Motor gereksinimleri:** scripted teknelere bekleme (`hold`) var; eklenecekler: `backing` (yelken geri basılı, tekne geri gidiyor; yelken karnı ters), rüzgara baş vermişken yelkenin tamamen boş çizilmesi (var), 8-10 tekne için etiket seyrekleştirme (yalnızca manevra yapanın notu), kırmızı "hatalı hareket" rozeti (`note` için `kind:'fault'`), daha geniş hat için `addBoat` slotları, Kural 13 ve 22 kural motoruna (ek tekneler) eklenmeli.
   - Teslim: 3 senaryo (A16, A17, A8) + KONULAR.md ✅ + `npm run check` temiz + ekran görüntüleri.
 - [x] **Yarış simülatörü – 1. aşama** (2026-11-12): sayfa, sürükle-bırak, rüzgar, sağanak, start/OCS, layline tramolası, şamandıra dönüşü, sıralama, olay listesi, Tramola komutu, geri sarma.
-- [ ] **Simülatör 2a (kullanıcı onayladı sırayı):** start'ta yarışın tamamını önceden hesapla, değişiklikte (sağanak/rüzgar/rota) o andan ileri yeniden hesapla; ileri sarma ve "tahmini sıra". Her teknede hız ("4.2 kn"), sağanakta yeşil ↑, pis rüzgarda kırmızı ↓; pis rüzgar gölgesi (rüzgaraltında 3-4 boy, katman).
+- [x] **Simülatör 2a** (2026-11-12, yapıldı): start'ta yarışın tamamını önceden hesapla, değişiklikte (sağanak/rüzgar/rota) o andan ileri yeniden hesapla; ileri sarma ve "tahmini sıra". Her teknede hız ("4.2 kn"), sağanakta yeşil ↑, pis rüzgarda kırmızı ↓; pis rüzgar gölgesi (rüzgaraltında 3-4 boy, katman).
 - [ ] **Simülatör 2b:** "ne oldu / kim haklı" ayrımı: yol vermeyen tekne → protesto + iki tur ceza (720°) animasyonu; temasta hak sahibi kaçınabilecekken kaçınmadıysa o da ceza (K14); "kural bilmeyen" tekne özelliği (kendi teknene de).
 - [ ] **Simülatör 2c:** kendi teknene rota çizme (parmakla çizgi; rüzgara karşı kısımda otomatik zikzak; bitince şamandıraya).
 - [ ] **Yarış simülatörü – 2. aşama (eski liste):** rüzgar gölgesi (dirty air) etkisi, salınımlı rüzgar (otomatik kayma), sağanağın rüzgarla sürüklenmesi, şamandırada tam K18 (zone, iç tekneye yer), pupa ayağı ve bitiş hattı, senaryoyu linkle paylaşma, tekne döndürerek yerleştirme. Şamandırada 12 teknede 3-6 temas oluyor; zone mantığıyla azaltılabilir.
@@ -110,6 +110,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+### 2026-11-12 · Simülatör 2a: önceden hesaplama, hız, pis rüzgar
+- Start'ta `SailSim.runToEnd` yarışı sonuna kadar hesaplar (0.1 s kareler); `sim.js` kareler arasını ara değerleyerek oynatır. Değişiklik (`applyChange`: rüzgar, sağanak ekle/taşı/temizle, Tramola, taktik) o karenin kopyasından ileriye yeniden hesaplar. Zaman çubuğu ileri de sarar; panelde "Tahmin: senin teknen N. olacak".
+- Pis rüzgar: her teknenin rüzgaraltında 4 boy, genişleyen koni; içindeki tekne en fazla %30 yavaşlar (`shadowAt`). Senin teknen gölgeye girince olay listesine yazılır. "Göster: Hız / Pis rüzgar" düğmeleri; hız knot olarak (orsa 55 px/s ≈ 3.5 kn), sağanakta yeşil ↑, gölgede kırmızı ↓.
+- Sıradaki: 2b protesto/ceza turu, 2c rota çizme.
 
 ### 2026-11-12 · Simülatör: şamandıra dönüşü ve uç durumlar
 - Kullanıcı bildirdi: geriye çekilen tekne şamandırayı altından/yanlış taraftan döndü. Sebep: şamandıradan kaçınma "engel sağdaysa sola dön" diyordu, iskele kontrayla soldan gelen tekne şamandıranın solundan çıkıp yanlış yönde dönüyordu; dönüş de sabit "sola dön" ile yapılıyordu.

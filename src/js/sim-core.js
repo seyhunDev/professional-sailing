@@ -15,6 +15,9 @@
   const CLOCK_SCALE = 5;
   const TURN_RATE = 110;          // derece/sn
   const GUST_GAIN = 0.25;         // sağanakta hız artışı
+  const SHADOW_LEN = 4 * HULL;    // rüzgar gölgesi (pis rüzgar) boyu: 4 tekne boyu
+  const SHADOW_LOSS = 0.3;        // gölgenin tam ortasında hız kaybı
+  const KNOTS = 3.5 / BASE;       // px/s → knot (orsada 55 px/s ≈ 3.5 kn, Optimist)
   const MIN_TACK_GAP = 3;         // iki tramola arası en az (sn)
   const OBSTACLES = E.obstaclesOf({ marks: [MARK], line: LINE });
   const LINE_OBS = E.obstaclesOf({ line: LINE });           // pin + hakem botu
@@ -71,6 +74,23 @@
     }
     return m;
   }
+
+  // Rüzgar gölgesi: b, başka bir teknenin rüzgaraltındaki konide mi? {k: 0..1, by}
+  function shadowAt(b, snap, w) {
+    const down = E.fwd(w + 180), right = E.fwd(w + 90);
+    let best = { k: 0, by: null };
+    for (const o of snap) {
+      if (o.ref === b || o.ref.phase === 'wait' || o.ref.phase === 'done') continue;
+      const dx = b.x - o.x, dy = b.y - o.y, along = dx * down.x + dy * down.y;
+      if (along < 12 || along > SHADOW_LEN) continue;
+      const half = 16 + along * 0.22, lat = Math.abs(dx * right.x + dy * right.y);
+      if (lat > half) continue;
+      const k = (1 - along / SHADOW_LEN) * (1 - lat / half) * 1.6;
+      if (k > best.k) best = { k: Math.min(1, k), by: o.ref };
+    }
+    return best;
+  }
+  const knots = v => v * KNOTS;
 
   // ---------- Kurulum ----------
   const COLORS = ['#c9d6e3', '#b8c7d6', '#aab9c9', '#d5dde6', '#bfcbd8', '#a3b3c4', '#cdd7e1', '#b0bfcf', '#dbe3ea', '#9fb0c3', '#c4d0dc', '#b4c3d2', '#d0d9e3', '#a8b8c8'];
@@ -276,6 +296,9 @@
     for (const b of active) {
       const remain = s.startAt - t;
       b.inGust = gustAt(s.gusts, b, w);
+      const sh = b.phase === 'race' || b.phase === 'round' ? shadowAt(b, snap, w) : { k: 0, by: null };
+      if (b.mine && sh.k > 0.25 && !(b.shadow > 0.25) && t > s.startAt) log(s, `${b.id} pis rüzgarda kaldı (${sh.by.id} numaranın rüzgar gölgesi), yavaşladı`, 'bad', 'golge' + b.id);
+      b.shadow = sh.k; b.shadowBy = sh.by ? sh.by.id : null;
       let target = b.h, speedK = 1, holding = false, turnDir = 0;
 
       if (b.phase === 'wait') {
@@ -391,7 +414,7 @@
       // sinyalden önce hatta varacaksa yavaşla (burnu hattın altında kalsın)
       if (b.phase === 'wait' && b.go && remain > 0) vt = Math.min(vt, Math.max(HOLD_V, (distToLine(b, b.h) - 6) / remain));
       if (b.phase === 'done') vt *= 0.8;
-      if (!holding) vt *= 1 + GUST_GAIN * b.inGust;
+      if (!holding) vt *= (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow);
       b.v += (vt - b.v) * Math.min(1, DT / TAU);
     }
 
@@ -451,8 +474,21 @@
     return { ...s, gusts: s.gusts.map(g => ({ ...g })), boats: s.boats.map(b => ({ ...b })), events: s.events.slice(), pairLog: { ...s.pairLog } };
   }
 
+  // Yarışı bitene kadar ileri hesapla; her 0.1 s'de bir kare (durumun kopyası) döndürür
+  function runToEnd(s0, maxT) {
+    const s = clone(s0), frames = [clone(s)];
+    maxT = maxT || 200;
+    while (s.t < maxT && !s.boats.every(b => b.finish || b.gone)) {
+      step(s);
+      if (Math.round(s.t / DT) % 2 === 0) frames.push(clone(s));
+    }
+    if (frames[frames.length - 1].t < s.t) frames.push(clone(s));
+    return frames;
+  }
+
   global.SailSim = {
+    runToEnd,
     DT, HULL, WORLD, LINE, MARK, BASE, START_AT, CLOCK_SCALE, PERSONAS, MINE_COLOR, OBSTACLES,
-    defaultFleet, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
+    SHADOW_LEN, knots, defaultFleet, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
 })(typeof window !== 'undefined' ? window : globalThis);
