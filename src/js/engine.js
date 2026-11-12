@@ -85,7 +85,7 @@
     const samples = [];
     let x = start.x, y = start.y, h = start.h, t = 0;
     let v = opts.v0 || 0;                 // mevcut hız (ivme için)
-    const TAU = opts.tau || 1.5;          // hızlanma zaman sabiti (s)
+    const TAU = opts.tau || scn.tau || 1.5;   // hızlanma zaman sabiti (s); küçük tekneler için scn.tau ≈ 1.0
     const obstacles = opts.obstacles || obstaclesOf(scn);
     let avoid = 0;                        // engel kaçınma açısı (derece), zamanla sıfıra döner
     const t0 = opts.t0 || 0;

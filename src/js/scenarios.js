@@ -35,7 +35,8 @@
       { t: 5, title: 'A tramola atıyor', text: 'A iskele kontraya tramola atıp B\'ye doğru gidiyor. Gerçekten geride mi? Kural 10 gereği iskele kontralı A, sancak kontralı B\'ye yol vermek zorunda; zaten onun arkasından geçecek.' },
       { t: 10, title: 'Sonuç', text: 'A, B\'nin kıç tarafından geçiyor. Farkın tek sebebi start çizgisinin avantajlı ucu. Start öncesi mutlaka ölçün: rüzgara karşı durup çizgiye bakın; burnunuzun gösterdiği tarafın GERİSİNDE kalan uç avantajlıdır. Pratik yol: çizgi boyunca gidip her iki uca aynı kontrada seyredin; hangisi daha orsa (rüzgara yakın) gidiyorsa o uç avantajlıdır.' }
     ],
-    addBoat: { pin: { x: 400, y: 612 }, middle: { x: 500, y: 612 }, committee: { x: 620, y: 612 } }
+    addBoat: { pin: { x: 400, y: 612 }, middle: { x: 500, y: 612 }, committee: { x: 620, y: 612 } },
+    crowd: [410, 480, 545, 590].map((x, i) => ({ pos: { x, y: 614 + (i % 2) * 6 }, tack: 'starboard', v0: 48 }))
   });
 
   // ---------- A1b: Hat avantajını ölçme yöntemleri ----------
@@ -76,48 +77,53 @@
   S.push({
     id: 'a2-timing',
     category: 'Taktik', topic: 'Start',
-    title: 'A2 · Zamanlama: bekleme, hızlanma, erken/geç start',
-    summary: 'İyi start = sinyal anında çizgide, tam hızda ve temiz havada olmak. Bunun için çizginin gerisinde "bekleyip" sinyalden ~5 saniye önce bordalayıp hızlanmak gerekir.',
-    duration: 30,
-    baseSpeed: 55,
+    title: 'A2 · Zamanlama: hattın dibinde bekle, 2-3 sn kala doldur',
+    summary: 'Optimist ve ILCA gibi küçük tekneler start hattının hemen gerisinde (1-1.5 tekne boyu) rüzgara baş verip beklerler; aralarında boşluk bırakırlar. İyi start = sinyalden 2-3 saniye önce yelkeni doldurup sinyal anında hattı tam hızla geçmek.',
+    duration: 28,
+    baseSpeed: 40,
+    tau: 1.0,            // küçük tekne: hızlı ivmelenir
+    goBefore: 2.5,       // filo sinyalden 2.5 s önce yelkeni doldurur
     wind: 0,
     line: { pin: { x: 250, y: 420 }, boat: { x: 750, y: 420 } },
     startAt: 20,
     boats: [
       { id: 'D', name: 'Doğru zamanlama', color: '#2a9d8f',
-        start: { x: 660, y: 640, h: 290 }, v0: 25,
+        start: { x: 700, y: 540, h: 290 }, v0: 25,
         segs: [
-          { mode: 'heading', h: 290, dur: 6, speed: 0.5, turn: 0 },      // çizgiye paralel yaklaşma
-          { mode: 'hold', h: 340, dur: 10.1, speed: 0.1, turn: 1.0 },   // orsalayıp bekleme
-          { mode: 'closehauled', tack: 'starboard', dur: 13.9, turn: 1.0 } // ~5 sn kala bordala, hızlan
+          { mode: 'heading', h: 290, dur: 4, speed: 0.5, turn: 0 },         // hattın dibine yarım hızla gel
+          { mode: 'hold', h: 340, dur: 12.9, speed: 0.05, turn: 1.0 },      // rüzgara baş ver, bekle
+          { mode: 'closehauled', tack: 'starboard', dur: 11.1, turn: 0.8 }  // 3 s kala doldur, hızlan
         ] },
       { id: 'E', name: 'Erken (OCS)', color: '#e76f51',
-        start: { x: 640, y: 560, h: 340 }, v0: 5,
+        start: { x: 455, y: 492, h: 340 }, v0: 2,
         segs: [
-          { mode: 'hold', h: 340, dur: 12, speed: 0.1, turn: 0 },
-          { mode: 'closehauled', tack: 'starboard', dur: 8, turn: 1.0 },   // çok erken bordaladı
-          { mode: 'heading', h: 150, dur: 3.6, turn: 1.6 },                 // geri dönüp çizginin altına
-          { mode: 'closehauled', tack: 'starboard', dur: 6.4, turn: 1.6 }
+          { mode: 'hold', h: 340, dur: 12, speed: 0.05, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 8, turn: 0.8 },   // 8 s kala doldurdu: çok erken
+          { mode: 'heading', h: 125, dur: 4.4, turn: 1.6 },                 // geri dönüp çizginin altına
+          { mode: 'closehauled', tack: 'starboard', dur: 3.6, turn: 1.6 }
         ] },
       { id: 'G', name: 'Geç kalan', color: '#8d99ae',
-        start: { x: 385, y: 620, h: 340 }, v0: 5,
+        start: { x: 335, y: 495, h: 340 }, v0: 2,
         segs: [
-          { mode: 'hold', h: 340, dur: 19.5, speed: 0.1, turn: 0 },
-          { mode: 'closehauled', tack: 'starboard', dur: 10.5, turn: 1.0 }
+          { mode: 'hold', h: 340, dur: 19.5, speed: 0.05, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 8.5, turn: 0.8 }
         ] }
     ],
+    crowd: [
+      { slot: 0.20 }, { slot: 0.44 }, { slot: 0.70 }, { slot: 0.82 }, { slot: 0.93 },
+      { slot: 0.30, row: 1 }, { slot: 0.42, row: 1 }
+    ],
     steps: [
-      { t: 0, title: 'Start\'a 20 sn', text: 'Yeşil tekne çizgiye paralel, yarım hızla, sancak kontra geliyor. Gri tekne yerini almış bekliyor; turuncu tekne de bekliyor.' },
-      { t: 6, title: 'Bekleme (hold)', text: 'Yeşil tekne orsalayarak (burnu rüzgara yakın, yelken boş) neredeyse duruyor. Yelkenin "sallanması" boş yelken demektir. Burada amaç çizginin ~4-5 tekne boyu gerisinde yerinizi korumaktır.' },
-      { t: 12, title: 'Turuncu çok erken bordaladı', text: 'Turuncu 8 saniye kala hızlanmaya başladı. Yarım hızda bile 10 saniyede çizgiyi geçer.' },
-      { t: 16.1, title: '4 sn kala: bordala ve hızlan!', text: 'Yeşil tekne orsadan bordalayıp yelkeni dolduruyor. Küçük bir tekne tam hıza ~4-6 saniyede çıkar; bu yüzden hızlanma, start sinyalinden ÖNCE başlamalı.' },
-      { t: 18, title: 'Turuncu çizgiyi geçti: OCS', text: 'Start sinyalinden önce çizgiyi geçen tekne "OCS"dir (On Course Side). Geri dönüp çizginin start tarafından yeniden geçmek zorunda (I bayrağı varsa uçlardan dolaşmalı). Kaybettiği süre 10-15 saniye; filo gitmiş olur.' },
-      { t: 20.2, title: 'START', text: 'Yeşil tekne tam bu anda, tam hızla çizgide. Gri tekne ise hızlanmaya yeni başlıyor: çizgiyi 3-4 saniye sonra, yavaş geçecek ve öndekilerin rüzgar gölgesinde kalacak.' },
-      { t: 25, title: 'Sonuç', text: 'İyi start için formül: zaman–mesafe hissi (kaç saniyede kaç tekne boyu?), çizginin gerisinde güvenli bekleme, ve sinyalden ~5 sn önce tam hıza çıkma. Antrenmanda 1 dakikalık "box start" ve "kaç saniyede çizgiye varırım" egzersizleri yapın.' }
+      { t: 0, title: 'Start\'a 20 sn: filo hattın dibinde', text: 'Gri tekneler hattın 1-1.5 boy gerisinde rüzgara baş vermiş, yelkenleri boş bekliyor. Aralarında boşluklar var: boşluk, hızlanma alanıdır. Yeşil tekne yarım hızla yerine geliyor.' },
+      { t: 4, title: 'Yerini al, rüzgara baş ver', text: 'Yeşil tekne de hattın dibinde durdu. Burnu rüzgara yakın, yelken boş ("sallanıyor"). Küçük teknede bekleme burada yapılır: hattan uzakta değil, hemen gerisinde. Rüzgaraltınızdaki boşluğu koruyun; biri sokulursa orsa edip kapatın (Kural 11).' },
+      { t: 12, title: 'Turuncu çok erken doldurdu', text: 'Turuncu 8 saniye kala yelkenini doldurdu. Küçük tekne 2-3 saniyede tam hıza çıkar; 8 saniye çok fazla, çizgiyi sinyalden önce geçecek.' },
+      { t: 15, title: 'Turuncu çizgiyi geçti: OCS', text: 'Start sinyalinden önce çizgiyi geçen tekne OCS\'dir. Geri dönüp çizginin start tarafından yeniden geçmek zorunda (I bayrağı varsa uçlardan dolaşarak). 10-15 saniye kayıp.' },
+      { t: 16.5, title: '3.5 sn kala: doldur ve hızlan', text: 'Yeşil tekne bordalayıp yelkeni dolduruyor. Filo da 2.5 s kala dolduruyor. Küçük teknede hızlanma kısa sürer; bu yüzden bekleme hattın dibinde, hızlanma son 2-3 saniyedir.' },
+      { t: 20, title: 'START', text: 'Yeşil tekne tam bu anda, tam hızla çizgide; filo da birlikte çıkıyor. Gri tekne hâlâ bekliyor: çizgiyi 2 saniye sonra, yavaş geçecek ve öndekilerin rüzgar gölgesinde kalacak.' },
+      { t: 25, title: 'Sonuç', text: 'Formül: hattın dibinde (1-1.5 boy) rüzgara baş verip bekle, rüzgaraltında boşluk tut, sinyalden 2-3 s önce doldur. Antrenmanda "kaç saniyede 1 boy?" hissini çalışın: yelkeni doldurup çizgiye varma süresini tekrar tekrar ölçün.' }
     ],
     addBoat: { pin: { x: 290, y: 560 }, middle: { x: 390, y: 640 }, committee: { x: 720, y: 560 } },
     expectEarly: ['E'],
-    // hat üstünde boş geçiş noktaları (0 = pin, 1 = hakem botu); scripted tekneler ~0.16 / 0.42 / 0.78'de
     startSlots: { pin: [0.28], middle: [0.54], committee: [0.86] }
   });
 
@@ -127,46 +133,53 @@
     category: 'Taktik', topic: 'Start',
     title: 'A3 · Pin ucu avantajlıysa: pin\'e yetiş, hemen tramola, pin\'e sıkışma',
     summary: 'Pin ucu avantajlıysa en iyi start pin\'in hemen yanından, sancak kontra, tam zamanında; sonra hemen iskele kontraya tramola atıp filoyu ÖNDEN kesmek. Tek şart: pin\'e giden layline\'ın ÜSTÜNDE olmak. Layline\'ın altında kalan tekne pin\'i dönemez; dışarıdan geçer ve geri dönmek zorunda kalır.',
-    duration: 19,
+    duration: 16.5,
     baseSpeed: 48,
-    wind: 340,
-    line: { pin: { x: 380, y: 480 }, boat: { x: 780, y: 480 } },
+    wind: 335,
+    line: { pin: { x: 200, y: 480 }, boat: { x: 800, y: 480 } },
     startAt: 6,
     rungs: { boat: 'P1', from: 8 },
-    laylines: [{ x: 380, y: 480, tack: 'starboard', len: 400, from: 2, label: 'Pin layline\'ı (sancak)' }],
+    laylines: [{ x: 200, y: 480, tack: 'starboard', len: 400, from: 2, label: 'Pin layline\'ı (sancak)' }],
     boats: [
       { id: 'P1', name: 'P1 – Pin\'de tam zamanında', color: '#2a9d8f',
-        start: { x: 690, y: 608, h: 295 }, v0: 48,
+        start: { x: 324, y: 507, h: 310 }, v0: 2,
         segs: [
-          { mode: 'closehauled', tack: 'starboard', dur: 7.5, turn: 0 },
-          { mode: 'closehauled', tack: 'port', dur: 11.5, turn: 1.4, note: 'Tramola → filoyu önden kes' }
+          { mode: 'hold', h: 310, dur: 3.8, speed: 0.05, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 3.2, turn: 0.8 },
+          { mode: 'closehauled', tack: 'port', dur: 9.5, turn: 1.4, note: 'Tramola → filoyu önden kes' }
         ] },
       { id: 'P2', name: 'P2 – Layline\'ın altında (sıkışan)', color: '#e76f51',
-        start: { x: 640, y: 650, h: 295 }, v0: 48,
+        start: { x: 290, y: 546, h: 310 }, v0: 2,
         segs: [
-          { mode: 'closehauled', tack: 'starboard', dur: 4, turn: 0 },
-          { mode: 'closehauled', tack: 'starboard', dur: 5.5, turn: 0, note: 'Pin\'e yetişemiyor!' },
-          { mode: 'heading', h: 108, dur: 5, turn: 1.4, note: 'Çizgi dışı → geri dönüyor' },
-          { mode: 'closehauled', tack: 'starboard', dur: 4.5, turn: 1.4 }
+          { mode: 'hold', h: 310, dur: 3.8, speed: 0.05, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 2, turn: 0.8 },
+          { mode: 'closehauled', tack: 'starboard', dur: 2.5, turn: 0, note: 'Pin\'e yetişemiyor!' },
+          { mode: 'heading', h: 118, dur: 4.6, turn: 1.4, note: 'Çizgi dışı → geri dönüyor' },
+          { mode: 'closehauled', tack: 'starboard', dur: 3.6, turn: 1.4 }
         ] },
       { id: 'P3', name: 'P3 – Ortadan güvenli', color: '#1f77b4',
-        start: { x: 901, y: 602, h: 295 }, v0: 48,
-        segs: [{ mode: 'closehauled', tack: 'starboard', dur: 19, turn: 0 }] }
+        start: { x: 684, y: 507, h: 310 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 310, dur: 3.8, speed: 0.05, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 12.7, turn: 0.8 }
+        ] }
     ],
     steps: [
-      { t: 0, title: 'Pin ucu avantajlı', text: 'Rüzgar 340°\'den, yani pin (sol) tarafından geliyor. Pin ucu hakem botundan ~3 tekne boyu "önde". Üç tekne de sancak kontra, start\'a 6 saniye var.' },
+      { t: 0, title: 'Pin ucu avantajlı', text: 'Rüzgar 335°\'den, yani pin (sol) tarafından geliyor. Hat geniş (12 boy); pin ucu hakem botundan ~5 tekne boyu "önde". Filo hattın dibinde rüzgara baş vermiş bekliyor; herkes pin tarafına yığılmış, hakem botu tarafı boş. Start\'a 6 saniye var.' },
       { t: 2, title: 'Pin layline\'ı', text: 'Mavi kesikli çizgi: pin\'den geriye, sancak orsa rotası boyunca çizilen layline. Bu çizginin ÜSTÜNDE (sağında) olan tekne pin\'e yetişir; altında kalan yetişemez. Yeşil P1 tam layline\'da, turuncu P2 altında.' },
       { t: 4, title: 'P2 pin\'e yetişemiyor', text: 'P2 orsa gittiği hâlde burnu pin\'in soluna düşüyor. Seçenekleri: tramola atıp iskele kontrada filoya girmek (tehlikeli, Kural 10) ya da pin\'in dışından geçip geri dönmek. İkisi de pahalı.' },
       { t: 6, title: 'START: P1 pin\'de', text: 'P1 start anında pin\'in hemen yanında, tam hızda. Avantajlı uçtan, temiz havada, rüzgaraltında kimse yok.' },
-      { t: 7.5, title: 'P1 hemen tramola', text: 'Pin\'den çıkan tekne sancakta uzun gitmez: pin\'i temizler temizlemez iskele kontraya döner. Neden? Pin avantajı onu filonun ÖNÜNE koydu; iskele kontrada herkesin önünden geçip istediği tarafa gidebilir. Sancakta kalsa sol kenara sıkışır.' },
+      { t: 7.0, title: 'P1 hemen tramola', text: 'Pin\'den çıkan tekne sancakta uzun gitmez: pin\'i temizler temizlemez iskele kontraya döner. Neden? Pin avantajı onu filonun ÖNÜNE koydu; iskele kontrada herkesin önünden geçip istediği tarafa gidebilir. Sancakta kalsa sol kenara sıkışır.' },
       { t: 8.6, title: 'P2 çizgi dışından geçti', text: 'P2 hattı pin\'in dışından geçti: start almış sayılmaz. Geri dönüp hattı uçlar arasından yeniden geçmek zorunda.' },
       { t: 11, title: 'P1 P3\'ün önünden geçiyor', text: 'İskele kontradaki P1, sancak kontradaki P3\'ün önünden rahatça geçiyor. Normalde iskele yol verirdi (Kural 10) ama P1 yeterince önde. Basamak çizgisi farkı gösteriyor: ~1.5 boy.' },
-      { t: 14, title: 'P2 geri dönüyor', text: 'P2 hattın altına inip yeniden start alıyor: 8-10 saniye ve filonun arkasında kirli hava. Pin\'e sıkışmanın maliyeti bu.' },
-      { t: 16.5, title: 'Sonuç', text: 'Pin avantajlıysa: layline\'ı son 30 saniyede gözle kontrol edin, layline\'ın biraz ÜSTÜNDE gelin, son 5 saniyede hızlanın, pin\'i temizleyince tramola atın. Emin değilseniz pin\'den 2-3 boy sağda start alın: küçük kayıp, sıfır risk.' }
+      { t: 12.5, title: 'P2 geri dönüyor', text: 'P2 hattın altına inip yeniden start alıyor: 8-10 saniye ve filonun arkasında kirli hava. Pin\'e sıkışmanın maliyeti bu.' },
+      { t: 15, title: 'Sonuç', text: 'Pin avantajlıysa: layline\'ı son 30 saniyede gözle kontrol edin, layline\'ın biraz ÜSTÜNDE gelin, son 5 saniyede hızlanın, pin\'i temizleyince tramola atın. Emin değilseniz pin\'den 2-3 boy sağda start alın: küçük kayıp, sıfır risk.' }
     ],
     addBoat: { pin: { x: 400, y: 650 }, middle: { x: 560, y: 660 }, committee: { x: 660, y: 650 } },
-    startSlots: { pin: [0.3], middle: [0.5], committee: [0.9] },
-    expectOutside: ['P2']
+    startSlots: { pin: [0.2], middle: [0.4], committee: [0.6] },
+    expectOutside: ['P2'],
+    tau: 1.0, goBefore: 2.5,
+    crowd: [{ slot: 0.3 }, { slot: 0.5 }]
   });
 
   // ---------- A4: Hakem botu ucu avantajlı ----------
@@ -198,8 +211,11 @@
           { mode: 'closehauled', tack: 'starboard', dur: 13.3, turn: 1.2 }
         ] },
       { id: 'C', name: 'C – Güvenli: 4 boy aşağıda', color: '#1f77b4',
-        start: { x: 570, y: 660, h: 330 }, v0: 40,
-        segs: [{ mode: 'closehauled', tack: 'starboard', dur: 18, turn: 0 }] }
+        start: { x: 455, y: 462, h: 340 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 340, dur: 5, speed: 0.05, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 13, turn: 0.8 }
+        ] }
     ],
     steps: [
       { t: 0, title: 'Hakem botu ucu avantajlı', text: 'Rüzgar 15°: hakem botu tarafından. Herkes hakem botunun hemen yanından çıkmak ister; ama orada tek bir yer var.' },
@@ -212,7 +228,9 @@
       { t: 14, title: 'Sonuç', text: 'Hakem botu ucu için ya layline\'da erkenden yer alın ve rüzgaraltınızı koruyun, ya da 3-5 boy aşağıda güvenli yeri seçin. Asla rüzgarüstünden sokulmayın: kapı kapanır, çarparsanız ceza sizin.' }
     ],
     addBoat: { pin: { x: 300, y: 600 }, middle: { x: 420, y: 660 }, committee: { x: 760, y: 640 } },
-    startSlots: { pin: [0.12], middle: [0.3], committee: [0.62] }
+    startSlots: { pin: [0.12], middle: [0.3], committee: [0.62] },
+    tau: 1.0, goBefore: 2.5,
+    crowd: [{ slot: 0.08 }, { slot: 0.2 }, { slot: 0.32 }, { slot: 0.58 }, { slot: 0.14, row: 1 }, { slot: 0.5, row: 1 }]
   });
 
   // ---------- B1: Kural 10 ----------

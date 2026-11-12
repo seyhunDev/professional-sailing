@@ -5,6 +5,7 @@
 
 ## Güncel durum (2026-11-12)
 - Canlı: https://seyhundev.github.io/professional-sailing/ — main'e push ile otomatik yayın (GitHub Actions, hash'li dosya adları, sağ altta sürüm damgası).
+- Start senaryolarında (A1, A2, A3, A4) kalabalık filo var; A3 hattı 600 px (12 boy), rüzgar 335°.
 - Hazır senaryolar (8): A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
 - Arayüz: tam ekran sahne; üst çubukta **senaryo seçici** (kategori sekmeleri Taktik/Kurallar/Teknik, alt konu başlıkları, özetli kartlar), Bilgi, Katmanlar, tam ekran; alt çubuk (oynat, hız, zaman çubuğu, tekne ekle/çıkar); canlı takipli bilgi kartı.
 - **Duyarlı düzen** (3 sınıf): bilgisayar (>1100 px: kart sağ üstte, tekne ekle alt çubukta), tablet (≤1100: ikon düğmeler, dikeyde kart altta geniş), telefon (≤640 px ya da yükseklik ≤460: kart alttan açılır sayfa + daraltma tutamacı, tekne ekle popover'da, seçici tam ekran). Dokunma hedefleri ≥44 px, iOS güvenli alan payları.
@@ -12,6 +13,7 @@
 - Terim: start hattının şamandıra ucu **pin**; "orsa şamandırası" yalnızca parkurun rüzgarüstü şamandırası için.
 - Senaryo katmanları: `rungs {boat, from, to}`, `laylines [{x,y,tack,len,from,to,label}]`, `readouts [{boat,from,to}]` (rota + rüzgar açısı), segment `note` (scripted tekne üstünde yazı).
 - Motor: segment tabanlı rota üretici (closehauled / run / heading / hold), ivme modeli, rüzgar keyframe'leri, yelken/bumba geometrisi, boş yelken sallanması.
+- **Kalabalık filo** (`scn.crowd`): start senaryolarına senaryo tanımından gelen gri tekneler; `slot` (0=pin, 1=hakem botu), `row` (2. sıra 60 px geride), ya da `pos`+`v0`. Hat geçiş noktası bir slot ise hattın 1-1.5 boy dibinde rüzgara baş verip (`w±25°`, hız %4) bekler; `goBefore` (2.5 s) kala yelkeni doldurur, `tau` (1.0) ile küçük tekne gibi hızlanır; kural manevraları sinyalden 0.5 s sonra başlar (start patlamasında yalnızca engel kaçınma). Yan yana boşluk: hat yönü ile orsa rotası arasındaki açı küçükse (büyük bias) slotları daha seyrek koy (A3: 600 px hat, Δu≥0.2).
 - Ek tekneler start senaryolarında **hat üstünde slot** alır (`scn.startSlots`, 0=pin 1=hakem botu; slotlar dolunca 2. sıra 70 px geride). Hızlanma mesafesi hesaplanıp bekleme konumu geriye yerleştirilir; sinyalde hattı uçlar arasından geçerler. Erken geçen "ERKEN · OCS", uçların dışından geçen "Çizgi dışından geçti!" notu alır. Beklerken kural manevrası yapılmaz.
 - Ek tekneler: kullanıcı ekler; `rules.js` tüm ek tekneleri birlikte simüle eder. Karşılaşmalarda RRS 10 (bordalama ya da yetmezse tramola), 11 (rüzgarüstü orsalar), 12 (arkadaki yavaşlar), 14 (hak sahibi de temas önler) uygulanır; manevra notu teknenin üstünde 2.5 s görünür. Scripted tekneler rotalarını değiştirmez (ders onlar).
 - Kategoriler: Kurallar / Taktik / Teknik; KONULAR.md de bu üç bölüme ayrıldı (Teknik = G1-G7, Aşama 1 ile).
@@ -45,6 +47,8 @@
 - 2026-11-12 · **Yayın: GitHub Actions + hash'li derleme.** Sebep: Pages'in 10 dk önbelleği yeni HTML'i eski CSS/JS ile eşleştirdi. `scripts/build.mjs` dosya adına içerik özeti ekler.
 - 2026-11-12 · **Yeni depo** `seyhunDev/professional-sailing`; eski `python_deneme` terk edildi.
 - 2026-11-12 · **Aşama 1 (yeni öğrenenler) atlandı**, Aşama 2 (yarış hazırlığı) ile başlandı.
+- 2026-11-12 · **Tekne ekle/çıkar arayüzden kaldırıldı** (kod duruyor, `addBoat`/`removeBoat`); kalabalık, senaryo tanımındaki `crowd` ile gelir. Sebep: kullanıcı gerçekçi, hazır kalabalık startlar istiyor; serbest ekleme kafa karıştırıyordu.
+- 2026-11-12 · **Küçük tekne start modeli:** Optimist/ILCA hattın hemen dibinde (1-1.5 boy) bekler, 2-3 s kala doldurur. A2 buna göre yeniden yazıldı; eski "4-5 boy geride bekle" metni kaldırıldı.
 - 2026-11-12 · **Kural motoru ek teknelere uygulanır, scripted teknelere uygulanmaz.** Sebep: scripted tekneler dersin kendisi; ek tekneler "kalabalık" ve kuralların canlı gösterimi. Hak sahibi notu gösterilmez (kalabalıkta okunmuyor), yalnızca yol veren manevralar yazılır.
 - 2026-11-12 · **Üç sabit kategori: Kurallar / Taktik / Teknik**, alt konu `topic` alanı ile.
 - 2026-11-12 · **Bilgi kartı tek adım gösterir**, canlı takip açık/kapalı; kullanıcı Önceki/Sonraki ile gezince takip kapanır.
@@ -66,6 +70,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 · Kalabalık start ve hattın dibinde bekleme (kullanıcı düzeltmesi)
+- Yapılanlar: `crowd` alanı + rules.simulate'te start modeli (goBefore, tau, rulesFrom); A2 yeniden (hattın dibinde bekleme, 7 filo teknesi, 2 sıra); A3 geniş hat 600 px, rüzgar 335°, P1/P2/P3 de bekliyor, 2 filo; A4'te C bekliyor + 6 filo; A1'de 4 filo. Tekne ekle/çıkar arayüzden gizlendi. Checker kalabalığı da denetliyor (`filoN`), en yakın yaklaşma zamanı ve konumuyla.
+- Öğrenilen: büyük bias'ta hat boyunca dizilen tekneler neredeyse kıç kıça gelir (yan mesafe = Δx·sin(rota–hat açısı)); slotları seyrek koymak gerekir. Hakem botu çevresi 60 px boş kalmalı (hold konumu sağa kayar).
+- Sonraki sohbete not: Start paketi 5 (ileri kalabalık) bu altyapıyı kullanmalı; `crowd` teknelerine senaryo bazlı davranış (ör. `behavior:'barging'`, `'late'`) eklenebilir.
+
 ### 2026-11-12 · İş tanımı: ileri seviye kalabalık start + uygulama adı
 - Kullanıcı istedi: kalabalık, geniş hatlı, pin avantajlı ve pin'de karmaşa olan start; bekleme taktikleri; Optimist'lerin hakem botunda rüzgara baş verip yer mücadelesi; geçerli kurallar ve hatalı hareketler. Ayrı sohbette yapılacak → "Sıradaki işler → Start paketi 5" ayrıntılı tanım.
 - Uygulama adı için ayrı sohbet → "Sıradaki işler → Uygulama adı".

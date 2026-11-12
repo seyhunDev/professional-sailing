@@ -12,6 +12,7 @@
   const HULL = 50;                 // tekne boyu (px)
   const COURSE = { w: 1000, h: 680 };   // senaryo koordinat alanı
   const EXTRA_COLORS = ['#ffd166', '#c77dff', '#90be6d', '#f9844a', '#48cae4', '#f94144', '#b5e48c'];
+  const CROWD_COLORS = ['#c9d6e3', '#b8c7d6', '#aab9c9', '#d5dde6', '#bfcbd8', '#a3b3c4', '#cdd7e1', '#b0bfcf', '#dbe3ea', '#9fb0c3'];
 
   const state = {
     scn: null, boats: [], extras: [], t: 0, playing: false, speed: 1, lastTs: 0,
@@ -33,8 +34,17 @@
 
   // ---------- Senaryo yükleme ----------
   function loadScenario(scn) {
-    state.scn = scn; state.t = 0; state.playing = false; state.extras = []; state.stepIdx = 0;
+    state.scn = scn; state.t = 0; state.playing = false; state.stepIdx = 0;
     state.boats = scn.boats.map(b => ({ ...b, track: E.buildTrack(scn, b.start, b.segs, { v0: b.v0, t0: b.t0 }) }));
+    // kalabalık filo: senaryoda tanımlı, kural motoruyla birlikte simüle edilen tekneler
+    state.extras = (scn.crowd || []).map((c, i) => {
+      const b = { id: c.id || String(i + 1), name: c.name || `Filo ${i + 1}`, color: c.color || CROWD_COLORS[i % CROWD_COLORS.length], tack: c.tack || 'starboard', extra: true, crowd: true };
+      if (c.slot != null && scn.line) { const { pin, boat: cb } = scn.line; b.slot = { x: pin.x + (cb.x - pin.x) * c.slot, y: pin.y + (cb.y - pin.y) * c.slot }; b.row = c.row || 0; }
+      else b.pos = c.pos;
+      b.v0 = c.v0;
+      return b;
+    });
+    simulateExtras();
     $('scrub').max = scn.duration;
     $('scnTitle').textContent = scn.title;
     $('scnSummary').textContent = scn.summary;
@@ -76,7 +86,7 @@
   // ---------- Ek tekneler: kural motoruyla birlikte simüle edilir ----------
   function simulateExtras() {
     const scn = state.scn;
-    const tracks = SailRules.simulate(scn, state.extras.map(b => ({ pos: b.pos, slot: b.slot, row: b.row, tack: b.tack })), state.boats);
+    const tracks = SailRules.simulate(scn, state.extras.map(b => ({ pos: b.pos, slot: b.slot, row: b.row, tack: b.tack, v0: b.v0 })), state.boats);
     state.extras.forEach((b, i) => b.track = tracks[i]);
   }
   function addBoat() {
@@ -154,7 +164,8 @@
     if (state.show.labels) {
       const lbl = el('text', { x: s.x.toFixed(1), y: (s.y + 40).toFixed(1), 'text-anchor': 'middle', fill: '#fff', 'font-size': 12, 'font-weight': 600,
         'paint-order': 'stroke', stroke: 'rgba(0,0,0,.6)', 'stroke-width': 3 }, parent);
-      lbl.textContent = `${b.id} · ${sail.tack === 'starboard' ? 'sancak' : 'iskele'}`;
+      lbl.textContent = b.crowd ? b.id : `${b.id} · ${sail.tack === 'starboard' ? 'sancak' : 'iskele'}`;
+      if (b.crowd) { lbl.setAttribute('font-size', 10); lbl.setAttribute('font-weight', 400); lbl.setAttribute('y', (s.y + 36).toFixed(1)); }
     }
     if (s.note) {
       const n = el('text', { x: s.x.toFixed(1), y: (s.y - 36).toFixed(1), 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12, 'font-weight': 700,
@@ -339,7 +350,7 @@
     const menu = $('addMenu'), row = $('addRow');
     const nodes = ['selSide', 'selTack', 'btnAdd', 'btnRemove'].map($);
     if (phoneMq.matches) {
-      const rows = menu.querySelectorAll('.row');
+      const rows = menu.querySelectorAll('.row'); if (!rows.length) return;
       rows[0].append(nodes[0], nodes[1]); rows[1].append(nodes[2], nodes[3]);
     } else {
       if (!row.querySelector('.lbl')) { const l = document.createElement('span'); l.className = 'lbl'; l.textContent = 'Tekne ekle'; row.appendChild(l); }
@@ -348,6 +359,8 @@
   }
   phoneMq.addEventListener('change', placeAddControls);
   placeAddControls();
+  // Tekne ekle/çıkar şimdilik kapalı (karar: NOTLAR.md); kalabalık senaryo tanımından gelir
+  ['addRow', 'addMenu', 'btnAddMenu'].forEach(id => $(id).style.display = 'none');
   $('btnAddMenu').onclick = () => $('addMenu').classList.toggle('hidden');
   $('btnCollapse').onclick = () => $('infoCard').classList.toggle('collapsed');
   $('infoHead').addEventListener('click', e => { if (phoneMq.matches && e.target.closest('.info-title-wrap')) $('infoCard').classList.toggle('collapsed'); });

@@ -33,7 +33,7 @@ npm run preview    # http://localhost:8080  (dist/ ile aynı yayın hâli)
 | Tekne / yelken / rüzgar vektör olarak çizilsin, ölçeklenince bozulmasın | **SVG** (Canvas değil: her tekne bir DOM nesnesi, tıklanabilir, CSS ile stillenebilir) |
 | Zamanda ileri-geri sarılabilsin, adımlara atlanabilsin | Senaryolar önceden **örneklenmiş rota** (track) üretir; her kare `t` ile örneklenir |
 | Senaryo yazmak kolay olsun (kod değil, tanım) | `docs/js/scenarios.js` içinde segment tabanlı tanım: `closehauled / run / heading / hold` |
-| Tekne ekle/çıkar, uç seçimi (pin / orta / hakem botu), kontra seçimi | Arayüzden; eklenen tekneler `rules.js` ile birlikte simüle edilir ve karşılaştıklarında RRS 10/11/12/14'e göre kendiliğinden manevra yapar (bordalama, tramola, orsalama, yavaşlama); uygulanan kural teknenin üstünde yazar |
+| Kalabalık start hatları | Senaryoda `crowd` ile tanımlanan filo, `rules.js` ile birlikte simüle edilir; hattın dibinde bekler, sinyalde çıkar ve karşılaşmalarda RRS 10/11/12/14'e göre kendiliğinden manevra yapar; uygulanan kural teknenin üstünde yazar. (Arayüzden tekne ekle/çıkar şimdilik kapalı; kod duruyor.) |
 | Ücretsiz yayın | GitHub Pages |
 | Python gerekli mi? | Hayır. Python yalnızca ileride veri (sporcu kayıtları, sonuçlar) tarafı için; animasyon tarafı tarayıcıda |
 
@@ -43,7 +43,7 @@ Framework bağımlılığı yok; ileride gerekirse SVG katmanı olduğu gibi Rea
 ## Kullanım
 
 - Üst çubuk: senaryo seçimi, **Bilgi** kartı aç/kapat, **Katmanlar** (rüzgar çizgileri, merdiven basamağı, isimler, izler), tam ekran.
-- Alt çubuk: oynat/duraklat, başa al, hız, zaman çubuğu, tekne ekle/çıkar.
+- Alt çubuk: oynat/duraklat, başa al, hız, zaman çubuğu.
 - Bilgi kartı: **Canlı takip** açıkken animasyonla birlikte adım adım ilerler. Önceki/Sonraki ile kendiniz gezerseniz canlı takip kapanır; **Bu ana git** animasyonu o adımın anına götürür.
 - Klavye: Boşluk oynat/duraklat, ← → adımlar arasında gezinme, `i` bilgi kartı.
 

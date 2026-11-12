@@ -111,9 +111,10 @@
      specs: [{pos:{x,y}, tack}] ya da start senaryosunda [{slot:{x,y}, tack}] (hat üstündeki hedef geçiş noktası)
      scripted: [{track}]  → her spec için örnek dizisi [{t,x,y,h,v,note}] */
   function simulate(scn, specs, scripted) {
-    const base = scn.baseSpeed || 55, TAU = 1.5;
+    const base = scn.baseSpeed || 55, TAU = scn.tau || 1.5;
     const isStart = !!(scn.line && scn.startAt > 0);
-    const goAt = isStart ? Math.max(0, scn.startAt - 4.5) : 0;
+    const goAt = isStart ? Math.max(0, scn.startAt - (scn.goBefore || 2.5)) : 0;   // küçük tekne: 2.5 s önce yelkeni doldur
+    const rulesFrom = scn.line ? (scn.startAt || 0) + 0.5 : 0;
     const w0 = E.windAt(scn.wind, 0);
     const HOLD_V = base * 0.04;
     const obstacles = E.obstaclesOf(scn);
@@ -123,10 +124,10 @@
       if (isStart && s.slot) {
         // geçiş noktasından geriye: hızlanma yolu + bekleme sürüklenmesi kadar
         const f = E.fwd(h0), fh = E.fwd(w0 + (s.tack === 'starboard' ? -25 : 25));
-        const sAcc = accelDistance(base, HOLD_V, scn.startAt - goAt, TAU) + (s.row || 0) * 70;
+        const sAcc = accelDistance(base, HOLD_V, scn.startAt - goAt, TAU) + (s.row || 0) * 60;
         pos = { x: s.slot.x - f.x * sAcc - fh.x * HOLD_V * goAt, y: s.slot.y - f.y * sAcc - fh.y * HOLD_V * goAt };
       }
-      return { x: pos.x, y: pos.y, h: h0, v: isStart ? HOLD_V : 0, tack: s.tack,
+      return { x: pos.x, y: pos.y, h: h0, v: s.v0 != null ? s.v0 : (isStart ? HOLD_V : 0), tack: s.tack,
         man: null, manUntil: -1, noteUntil: -1, note: '', crossed: false, avoid: 0,
         side: scn.line ? lineSide(scn.line, pos) : 0, out: [{ t: 0, x: pos.x, y: pos.y, h: h0 }] };
     });
@@ -135,7 +136,7 @@
       const w = E.windAt(scn.wind, t);
       const scriptedNow = scripted.map(b => { const s = E.sampleTrack(b.track, t); return { x: s.x, y: s.y, h: s.h, v: s.v != null ? s.v : base }; });
       const othersOf = b => [...scriptedNow, ...boats.filter(o => o !== b).map(o => ({ x: o.x, y: o.y, h: o.h, v: o.v }))];
-      const decisions = boats.map(b => (t < goAt ? null : decide(b, othersOf(b), w)));   // beklerken kural manevrası yok
+      const decisions = boats.map(b => (t < rulesFrom ? null : decide(b, othersOf(b), w)));   // start patlamasında kural manevrası yok (yalnızca engel kaçınma)
       boats.forEach((b, i) => {
         const dec = decisions[i];
         const holding = t < goAt;
