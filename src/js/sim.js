@@ -136,7 +136,12 @@
       const gg = el('g', { transform: `translate(${gu.x.toFixed(1)},${gu.y.toFixed(1)}) rotate(${v.wind.toFixed(1)})`, class: 'gust', 'data-gust': i }, g);
       el('ellipse', { rx: gu.rx, ry: gu.ry, fill: 'url(#gustFill)' }, gg);
       const on = st.gsel === i;
-      el('ellipse', { rx: gu.rx, ry: gu.ry, fill: 'none', stroke: on ? '#38bdf8' : 'rgba(125,211,252,.45)', 'stroke-width': on ? 2.5 : 1.5, 'stroke-dasharray': on ? '' : '3 7' }, gg);
+      if (on) {   // seçili sağanak: dışa doğru yayılan halka, ayar kartıyla aynı renk
+        const ph = (performance.now() / 1400) % 1, k = 1 + ph * 0.12;
+        el('ellipse', { rx: gu.rx * k, ry: gu.ry * k, fill: 'none', stroke: '#38bdf8', 'stroke-opacity': (1 - ph) * 0.7, 'stroke-width': 3 }, gg);
+        el('ellipse', { rx: gu.rx, ry: gu.ry, fill: 'rgba(56,189,248,.08)', stroke: 'none' }, gg);
+      }
+      el('ellipse', { rx: gu.rx, ry: gu.ry, fill: 'none', stroke: on ? '#38bdf8' : 'rgba(125,211,252,.45)', 'stroke-width': on ? 3 : 1.5, 'stroke-dasharray': on ? '' : '3 7' }, gg);
       // kedi pençesi (cat's paw) çizgileri: rüzgarla akar
       for (let k = 0; k < 9; k++) {
         const ax = ((k * 53) % (gu.rx * 1.2)) - gu.rx * 0.6, base = ((k * 97) % (gu.ry * 1.4)) - gu.ry * 0.7;
@@ -146,6 +151,7 @@
       const lab = el('g', { transform: `rotate(${-v.wind.toFixed(1)})` }, gg);
       el('text', { y: -gu.ry * 0.15, 'text-anchor': 'middle', fill: '#bae6fd', 'font-size': 14, 'font-weight': 700, 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.8)', 'stroke-width': 4 }, lab).textContent = v.gusts.length > 1 ? `SAĞANAK ${i + 1}` : 'SAĞANAK';
       el('text', { y: -gu.ry * 0.15 + 17, 'text-anchor': 'middle', fill: '#7dd3fc', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.8)', 'stroke-width': 4 }, lab).textContent = 'tekneler %25 hızlı';
+      if (on) el('text', { y: -gu.ry * 0.15 - 20, 'text-anchor': 'middle', fill: '#38bdf8', 'font-size': 11, 'font-weight': 800, 'letter-spacing': '.08em', 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.85)', 'stroke-width': 4 }, lab).textContent = 'SEÇİLİ · AYARLAR ALTTA';
     });
   }
 
@@ -518,14 +524,23 @@
   }
   function gustReset() { gustEdit((a, i) => { a[i].rx = GUST_BASE.rx; a[i].ry = GUST_BASE.ry; }, `Sağanak ${st.gsel + 1} ilk boyutuna döndü`); }
   function gustDelete() { const n = st.gsel + 1; gustEdit((a, i) => a.splice(i, 1), `Sağanak ${n} geçti`); st.gsel = null; gustBarUpdate(); }
+  // Sağanağı seç: ayar kartı sağ altta açılır ve bir kez parlar (yeni açıldığı fark edilsin)
+  function gustSelect(i) {
+    const was = st.gsel;
+    st.gsel = i; st.sel = null;
+    if (phoneMq.matches) setPanelOpen(false);   // telefonda alt panel kartın üstünü kapatmasın
+    gustBarUpdate(); updatePanel(true);
+    if (was !== i) { const bar = $('gustBar'); bar.classList.remove('flash'); void bar.offsetWidth; bar.classList.add('flash'); }
+  }
   function gustBarUpdate() {
     const list = st.mode === 'setup' || st.sim ? gustList() : [];
     if (st.gsel != null && !list[st.gsel]) st.gsel = null;
     $('gustBar').classList.toggle('hidden', st.gsel == null);
+    document.body.classList.toggle('gust-editing', st.gsel != null);
     if (st.gsel == null) return;
     const g = list[st.gsel], pct = Math.round(g.rx / GUST_BASE.rx * 100);
-    $('gbTitle').textContent = list.length > 1 ? `Sağanak ${st.gsel + 1}` : 'Sağanak';
-    $('gbSize').textContent = `boyut %${pct}`;
+    $('gbTitle').textContent = list.length > 1 ? `Sağanak ${st.gsel + 1} ayarları` : 'Sağanak ayarları';
+    $('gbSize').textContent = `%${pct}`;
     $('gbMinus').disabled = pct <= 40; $('gbPlus').disabled = pct >= 250; $('gbReset').disabled = pct === 100;
   }
   // ---------- Parkur: start hattı boyu ve şamandıra uzaklığı (yalnız kurulumda) ----------
@@ -559,9 +574,9 @@
     const g = { x: S.MARK.x + (side === 'L' ? -270 : 270), y: (S.MARK.y + S.LINE.pin.y) / 2, rx: 120, ry: 190 };
     if (st.mode === 'setup') st.gusts.push(g);
     else applyChange(r => { r.gusts.push(g); r.events.push({ t: r.t, text: `${side === 'L' ? 'Sol' : 'Sağ'} tarafa sağanak geldi`, kind: 'wind' }); });
-    toast(`${side === 'L' ? 'Sol' : 'Sağ'} tarafa sağanak eklendi · sürükleyerek taşıyabilirsin`);
+    gustSelect(gustList().length - 1);
   }
-  function clearGusts() { st.gsel = null; if (st.mode === 'setup') st.gusts.length = 0; else applyChange(r => { r.gusts.length = 0; r.events.push({ t: r.t, text: 'Sağanak geçti', kind: 'wind' }); }); }
+  function clearGusts() { st.gsel = null; if (st.mode === 'setup') st.gusts.length = 0; else applyChange(r => { r.gusts.length = 0; r.events.push({ t: r.t, text: 'Sağanak geçti', kind: 'wind' }); });  gustBarUpdate(); }
   function renumber() {
     let k = 1;
     for (const b of st.fleet) if (!b.mine) { b.id = String(k); b.name = `Tekne ${k}`; k++; }
@@ -688,7 +703,7 @@
       d.obj.x = d.x1; d.obj.y = d.y1;                 // eski karedeki konumu geri koy; değişiklik bu andan itibaren
       if (idx >= 0) applyChange(r => { Object.assign(r.gusts[idx], pos); r.events.push({ t: r.t, text: 'Sağanak taşındı', kind: 'wind' }); });
     }
-    if (d.kind === 'gust' && (!d.moved || st.mode === 'setup')) { const i = gustList().indexOf(d.obj); if (i >= 0) { st.gsel = i; st.sel = null; } }
+    if (d.kind === 'gust' && (!d.moved || st.mode === 'setup')) { const i = gustList().indexOf(d.obj); if (i >= 0) gustSelect(i); }
     if (d.kind === 'pick') { if (!d.moved) { st.sel = st.sel === d.obj.id ? null : d.obj.id; st.gsel = null; if (phoneMq.matches) setPanelOpen(true); } $('course').style.cursor = ''; updatePanel(true); return; }
     if (d.kind === 'boat' && !d.moved) { st.sel = st.sel === d.obj.id ? null : d.obj.id; if (phoneMq.matches) setPanelOpen(true); }
     if (d.kind === 'boat' && d.moved) settleBoat(d.obj);
@@ -907,6 +922,7 @@
     else if (e.key === 't' || e.key === 'T') $('btnTack').click();
     else if (e.key === 'm' || e.key === 'M') toggleManual();
     else if (e.key === 'Escape' && st.drawMode) endDraw(false);
+    else if (e.key === 'Escape' && st.gsel != null) $('gbClose').click();
     else if (e.key === 'Enter' && st.drawMode) endDraw(true);
     else if ((e.metaKey || e.ctrlKey) && e.key === 'z' && st.drawMode) { e.preventDefault(); routeUndo(); }
     else if (e.key === '+' || e.key === '=') zoomBy(1.4);

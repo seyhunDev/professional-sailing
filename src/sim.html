@@ -77,14 +77,23 @@
       </div>
     </div>
 
-    <div id="gustBar" class="gust-bar hidden" role="toolbar" aria-label="Sağanak">
-      <div class="rb-head"><span class="gb-dot"></span><div class="rb-text"><b id="gbTitle">Sağanak</b><span id="gbSize"></span></div></div>
-      <div class="rb-actions">
-        <button class="tb" id="gbMinus" title="Sağanağı küçült">−&nbsp;Küçült</button>
-        <button class="tb" id="gbPlus" title="Sağanağı büyüt">+&nbsp;Büyüt</button>
+    <div id="gustBar" class="gust-bar hidden" role="dialog" aria-label="Sağanak ayarları">
+      <div class="gb-head">
+        <span class="gb-dot"></span>
+        <div class="rb-text"><b id="gbTitle">Sağanak ayarları</b><span id="gbHint">Haritada parlayan sağanak · sürükleyerek taşı</span></div>
+        <button class="icon sm" id="gbClose" title="Kapat (Esc)"><svg><use href="#i-close"/></svg></button>
+      </div>
+      <div class="gb-row">
+        <span class="lbl">Boyut</span>
+        <div class="stepper">
+          <button id="gbMinus" title="Sağanağı küçült">−</button>
+          <span class="val" id="gbSize">%100</span>
+          <button id="gbPlus" title="Sağanağı büyüt">+</button>
+        </div>
+      </div>
+      <div class="gb-actions">
         <button class="tb" id="gbReset" title="İlk boyuta döndür"><svg class="ci"><use href="#i-undo"/></svg>Sıfırla</button>
         <button class="tb gb-del" id="gbDelete" title="Bu sağanağı sil">Sil</button>
-        <button class="icon sm" id="gbClose" title="Seçimi kaldır"><svg><use href="#i-close"/></svg></button>
       </div>
     </div>
 
@@ -159,7 +168,7 @@
           <ol>
             <li><b>Sürükle:</b> tekneleri hattın dibine yerleştir. Turuncu tekne <b>senin teknen</b>; bir boşluğa koy.</li>
             <li><b>Dokun:</b> bir tekneyi seç; kontrasını ve taktiğini değiştir, ya da onu senin teknen yap.</li>
-            <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin). Sağanağa dokununca üstte bir çubuk açılır: <b>Büyüt / Küçült</b>, <b>Sıfırla</b> (ilk boyut) ve <b>Sil</b>; birden çok sağanaktan istediğini ayrı ayrı düzenlersin.</li>
+            <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin). Sağanak eklenince ya da ona dokununca sağ altta <b>Sağanak ayarları</b> kartı açılır, seçili sağanak haritada parlar: <b>Boyut − / +</b>, <b>Sıfırla</b> (ilk boyut) ve <b>Sil</b>; birden çok sağanaktan istediğini ayrı ayrı düzenlersin.</li>
             <li><b>Parkur:</b> panelin üstündeki <b>Parkur</b> kutusundan start hattının uzunluğunu ve orsa şamandırasının uzaklığını değiştir; hız, rüzgar gölgesi ve kurallar yeni parkura göre hesaplanır. <b>Varsayılan</b> ile tek dokunuşla geri dönersin.</li>
             <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 1 dakikalık geri sayım başlar. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
             <li><b>Rota:</b> alttaki <b>Rota</b> düğmesine bas; üstte rota çubuğu açılır. <b>Açılı</b> (varsayılan): teknenden başlayarak sürükle; her sürükleme düz bir bacaktır ve orsadan darsa orsa açısına (rüzgara 45°) oturur. <b>Serbest</b>: parmağınla istediğin gibi çiz (hatalı gidişleri göstermek için). <b>Geri al</b> son bacağı siler; bitince yeşil <b>Tamam</b>. Yarışta da rotayı düzenleyebilirsin.</li>

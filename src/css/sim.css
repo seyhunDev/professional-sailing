@@ -151,17 +151,32 @@ body.drawing #course { cursor: crosshair; }
 .course-box .box-head small { font-weight: 500; font-size: 11.5px; color: var(--text2); margin-left: 6px; }
 .course-box .box-head small.changed { color: #fb923c; }
 .course-box .box-head .tb.sm { height: 30px; min-height: 30px; padding: 0 10px; font-size: 12.5px; }
-/* sağanak çubuğu */
-.gust-bar { position: absolute; top: 12px; left: 12px; right: 12px; margin: 0 auto; width: fit-content; z-index: 7; display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 14px; background: var(--panel-solid); border: 1px solid rgba(56,189,248,.55);
-  border-radius: 14px; box-shadow: var(--shadow), 0 0 0 4px rgba(56,189,248,.08); }
-.gust-bar .rb-text b { color: #bae6fd; }
-.gb-dot { width: 10px; height: 10px; border-radius: 50%; background: #38bdf8; flex: 0 0 auto; }
+/* sağanak ayar kartı: sahnenin sağ altında, seçili sağanakla aynı mavi */
+.gust-bar { position: absolute; right: 14px; bottom: 14px; z-index: 7; width: 270px; display: flex; flex-direction: column; gap: 10px; padding: 12px;
+  background: var(--panel-solid); border: 1.5px solid #38bdf8; border-radius: 14px; box-shadow: var(--shadow), 0 0 0 4px rgba(56,189,248,.12); animation: gbIn .22s ease-out; }
+.gust-bar.flash { animation: gbIn .22s ease-out, gbGlow 1.1s ease-out 2; }
+@keyframes gbIn { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes gbGlow { 0% { box-shadow: var(--shadow), 0 0 0 0 rgba(56,189,248,.7); } 100% { box-shadow: var(--shadow), 0 0 0 14px rgba(56,189,248,0); } }
+.gb-head { display: flex; align-items: center; gap: 10px; }
+.gb-head .rb-text { flex: 1 1 auto; }
+.gust-bar .rb-text b { color: #bae6fd; font-size: 14px; }
+.gust-bar .rb-text span { max-width: none; font-size: 11.5px; }
+.gb-dot { width: 10px; height: 10px; border-radius: 50%; background: #38bdf8; flex: 0 0 auto; animation: gbPulse 1.4s ease-in-out infinite; }
+@keyframes gbPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(56,189,248,.6); } 50% { box-shadow: 0 0 0 6px rgba(56,189,248,0); } }
+.gb-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.gb-row .lbl { font-size: 12.5px; color: var(--text2); }
+.gb-row .stepper .val { min-width: 64px; }
+.gb-actions { display: flex; gap: 8px; }
+.gb-actions .tb { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; min-height: 38px; font-size: 13px; font-weight: 600; }
 .gb-del { color: #fca5a5; border-color: rgba(248,113,113,.45); }
 .gb-del:hover { background: rgba(248,113,113,.16); }
 .route-bar:not(.hidden) ~ .gust-bar { display: none; }
-@media (min-width: 1101px) { .stage:has(#panel:not(.hidden)) .gust-bar { right: 400px; } }
-@media (max-width: 1100px) { .gust-bar { flex-wrap: wrap; gap: 8px; } }
-@media (max-width: 640px) { .gust-bar { top: 8px; padding: 8px; border-radius: 12px; } .gust-bar .rb-actions { flex: 1 1 100%; flex-wrap: wrap; } .gust-bar .rb-actions .tb { padding: 0 10px; } }
+/* panel açıkken kart panelin soluna */
+@media (min-width: 641px) { .stage:has(#panel:not(.hidden)) .gust-bar { right: 400px; } }
+@media (max-width: 640px), (max-height: 460px) { .gust-bar { left: 8px; right: 8px; bottom: 8px; width: auto; padding: 10px; border-radius: 12px; gap: 8px; } }
+/* sağanak düzenlenirken alttaki Sağanak grubu da mavi: ikisinin bağlantısı görünsün */
+body.gust-editing .cg[aria-label="Sağanak"] .cg-lbl { color: #38bdf8; }
+body.gust-editing .cg[aria-label="Sağanak"] .seg { border-color: rgba(56,189,248,.6); box-shadow: 0 0 0 3px rgba(56,189,248,.12); }
 .course-box.sea-box .sel-row .lbl { width: 64px; flex: 0 0 64px; }
 /* sayfa sabit: iPad Safari'de sayfa esneyip kaymasın */
 body.sim { position: fixed; inset: 0; overscroll-behavior: none; }
@@ -177,7 +192,7 @@ body.sim { position: fixed; inset: 0; overscroll-behavior: none; }
 .zoom-ctl #btnFollow.on { background: rgba(251,146,60,.18); color: #fed7aa; }
 #zoomVal { text-align: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; padding: 1px 0; }
 @media (max-width: 640px) { .zoom-ctl { left: auto; right: 10px; bottom: auto; top: 10px; } }
-@media (max-width: 640px) { .stage:has(.route-bar:not(.hidden)) .zoom-ctl, .stage:has(.gust-bar:not(.hidden)) .zoom-ctl { display: none; } }
+@media (max-width: 640px) { .stage:has(.route-bar:not(.hidden)) .zoom-ctl { display: none; } }
 @media (max-width: 640px) { .zoom-ctl { padding: 3px; gap: 0; border-radius: 12px; } .zoom-ctl button { min-width: 40px; height: 36px; font-size: 18px; } .zoom-ctl .zc-txt { font-size: 11px; height: 30px; padding: 0 6px; } #zoomVal { display: none; } }
 .tb.accent.pulse:not(:disabled) { box-shadow: 0 0 0 0 rgba(251,146,60,.5); animation: tackPulse 2s ease-out infinite; }
 @keyframes tackPulse { 0% { box-shadow: 0 0 0 0 rgba(251,146,60,.45); } 70%, 100% { box-shadow: 0 0 0 8px rgba(251,146,60,0); } }
