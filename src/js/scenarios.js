@@ -357,15 +357,16 @@
     line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
     startAt: 24,
     rungs: { boat: 'S', from: 24.5 },
-    sightline: { from: 0, to: 9, label: 'Transit: pin\'den hakem botuna bak — hat burada' },
+    sightline: { from: 0, to: 6, label: 'Transit: pin\'den hakem botuna bak — hat burada' },
     boats: [
       { id: 'S', name: 'Yayı gören, ortada yukarı', role: 'dogru', color: '#2a9d8f',
-        start: { x: 115, y: 575, h: 25 }, v0: 2,
+        start: { x: 88, y: 452, h: 90 }, v0: 2,
         segs: [
-          { mode: 'hold', h: 25, dur: 7, speed: 0.05, turn: 0, note: 'Pin tarafından hatta bakıyor' },
-          { mode: 'heading', h: 90, dur: 6.9, turn: 1.0, note: 'Apaz: hattın altından ortaya' },
+          { mode: 'hold', h: 90, dur: 4, speed: 0.04, turn: 0 },
+          { mode: 'heading', h: 160, dur: 3.2, turn: 0.8, note: 'Hattın altına iniyor' },
+          { mode: 'heading', h: 90, dur: 6.2, turn: 1.0, note: 'Apaz: hattın altından ortaya' },
           { mode: 'heading', h: 35, dur: 2.3, turn: 1.0, speed: 1, note: 'Boşluğa gir, komşulardan YUKARI' },
-          { mode: 'hold', h: 340, dur: 6.3, speed: 0.04, turn: 1.0, note: 'Hattı biliyorum: 1 boy geride' },
+          { mode: 'hold', h: 340, dur: 6.8, speed: 0.04, turn: 1.0, note: 'Hattı biliyorum: 1 boy geride' },
           { mode: 'closehauled', tack: 'starboard', dur: 9.5, turn: 0.8 }
         ] }
     ],
@@ -375,9 +376,9 @@
       { slot: 0.50, back: 145 }, { slot: 0.60, back: 135 }, { slot: 0.69, back: 95 }, { slot: 0.76, back: 50 }, { slot: 0.87, back: 0 }
     ],
     steps: [
-      { t: 0, title: 'Start\'a 72 sn: pin tarafından hatta bak', text: 'Yeşil S pin\'in dışında, hattın hizasında duruyor ve hakem botuna bakıyor: pin ile hakem botunu aynı hizaya getirince hat tam olarak görünür (transit). Gördüğü şey: uçlardaki tekneler hatta yakın, ortadakiler 2-3 boy geride. Bu bir hat yayı (line sag).' },
-      { t: 3.5, title: 'Yay neden oluşur?', text: 'Uzun hatta ortadaki tekne hattı göremez; iki ucu birden hizalayamaz. Herkes komşusuna göre durur, her komşu biraz geri kalır; orta kayar. Yayı yalnızca hattı GÖREN bilir: uçtan bakan ya da kıyıda transit alan.' },
-      { t: 7, title: 'Vakit var: hattın altından ortaya', text: 'S yelkenini doldurup apaz ile hattın altından, uçtaki teknelerin altından ortaya doğru gidiyor. İskele kontrada: herkese yol verir (Kural 10). Ortaya giderken filonun rüzgar gölgesine girer, hızı düşer: bunu zamanına ekle.' },
+      { t: 0, title: 'Start\'a 72 sn: pin tarafından hatta bak', text: 'Yeşil S pin\'in dışında, tam hattın uzantısında (hattın üstünde) duruyor ve hakem botuna bakıyor: pin ile hakem botunu aynı hizaya getirince hat tam olarak görünür (transit). Gördüğü şey: uçlardaki tekneler hatta yakın, ortadakiler 2-3 boy geride. Bu bir hat yayı (line sag).' },
+      { t: 2, title: 'Yay neden oluşur?', text: 'Uzun hatta ortadaki tekne hattı göremez; iki ucu birden hizalayamaz. Herkes komşusuna göre durur, her komşu biraz geri kalır; orta kayar. Yayı yalnızca hattı GÖREN bilir: uçtan bakan ya da kıyıda transit alan.' },
+      { t: 4, title: 'Vakit var: hattın altından ortaya', text: 'S hattın uzantısından ayrılıp önce hattın altına iniyor, sonra yelkenini doldurup apaz ile uçtaki teknelerin altından ortaya doğru gidiyor. İskele kontrada: herkese yol verir (Kural 10). Ortaya giderken filonun rüzgar gölgesine girer, hızı düşer: bunu zamanına ekle.' },
       { t: 12, title: 'Hangi boşluk, ne zaman?', text: 'Hedef: yayın derinleştiği yerde, iki teknenin arasında bir boşluk. Zamanı öyle ayarla ki 45-50 sn kala orada ol: daha erken gelirsen sürüklenirsin, daha geç gelirsen boşluk kapanır. Kargaşanın içinde değil, uzaktan planla.' },
       { t: 14, title: 'Boşluğa gir ama YUKARI dur', text: 'S boşluğa giriyor ama komşuları gibi 3 boy geride değil, hattın 1 boy altında duruyor. Komşulara göre "öne çıkmış" görünür; aslında hattın doğru yerindedir. Bunun için hattı gerçekten biliyor olman lazım: transit şart.' },
       { t: 17.5, title: 'Yerini koru, hattı kontrol et', text: 'Rüzgara baş vermiş bekliyor; rüzgaraltında boşluğu var. Son 30 sn\'de transiti bir kez daha kontrol et: pin ile hakem botu hizası nerede, burnun ona göre nerede?' },
