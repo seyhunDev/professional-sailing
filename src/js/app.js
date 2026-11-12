@@ -21,6 +21,8 @@
     follow: true, stepIdx: 0, infoOpen: true
   };
 
+  const phoneMq = window.matchMedia('(max-width: 640px), (max-height: 460px)');
+
   // ---------- Görünüm alanı: sahne oranına göre su alanını genişlet ----------
   function fitViewBox() {
     const svg = $('course');
@@ -28,7 +30,9 @@
     const aspect = W / H, ca = COURSE.w / COURSE.h;
     let w = COURSE.w, h = COURSE.h;
     if (aspect > ca) w = COURSE.h * aspect; else h = COURSE.w / aspect;
-    state.vb = { x: -(w - COURSE.w) / 2, y: -(h - COURSE.h) / 2, w, h };
+    // dikey ekranda fazla yükseklik: tablette parkur aşağıda (üst boşluk bilgi kartına), telefonda yukarıda (kart altta)
+    const topShare = (typeof phoneMq !== 'undefined' && phoneMq.matches) ? 0.22 : 0.68;
+    state.vb = { x: -(w - COURSE.w) / 2, y: -(h - COURSE.h) * topShare, w, h };
     svg.setAttribute('viewBox', `${state.vb.x} ${state.vb.y} ${w} ${h}`);
   }
 
@@ -345,7 +349,6 @@
   $('picker').addEventListener('click', e => { if (e.target === $('picker')) openPicker(false); });
 
   // ---------- Tekne ekle denetimlerinin yeri: telefonda popover, geniş ekranda alt çubuk ----------
-  const phoneMq = window.matchMedia('(max-width: 640px), (max-height: 460px)');
   function placeAddControls() {
     const menu = $('addMenu'), row = $('addRow');
     const nodes = ['selSide', 'selTack', 'btnAdd', 'btnRemove'].map($);

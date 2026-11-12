@@ -120,9 +120,9 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .version-row { display: none; }
 }
 @media (max-width: 1100px) and (orientation: portrait) {
-  /* dikey tablet: bilgi kartı altta, geniş */
-  .info-card { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; max-height: 42%; }
-  .info-card.hidden { transform: translateY(20px); }
+  /* dikey tablet: bilgi kartı sağ üstte, geniş; alt yarıya inmez (parkur aşağıda) */
+  .info-card { top: 12px; right: 12px; left: auto; width: min(560px, 64vw); max-height: 44%; }
+  .info-body p { font-size: 15px; }
 }
 
 /* ===== TELEFON ===== */
