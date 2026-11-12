@@ -426,14 +426,24 @@
         let lineAim = null;
         if (!b.started) {
           const u0 = R.lineParam(LINE, b), u = clamp(u0, 0.12, 0.88);
-          if (Math.abs(u0 - u) > 0.01) {                   // uçların dışında: hattın içindeki bir noktaya yönel
+          // gerçekten uçların dışında (pin'in solu / hakem botunun sağı): hattın içindeki bir noktaya yönel.
+          // Manuelde uca yakın ama içerideyse düz devam eder (otomatikte pin'e sıkışmasın diye %11 pay)
+          const edgeU = b.manual ? 0.02 : 0.11;
+          if (u0 < edgeU || u0 > 1 - edgeU) {
             const P = { x: LINE.pin.x + (LINE.boat.x - LINE.pin.x) * u, y: LINE.pin.y + (LINE.boat.y - LINE.pin.y) * u - 30 };
             lineAim = { brg: bearing(b, P), rel: E.norm180(bearing(b, P) - w) };
             wt = lineAim.rel > 15 ? 'port' : lineAim.rel < -15 ? 'starboard' : b.tack;   // ölü bölgede gidip gelmesin
+            if (b.manual) {                                 // manuel: kendisi dönmez, yalnız uyarır
+              if (wt !== b.tack) { wt = b.tack; if (Math.abs(lineAim.rel) < 45 || (lineAim.rel > 0) !== (b.tack === 'port')) lineAim = null; if (t - (b.warnAt || -9) > 4) { b.warnAt = t; note(b, s, 'Hattın dışındasın: tramola at', 'bad', 3); } }
+            }
           } else wt = b.tack;                              // uçların arasında: düz devam, hattı geç
         }
         const edge = b.x < 40 || b.x > WORLD.w - 40;
-        if (b.manual && b.started) wt = (b.x < 25 && b.tack === 'starboard') ? 'port' : (b.x > WORLD.w - 25 && b.tack === 'port') ? 'starboard' : b.tack;   // yalnız parkurdan çıkmasın
+        if (b.manual) {                                    // yalnız parkurdan çıkmasın (ve bunu söyler)
+          wt = (b.x < 25 && b.tack === 'starboard') ? 'port' : (b.x > WORLD.w - 25 && b.tack === 'port') ? 'starboard' : b.tack;
+          if (wt !== b.tack) { note(b, s, 'Parkur kenarı: zorunlu tramola', 'bad', 3); log(s, `${b.id}: parkurun kenarına geldi, zorunlu tramola`); }
+          else if ((b.x < 110 && b.tack === 'starboard') || (b.x > WORLD.w - 110 && b.tack === 'port')) { if (t - (b.warnAt || -9) > 5) { b.warnAt = t; note(b, s, 'Kenara yaklaşıyorsun: tramola?', '', 2.5); } }
+        }
         if (wt !== b.tack && t - b.lastTack > MIN_TACK_GAP && (t > s.startAt + 3 || edge)) {
           // K13 bilinci: tramoladan sonra biriyle çakışacaksa bekle
           const nh = E.tackHeading(w, wt), others = snap.filter(o => o.ref !== b);

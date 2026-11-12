@@ -130,6 +130,11 @@
 
 ## Oturum günlüğü (en yeni üstte)
 
+### 2026-11-12 · Manuel modda start'ta kendiliğinden tramola düzeltmesi
+- Sebep: start'tan sonra hattı henüz geçmemiş tekne, hattın uçlarına %12 yakınsa "uçların dışında" sayılıp hattın içine dönmek için tramola atıyordu (`lineAim`). Sancakta sola giden teknede pin tarafında hep oluyordu.
+- Manuelde artık yalnız gerçekten dışarıdaysa (%2) uyarı verir ("Hattın dışındasın: tramola at"), kendisi dönmez. Otomatikte %11 pay kaldı (pin'e sıkışmasın).
+- Manuelde tek zorunlu tramola parkurun kenarı (25 px), artık olaylara yazılıyor; kenara 110 px kala "tramola?" uyarısı.
+
 ### 2026-11-12 · Simülatör: Manuel mod (tramolayı yalnız kullanıcı atar)
 - Alt çubukta **Manuel** anahtarı (M tuşu), kurulumda ve yarışta. Açıkken senin teknen start'tan sonra hiç kendi tramola atmaz: taktik / layline / kaçış tramolası / rüzgarda kalma / şamandırayı tutmama tramolaları kapalı; yalnız parkurun kenarına (25 px) gelince güvenlik tramolası. Start'a yaklaşma ve şamandıra dönüşü otomatik. Rota kapanır, taktik seçimi pasif, Tramola düğmesi yanıp söner. Kapalıyken eski davranış.
 - Motor: `b.manual`, `command 'manual'`; kayıtta saklanır.
