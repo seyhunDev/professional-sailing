@@ -14,7 +14,8 @@ yürütülür; sohbetler arasındaki ortak hafıza **`NOTLAR.md`** dosyasıdır.
    - "Güncel durum" (ne çalışıyor, ne yayında)
    - "Sıradaki işler" (biteni işaretle, yeni çıkanları ekle)
    - "Oturum günlüğü"na yeni kayıt: tarih, sohbetin konusu, yapılanlar, yarım kalanlar, sonraki sohbete not
-4. Kullanıcının karar vermesi gereken konuları "Açık sorular" bölümüne yaz; cevaplanınca "Kararlar"a taşı.
+4. **Senaryo bazlı sohbet:** kullanıcı "X kartını geliştir" derse `NOTLAR.md` → "Senaryo kartları" tablosundaki satırı oku, işi yap, satırı (durum / eksikler / fikirler) güncelle; bağlı senaryoları etkileyen bir değişiklikse "Sohbetler arası mesajlar"a yaz.
+5. Kullanıcının karar vermesi gereken konuları "Açık sorular" bölümüne yaz; cevaplanınca "Kararlar"a taşı.
 
 ## Proje özeti
 Genç yarış yelkencileri için etkileşimli taktik/kural animasyonları. Üstten görünüş, SVG, vanilla JS.

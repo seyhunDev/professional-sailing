@@ -124,7 +124,7 @@
       if (isStart && s.slot) {
         // geçiş noktasından geriye: hızlanma yolu + bekleme sürüklenmesi kadar
         const f = E.fwd(h0), fh = E.fwd(w0 + (s.tack === 'starboard' ? -25 : 25));
-        const sAcc = accelDistance(base, HOLD_V, scn.startAt - goAt, TAU) + (s.row || 0) * 60;
+        const sAcc = accelDistance(base, HOLD_V, scn.startAt - goAt, TAU) + (s.row || 0) * 60 + (s.back || 0);
         pos = { x: s.slot.x - f.x * sAcc - fh.x * HOLD_V * goAt, y: s.slot.y - f.y * sAcc - fh.y * HOLD_V * goAt };
       }
       return { x: pos.x, y: pos.y, h: h0, v: s.v0 != null ? s.v0 : (isStart ? HOLD_V : 0), tack: s.tack,

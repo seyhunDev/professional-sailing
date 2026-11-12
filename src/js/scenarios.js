@@ -344,6 +344,51 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // ---------- İA2: Hat yayı (line sag): pin tarafından bak, ortada yukarıdan çık ----------
+  S.push({
+    id: 'ia2-line-sag',
+    category: 'İleri Taktik', topic: 'Start',
+    title: 'İA2 · Hat yayı: pin tarafından hattı gör, ortada herkesten yukarı dur',
+    summary: 'Uzun hatlarda filo ortaya doğru hattan uzaklaşır: hat yayı (line sag). Kimse hattı göremez, herkes komşusuna göre durur. Pin tarafından hakem botuna bakan tekne yayı görür; vakti varsa hattın altından ortaya gelir, bir boşluğa komşularından YUKARI (hatta yakın) yerleşir ve sinyalde 1-2 boy önde çıkar. Yay yoksa: herhangi bir boşluğa, herkesle aynı hizada.',
+    duration: 32,
+    baseSpeed: 40, tau: 1.0, goBefore: 2.5,
+    clockScale: 3,
+    wind: 0,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 24,
+    rungs: { boat: 'S', from: 24.5 },
+    sightline: { from: 0, to: 9, label: 'Transit: pin\'den hakem botuna bak — hat burada' },
+    boats: [
+      { id: 'S', name: 'S – Yayı gören: ortada herkesten yukarı', color: '#2a9d8f',
+        start: { x: 115, y: 575, h: 25 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 25, dur: 7, speed: 0.05, turn: 0, note: 'Pin tarafından hatta bakıyor' },
+          { mode: 'heading', h: 90, dur: 6.9, turn: 1.0, note: 'Apaz: hattın altından ortaya' },
+          { mode: 'heading', h: 35, dur: 2.3, turn: 1.0, speed: 1, note: 'Boşluğa gir, komşulardan YUKARI' },
+          { mode: 'hold', h: 340, dur: 5.9, speed: 0.04, turn: 1.0, note: 'Hattı biliyorum: 1 boy geride' },
+          { mode: 'closehauled', tack: 'starboard', dur: 9.9, turn: 0.8 }
+        ] }
+    ],
+    // yay: uçlar hatta yakın, orta 2.5-3 boy geride
+    crowd: [
+      { slot: 0.10, back: 0 }, { slot: 0.20, back: 30 }, { slot: 0.30, back: 95 }, { slot: 0.40, back: 130 },
+      { slot: 0.50, back: 145 }, { slot: 0.60, back: 135 }, { slot: 0.70, back: 100 }, { slot: 0.80, back: 45 }, { slot: 0.86, back: 0 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 72 sn: pin tarafından hatta bak', text: 'Yeşil S pin\'in dışında, hattın hizasında duruyor ve hakem botuna bakıyor: pin ile hakem botunu aynı hizaya getirince hat tam olarak görünür (transit). Gördüğü şey: uçlardaki tekneler hatta yakın, ortadakiler 2-3 boy geride. Bu bir hat yayı (line sag).' },
+      { t: 3.5, title: 'Yay neden oluşur?', text: 'Uzun hatta ortadaki tekne hattı göremez; iki ucu birden hizalayamaz. Herkes komşusuna göre durur, her komşu biraz geri kalır; orta kayar. Yayı yalnızca hattı GÖREN bilir: uçtan bakan ya da kıyıda transit alan.' },
+      { t: 7, title: 'Vakit var: hattın altından ortaya', text: 'S yelkenini doldurup apaz ile hattın altından, uçtaki teknelerin altından ortaya doğru gidiyor. İskele kontrada: herkese yol verir (Kural 10). Ortaya giderken filonun rüzgar gölgesine girer, hızı düşer: bunu zamanına ekle.' },
+      { t: 12, title: 'Hangi boşluk, ne zaman?', text: 'Hedef: yayın derinleştiği yerde, iki teknenin arasında bir boşluk. Zamanı öyle ayarla ki 45-50 sn kala orada ol: daha erken gelirsen sürüklenirsin, daha geç gelirsen boşluk kapanır. Kargaşanın içinde değil, uzaktan planla.' },
+      { t: 14, title: 'Boşluğa gir ama YUKARI dur', text: 'S boşluğa giriyor ama komşuları gibi 3 boy geride değil, hattın 1 boy altında duruyor. Komşulara göre "öne çıkmış" görünür; aslında hattın doğru yerindedir. Bunun için hattı gerçekten biliyor olman lazım: transit şart.' },
+      { t: 17.5, title: 'Yerini koru, hattı kontrol et', text: 'Rüzgara baş vermiş bekliyor; rüzgaraltında boşluğu var. Son 30 sn\'de transiti bir kez daha kontrol et: pin ile hakem botu hizası nerede, burnun ona göre nerede?' },
+      { t: 21.5, title: '2.5 sn kala doldur', text: 'Komşular 3 boy geriden hızlanacak; S 1 boydan. Sinyalde S hatta, onlar değil.' },
+      { t: 24, title: 'START: 2 boy önde, temiz hava', text: 'S tam hatta, tam hızda. Ortadaki tekneler 2-3 saniye sonra geçecek. Basamak çizgisi farkı gösteriyor. Üstelik S\'nin rüzgarüstünde kimse yok: temiz hava.' },
+      { t: 28, title: 'Yay yoksa?', text: 'Hatta baktın, yay yok: herkes hattın dibinde. O zaman "yukarı durmak" diye bir şey yok: herhangi bir boşluğa, herkesle aynı hizada dur; zamanlamaya ve rüzgaraltı boşluğuna odaklan. Her iki durumda da kural aynı: kargaşadan uzak dur, uzaktan bak, planla, son dakikada gir.' }
+    ],
+    addBoat: { pin: { x: 290, y: 560 }, middle: { x: 500, y: 560 }, committee: { x: 720, y: 560 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   // ---------- B1: Kural 10 ----------
   S.push({
     id: 'b1-rule10',

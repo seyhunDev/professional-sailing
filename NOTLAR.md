@@ -8,7 +8,7 @@
 - Start senaryolarında (A1, A2, A3, A4) kalabalık filo var; A3 hattı 600 px (12 boy), rüzgar 335°.
 - Yeni kategori **İleri Taktik** (4. sekme; `category: 'İleri Taktik'`), KONULAR.md → H bölümü. İlk senaryo İA1.
 - Senaryo alanları: `clockScale` (sayaç gerçek zaman çarpanı, ör. 4 → 30 s animasyon = 2 dk), `prepFlag` ('P','I','U','Siyah') + `flagDownAt` (1 dk kala bayrak iner).
-- Hazır senaryolar (10): A12 bayraklar ve İA1 pin dışında bekleme dahil; A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
+- Hazır senaryolar (11): A12 bayraklar, İA1 pin dışında bekleme, İA2 hat yayı dahil; A1 line bias, A1b ölçüm yöntemleri, A2 zamanlama/OCS, A3 pin ucu avantajlı, A4 hakem botu avantajlı/barging, B1 Kural 10, C1 header'da tramola, B8 Kural 18.
 - Arayüz: tam ekran sahne; üst çubukta **senaryo seçici** (kategori sekmeleri Taktik/Kurallar/Teknik, alt konu başlıkları, özetli kartlar), Bilgi, Katmanlar, tam ekran; alt çubuk (oynat, hız, zaman çubuğu, tekne ekle/çıkar); canlı takipli bilgi kartı.
 - **Duyarlı düzen** (3 sınıf): bilgisayar (>1100 px: kart sağ üstte, tekne ekle alt çubukta), tablet (≤1100: ikon düğmeler; dikeyde kart SAĞ ÜSTTE geniş (64vw, maks %44 yükseklik), parkur ekranın alt kısmına kaydırılır: `fitViewBox` dikey fazlalığın %68'ini üste verir; telefonda tersi %22), telefon (≤640 px ya da yükseklik ≤460: kart alttan açılır sayfa + daraltma tutamacı, tekne ekle popover'da, seçici tam ekran). Dokunma hedefleri ≥44 px, iOS güvenli alan payları.
 - **Engel kaçınma** (`engine.avoidDir`): şamandıra, pin ve hakem botu engeldir; önünde engel olan tekne (scripted ya da eklenen) kendiliğinden yana kaçıp rotaya döner. `npm run check` (`scripts/check-scenarios.mjs`) her senaryoda alan dışı, çarpışma, engele yaklaşma ve start hattı geçişini denetler; `expectOutside` / `expectEarly` ile bilinçli istisnalar.
@@ -62,6 +62,24 @@
 - Senaryolarda İngilizce terimlerin parantez içinde verilmesi devam etsin mi, yoksa yalnızca Türkçe mi?
 - Antrenörler sahada tablet mi kullanacak? (Mobil düzenin önceliğini belirler.)
 
+## Senaryo kartları (her senaryo için ayrı sohbet açılabilir)
+> Kullanım: yeni sohbette "NOTLAR.md'deki **İA2 kartını** geliştir: <istek>" de. Sohbet, kartı okur, işi yapar, kartı günceller.
+> Kart formatı: id · dosyadaki yer · durum · bilinen eksikler · fikirler · bağlı senaryolar.
+
+| Kart | id | Durum | Bilinen eksikler / fikirler | Bağlı |
+|---|---|---|---|---|
+| A1 | `a1-line-bias` | ✅ | Filo 4 tekne; A iskele kontrada filonun arasından geçiyor (basamak farkı ≥1 boy). | A1b, A3, A4 |
+| A1b | `a1b-measure` | ✅ | Rüzgar açısı okuması. Fikir: pusula kadranı görseli. | A1 |
+| A2 | `a2-timing` | ✅ | Hattın dibinde bekleme modeli, fodepar hafif. Fikir: "kaç saniyede 1 boy" ölçüm katmanı. | A12 |
+| A3 | `a3-pin-favored` | ✅ | 600 px hat, 25° bias; P2 çizgi dışı (ders olarak). Fikir: P2 için de "geri dönüş" yolu. | İA1 |
+| A4 | `a4-committee-favored` | ✅ | Barging; L hakem botuna yakın (u=0.9). Fikir: hakem botunun kıçından "çit" vurgusu. | A17 |
+| A12 | `a12-flags` | ✅ | Yalnızca U bayrağı canlı; P/I/siyah varyantları ve 5-4-1-0 sırası eksik. | A2, A13 |
+| İA1 | `ia1-port-approach-pin` | ✅ | Solda bekle, apaz gel, layline üstünde tramola; Z (layline altı) ve Y (geç) hataları. Fikir: K13/K15 ihlali yapan 3. hata teknesi (ceza turu). | A3, A16 |
+| İA2 | `ia2-line-sag` | ✅ | Transit nişan hattı, yay (back), S yukarı durur. Eksik: yay görseli (eğri), rüzgar gölgesi etkisi görsel değil. Fikir: "yay yok" varyantı. | A5, A6, H5 |
+| B1 | `b1-rule10` | ✅ | Tek tekne bordalama. Fikir: lee-bow varyantı. | B2 |
+| B8 | `b8-rule18` | ✅ | Zone + bindirme. Fikir: 18.3 zone içinde tramola varyantı. | B9 |
+| C1 | `c1-header-tack` | ✅ | Salınımlı rüzgar. Fikir: pusula okuması katmanı. | C2, C3 |
+
 ## Sohbetler arası mesajlar
 - (boş) — Başka bir sohbeti ilgilendiren şeyleri buraya tarih ve konu ile yazın; ilgili sohbet okuyunca satırı siler.
 
@@ -73,6 +91,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-12 · İA2 hat yayı + senaryo kartları
+- Yapılanlar: İA2 (600 px hat, 9 teknelik yay: `crowd[].back` px ile ortadakiler 2.5-3.5 boy geride; S pin tarafından transitle hattı görür, apaz ile ortaya gelir, boşluğa komşularından yukarı yerleşir, sinyalde 2 boy önde; "yay yoksa" adımı). Yeni: `scn.sightline` transit katmanı, `crowd[].back`. NOTLAR'a "Senaryo kartları" tablosu: her senaryo için ayrı sohbet açılabilir, kart güncellenir.
+- Yarım kalan: yayın kendisi için eğri çizim yok (tekne dizilimi yeterli görünüyor); ortadaki filo teknelerinin start sonrası K12 ile fazla yavaşlaması (f6 7 s geç).
+- Sonraki sohbete not: senaryo bazlı sohbetlerde CLAUDE.md protokolü aynen geçerli; kart satırı + oturum günlüğü güncellenir.
+
 ### 2026-11-12 · İA1 düzeltme: dışarıdan start yok, burun hattın altında
 - Kural: start edemeyen tekne hattın dışından ÇIKMAZ; ya rüzgarüstüne tramola ya da bordalayıp/kavança ile herkesin arkasından hattın içinden geçer. Z buna göre: pin'i kurtaramayınca bordalar, hattın altından sağa gider, herkesin arkasından geçer. `expectOutside` kullanımı artık yalnızca "ders olarak gösterilen" çizgi dışı için (A3 P2).
 - Bekleyen teknenin burnu sinyalden önce hattı geçmemeli (X: tramola noktası 15 px aşağı, bekleme sürüklenmesi 0.03).

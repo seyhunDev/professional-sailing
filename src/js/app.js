@@ -43,7 +43,7 @@
     // kalabalık filo: senaryoda tanımlı, kural motoruyla birlikte simüle edilen tekneler
     state.extras = (scn.crowd || []).map((c, i) => {
       const b = { id: c.id || String(i + 1), name: c.name || `Filo ${i + 1}`, color: c.color || CROWD_COLORS[i % CROWD_COLORS.length], tack: c.tack || 'starboard', extra: true, crowd: true };
-      if (c.slot != null && scn.line) { const { pin, boat: cb } = scn.line; b.slot = { x: pin.x + (cb.x - pin.x) * c.slot, y: pin.y + (cb.y - pin.y) * c.slot }; b.row = c.row || 0; }
+      if (c.slot != null && scn.line) { const { pin, boat: cb } = scn.line; b.slot = { x: pin.x + (cb.x - pin.x) * c.slot, y: pin.y + (cb.y - pin.y) * c.slot }; b.row = c.row || 0; b.back = c.back || 0; }
       else b.pos = c.pos;
       b.v0 = c.v0;
       return b;
@@ -90,7 +90,7 @@
   // ---------- Ek tekneler: kural motoruyla birlikte simüle edilir ----------
   function simulateExtras() {
     const scn = state.scn;
-    const tracks = SailRules.simulate(scn, state.extras.map(b => ({ pos: b.pos, slot: b.slot, row: b.row, tack: b.tack, v0: b.v0 })), state.boats);
+    const tracks = SailRules.simulate(scn, state.extras.map(b => ({ pos: b.pos, slot: b.slot, row: b.row, back: b.back, tack: b.tack, v0: b.v0 })), state.boats);
     state.extras.forEach((b, i) => b.track = tracks[i]);
   }
   function addBoat() {
@@ -222,6 +222,14 @@
       const hd = E.tackHeading(w, L.tack), f = E.fwd(hd), len = L.len || 500;
       el('line', { x1: L.x, y1: L.y, x2: L.x - f.x * len, y2: L.y - f.y * len, stroke: L.color || '#4cc9f0', 'stroke-width': 1.5, 'stroke-dasharray': '4 6', opacity: .8 }, g);
       if (L.label) el('text', { x: L.x - f.x * len * 0.55 + 10, y: L.y - f.y * len * 0.55, fill: L.color || '#4cc9f0', 'font-size': 12 }, g).textContent = L.label;
+    }
+    // transit / nişan hattı: pin'den hakem botuna bakış
+    if (scn.sightline && scn.line && state.t >= (scn.sightline.from || 0) && (scn.sightline.to == null || state.t <= scn.sightline.to)) {
+      const { pin, boat } = scn.line; const dx = boat.x - pin.x, dy = boat.y - pin.y, L = Math.hypot(dx, dy);
+      const ux = dx / L, uy = dy / L;
+      el('line', { x1: pin.x - ux * 120, y1: pin.y - uy * 120, x2: boat.x + ux * 160, y2: boat.y + uy * 160, stroke: '#fff', 'stroke-width': 2, 'stroke-dasharray': '2 6', opacity: .9 }, g);
+      el('circle', { cx: pin.x - ux * 120, cy: pin.y - uy * 120, r: 6, fill: 'none', stroke: '#fff', 'stroke-width': 2 }, g);
+      el('text', { x: pin.x - ux * 120, y: pin.y - uy * 120 - 12, 'text-anchor': 'middle', fill: '#fff', 'font-size': 12, 'font-weight': 600 }, g).textContent = scn.sightline.label || 'Transit: pin → hakem botu hizası';
     }
     // okumalar: teknenin rüzgar açısı
     for (const R of scn.readouts || []) {
