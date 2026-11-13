@@ -724,5 +724,56 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.8] }
   });
 
+  // ---------- İA5: hakem botu ucu kalabalık: erken gir, yerini tut ----------
+  S.push({
+    id: 'ia5-committee-crowd',
+    category: 'İleri Taktik', topic: 'Start · Hakem botu',
+    title: 'İA5 · Hakem botu kalabalık: erken gir, yerini tut',
+    summary: 'Hakem botu ucu avantajlı ve herkes oraya yığılıyor. Yeşil D erken gelir, kalabalığın içine girip turuncu bayrağın dibinde yerini alır ve start\'a kadar orada bekler. Turuncu Y ise kalabalığın dışında, açıkta bekler: "son dakika girerim" der. 1 dk kala geldiğinde ön sıra dolmuştur; giremez, D\'nin altında (arkasında) ikinci sırada kalır ve start\'ı D\'nin pis rüzgarında alır.',
+    duration: 38,
+    baseSpeed: 40, goBefore: 2.5,
+    clockScale: 4,
+    wind: 5,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 30,
+    rungs: { boat: 'D', from: 30.5 },
+    committeeLabel: 'right',
+    laylines: [{ x: 770, y: 452, tack: 'starboard', len: 260, from: 0, to: 8, label: 'Hakem botu layline\'ı' }],
+    boats: [
+      { id: 'D', name: 'Erken girip yer tutan', role: 'dogru', color: '#2a9d8f',
+        start: { x: 893, y: 660, h: 320 }, v0: 30,
+        segs: [
+          { mode: 'closehauled', tack: 'starboard', dur: 4.6, turn: 0, note: 'Erken: layline\'dan kalabalığa gir' },
+          { mode: 'hold', h: 5, dur: 22.3, speed: 0.008, turn: 1.4, note: 'Bayrağın dibinde: yer benim' },
+          { mode: 'closehauled', tack: 'starboard', dur: 11.1, turn: 0.8 }
+        ] },
+      { id: 'Y', name: 'Dışarıda bekleyip giremeyen', role: 'hata', color: '#e76f51',
+        start: { x: 950, y: 625, h: 0 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 0, dur: 14, speed: 0.03, turn: 0, note: 'Dışarıda: "son dakika girerim"' },
+          { mode: 'heading', h: 277, dur: 5.05, turn: 1.0, note: 'Geç: hakem botuna doğru' },
+          { mode: 'hold', h: 359, dur: 8.35, speed: 0.015, turn: 1.4, note: 'Yer yok! D\'nin altında kaldı' },
+          { mode: 'closehauled', tack: 'starboard', dur: 4, turn: 0.8, speed: 0.8 },
+          { mode: 'closehauled', tack: 'starboard', dur: 6.6, turn: 0.8, speed: 0.9, note: 'Pis rüzgarda, 2. sırada' }
+        ] }
+    ],
+    crowd: [
+      { slot: 0.41 }, { slot: 0.50 }, { slot: 0.59 }, { slot: 0.68 }, { slot: 0.77 }, { slot: 0.55, row: 1 }, { slot: 0.73, row: 1 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dk: hakem botu ucu kalabalık', text: 'Rüzgar 5° sağa dönmüş, hakem botu ucu avantajlı. Filonun yarısı hakem botu tarafına yığılmış. En değerli yer turuncu bayrağın hemen yanı ve orada tek kişilik yer var: önce gelen alır.' },
+      { t: 1.5, title: 'D erken geliyor', text: 'Yeşil D, 2 dk kala hakem botunun sancak layline\'ından, rüzgaraltından gelip kalabalığın içine giriyor. Rüzgaraltından gelen tekne hak sahibidir (Kural 11): bekleyen tekneler ona yer açar, kimse onun rüzgarüstüne sokulamaz.' },
+      { t: 5.5, title: 'Bayrağın dibinde yerini al', text: 'D turuncu bayrağın hemen yanında, hattın 1 boy altında rüzgara baş verip duruyor. Hakem botuyla arasında tekne sığmaz; rüzgaraltındaki tekneye kadar yaklaşık 1 boy hızlanma yeri var. Yer artık D\'nin: 1,5 dakika boyunca burnunu rüzgarda tutup orada bekleyecek.' },
+      { t: 9, title: 'Y dışarıda bekliyor', text: 'Turuncu Y kalabalığa girmemiş; hakem botunun sağında, açıkta rahat rahat bekliyor: "Son dakika gelir, araya girerim." Açıkta beklemek kolaydır ama yer tutmaz. Kalabalık uçta yer, bekleyerek değil, erken girip orada durarak alınır.' },
+      { t: 14, title: '1 dk kala: Y geç geliyor', text: 'Y şimdi hakem botuna doğru geliyor. Ama ön sıra dolu: bayrağın dibinde D, onun rüzgaraltında filo, aralarda tekne sığacak boşluk yok. Rüzgarüstünden, D ile hakem botu arasına girmek ise barging olur: hak vermez (Kural 11) ve hakem botuna değerse Kural 31.' },
+      { t: 20.5, title: 'Yer yok: Y, D\'nin altında kaldı', text: 'Y giremedi; D\'nin hemen altında, arkasında ikinci sırada duruyor. Arkadan gelen tekne öndekine yol verir (Kural 12): D\'nin yerini isteyemez. Önünde D, rüzgaraltında filo teknesi var: sinyalde düşüp hızlanacağı yer de yok.' },
+      { t: 26.9, title: '3 sn kala doldur', text: 'D burnunu rüzgaraltındaki küçük boşluğa düşürüp yelkeni dolduruyor ve hızlanıyor. Y ancak D gittikten sonra hareket edebiliyor ve D\'nin pis rüzgarında (mor gölge) hızlanıyor.' },
+      { t: 30, title: 'START: erken giren ön sırada', text: 'D avantajlı uçtan, hakem botunun hemen yanından, temiz havada ve tam hızda çıkıyor. Y ikinci sırada, D\'nin arkasında; havası kirli, hızı düşük ve her saniye biraz daha geride.' },
+      { t: 34, title: 'Özet', text: 'Hakem botu ucu kalabalıksa: erken gel, layline\'dan rüzgaraltından gir, bayrağın dibinde yerini al ve start\'a kadar orada tut. Dışarıda bekleyip son dakika girmeyi planlarsan ön sıra dolar ve birinin altında, arkasında kalırsın. Geç kaldıysan inat etme: 3-4 boy aşağıda boş bir yer seç.' }
+    ],
+    addBoat: { pin: { x: 290, y: 580 }, middle: { x: 500, y: 580 }, committee: { x: 720, y: 600 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.8] }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);

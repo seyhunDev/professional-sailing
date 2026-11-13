@@ -330,7 +330,11 @@
       const offs = [-50, -74, -98, -122, 52, 76].map(o => o < 0 ? -28 - (-o - 28) * ls : 28 + (o - 28) * ls);
       let r = null, off = offs[0];
       for (const o of offs) { const c = { x: n.x - w / 2, y: n.y + o, w, h: H }; if (!hit(c)) { r = c; off = o; break; } }
-      if (!r) r = { x: n.x - w / 2, y: n.y + offs[0], w, h: H };
+      if (!r) {                                                // boş yer yoksa en az örten yeri seç (etiketleri örtmesin)
+        const area = (a, q) => Math.max(0, Math.min(a.x + a.w, q.x + q.w) - Math.max(a.x, q.x)) * Math.max(0, Math.min(a.y + a.h, q.y + q.h) - Math.max(a.y, q.y));
+        let best = Infinity;
+        for (const o of offs) { const c = { x: n.x - w / 2, y: n.y + o, w, h: H }, sc = [...placed, ...obst].reduce((t, q) => t + area(c, q), 0); if (sc < best) { best = sc; r = c; off = o; } }
+      }
       placed.push(r);
       const g = el('g', {}, parent);
       if (off !== offs[0]) {                                   // kaydırıldıysa tekneye ince bağlantı

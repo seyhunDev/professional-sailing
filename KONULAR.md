@@ -106,6 +106,7 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | H6 | Genel geri çağırma sonrası taktik değişimi | Siyah bayrak sonrası temkinli start; U bayrağında kalabalıktan kaçınma. | ⬜ |
 | H7 | Hakem botu ucunda yer tutma | Erken ve layline'dan (rüzgaraltından) gel, turuncu bayrağın dibinde hattın 1 boy altında rüzgara baş verip bekle; rüzgarüstünde boşluk bırakma, rüzgaraltındaki boşluğu koru, 2-3 sn kala doldur; HATA: geç gelip araya sokulan (barging, K11, K31). | ✅ (İA3) |
 | H8 | Sıkıştıysan çık: boş yerde rüzgarüstü teknenin altına yanaş | Kalabalıkta ikinci sırada kalınca vakit varken çıkıp daha boş yere geçme; rüzgarüstü komşunun ~1 boy rüzgaraltında bekleme (K11 seni korur, altındaki boşluk senin); HATA: rüzgaraltındakinin üstüne yanaşmak (altı dolu, hızlanamaz, orsalanır). | ✅ (İA4) |
+| H9 | Hakem botu ucu kalabalık: erken gir, yerini tut | Kalabalık hakem botu ucunda erken ve layline'dan (rüzgaraltından) girip turuncu bayrağın dibinde start'a kadar bekleme; HATA: dışarıda, açıkta bekleyip 1 dk kala gelen tekne ön sıra dolduğu için giremez, yer tutan teknenin altında (arkasında) ikinci sırada kalır ve pis rüzgarda çıkar (K12). | ✅ (İA5) |
 
 # III. TEKNİK
 
