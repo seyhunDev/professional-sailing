@@ -33,7 +33,7 @@ npm run preview    # http://localhost:8080  (dist/ ile aynı yayın hâli)
 | Tekne / yelken / rüzgar vektör olarak çizilsin, ölçeklenince bozulmasın | **SVG** (Canvas değil: her tekne bir DOM nesnesi, tıklanabilir, CSS ile stillenebilir) |
 | Zamanda ileri-geri sarılabilsin, adımlara atlanabilsin | Senaryolar önceden **örneklenmiş rota** (track) üretir; her kare `t` ile örneklenir |
 | Senaryo yazmak kolay olsun (kod değil, tanım) | `docs/js/scenarios.js` içinde segment tabanlı tanım: `closehauled / run / heading / hold` |
-| Kalabalık start hatları | Senaryoda `crowd` ile tanımlanan filo, `rules.js` ile birlikte simüle edilir; hattın dibinde bekler, sinyalde çıkar ve karşılaşmalarda RRS 10/11/12/14'e göre kendiliğinden manevra yapar; uygulanan kural teknenin üstünde yazar. (Arayüzden tekne ekle/çıkar şimdilik kapalı; kod duruyor.) |
+| Kalabalık start hatları | Senaryoda `crowd` ile tanımlanan filo, `rules.js` ile birlikte simüle edilir; hattın dibinde bekler, sinyalde çıkar ve karşılaşmalarda simülatörle **aynı kural koduyla** (`SailRules.giveWay` / `chooseEscape`: RRS 10/11/12/13/14) kendiliğinden manevra yapar; uygulanan kural teknenin üstünde yazar. Hızlanma simülatördeki tekne sınıfı tablosundan (`boatClass`, `windKn`, `clockScale` → `engine.scenarioTau`). (Arayüzden tekne ekle/çıkar şimdilik kapalı; kod duruyor.) |
 | Ücretsiz yayın | GitHub Pages |
 | Python gerekli mi? | Hayır. Python yalnızca ileride veri (sporcu kayıtları, sonuçlar) tarafı için; animasyon tarafı tarayıcıda |
 

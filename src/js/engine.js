@@ -51,6 +51,37 @@
     return base * 0.8;                            // tam pupa
   }
 
+  // ---------- Tekne sınıfı ve hızlanma (simülatör ve senaryolar ortak) ----------
+  // Orsa tekne hızı (knot), rüzgar hızına (knot) göre. Kaynak: sınıfların bilinen ortalama orsa hızları
+  // (Optimist: hafif havada ~2.5, orta havada ~3.5-4, kuvvetlide fazla güçlenir, artmaz; ILCA: 10 knot üstünde ~5-5.5).
+  // acc: hızlanma süresi sabiti (gerçek sn) – yelkeni doldurduktan sonra tam hıza ~3×acc sn'de çıkar.
+  const BOAT_CLASSES = {
+    optimist: { name: 'Optimist', acc: 4, up: [[3, 1.9], [4, 2.4], [6, 3.0], [8, 3.5], [10, 3.8], [12, 4.0], [14, 4.1], [16, 4.1], [20, 3.9], [25, 3.6]] },
+    ilca4: { name: 'ILCA 4', acc: 5, up: [[3, 2.0], [4, 2.6], [6, 3.5], [8, 4.1], [10, 4.5], [12, 4.7], [14, 4.8], [16, 4.8], [20, 4.7], [25, 4.5]] },
+    ilca6: { name: 'ILCA 6', acc: 5, up: [[3, 2.1], [4, 2.8], [6, 3.7], [8, 4.4], [10, 4.8], [12, 5.1], [14, 5.2], [16, 5.3], [20, 5.3], [25, 5.1]] },
+    ilca7: { name: 'ILCA 7', acc: 5.5, up: [[3, 2.1], [4, 2.8], [6, 3.8], [8, 4.5], [10, 5.0], [12, 5.3], [14, 5.5], [16, 5.6], [20, 5.7], [25, 5.6]] }
+  };
+  function upwindKn(cls, wind) {
+    const t = (BOAT_CLASSES[cls] || BOAT_CLASSES.optimist).up;
+    if (wind <= t[0][0]) return t[0][1];
+    for (let i = 1; i < t.length; i++) if (wind <= t[i][0]) { const [a, va] = t[i - 1], [b, vb] = t[i]; return va + (vb - va) * (wind - a) / (b - a); }
+    return t[t.length - 1][1];
+  }
+  // Yelkeni boş bekleyen teknenin hızlanma zaman sabiti, animasyon saniyesi cinsinden.
+  // clockScale: 1 animasyon (simülasyon) saniyesi kaç gerçek saniye. Hafif havada daha yavaş hızlanır.
+  function accelTau(cls, windKn, clockScale) {
+    const c = BOAT_CLASSES[cls] || BOAT_CLASSES.optimist, k = Math.max(0.8, Math.min(1.5, 8 / (windKn || 8)));
+    return c.acc * k / (clockScale || 1);
+  }
+  // Senaryonun ivme sabiti: start senaryosunda sınıf tablosundan (simülatördeki start hızlanmasıyla aynı),
+  // diğerlerinde simülatörün yarış içi sabiti (1.2). scn.tau verilirse o kullanılır.
+  const RACE_TAU = 1.2;
+  function scenarioTau(scn) {
+    if (scn.tau != null) return scn.tau;
+    if (scn.line && scn.startAt > 0) return accelTau(scn.boatClass || 'optimist', scn.windKn || 8, scn.clockScale || 1);
+    return RACE_TAU;
+  }
+
   // ---------- Engel kaçınma ----------
   // Senaryodaki şamandıralar, pin ve hakem botu: [{x,y,r}]
   function obstaclesOf(scn) {
@@ -85,7 +116,7 @@
     const samples = [];
     let x = start.x, y = start.y, h = start.h, t = 0;
     let v = opts.v0 || 0;                 // mevcut hız (ivme için)
-    const TAU = opts.tau || scn.tau || 1.5;   // hızlanma zaman sabiti (s); küçük tekneler için scn.tau ≈ 1.0
+    const TAU = opts.tau || scenarioTau(scn);   // hızlanma zaman sabiti (s): sınıf tablosundan (bkz. scenarioTau)
     const obstacles = opts.obstacles || obstaclesOf(scn);
     let avoid = 0;                        // engel kaçınma açısı (derece), zamanla sıfıra döner
     const t0 = opts.t0 || 0;
@@ -291,6 +322,6 @@
     SHADOW, shadowStrength, shadowOf, shadowK, shadowPolygon,
     DEG, norm180, norm360, lerp, lerpAngle, fwd,
     windAt, tackHeading, runHeading, buildTrack, sampleTrack, sailState, speedFor, obstaclesOf, avoidDir,
-    CLOSE_HAULED, RUN
+    CLOSE_HAULED, RUN, BOAT_CLASSES, upwindKn, accelTau, scenarioTau, RACE_TAU
   };
 })(typeof window !== 'undefined' ? window : globalThis);

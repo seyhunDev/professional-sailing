@@ -36,7 +36,9 @@
       { t: 10, title: 'Sonuç', text: 'A, B\'nin kıç tarafından geçiyor. Farkın tek sebebi start çizgisinin avantajlı ucu. Start öncesi mutlaka ölçün: rüzgara karşı durup çizgiye bakın; burnunuzun gösterdiği tarafın GERİSİNDE kalan uç avantajlıdır. Pratik yol: çizgi boyunca gidip her iki uca aynı kontrada seyredin; hangisi daha orsa (rüzgara yakın) gidiyorsa o uç avantajlıdır.' }
     ],
     addBoat: { pin: { x: 400, y: 612 }, middle: { x: 500, y: 612 }, committee: { x: 620, y: 612 } },
-    crowd: [{ pos: { x: 530, y: 614 }, tack: 'starboard', v0: 48 }, { pos: { x: 592, y: 614 }, tack: 'starboard', v0: 48 }, { pos: { x: 430, y: 684 }, tack: 'starboard', v0: 48 }, { pos: { x: 478, y: 684 }, tack: 'starboard', v0: 48 }]
+    // filo ön sırada, B'ye 1 boy aralıkla (merkezler ~50 px). 2. sıra yok: A'nın iskele rotası onların önünü keserdi
+    // (iskele kontra, sancak kontraya yol vermeli; K10). A hepsinin kıçından geçer.
+    crowd: [{ pos: { x: 500, y: 614 }, tack: 'starboard', v0: 48 }, { pos: { x: 550, y: 614 }, tack: 'starboard', v0: 48 }, { pos: { x: 600, y: 614 }, tack: 'starboard', v0: 48 }]
   });
 
   // ---------- A1b: Hat avantajını ölçme yöntemleri ----------
@@ -77,12 +79,12 @@
   S.push({
     id: 'a2-timing',
     category: 'Taktik', topic: 'Start',
-    title: 'A2 · Zamanlama: hattın dibinde bekle, 2-3 sn kala doldur',
-    summary: 'Optimist ve ILCA gibi küçük tekneler start hattının hemen gerisinde (1-1.5 tekne boyu) rüzgara baş verip beklerler; aralarında boşluk bırakırlar. İyi start = sinyalden 2-3 saniye önce yelkeni doldurup sinyal anında hattı tam hızla geçmek.',
+    title: 'A2 · Zamanlama: hattın dibinde bekle, 10-12 sn kala doldur',
+    summary: 'Optimist ve ILCA gibi küçük tekneler start hattının hemen gerisinde (1-1.5 tekne boyu) rüzgara baş verip beklerler; aralarında boşluk bırakırlar. İyi start = sinyalden 10-12 saniye önce yelkeni doldurup (Optimist tam hıza bu sürede çıkar) sinyal anında hattı tam hızla geçmek.',
     duration: 28,
     baseSpeed: 40,
-    tau: 1.0,            // küçük tekne: hızlı ivmelenir
-    goBefore: 2.5,       // filo sinyalden 2.5 s önce yelkeni doldurur
+    clockScale: 4,       // 1 animasyon saniyesi = 4 gerçek saniye; ivme simülatördeki Optimist tablosundan (engine.accelTau)
+    goBefore: 2.5,       // filo sinyalden 2.5 animasyon sn (10 gerçek sn) önce yelkeni doldurur
     wind: 0,
     line: { pin: { x: 250, y: 420 }, boat: { x: 750, y: 420 } },
     startAt: 20,
@@ -115,13 +117,13 @@
       { slot: 0.22, row: 1 }, { slot: 0.44, row: 1 }
     ],
     steps: [
-      { t: 0, title: 'Start\'a 20 sn: filo hattın dibinde', text: 'Gri tekneler hattın 1-1.5 boy gerisinde rüzgara baş vermiş, yelkenleri boş bekliyor. Aralarında boşluklar var: boşluk, hızlanma alanıdır. Yeşil tekne yarım hızla yerine geliyor.' },
+      { t: 0, title: 'Start\'a 1 dk 20 sn: filo hattın dibinde', text: 'Gri tekneler hattın 1-1.5 boy gerisinde rüzgara baş vermiş, yelkenleri boş bekliyor. Aralarında boşluklar var: boşluk, hızlanma alanıdır. Yeşil tekne yarım hızla yerine geliyor.' },
       { t: 4, title: 'Yerini al, rüzgara baş ver', text: 'Yeşil tekne de hattın dibinde durdu. Burnu rüzgara yakın, yelken boş ("sallanıyor"). Küçük teknede bekleme burada yapılır: hattan uzakta değil, hemen gerisinde. Rüzgaraltınızdaki boşluğu koruyun; biri sokulursa orsa edip kapatın (Kural 11).' },
-      { t: 17.2, title: 'Turuncu yarım saniye erken doldurdu', text: 'Turuncu 2.8 saniye kala yelkenini doldurdu; yeşil 3 saniye kala ama 1 boy daha gerideydi. Yarım saniye bile küçük teknede yarım boy eder.' },
+      { t: 17.2, title: 'Turuncu 1 saniye erken doldurdu', text: 'Turuncu 11 saniye kala yelkenini doldurdu; yeşil 12 saniye kala ama 1 boy daha gerideydi. Bekleme yerine göre 1-2 saniye bile küçük teknede yarım boy eder.' },
       { t: 19.6, title: 'Burnu çizgiyi geçti: fodepar (OCS)', text: 'Sinyalde teknenin herhangi bir parçası (burun!) çizginin öbür tarafındaysa erken start = fodepar (OCS). Çoğu fodepar böyle olur: yarım boy. P bayrağında geri dönüp hattı yeniden geçmek yeter; I bayrağında uçlardan dolaşılır; U ve siyah bayrakta son 1 dakikada bu burun yarıştan çıkarır (bkz. A12).' },
-      { t: 16.5, title: '3.5 sn kala: doldur ve hızlan', text: 'Yeşil tekne bordalayıp yelkeni dolduruyor. Filo da 2.5 s kala dolduruyor. Küçük teknede hızlanma kısa sürer; bu yüzden bekleme hattın dibinde, hızlanma son 2-3 saniyedir.' },
-      { t: 20, title: 'START', text: 'Yeşil tekne tam bu anda, tam hızla çizgide; filo da birlikte çıkıyor. Turuncu geri dönüyor: 8-10 saniye ve kirli hava. Gri tekne hâlâ bekliyor: çizgiyi 2 saniye sonra, yavaş geçecek.' },
-      { t: 25, title: 'Sonuç', text: 'Formül: hattın dibinde (1-1.5 boy) rüzgara baş verip bekle, rüzgaraltında boşluk tut, sinyalden 2-3 s önce doldur. Antrenmanda "kaç saniyede 1 boy?" hissini çalışın: yelkeni doldurup çizgiye varma süresini tekrar tekrar ölçün.' }
+      { t: 16.5, title: '14 sn kala: doldurmaya hazırlan', text: 'Yeşil tekne bordalayıp yelkeni dolduruyor; filo 10 saniye kala dolduruyor. Optimist yelkeni doldurunca tam hıza ~10-12 saniyede çıkar (simülatördeki tekne tablosuyla aynı). Bu yüzden bekleme hattın dibinde, hızlanma son 10-12 saniyedir.' },
+      { t: 20, title: 'START', text: 'Yeşil tekne tam bu anda, tam hızla çizgide; filo da birlikte çıkıyor. Turuncu geri dönüyor: 20-25 saniye ve kirli hava. Gri tekne geç doldurdu: çizgiyi ~9 saniye sonra, yavaş geçecek.' },
+      { t: 25, title: 'Sonuç', text: 'Formül: hattın dibinde (1-1.5 boy) rüzgara baş verip bekle, rüzgaraltında boşluk tut, sinyalden 10-12 sn önce doldur. Antrenmanda "kaç saniyede 1 boy?" hissini çalışın: yelkeni doldurup çizgiye varma süresini tekrar tekrar ölçün.' }
     ],
     addBoat: { pin: { x: 290, y: 560 }, middle: { x: 390, y: 640 }, committee: { x: 720, y: 560 } },
     expectEarly: ['E'],
@@ -136,6 +138,7 @@
     summary: 'Pin ucu avantajlıysa en iyi start pin\'in hemen yanından, sancak kontra, tam zamanında; sonra hemen iskele kontraya tramola atıp filoyu ÖNDEN kesmek. Tek şart: pin\'e giden layline\'ın ÜSTÜNDE olmak. Layline\'ın altında kalan tekne pin\'i dönemez; dışarıdan geçer ve geri dönmek zorunda kalır.',
     duration: 16.5,
     baseSpeed: 48,
+    clockScale: 4,            // sayaç gerçek saniye (1 animasyon sn = 4 sn); ivme Optimist tablosundan
     wind: 335,
     line: { pin: { x: 200, y: 480 }, boat: { x: 800, y: 480 } },
     startAt: 6,
@@ -166,21 +169,22 @@
         ] }
     ],
     steps: [
-      { t: 0, title: 'Pin ucu avantajlı', text: 'Rüzgar 335°\'den, yani pin (sol) tarafından geliyor. Hat geniş (12 boy); pin ucu hakem botundan ~5 tekne boyu "önde". Filo hattın dibinde rüzgara baş vermiş bekliyor; herkes pin tarafına yığılmış, hakem botu tarafı boş. Start\'a 6 saniye var.' },
+      { t: 0, title: 'Pin ucu avantajlı', text: 'Rüzgar 335°\'den, yani pin (sol) tarafından geliyor. Hat geniş (12 boy); pin ucu hakem botundan ~5 tekne boyu "önde". Filo hattın dibinde rüzgara baş vermiş bekliyor; herkes pin tarafına yığılmış, hakem botu tarafı boş. Start\'a 24 saniye var.' },
       { t: 2, title: 'Pin layline\'ı', text: 'Mavi kesikli çizgi: pin\'den geriye, sancak orsa rotası boyunca çizilen layline. Bu çizginin ÜSTÜNDE (sağında) olan tekne pin\'e yetişir; altında kalan yetişemez. Yeşil P1 tam layline\'da, turuncu P2 altında.' },
       { t: 4, title: 'P2 pin\'e yetişemiyor', text: 'P2 orsa gittiği hâlde burnu pin\'in soluna düşüyor. Seçenekleri: tramola atıp iskele kontrada filoya girmek (tehlikeli, Kural 10) ya da pin\'in dışından geçip geri dönmek. İkisi de pahalı.' },
       { t: 6, title: 'START: P1 pin\'de', text: 'P1 start anında pin\'in hemen yanında, tam hızda. Avantajlı uçtan, temiz havada, rüzgaraltında kimse yok.' },
       { t: 7.0, title: 'P1 hemen tramola', text: 'Pin\'den çıkan tekne sancakta uzun gitmez: pin\'i temizler temizlemez iskele kontraya döner. Neden? Pin avantajı onu filonun ÖNÜNE koydu; iskele kontrada herkesin önünden geçip istediği tarafa gidebilir. Sancakta kalsa sol kenara sıkışır.' },
       { t: 8.6, title: 'P2 çizgi dışından geçti', text: 'P2 hattı pin\'in dışından geçti: start almış sayılmaz. Geri dönüp hattı uçlar arasından yeniden geçmek zorunda.' },
       { t: 11, title: 'P1 P3\'ün önünden geçiyor', text: 'İskele kontradaki P1, sancak kontradaki P3\'ün önünden rahatça geçiyor. Normalde iskele yol verirdi (Kural 10) ama P1 yeterince önde. Basamak çizgisi farkı gösteriyor: ~1.5 boy.' },
-      { t: 12.5, title: 'P2 geri dönüyor', text: 'P2 hattın altına inip yeniden start alıyor: 8-10 saniye ve filonun arkasında kirli hava. Pin\'e sıkışmanın maliyeti bu.' },
-      { t: 15, title: 'Sonuç', text: 'Pin avantajlıysa: layline\'ı son 30 saniyede gözle kontrol edin, layline\'ın biraz ÜSTÜNDE gelin, son 5 saniyede hızlanın, pin\'i temizleyince tramola atın. Emin değilseniz pin\'den 2-3 boy sağda start alın: küçük kayıp, sıfır risk.' }
+      { t: 12.5, title: 'P2 geri dönüyor', text: 'P2 hattın altına inip yeniden start alıyor: yarım dakika ve filonun arkasında kirli hava. Pin\'e sıkışmanın maliyeti bu.' },
+      { t: 15, title: 'Sonuç', text: 'Pin avantajlıysa: layline\'ı son 30 saniyede gözle kontrol edin, layline\'ın biraz ÜSTÜNDE gelin, son 10 saniyede hızlanın, pin\'i temizleyince tramola atın. Emin değilseniz pin\'den 2-3 boy sağda start alın: küçük kayıp, sıfır risk.' }
     ],
     addBoat: { pin: { x: 400, y: 650 }, middle: { x: 560, y: 660 }, committee: { x: 660, y: 650 } },
     startSlots: { pin: [0.2], middle: [0.4], committee: [0.6] },
     expectOutside: ['P2'],
-    tau: 1.0, goBefore: 2.5,
-    crowd: [{ slot: 0.3 }, { slot: 0.5 }]
+    goBefore: 2.5,
+    // filo P1'in tramola rotasının sağında: P1 iskele kontrada hepsinin önünden temiz geçer (simülatörde K14/protesto yok)
+    crowd: [{ slot: 0.36 }, { slot: 0.47 }, { slot: 0.58 }]
   });
 
   // ---------- A4: Hakem botu ucu avantajlı ----------
@@ -191,6 +195,7 @@
     summary: 'Hakem botu ucu avantajlıysa herkes oraya ister. Oraya ancak hakem botunun layline\'ında, rüzgaraltından gelerek hak kazanılır. Rüzgarüstünden sokulmak (barging) hak vermez: rüzgaraltındaki tekne orsa edip kapıyı kapatabilir.',
     duration: 18,
     baseSpeed: 40,
+    clockScale: 4,            // sayaç gerçek saniye (1 animasyon sn = 4 sn); ivme Optimist tablosundan
     wind: 15,
     line: { pin: { x: 240, y: 400 }, boat: { x: 640, y: 400 } },
     startAt: 7.5,
@@ -230,7 +235,7 @@
     ],
     addBoat: { pin: { x: 300, y: 600 }, middle: { x: 420, y: 660 }, committee: { x: 760, y: 640 } },
     startSlots: { pin: [0.12], middle: [0.3], committee: [0.62] },
-    tau: 1.0, goBefore: 2.5,
+    goBefore: 2.5,
     crowd: [{ slot: 0.08 }, { slot: 0.2 }, { slot: 0.32 }, { slot: 0.58 }, { slot: 0.14, row: 1 }, { slot: 0.5, row: 1 }]
   });
 
@@ -241,8 +246,8 @@
     title: 'A12 · Start bayrakları: P, I, U, siyah — son 1 dakikada burun',
     summary: 'Hazırlık bayrağı hangi fodepar (OCS) kuralının geçerli olduğunu söyler. P: geri dön, yeniden geç. I: uçlardan dolaş. U: son 1 dakikada hattın üstündeysen yarıştan çıkarsın (genel geri çağırma olursa affedilir). Siyah: çıkarsın ve tekrar startta da yarışamazsın.',
     duration: 36,
-    baseSpeed: 40, tau: 1.0, goBefore: 2.5,
-    clockScale: 4,            // 1 animasyon saniyesi = 4 gerçek saniye (son 2 dakika)
+    baseSpeed: 40, goBefore: 2.5,
+    clockScale: 4,            // 1 animasyon saniyesi = 4 gerçek saniye (son 2 dakika); ivme Optimist tablosundan
     prepFlag: 'U',
     flagDownAt: 15,           // 1 dk kala bayrak iner (t=15 → 60 s)
     wind: 0,
@@ -266,7 +271,7 @@
           { mode: 'closehauled', tack: 'starboard', dur: 8.5, turn: 0.8 }
         ] }
     ],
-    crowd: [{ slot: 0.1 }, { slot: 0.68 }, { slot: 0.82 }, { slot: 0.94 }, { slot: 0.1, row: 1 }, { slot: 0.68, row: 1 }],
+    crowd: [{ slot: 0.1 }, { slot: 0.68 }, { slot: 0.8 }, { slot: 0.92 }, { slot: 0.1, row: 1 }, { slot: 0.68, row: 1 }],
     steps: [
       { t: 0, title: 'Start\'a 2 dakika: hazırlık bayrağı U', text: 'Hakem botunda hazırlık bayrağı dalgalanıyor: U. Bayrak hangi fodepar (OCS) kuralının geçerli olduğunu söyler. Saat sağ üstte, gerçek zaman (animasyon 4× hızlı).' },
       { t: 6, title: 'Bayrak türleri', text: 'P (mavi-beyaz): fodepar yaparsan geri dönüp hattı yeniden geç, ceza yok. I (sarı-siyah): son 1 dakikada hattın üstündeysen uçlardan dolaşarak geri dön. U (kırmızı-beyaz kare): son 1 dakikada gövdenin bir parçası hat üçgenindeyse yarıştan çıkarsın (UFD) ama genel geri çağırma olursa yeniden yarışabilirsin. Siyah: aynı şey ama genel geri çağırmada bile yarışamazsın (BFD).' },
@@ -467,7 +472,7 @@
           { mode: 'closehauled', tack: 'starboard', dur: 10, turn: 0.8 }
         ] },
       { id: 'D', name: '1 dk önce bakan, dar boşlukta', role: 'hata', color: '#e76f51',
-        start: { x: 83, y: 548, h: 90 }, v0: 2,
+        start: { x: 78, y: 548, h: 90 }, v0: 2,
         segs: [
           { mode: 'hold', h: 90, dur: 15, speed: 0.04, turn: 0, note: 'Hâlâ hatta bakmadı' },
           { mode: 'heading', h: 110, dur: 2.5, turn: 0.8, note: '1 dk kala: vakit az, en yakın boşluk' },
@@ -479,7 +484,7 @@
     ],
     // 7 tekne: 0.12-0.26 DAR (D buraya), 0.34-0.55 GENİŞ orta, 0.64-0.87 GENİŞ avantajlı (S 7'nin rüzgaraltına)
     crowd: [
-      { slot: 0.05, back: 0 }, { slot: 0.12, back: 4 }, { slot: 0.26, back: 0 }, { slot: 0.34, back: 5 },
+      { slot: 0.06, back: 0 }, { slot: 0.13, back: 4 }, { slot: 0.26, back: 0 }, { slot: 0.34, back: 5 },
       { slot: 0.55, back: 0 }, { slot: 0.64, back: 4 }, { slot: 0.87, back: 0 }
     ],
     steps: [

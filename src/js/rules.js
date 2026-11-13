@@ -13,32 +13,6 @@
 
   const dot = (a, b) => a.x * b.x + a.y * b.y;
 
-  /* Kural tepki eşikleri ("his"). STRICT: kuralın ilk sezildiği an tepki (eski davranış, decide() varsayılanı).
-     SCENARIO: senaryolardaki filo ve ek tekneler için gevşek ayar (kullanıcı isteği 2026-11-12): senaryo
-     kuralı değil taktiği anlatır, gri tekneler erken orsalayıp / kafa açıp rotadan çıkmasın, olay kesintisiz
-     oynasın. Tekneler ancak gerçekten yakınlaşınca (≈0.7 boy) ve kısa süre tepki verir.
-     Senaryo bazında `scn.ruleFeel: {...}` ile tek tek değerler değiştirilebilir. Simülatör (sim-core.js)
-     kendi kaçış seçicisini kullanır, bu ayardan etkilenmez. */
-  const STRICT = {
-    look: 260,        // bu mesafeden uzaktaki tekneye bakma (px)
-    riskD: 58,        // öngörülen en yakın yaklaşma bunun altındaysa risk (px)
-    riskT: 8,         // ... ve bu kadar saniye içindeyse
-    nearD: HULL * 0.85,   // şu an bu kadar yakınsa risk
-    k14D: 40, k14T: 2.2, k14Near: HULL * 0.8,   // hak sahibinin temas önleme (K14) eşiği
-    hold: 1.2,        // manevra tetiklenince en az bu kadar sürer (s)
-    luffK11: 28,      // K11 rüzgarüstü orsalama: rüzgara açı (küçük = daha çok orsa, pırpır)
-    slow: 0.55, slowTurn: 18,   // K12 arkadaki: hız çarpanı, bordalama açısı
-    duck: 60,         // bordalama açısı (orsa rotasından)
-  };
-  const SCENARIO = {
-    ...STRICT,
-    look: 160, riskD: 34, riskT: 2.5, nearD: 30,
-    k14D: 20, k14T: 1.0, k14Near: 26,
-    hold: 0.6, luffK11: 36, slow: 0.8, slowTurn: 8, duck: 40,
-    // senaryo teknesi (dersin kendisi, rotasını değiştirmez) karşısında biraz daha erken: çarpışma olmasın
-    lesson: { riskD: 44, riskT: 3.5, nearD: 31, k14D: 36, k14T: 2.0, k14Near: 36 },
-  };
-
   // X, O'nun "net arkasında" mı? (X'in merkezi O'nun kıç hattının gerisinde)
   function clearAstern(X, O) {
     const f = E.fwd(O.h);
@@ -74,74 +48,6 @@
     return { tc, dmin, d };
   }
 
-  // X için karar: {kind, note, rule} | null
-  function decide(X, others, windFrom, feel) {
-    const F0 = feel || STRICT;
-    let best = null;
-    for (const O of others) {
-      const a = approach(X, O);
-      if (a.d > F0.look) continue;
-      const F = typeof O.ref === 'string' && F0.lesson ? { ...F0, ...F0.lesson } : F0;
-      const risk = a.dmin < F.riskD && a.tc < F.riskT && a.dmin < a.d - 6;   // yakınsıyor olmalı; paralel seyir risk değil
-      const nearNow = a.d < F.nearD;
-      if (!risk && !nearNow) continue;
-      const sX = E.sailState(X.h, windFrom), sO = E.sailState(O.h, windFrom);
-      let dec;
-      if (sX.tack !== sO.tack) {
-        dec = sX.tack === 'port'
-          ? { kind: 'duck', note: 'Yol veriyor · K10', rule: 10 }
-          : { kind: 'row', note: 'Hak sahibi · K10', rule: 10 };
-      } else {
-        const xAstern = clearAstern(X, O), oAstern = clearAstern(O, X);
-        if (!xAstern && !oAstern) {
-          const windward = isWindward(X, O, windFrom);
-          dec = windward
-            ? { kind: 'luffK11', note: 'Rüzgarüstü yol verir · K11 (orsalıyor)', rule: 11 }
-            : { kind: 'row', note: 'Hak sahibi · K11', rule: 11 };
-        } else if (xAstern) {
-          dec = { kind: 'slow', note: 'Arkadaki yol verir · K12', rule: 12 };
-        } else {
-          dec = { kind: 'row', note: 'Hak sahibi · K12', rule: 12 };
-        }
-      }
-      // Kural 14: hak sahibi olsa da temas kaçınılmazsa kaç.
-      // Rüzgaraltı tekne (K11 hak sahibi) rotasından çıkmaz: temas önleme işi rüzgarüstündedir (orsalar,
-      // yelkeni pırpırlar). Yalnız çok yakında rotasında yavaşlar. Senaryo teknesi (yol vermez) karşısında eski kural.
-      const leeK11 = dec.kind === 'row' && dec.rule === 11 && typeof O.ref !== 'string';
-      if (leeK11) {
-        if ((a.dmin < 12 && a.tc < 0.8) || a.d < HULL * 0.5) dec = { kind: 'brake', note: 'Temas önleme · K14 (rotada yavaşlıyor)', rule: 14 };
-      } else if (dec.kind === 'row' && ((a.dmin < F.k14D && a.tc < F.k14T) || a.d < F.k14Near)) {
-        dec = { kind: 'duck', note: 'Temas önleme · K14', rule: 14 };
-      }
-      // en acil olanı seç: önce manevra gerektirenler, sonra en yakın
-      const prio = (dec.kind === 'row' ? 0 : 10) + (8 - a.tc);
-      // çok yakında (gevşek ayarda geç kalınmışsa) manevra tam açıyla yapılır
-      const urgent = F !== STRICT && (a.d < F.nearD + 4 || a.dmin < F.riskD * 0.6);
-      if (!best || prio > best.prio) best = { ...dec, prio, tc: a.tc, urgent };
-    }
-    return best;
-  }
-
-  // Manevraya göre hedef rota ve hız çarpanı
-  function maneuverTarget(kind, windFrom, tack, baseTarget, F = STRICT) {
-    const away = tack === 'starboard' ? -1 : 1;    // rüzgardan uzaklaşma yönü (bordalama)
-    switch (kind) {
-      case 'duck': return { h: E.tackHeading(windFrom, tack) + away * F.duck, speed: 1 };
-      case 'luff': return { h: windFrom + away * 32, speed: 1 };          // sıkıştır (pinch): yavaşlar ama durmaz
-      case 'luffK11': return { h: windFrom + away * F.luffK11, speed: 1 }; // K11 rüzgarüstü: rüzgara döner, yelken pırpırlar, hız düşer
-      case 'brake': return { h: baseTarget, speed: 0.5 };                // rotada yavaşla (rüzgaraltı K14)
-      case 'slow': return { h: baseTarget + away * F.slowTurn, speed: F.slow };
-      default: return { h: baseTarget, speed: 1 };                        // 'tack': yeni kontrada orsa
-    }
-  }
-
-  // Aday rotanın diğer teknelere göre en yakın yaklaşma mesafesi (2-4 s içinde)
-  function clearance(X, hCand, others) {
-    let m = 1e9;
-    for (const O of others) { const a = approach({ x: X.x, y: X.y, h: hCand, v: Math.max(X.v, 20) }, O); if (a.d < 260) m = Math.min(m, a.dmin); }
-    return m;
-  }
-
   // Start hattı yardımcıları (pin → hakem botu vektörü; "arka" taraf = start öncesi taraf)
   function lineSide(line, p) {
     const lx = line.boat.x - line.pin.x, ly = line.boat.y - line.pin.y;
@@ -159,20 +65,128 @@
     return sAcc;
   }
 
-  /* Tüm ek tekneleri birlikte simüle et.
+  /* ---------- Ortak yol hakkı çekirdeği (simülatör ve senaryolar AYNI fonksiyonları kullanır) ----------
+     2026-11-13: senaryo filosu artık simülatörün "kim yol verir" (classify), "yol vermeli miyim" (giveWay) ve
+     "kaçış seçici" (chooseEscape) mantığıyla hareket eder; iki yerde farklı davranış kalmasın diye tek kaynak.
+     Tekne nesnesinde kullanılan alanlar: x, y, h, v, tack, phase ('race' varsayılır), lastTack, ignoresRules, id. */
+  // Yol verme mesafeleri (merkezler arası px; tekne boyu 50). Optimist'ler yakın geçer:
+  // detect: bu kadar yakından geçecekse yol veren önlem alır · safe: kaçışta hedeflenen en yakın geçiş
+  const GW = { detect: 34, safe: 34 };
+  const tackOf = (h, w) => (E.norm180(h - w) < 0 ? 'starboard' : 'port');
+  const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+  // a ile c'nin (a: h, v ile) en yakın yaklaşması, ufuk H saniye
+  function closest(a, h, v, c, H) {
+    const fa = E.fwd(h), fc = E.fwd(c.h);
+    const rx = c.x - a.x, ry = c.y - a.y, wx = fc.x * c.v - fa.x * v, wy = fc.y * c.v - fa.y * v;
+    const w2 = wx * wx + wy * wy;
+    const tc = w2 < 1e-6 ? 0 : clampN(-(rx * wx + ry * wy) / w2, 0, H);
+    return { dmin: Math.hypot(rx + wx * tc, ry + wy * tc), tc, d: Math.hypot(rx, ry) };
+  }
+  // b, O'ya hangi kurala göre yol vermeli? (0 = b hak sahibi)
+  function classify(b, O, w, t) {
+    const lt = x => (x.lastTack != null ? x.lastTack : -10);
+    const tk = x => t - lt(x) < 1.4 && Math.abs(E.norm180(x.h - w)) < 44;
+    if (b.phase === 'penalty') return 22;                                 // ceza turu atan tekne herkese yol verir (K22.2)
+    if (O.phase === 'penalty') return 0;
+    if (b.phase === 'ocs') return 22;                                     // geri dönen tekne herkese yol verir
+    if (O.phase === 'ocs') return 0;
+    if (O.phase === 'round' && b.phase !== 'round') return 18;            // şamandırayı dönen tekneye yer ver
+    if (b.phase === 'round' && O.phase !== 'round') return 0;
+    if (tk(b) && !tk(O)) return 13;                                       // tramola atan yol verir (K13)
+    if (tk(O) && !tk(b)) return 0;
+    const tb = tackOf(b.h, w), to = tackOf(O.h, w);
+    if (tb !== to) return tb === 'port' ? 10 : 0;
+    if (clearAstern(b, O)) return 12;
+    if (clearAstern(O, b)) return 0;
+    return isWindward(b, O, w) ? 11 : 0;                                  // rüzgarüstü (yan olarak) yol verir
+  }
+  // b kime yol vermeli? others: [{x,y,h,v,ref}] → {O, rule, lee, dmin, tc} | null
+  function giveWay(b, others, w, t) {
+    let best = null;
+    const vb = Math.max(b.v, 22);
+    for (const O of others) {
+      const c = closest(b, b.h, vb, O, 4);
+      if (c.d > 200 || c.dmin > GW.detect) continue;
+      if (c.dmin > c.d - 4 && c.d > 34) continue;                       // uzaklaşıyor / paralel
+      let rule = classify(b, O.ref, w, t);
+      // hak sahibi rotasında kalır; yalnızca karşıdaki yol vermiyorsa (kural bilmeyen) ya da temas
+      // kaçınılmazsa son anda kaçar (K14). Rüzgaraltı tekne (K11 hak sahibi) daha da geç davranır:
+      // temas önleme işi rüzgarüstündedir (orsalar, yelkeni pırpırlar, yavaşlar)
+      const lee = !rule && classify(O.ref, b, w, t) === 11;
+      if (!rule && (lee
+        ? (O.ref.ignoresRules && c.dmin < 20 && c.tc < 1.1) || (c.dmin < 9 && c.tc < 0.6)
+        : (O.ref.ignoresRules && c.dmin < 24 && c.tc < 1.4) || (c.dmin < 14 && c.tc < 0.9))) rule = 14;
+      if (!rule) continue;
+      const urg = c.tc - c.dmin / 40;
+      if (!best || urg < best.urg) best = { O, rule, lee: rule === 14 && lee, dmin: c.dmin, tc: c.tc, urg, mine: b.mine };
+    }
+    return best;
+  }
+  /* Kaçış: aday rota farkları arasından en güvenlisini seç. target: teknenin istediği rota.
+     opts.allowTack: kaçmak için tramola serbest mi (çağıran karar verir: taktik, rota, faz)
+     opts.marks: çarpılmaması gereken sabit noktalar [{x,y}] (şamandıra) */
+  function chooseEscape(b, others, w, target, t, g, opts) {
+    opts = opts || {};
+    const away = b.tack === 'starboard' ? -1 : 1;                       // bordalama yönü (+ rüzgardan uzak)
+    const cands = [];
+    for (const off of [0, 15, 30, 45, 60]) cands.push({ kind: off ? 'duck' : 'hold', off: away * off, speed: 1, cost: off * 0.12 });
+    for (const off of [15, 25]) cands.push({ kind: 'luff', off: -away * off, speed: 1, cost: off * 0.18 });
+    cands.push({ kind: 'slow', off: 0, speed: 0.35, cost: 5 });
+    cands.push({ kind: 'slow', off: away * 20, speed: 0.4, cost: 6 });
+    if (opts.allowTack && g.rule !== 14 && g.rule !== 11 && g.rule !== 12) cands.push({ kind: 'tack', h: E.tackHeading(w, b.tack === 'starboard' ? 'port' : 'starboard'), speed: 0.6, cost: 9 });
+    // K11: rüzgarüstü tekne orsalayarak yol verir (rüzgara döner, yelkeni pırpırlar, yavaşlar).
+    // Bordalamak (rüzgaraltındakine doğru inmek) yalnızca öbür tekne açıkça öndeyse, kıçından geçmek için
+    if (g.rule === 11) {
+      const O = g.O, ahead = dot({ x: O.x - b.x, y: O.y - b.y }, E.fwd(b.h)) > 30;
+      cands.splice(0, cands.length, { kind: 'hold', off: 0, speed: 1, cost: 0 });
+      for (const off of [10, 20, 30]) cands.push({ kind: 'luff', off: -away * off, speed: 1, cost: off * 0.06 });
+      cands.push({ kind: 'luff', off: -away * 25, speed: 0.5, cost: 3 });
+      cands.push({ kind: 'slow', off: 0, speed: 0.4, cost: 5 });
+      if (ahead) for (const off of [15, 30]) cands.push({ kind: 'duck', off: away * off, speed: 1, cost: off * 0.12 });
+    }
+    // K14, rüzgaraltı hak sahibi: rotadan çıkıp kaçmaz (rüzgarüstündekine doğru da orsalamaz), yalnız rotasında yavaşlar
+    if (g.rule === 14 && g.lee) cands.splice(0, cands.length,
+      { kind: 'hold', off: 0, speed: 1, cost: 0 }, { kind: 'slow', off: 0, speed: 0.6, cost: 2 }, { kind: 'slow', off: 0, speed: 0.35, cost: 4 });
+    // K18: şamandırada dönen tekneye yer ver → bordalayıp uzaklaşma, rotada yavaşla ya da hafif orsala
+    if (g.rule === 18) cands.splice(0, cands.length,
+      { kind: 'hold', off: 0, speed: 1, cost: 0 }, { kind: 'slow', off: 0, speed: 0.3, cost: 3 }, { kind: 'slow', off: -away * 15, speed: 0.35, cost: 4 }, { kind: 'duck', off: away * 15, speed: 0.6, cost: 5 });
+    let best = null;
+    for (const c of cands) {
+      const h = c.h != null ? c.h : target + c.off, v = Math.max(8, Math.max(b.v, 22) * c.speed);
+      let m = 1e9;
+      for (const O of others) { const r = closest(b, h, v, O, 4); if (r.d < 220) m = Math.min(m, r.dmin); }
+      for (const mk of opts.marks || []) { const rm = closest(b, h, v, { x: mk.x, y: mk.y, h: 0, v: 0 }, 3); m = Math.min(m, rm.dmin + 14); }   // şamandıraya da çarpma
+      const score = Math.min(m, GW.safe) - c.cost;
+      if (!best || score > best.score) best = { ...c, score };
+    }
+    return best;
+  }
+  function ruleText(rule, kind) {
+    const act = { duck: 'bordalıyor', luff: 'orsalıyor', slow: 'yavaşlıyor', tack: 'tramola', hold: 'rotada' }[kind] || '';
+    const r = { 10: 'K10', 11: 'K11', 12: 'K12', 13: 'K13', 14: 'K14', 18: 'K18', 22: 'K22' }[rule];
+    return rule === 14 ? `Temas önleme · K14 (${act})` : `${r} (${act})`;
+  }
+
+  /* Tüm ek tekneleri (senaryo filosu + kullanıcı eklemeleri) birlikte simüle et.
+     2026-11-13'ten beri simülatörle AYNI kurallar: giveWay → chooseEscape (K10/11/12/13/14), rüzgarüstü orsalayarak
+     yol verir, rüzgaraltı hak sahibi rotasında kalır (K14 yalnız son anda, rotada yavaşlayarak), aynı yol verme
+     mesafeleri (GW), aynı dönüş hızı (TURN_RATE), aynı hız modeli (speedFor × kaçış hızı × pis rüzgar) ve start
+     öncesi "öndekinin kıçına girme". Senaryo tekneleri (ders) rotasını değiştirmez: filo için "yol vermez" teknedir
+     (simülatördeki ignoresRules gibi), hak sahibi filo teknesi ona karşı biraz daha erken K14 yapar.
      specs: [{pos:{x,y}, tack}] ya da start senaryosunda [{slot:{x,y}, tack}] (hat üstündeki hedef geçiş noktası)
      scripted: [{track}]  → her spec için örnek dizisi [{t,x,y,h,v,note}] */
+  const TURN_RATE = 110;   // derece/sn, simülatörle aynı
   function simulate(scn, specs, scripted) {
-    const base = scn.baseSpeed || 55, TAU = scn.tau || 1.5;
+    const base = scn.baseSpeed || 55, TAU = E.scenarioTau(scn);
     const isStart = !!(scn.line && scn.startAt > 0);
-    const goAt = isStart ? Math.max(0, scn.startAt - (scn.goBefore || 2.5)) : 0;   // küçük tekne: 2.5 s önce yelkeni doldur
-    const rulesFrom = scn.line ? (scn.startAt || 0) + 0.5 : 0;
+    const goAt = isStart ? Math.max(0, scn.startAt - (scn.goBefore || 2.5)) : 0;   // küçük tekne: sinyalden önce yelkeni doldur
+    const rulesFrom = scn.line ? (scn.startAt || 0) + 0.5 : 0;                      // simülatör gibi: kurallar sinyalden 0.5 s sonra
     const w0 = E.windAt(scn.wind, 0);
     const HOLD_V = base * 0.04;
     const obstacles = E.obstaclesOf(scn);
+    const marks = scn.marks || [];
     const shadowsOn = scn.shadows !== false;
-    const F = { ...SCENARIO, ...(scn.ruleFeel || {}) };   // senaryoda gevşek kural tepkisi
-    const boats = specs.map(s => {
+    const boats = specs.map((s, i) => {
       const h0 = E.tackHeading(w0, s.tack);
       let pos = s.pos;
       if (isStart && s.slot) {
@@ -181,56 +195,64 @@
         const sAcc = accelDistance(base, HOLD_V, scn.startAt - goAt, TAU) + (s.row || 0) * 60 + (s.back || 0);
         pos = { x: s.slot.x - f.x * sAcc - fh.x * HOLD_V * goAt, y: s.slot.y - f.y * sAcc - fh.y * HOLD_V * goAt };
       }
-      return { x: pos.x, y: pos.y, h: h0, v: s.v0 != null ? s.v0 : (isStart ? HOLD_V : 0), tack: s.tack,
-        man: null, manUntil: -1, noteUntil: -1, note: '', crossed: false, avoid: 0,
+      return { id: 'f' + (i + 1), x: pos.x, y: pos.y, h: h0, v: s.v0 != null ? s.v0 : (isStart ? HOLD_V : 0), tack: s.tack,
+        phase: 'race', lastTack: -10, man: null, manUntil: -1, reEval: 0, escH: null, escSpeed: 1, noteUntil: -1, note: '', crossed: false,
         side: scn.line ? lineSide(scn.line, pos) : 0, out: [{ t: 0, x: pos.x, y: pos.y, h: h0 }] };
     });
+    // senaryo teknesinin kontrası ve son tramola anı (K13: tramola atan yol verir)
+    const sRef = scripted.map((b, i) => ({ id: 's' + (i + 1), ignoresRules: true, phase: 'race', lastTack: -10, tack: null }));
     let t = 0;
     while (t < scn.duration) {
       const w = E.windAt(scn.wind, t);
-      const scriptedNow = scripted.map((b, i) => { const s = E.sampleTrack(b.track, t); return { x: s.x, y: s.y, h: s.h, v: s.v != null ? s.v : base, ref: 's' + i }; });
-      const casters = shadowsOn ? [...scriptedNow, ...boats.map(o => ({ x: o.x, y: o.y, v: o.v, ref: o }))] : [];
-      const othersOf = b => [...scriptedNow, ...boats.filter(o => o !== b).map(o => ({ x: o.x, y: o.y, h: o.h, v: o.v }))];
-      const decisions = boats.map(b => (t < rulesFrom ? null : decide(b, othersOf(b), w, F)));   // start patlamasında kural manevrası yok (yalnızca engel kaçınma)
-      boats.forEach((b, i) => {
-        const dec = decisions[i];
+      const scriptedNow = scripted.map((b, i) => {
+        const s = E.sampleTrack(b.track, t), r = sRef[i], tk = tackOf(s.h, w);
+        if (r.tack && tk !== r.tack && Math.abs(E.norm180(s.h - w)) < 60) r.lastTack = t;
+        r.tack = tk;
+        return { x: s.x, y: s.y, h: s.h, v: s.v != null ? s.v : base, ref: r };
+      });
+      const snap = [...scriptedNow, ...boats.map(o => ({ x: o.x, y: o.y, h: o.h, v: o.v, ref: o }))];
+      const casters = shadowsOn ? snap.map(o => ({ x: o.x, y: o.y, v: o.v, ref: o.ref })) : [];
+      const rulesOn = t >= rulesFrom;
+      for (const b of boats) {
         const holding = t < goAt;
-        let baseTarget = E.tackHeading(w, b.tack), speed = 1;
-        if (holding) baseTarget = w + (b.tack === 'starboard' ? -25 : 25);   // orsalayıp bekle
-        if (dec && dec.kind !== 'row') {
-          let kind = dec.kind, note = dec.note;
-          if (kind === 'luffK11') {
-            // rüzgarüstünde de bir tekne varsa orsalayamaz (ona doğru gider): rotada yavaşlar
-            const above = othersOf(b).some(o => Math.hypot(o.x - b.x, o.y - b.y) < 45 && isWindward(o, b, w));
-            if (above) { kind = 'brake'; note = 'Rüzgarüstü yol verir · K11 (yavaşlıyor)'; }
-          }
-          if (!b.man) {
-            const others = othersOf(b);
-            if (kind === 'duck' && dec.rule === 10) {
-              const duckH = maneuverTarget('duck', w, b.tack, baseTarget, F).h;
-              const newTack = b.tack === 'starboard' ? 'port' : 'starboard';
-              const tackH = E.tackHeading(w, newTack);
-              const cd = clearance(b, duckH, others), ct = clearance(b, tackH, others);
-              if (cd < 90 && ct > cd) { kind = 'tack'; b.tack = newTack; note = 'Yol veriyor · K10 (tramola)'; }
-              else note = 'Yol veriyor · K10 (bordalıyor)';
-            } else if (dec.rule === 14 && kind !== 'brake') {
-              const duckH = maneuverTarget('duck', w, b.tack, baseTarget, F).h, luffH = maneuverTarget('luff', w, b.tack, baseTarget, F).h;
-              kind = clearance(b, luffH, others) > clearance(b, duckH, others) ? 'luff' : 'duck';
+        let target = holding ? w + (b.tack === 'starboard' ? -25 : 25) : E.tackHeading(w, b.tack), speedK = 1;   // beklerken orsalayıp durur
+        if (rulesOn) {
+          const others = snap.filter(o => o.ref !== b);
+          const g = giveWay(b, others, w, t);
+          if (g) {
+            if (t >= b.reEval || !b.man) {
+              const ch = chooseEscape(b, others, w, target, t, g, { allowTack: t - b.lastTack > 1.5, marks });
+              b.reEval = t + 0.3;
+              if (ch.kind === 'tack') { b.tack = b.tack === 'starboard' ? 'port' : 'starboard'; b.lastTack = t; b.man = 'tack'; b.escH = null; target = E.tackHeading(w, b.tack); }
+              else { b.man = ch.kind; b.escH = ch.off; b.escSpeed = ch.speed; }
+              if (ch.kind !== 'hold') {
+                b.note = (g.rule === 14 ? '' : 'Yol veriyor · ') + ruleText(g.rule, ch.kind); b.noteUntil = t + 2;
+                if (g.rule === 14) b.k14 = { t, by: g.O.ref.id };   // hak sahibi kaçmak zorunda kaldı: simülatörde karşı tarafa protesto
+              }
             }
-          }
-          if (b.man !== kind && !(b.man === 'tack' && kind === 'duck')) b.man = kind;
-          b.manF = dec.urgent ? STRICT : F;
-          b.manUntil = t + F.hold; b.note = note; b.noteUntil = t + 2.5;
-        } else if (b.man && t > b.manUntil) b.man = null;
-        let target = holding ? baseTarget : E.tackHeading(w, b.tack);
-        if (b.man && !holding) { const m = maneuverTarget(b.man, w, b.tack, target, b.manF || F); target = m.h; speed *= m.speed; }
-        b.h = E.lerpAngle(b.h, target, Math.min(1, DT / 0.6));
+            b.manUntil = t + 0.8;
+          } else if (b.man && t > b.manUntil) { b.man = null; b.escH = null; }
+          if (b.man && b.man !== 'tack' && b.escH != null) { target += b.escH; speedK = b.escSpeed; }
+        }
+        // dönüş (simülatörle aynı hız)
+        const diff = E.norm180(target - b.h), rate = TURN_RATE * DT;
+        b.h = E.norm360(b.h + Math.max(-rate, Math.min(rate, diff)));
         const dir = E.avoidDir(b.x, b.y, b.h, obstacles, b.v);
-        if (dir !== 0) b.h += dir * 160 * DT;                       // engelden yana kaç (rota hedefi sonra geri çeker)
-        let vt = holding ? HOLD_V : E.speedFor(Math.abs(E.norm180(b.h - w)), base) * (b.man ? speed : 1);
+        if (dir !== 0) b.h = E.norm360(b.h + dir * 160 * DT);       // engelden yana kaç (rota hedefi sonra geri çeker)
+        const twa = Math.abs(E.norm180(b.h - w));
+        let vt = holding ? HOLD_V : E.speedFor(twa, base) * speedK;
+        // start öncesi (kurallar henüz yok): öndeki teknenin kıçına girme, arkasında kal (simülatördeki K12 bilinci)
+        if (!rulesOn && !holding) {
+          const f = E.fwd(b.h);
+          for (const o of snap) {
+            if (o.ref === b) continue;
+            const dx = o.x - b.x, dy = o.y - b.y, al = dx * f.x + dy * f.y, lat = Math.abs(dx * f.y - dy * f.x);
+            if (al > 0 && al < 80 && lat < 26) vt = Math.min(vt, Math.max(0, o.v * 0.9 + (al - 36) * 2));
+          }
+        }
         if (!holding && shadowsOn) vt *= 1 - E.SHADOW.loss * E.shadowK({ x: b.x, y: b.y, ref: b }, casters, w, base).k;   // pis rüzgar
         b.v += (vt - b.v) * Math.min(1, DT / TAU);
-      });
+      }
       t += DT;
       for (const b of boats) {
         const f = E.fwd(b.h); b.x += f.x * b.v * DT; b.y += f.y * b.v * DT;
@@ -245,7 +267,7 @@
           }
           b.side = side;
         }
-        b.out.push({ t, x: b.x, y: b.y, h: b.h, v: b.v, note: t < b.noteUntil ? b.note : '' });
+        b.out.push({ t, x: b.x, y: b.y, h: b.h, v: b.v, note: t < b.noteUntil ? b.note : '', k14: b.k14 && b.k14.t > t - DT * 1.5 ? b.k14.by : undefined });
       }
     }
     return boats.map(b => b.out);
@@ -287,5 +309,5 @@
     return { scripted: scripted.map(s => s.track), extras };
   }
 
-  global.SailRules = { FEEL: { STRICT, SCENARIO }, simulate, buildScene, warpForShadows, decide, clearAstern, isWindward, approach, lineSide, lineParam };
+  global.SailRules = { GW, closest, classify, giveWay, chooseEscape, ruleText, tackOf, simulate, buildScene, warpForShadows, clearAstern, isWindward, approach, lineSide, lineParam };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -35,6 +35,40 @@ for (const scn of globalThis.SCENARIOS) {
   }
   for (const [k, m] of Object.entries(minPair)) if (m.d < 30) warn(scn, `${k} birbirine ${m.d.toFixed(0)} px yaklaşıyor (t=${m.t.toFixed(1)}, ${m.a.x.toFixed(0)},${m.a.y.toFixed(0)} / ${m.b.x.toFixed(0)},${m.b.y.toFixed(0)})`);
   for (const [k, d] of Object.entries(minObs)) if (d < 10) warn(scn, `${k} engele ${d.toFixed(0)} px yaklaşıyor (şamandıra/hakem botu)`);
+  // Kural denetimi (simülatörle aynı classify): senaryo teknesi (ders, rotasını değiştirmez) yol vermesi gerekirken
+  // bir tekneye 30 px'den fazla yaklaşırsa simülatörde protesto edilirdi. role:'hata' tekneler (bilinçli hata) hariç.
+  {
+    const lastTack = {}, prevTack = {}, worst = {};
+    for (let t = 0; t <= scn.duration; t += 0.1) {
+      const w = E.windAt(scn.wind, t);
+      const pos = tracks.map(b => { const s = E.sampleTrack(b.track, t); return { id: b.id, x: s.x, y: s.y, h: s.h, v: s.v || 0, phase: 'race' }; });
+      for (const p of pos) {
+        const tk = R.tackOf(p.h, w);
+        if (prevTack[p.id] && tk !== prevTack[p.id] && Math.abs(E.norm180(p.h - w)) < 60) lastTack[p.id] = t;
+        prevTack[p.id] = tk; p.lastTack = lastTack[p.id] ?? -10;
+      }
+      scn.boats.forEach((sb, i) => {
+        if (sb.role === 'hata' || (scn.expectFaults || []).includes(sb.id)) return;
+        const S = pos[i];
+        if ((S.v || 0) < (scn.baseSpeed || 55) * 0.2) return;          // beklerken (yelken boş) kural sorunu sayma
+        for (const O of pos) {
+          if (O === S) continue;
+          const d = Math.hypot(S.x - O.x, S.y - O.y);
+          if (d >= 30) continue;
+          const rule = R.classify(S, O, w, t);
+          if (rule && (!worst[S.id + O.id] || d < worst[S.id + O.id].d)) worst[S.id + O.id] = { d, t, rule, a: S.id, b: O.id };
+        }
+      });
+    }
+    for (const v of Object.values(worst)) warn(scn, `${v.a} yol vermesi gerekirken (K${v.rule}) ${v.b} teknesine ${v.d.toFixed(0)} px yaklaşıyor (t=${v.t.toFixed(1)}) · simülatörde protesto`);
+    // filo teknesi senaryo teknesi yüzünden temas önleme (K14) yaptıysa: senaryo teknesi yol vermedi demektir
+    const forced = {};
+    sc.extras.forEach((tr, i) => { for (const s of tr) if (s.k14 && s.k14[0] === 's') { const sb = scn.boats[+s.k14.slice(1) - 1]; if (sb && sb.role !== 'hata' && !(scn.expectFaults || []).includes(sb.id)) forced[sb.id + '>filo' + (i + 1)] ??= s.t; } });
+    for (const [k, t] of Object.entries(forced)) warn(scn, `${k.replace('>', ' yüzünden ')} temas önleme (K14) yapıyor (t=${t.toFixed(1)}) · simülatörde protesto`);
+    const notes = new Set();
+    sc.extras.forEach((tr, i) => { let last = ''; for (const s of tr) { if (s.note && s.note !== last) notes.add(i + ':' + s.t.toFixed(1) + ':' + s.note); last = s.note; } });
+    if (process.argv.includes('-v')) console.log(`    filo kural notu: ${notes.size}`, [...notes].slice(0, 12).join(' | '));
+  }
   if (scn.line && scn.startAt > 0) {
     for (const b of tracks) {
       let c = null;
