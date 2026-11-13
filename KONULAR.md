@@ -109,6 +109,7 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | H9 | Hakem botu ucu kalabalık: erken gir, yerini tut | Kalabalık hakem botu ucunda erken ve layline'dan (rüzgaraltından) girip turuncu bayrağın dibinde start'a kadar bekleme; HATA: dışarıda, açıkta bekleyip 1 dk kala gelen tekne ön sıra dolduğu için giremez, yer tutan teknenin altında (arkasında) ikinci sırada kalır ve pis rüzgarda çıkar (K12). | ✅ (İA5) |
 | H10 | Kuvvetli rüzgarda hakem botu: açılan boşluğa gir | Kuvvetli rüzgarda (18 kn) hakem botu dibinde bekleyen tekneler rüzgaraltına kayar, son 30-40 sn'de botun dibinde boşluk açılır; hakem botunun sancak tarafında, hat hizasında bekleyip boşluğu öngörerek yavaşça botun kıçından dolaşıp girme ve bot ucundan start; HATA: bayrağın dibine erken park edip kayan tekne (K11, K31, barging). | ✅ (İA6) |
 | H11 | Kaydıkça yüksel: hatta yer tutma | Bekleyen tekne rüzgar ve akıntıyla aşağı/rüzgaraltına kayar; dört düzeltme: iskotayı bir an çekip orsalama, ikili tramola (tramola + tramola + dur, rüzgarüstündeki teknenin altına geçme), durduğun yerde tramola, burnu açıp doldurup orsalama. HATA: tam dolu yelkenle ikili tramola, tekne öne fırlar. | ✅ (İA7) |
+| H12 | Pin'de karmaşa: layline üstünde kal | Pin çok avantajlı, filo pin'e yığılır; doğru tekne erken, layline'ın üstünde pin'in yarım boy içinde bekler. HATA: kalabalıkta layline'ın altına düşen tekne pin'i dönemez, tramola atıp herkese yol verir (K13, K10); geç gelen ikinci sırada pis rüzgarda (K12). K31 pin'e değme. | ✅ (İA8) |
 
 # III. TEKNİK
 

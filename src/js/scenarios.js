@@ -903,5 +903,68 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // ---------- İA8: pin avantajlı, pin'de karmaşa ----------
+  S.push({
+    id: 'ia8-pin-chaos',
+    category: 'İleri Taktik', topic: 'Start · Pin',
+    title: 'İA8 · Pin\'de karmaşa: layline\'ın üstünde kal, altında kalırsan çık',
+    summary: 'Rüzgar 15° sola dönmüş, pin çok avantajlı ve filonun yarısı pin\'e yığılıyor. Yeşil P erken gelir, pin layline\'ının ÜSTÜNDE, pin\'in yarım boy içinde yerini alır ve pin\'den çıkar. Turuncu L kalabalıkta aşağı itilir, layline\'ın ALTINDA kalır: sinyalde pin\'i dönemez, tramola atıp herkese yol vermek zorunda kalır (Kural 13, 10). Mor Y geç gelir, ön sıra dolmuştur: ikinci sırada, pis rüzgarda çıkar.',
+    duration: 38,
+    baseSpeed: 40,
+    clockScale: 4,
+    wind: 345,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 30,
+    rungs: { boat: 'P', from: 30.5 },
+    laylines: [{ x: 200, y: 440, tack: 'starboard', len: 330, from: 0, to: 31, label: 'Pin layline\'ı: bunun ALTINDA pin dönülmez' }],
+    boats: [
+      { id: 'P', name: 'Layline üstünde, pin\'den', role: 'dogru', color: '#2a9d8f',
+        start: { x: 410, y: 572, h: 300 }, v0: 25,
+        segs: [
+          { mode: 'closehauled', tack: 'starboard', dur: 5.4, turn: 0, speed: 0.75, note: 'Erken: layline üstünden pin\'e' },
+          { mode: 'hold', h: 335, dur: 23.2, speed: 0.006, turn: 1.2, note: 'Pin\'in yarım boy içinde: yer benim' },
+          { mode: 'closehauled', tack: 'starboard', dur: 9.4, turn: 0.8 }
+        ] },
+      { id: 'L', name: 'Layline altında kalan', role: 'hata', color: '#e76f51',
+        start: { x: 268, y: 522, h: 335 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 335, dur: 14, speed: 0.006, turn: 0, drift: 1, note: 'Kalabalıkta aşağı itildi' },
+          { mode: 'hold', h: 335, dur: 12, speed: 0.006, turn: 0, drift: 1, note: 'Layline\'ın ALTINDA' },
+          { mode: 'closehauled', tack: 'starboard', dur: 1.8, turn: 0.8, note: 'Pin\'i dönemiyor!' },
+          { mode: 'heading', h: 40, dur: 1.3, turn: 0.8, speed: 0.6, note: 'Tramola: herkese yol ver (K13)' },
+          { mode: 'heading', h: 105, dur: 3.6, turn: 1.0, speed: 0.8, note: 'İskele kontra: herkesin arkasından (K10)' },
+          { mode: 'closehauled', tack: 'port', dur: 4.3, turn: 1.0 }
+        ] },
+      { id: 'Y', name: 'Geç gelen, ikinci sırada', role: 'hata', color: '#c77dff',
+        start: { x: 700, y: 610, h: 270 }, v0: 10,
+        segs: [
+          { mode: 'hold', h: 270, dur: 13, speed: 0.05, turn: 0, note: '"Pin\'e son dakika girerim"' },
+          { mode: 'heading', h: 290, dur: 6.5, turn: 1.0, speed: 0.75, note: 'Geç: pin\'e doğru' },
+          { mode: 'hold', h: 335, dur: 9, speed: 0.01, turn: 1.0, note: 'Ön sıra dolu: ikinci sırada' },
+          { mode: 'closehauled', tack: 'starboard', dur: 9.5, turn: 0.8, note: 'Pis rüzgarda' }
+        ] }
+    ],
+    crowd: [
+      { slot: 0.19 }, { slot: 0.28 }, { slot: 0.37 }, { slot: 0.46 }, { slot: 0.55 }, { slot: 0.24, row: 1 }, { slot: 0.42, row: 1 },
+      { slot: 0.68 }, { slot: 0.82 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dk: pin çok avantajlı', text: 'Rüzgar 15° sola dönmüş: pin ucu hattın neredeyse 3 boy önünde. Herkes pin\'den çıkmak istiyor; filonun yarısı pin\'e yığılıyor. Mavi kesikli çizgi pin layline\'ı: sancak orsa ile pin\'e varabileceğin son rota.' },
+      { t: 2, title: 'P erken ve layline\'ın üstünden geliyor', text: 'Yeşil P 2 dk kala sancak kontrada, layline\'ın üstünden pin\'e geliyor. Rüzgaraltından gelen tekne hak sahibidir (Kural 11): bekleyenler ona yer açar.' },
+      { t: 6, title: 'Pin\'in yarım boy içinde dur', text: 'P pin\'e değmeden, pin\'in yarım boy içinde ve layline\'ın üstünde rüzgara baş verip duruyor. Pin\'e değmek Kural 31: bir tur ceza. Pin\'in dışında beklemek de olur ama sinyalde içeri girmek zorundasın.' },
+      { t: 10, title: 'L kalabalıkta aşağı itildi', text: 'Turuncu L, P\'nin hemen arkasında bekliyor. Önünde P, rüzgarüstünde filo var; yer açılmadıkça kayıyor. Şimdi layline\'ın ALTINDA.' },
+      { t: 13, title: 'Y geç geliyor', text: 'Mor Y "pin\'e son dakika girerim" diye dışarıda bekledi. Şimdi geliyor ama ön sıra dolu.' },
+      { t: 16, title: 'Layline\'ın altındaysan', text: 'Layline\'ın altındaki tekne sancak orsa ile pin\'e varamaz: burnu pin\'in soluna düşer. Ya erken tramola atıp çıkar ya da sinyalde herkesin arkasından dolaşır. Pin\'i "son anda orsalayıp" dönmeye çalışmak Kural 31 (pin\'e değme) ve fodepar riski.' },
+      { t: 21, title: 'Y ikinci sırada', text: 'Y, ön sıradakilerin hemen arkasında kaldı. Önündeki teknelerin pis rüzgarında (mor gölge) ve hızlanacak yeri yok. Arkadaki tekne öndekine yol verir (Kural 12).' },
+      { t: 26, title: 'L doldurdu ama yetişemeyecek', text: 'L yelkeni doldurup pin\'e gidiyor; ama layline\'ın altında: sancak orsa ile pin\'in soluna düşecek. Pin\'in dışından geçmek start sayılmaz.' },
+      { t: 27.8, title: 'L tramola: herkese yol ver', text: 'L tramola atıyor. Tramola sırasında herkese yol verir (Kural 13), iskele kontrada da tüm sancak teknelere (Kural 10). Burnunu düşürüp herkesin arkasından dolaşacak: 30-40 saniye kayıp.' },
+      { t: 28.6, title: '6 sn kala doldur', text: 'P burnunu düşürüp dolduruyor; layline\'ın üstünde olduğu için pin\'i rahat geçecek.' },
+      { t: 30, title: 'START: P pin\'den', text: 'P pin\'in hemen yanından, avantajlı uçtan, temiz havada çıkıyor. Y ikinci sırada, kirli havada; L herkesin arkasında.' },
+      { t: 35, title: 'Özet', text: 'Pin avantajlıysa: erken gel, layline\'ın üstünde kal, pin\'in yarım boy içinde dur, pin\'e değme. Layline\'ın altına düştüysen erken çık, inat etme. Geç kalırsan ön sıra dolar.' }
+    ],
+    addBoat: { pin: { x: 290, y: 600 }, middle: { x: 500, y: 600 }, committee: { x: 720, y: 600 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);
