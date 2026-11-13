@@ -202,6 +202,8 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+
+- **2026-11-13 · Bildir onayı:** gönderince (GitHub/Kopyala/Dosya) pencere kapanır, not temizlenir, Bildir düğmesi 4 sn yeşil onay + "Gönderildi" (veri adrese sığmadıysa 9 sn "Panoda"). Duman testi bunu denetliyor. Otomatik bildirim kontrolü kurulmadı (kullanıcı "ben söylerim" dedi).
 ### 2026-11-13 · İleri start paketi: hatta yer tutma ve 6 taktik (İA7-İA13)
 - Kullanıcı: "hepsini sırayla yap, bana sorma"; önce hatta durma/yükselme (iskota, ikili tramola, yerinde tramola, kafayı açıp yükselme; iki grup arasında rüzgarüstü tekneye yaklaşma), sonra önerilen 6 fikir (pin karmaşası, fren/geri gitme, boşluğu savun, B planı, son saniye iskele yaklaşma, genel geri çağırma + siyah bayrak).
 - Yapılan: İA7-İA13 (v1.104-v1.110), motor `back` segmenti, KONULAR H6 + H11-H16 ✅. `npm run check` ve `npm run smoke` temiz. Görüntüler: proje dosyaları `ileri-start/`.

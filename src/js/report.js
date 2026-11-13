@@ -185,23 +185,23 @@
         const w = window.open('about:blank', '_blank');   // iOS: açılır pencere tıklamayla açılmalı
         const res = await toGithub(r);
         if (w) w.location.href = res.url; else location.href = res.url;
-        foot(res.inUrl ? `GitHub açıldı: <b>Submit new issue</b>'ya bas.${res.copied ? ' Veri ayrıca panoda.' : ''}`
-          : `GitHub açıldı. Veri adrese sığmadı${res.copied ? ', <b>panoya kopyalandı</b>: konunun en altına yapıştırıp' : ''} <b>Submit new issue</b>'ya bas.`);
         push('report', { how: 'github', note: !!r.note });
+        done(res.inUrl ? 'Gönderildi' : 'Panoda', res.inUrl ? 'GitHub açıldı: Submit new issue\'ya bas.'
+          : `GitHub açıldı. Veri adrese sığmadı${res.copied ? ', panoya kopyalandı: konunun en altına yapıştırıp' : ''} Submit new issue'ya bas.`);
       });
       dlg.querySelector('#repCopy').addEventListener('click', async () => {
         const r = withNote(); keep(r);
         const ok = await copy(bodyText(r, await pack(r), 40));
-        foot(ok ? 'Panoya kopyalandı: Claude sohbetine yapıştırabilirsin.' : 'Kopyalanamadı. Dosya ile dene.');
         push('report', { how: 'copy' });
+        if (ok) done('Kopyalandı', 'Panoya kopyalandı: Claude sohbetine yapıştırabilirsin.'); else foot('Kopyalanamadı. Dosya ile dene.');
       });
       dlg.querySelector('#repFile').addEventListener('click', () => {
         const r = withNote(); keep(r);
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([JSON.stringify(r, null, 1)], { type: 'application/json' }));
         a.download = `velora-bildirim-${r.at.slice(0, 16).replace(/[:T]/g, '-')}.json`; document.body.appendChild(a); a.click(); a.remove();
-        foot('Dosya indirildi: Claude sohbetine ekleyebilirsin.');
         push('report', { how: 'file' });
+        done('İndirildi', 'Dosya indirildi: Claude sohbetine ekleyebilirsin.');
       });
     }
     const s = summary(last);
@@ -214,6 +214,20 @@
   const foot = html => { dlg.querySelector('#repFoot').innerHTML = html; };
   function withNote() { return { ...last, note: dlg.querySelector('#repNote').value.trim() }; }
   function close() { if (dlg) dlg.classList.add('hidden'); }
+  // Gönderince: pencere kapanır, not temizlenir, Bildir düğmesi birkaç saniye onay işaretiyle "Gönderildi" der.
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  let doneTimer = 0;
+  function done(label, tip) {
+    dlg.querySelector('#repNote').value = '';
+    close();
+    const b = document.getElementById('btnReport'); if (!b) return;
+    clearTimeout(doneTimer);
+    b.classList.add('sent'); b.innerHTML = CHECK + `<span class="lbl">${esc(label)}</span>`; b.title = tip;
+    doneTimer = setTimeout(() => {
+      b.classList.remove('sent'); b.innerHTML = ICON + '<span class="lbl">Bildir</span>';
+      b.title = 'Bildirim gönder: ne oldu yaz, o ana kadarki veriyle Claude\'a gönder';
+    }, label === 'Panoda' ? 9000 : 4000);
+  }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ui); else ui();
 

@@ -138,7 +138,12 @@ const shot = async (p, name) => { if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: 
   const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#repFile')]);
   const file = path.join(SHOTS || path.join(process.env.TMPDIR || '/tmp', 'velora-smoke'), 'bildirim.json');
   fs.mkdirSync(path.dirname(file), { recursive: true }); await dl.saveAs(file);
+  ok(!(await p.isVisible('#repDlg')) && /İndirildi/.test(await p.textContent('#btnReport')), 'dosya inince pencere kapandı, düğmede onay');
+  await p.click('#btnReport'); await p.waitForTimeout(200);
+  await p.fill('#repNote', 'Duman testi: elle sürerken bildirim');
   await p.click('#repSend'); await p.waitForTimeout(600);
+  ok(!(await p.isVisible('#repDlg')) && /Gönderildi|Panoda/.test(await p.textContent('#btnReport')) && await p.$('#btnReport.sent'), 'gönderince pencere kapandı, düğmede onay işareti');
+  await shot(p, 'bildirim-gonderildi.png');
   const urls = await p.evaluate(() => window.__opened);
   const u = urls[0] ? new URL(urls[0]) : null;
   ok(u && u.host === 'github.com' && /bildirim/.test(u.searchParams.get('labels')) && urls[0].length <= 7100, `GitHub konu adresi hazır (${urls[0] ? urls[0].length : 0} karakter)`);
