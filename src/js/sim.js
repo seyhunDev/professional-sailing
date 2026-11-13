@@ -509,22 +509,20 @@
     const key = [phase[1], !!st.drive, manual, hasRoute, mine && mine.persona, mine && mine.ignoresRules, mine && mine.finish, sb && sb.id, sb && sb.sailor, st.gsel, gl && gl.length, st.drawMode].join('|');
     if (key === lastStateKey) return;
     lastStateKey = key;
-    // ana durum ve senin teknenin modu
-    $('msPhase').className = 'ms-chip ph-' + phase[0]; $('msPhase').textContent = phase[1];
-    const m = $('msMine');
-    if (!mine || st.drive) m.classList.add('hidden');   // elle sürerken alttaki panel zaten söylüyor
-    else {
-      m.classList.remove('hidden');
-      m.className = 'ms-chip ' + (manual ? 'ms-manual' : hasRoute ? 'ms-route' : 'ms-auto');
-      m.innerHTML = st.drive ? '<b>Elle sür</b> dümen ve iskota sende' : manual ? '<b>Manuel</b> tramolayı sen atarsın (T)' : hasRoute ? '<b>Rota</b> çizdiğin rotayı izliyor' : `<b>Otomatik</b> taktik: ${esc(S.PERSONAS[mine.persona] || mine.persona)}`;
-    }
-    $('msRules').classList.toggle('hidden', !(mine && mine.ignoresRules));
-    // seçili nesne (tekne ya da sağanak); dokununca seçim kalkar
-    const s = $('msSel');
-    const selTxt = sb ? `<span class="boat-id" style="background:${sb.color}">${esc(sb.id)}</span>${esc(sb.mine ? 'Senin teknen' : 'Tekne ' + sb.id)} seçili`
-      : gl && gl[st.gsel] ? `<svg class="ci"><use href="#i-gust"/></svg>${gl.length > 1 ? 'Sağanak ' + (st.gsel + 1) : 'Sağanak'} seçili` : '';
-    s.classList.toggle('hidden', !selTxt || !!st.drawMode);
-    if (selTxt) s.innerHTML = selTxt + '<svg class="ci x"><use href="#i-close"/></svg>';
+    // Sağ üstte küçük durum rozetleri (simge + tek kelime): yalnız ekrandan başka türlü anlaşılmayan durumlar.
+    // Kurulum / geri sayım / yarış sol üstteki saatte zaten yazıyor; Otomatik varsayılan; seçim panelde ve sağanak kartında görünüyor.
+    const chip = (id, show, cls, icon, txt, title) => {
+      const x = $(id); x.classList.toggle('hidden', !show); if (!show) return;
+      x.className = 'ms-chip ' + cls; x.title = title; x.innerHTML = `<svg class="ci"><use href="#${icon}"/></svg><span>${txt}</span>`;
+    };
+    const dp = st.drive && st.drive.live && st.drive.paused;
+    chip('msPhase', !st.drive && (st.mode === 'pause' || st.mode === 'end'),   // elle sürerken alttaki panel söylüyor
+      st.drive ? 'ph-drive' : st.mode === 'end' ? 'ph-end' : 'ph-pause',
+      st.drive && !dp ? 'i-helm' : st.mode === 'end' ? 'i-flag' : 'i-pause', st.drive ? (dp ? 'Durdu' : 'Elle') : st.mode === 'end' ? 'Bitti' : 'Durdu', phase[1]);
+    chip('msMine', !!mine && !st.drive && (manual || hasRoute), manual ? 'ms-manual' : 'ms-route', manual ? 'i-tack' : 'i-route', manual ? 'Manuel' : 'Rota',
+      manual ? 'Manuel: tramolayı sen atarsın (T)' : 'Teknen çizdiğin rotayı izliyor');
+    chip('msRules', !!(mine && mine.ignoresRules), 'ms-warn', 'i-close', 'Yol vermez', 'Senin teknen yol vermiyor: protesto edilebilir');
+    $('msSel').classList.add('hidden');
     // düğmeler: basılı durum (aria-pressed) ve devre dışıysa nedeni
     $('btnManual').setAttribute('aria-pressed', manual); $('btnMineRules').setAttribute('aria-pressed', !!(mine && mine.ignoresRules));
     $('btnTack').title = setup ? "Tramola: start'tan sonra kullanılır (T)" : manual ? 'Tramola at (T): manuelde tramolayı yalnız sen atarsın' : 'Tramola at (T)';
