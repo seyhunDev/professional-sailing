@@ -1225,5 +1225,75 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // ---------- İA13: genel geri çağırmadan sonra siyah bayrak ----------
+  S.push({
+    id: 'ia13-black-flag',
+    category: 'İleri Taktik', topic: 'Start',
+    title: 'İA13 · Genel geri çağırma, sonra siyah bayrak: son dakikada burun hatta değmesin',
+    summary: 'İlk start\'ta filonun çoğu erken çıktı ve hakem genel geri çağırma yaptı (Birinci Tekrar bayrağı, iki ses). Yeniden start siyah bayrakla: son 1 dakikada gövdesinin bir parçası hat üçgenindeki tekne diskalifiye olur (BFD), yelken numarası hakem botunda gösterilir ve start yeniden yapılsa da yarışamaz. Filo temkinli, hattın gerisinde bekliyor ve ortada yay oluşuyor. Yeşil S transitle hattın yerini bilir, hattın yarım boy altında bekler ve tam hızla çıkar. Turuncu B son dakikada burnunu hatta sokar: BFD. Mor C hattın üstüne son dakikadan ÖNCE çıkar: ceza yok, geri çekilir.',
+    duration: 40,
+    baseSpeed: 40,
+    clockScale: 4,
+    prepFlag: 'Siyah',
+    flagDownAt: 17,
+    wind: 0,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 32,
+    rungs: { boat: 'S', from: 32.5 },
+    sightline: { from: 0, to: 6, label: 'Transit: pin\'den hakem botuna bak — hat burada' },
+    sag: { from: 2, to: 30 },
+    expectEarly: ['B'],
+    boats: [
+      { id: 'S', name: 'Transitle, yarım boy altta', role: 'dogru', color: '#2a9d8f',
+        start: { x: 528, y: 476, h: 345 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 345, dur: 29.4, speed: 0.004, turn: 0, note: 'Hat yarım boy önde: transit' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10.6, turn: 0.8 }
+        ] },
+      { id: 'B', name: 'Son dakikada burnu hatta: BFD', role: 'hata', color: '#e76f51',
+        start: { x: 392, y: 484, h: 345 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 345, dur: 18, speed: 0.004, turn: 0, note: 'Hattın dibinde' },
+          { mode: 'hold', h: 350, dur: 3.2, speed: 0.18, turn: 0.6, note: 'Sürünüyor…' },
+          { mode: 'hold', h: 350, dur: 2.2, speed: 0.004, turn: 0, note: 'Burnu hatta: BFD!' },
+          { mode: 'back', h: 350, dur: 2.0, speed: 0.25, turn: 0, note: 'Geri çekilmek kurtarmaz' },
+          { mode: 'hold', h: 345, dur: 4.6, speed: 0.004, turn: 0.6, note: 'Numarası hakem botunda: BFD' },
+          { mode: 'heading', h: 160, dur: 3.0, turn: 1.0, speed: 0.5, note: 'Yarıştan çıktı' },
+          { mode: 'heading', h: 180, dur: 7.0, turn: 1.0, speed: 0.5, note: 'Yarıştan çıktı' }
+        ] },
+      { id: 'C', name: 'Son dakikadan önce üstte: ceza yok', role: 'hak', color: '#c77dff',
+        start: { x: 652, y: 482, h: 345 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 350, dur: 5.5, speed: 0.1, turn: 0, note: 'Sürünüyor' },
+          { mode: 'hold', h: 350, dur: 2.0, speed: 0.004, turn: 0, note: 'Hattın üstünde: henüz son dakika değil' },
+          { mode: 'back', h: 350, dur: 2.6, speed: 0.3, turn: 0, note: 'Geri çekiliyor: ceza yok' },
+          { mode: 'hold', h: 345, dur: 19.6, speed: 0.004, turn: 0.6, note: 'Yarım boy altta' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10.3, turn: 0.8 }
+        ] }
+    ],
+    // temkinli filo: uçlar hatta yakın, orta 1-1,5 boy geride (siyah bayrak yayı)
+    crowd: [
+      { slot: 0.06, back: 0 }, { slot: 0.13, back: 10 }, { slot: 0.33, back: 45 },
+      { slot: 0.40, back: 55 }, { slot: 0.60, back: 55 }, { slot: 0.73, back: 40 },
+      { slot: 0.80, back: 32 }, { slot: 0.89, back: 8 }
+    ],
+    steps: [
+      { t: 0, title: 'Az önce: genel geri çağırma', text: 'İlk start\'ta filonun çoğu hattın üstündeydi ve hakem kimin erken çıktığını tek tek ayıramadı. Genel geri çağırma yaptı: Birinci Tekrar bayrağı (üç köşeli, sarı-mavi) ve iki ses. Herkes geri döndü; start sırası yeniden başlıyor. Bu kez hazırlık bayrağı SİYAH.' },
+      { t: 3, title: 'Siyah bayrak ne demek?', text: 'Son 1 dakikada gövdenin, ekipmanın ya da mürettebatın bir parçası hat üçgenindeyse (hat ile iki ucu ve ilk şamandıra arasında) diskalifiye olursun: BFD. Yelken numaran hakem botunda gösterilir. Start yine geri çağrılırsa bir sonraki start\'a da giremezsin. Geri dönmek kurtarmaz.' },
+      { t: 6, title: 'Filo temkinli: yay oluşuyor', text: 'Siyah bayrakta herkes hattan uzak durur; ortadaki tekneler uçları göremediği için daha da geride bekler. Ortada 1-1,5 boyluk bir yay oluşur (İA2). Hattın yerini bilen için büyük fırsat.' },
+      { t: 7.5, title: 'C hattın üstünde ama…', text: 'Mor C sürünüp hattın üstüne çıktı. Henüz son dakika değil: bayrak hâlâ yukarıda. Siyah bayrak kuralı son 1 dakikada başlar. C yelkenini ters basıp geri çekiliyor: ceza yok.' },
+      { t: 12, title: 'S hattı biliyor', text: 'Yeşil S transitle (pin ile hakem botunu bir hizaya getirerek) hattın yerini biliyor ve hattın yarım boy altında bekliyor. Komşuları 1 boy geride. Siyah bayrakta bile yarım boy güvenlidir: hat üçgenine girmez.' },
+      { t: 17, title: '1 dakika: bayrak indi', text: 'Hazırlık bayrağı indi, uzun ses. Siyah bayrak kuralı şimdi başladı: start sinyaline kadar hat üçgenine giren diskalifiye.' },
+      { t: 18, title: 'B sürünüyor', text: 'Turuncu B yelkeni yarım dolu tutup sürünüyor. Komşularından öne geçti ama hattın nerede olduğunu bilmiyor.' },
+      { t: 21.2, title: 'B\'nin burnu hatta: BFD', text: 'B\'nin burnu hat üçgeninde. Siyah bayrak altında bu kadar: hakem numarasını yazdı. B geri çekilse de, start\'ta hattın altından geçse de diskalifiye. P bayrağında geri dönüp düzeltebilirdi; siyah bayrakta düzeltme yok.' },
+      { t: 28, title: 'BFD numaraları hakem botunda', text: 'Hakem BFD olan teknelerin numaralarını hakem botunda gösterir. B yarıştan çıkıyor; hakemi dinlemezse protestoyla da diskalifiye olur.' },
+      { t: 29.4, title: '10 sn kala doldur', text: 'S yarım boy altta: dolduruyor, düşüp hızlanıyor. Komşuları 1 boy geriden, yavaş başlıyor.' },
+      { t: 32, title: 'START', text: 'S yayın ortasından, komşularından bir boy önde ve tam hızda çıkıyor. Siyah bayrakta en büyük kazanç: hattın yerini bilmek ve yarım boy altta, korkusuzca beklemek.' },
+      { t: 36, title: 'Özet', text: 'Genel geri çağırma sonrası çoğu zaman U ya da siyah bayrak gelir. Siyah bayrakta son 1 dakikada hat üçgenine girme: geri dönmek kurtarmaz. Son dakikadan önce hattın üstünde olmak ceza değildir. Filo temkinliyken transitle hattı bilen kazanır.' }
+    ],
+    addBoat: { pin: { x: 290, y: 600 }, middle: { x: 500, y: 600 }, committee: { x: 720, y: 600 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);
