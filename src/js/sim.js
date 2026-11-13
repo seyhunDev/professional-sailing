@@ -483,6 +483,7 @@
     const mine = v.boats.find(b => b.mine);
     $('btnTack').disabled = !mine || setup || !(mine.phase === 'race' || (mine.manual && mine.phase === 'wait'));
     $('btnManual').classList.toggle('on', !!(mine && mine.manual));
+    $('btnReset').disabled = st.mode === 'setup';   // kurulumda sıfırlanacak yarış yok
     $('btnManual').disabled = !mine || (!setup && !!mine.finish);
     $('selMinePersona').disabled = !!(mine && mine.manual);
     $('btnTack').classList.toggle('pulse', !!(mine && mine.manual && !setup && mine.phase === 'race'));
@@ -643,7 +644,10 @@
     else if (st.mode === 'end') { st.playT = 0; st.sim = viewAt(0); st.mode = 'run'; }
     updatePanel(true);
   }
-  function backToSetup() { st.drive = null; st.mode = 'setup'; st.sim = null; st.frames = []; updatePanel(true); }
+  function backToSetup() {
+    if (st.drive) { st.drive = null; if (st.camPrev) Object.assign(st.cam, st.camPrev); st.camPrev = null; st.cam.follow = false; st.cam.panAt = null; applyCam(); }
+    if (st.mode !== 'setup') toast('Yarış sıfırlandı · tekneler start öncesi yerlerinde, ▶ ile yeniden başlat');
+    st.mode = 'setup'; st.sim = null; st.frames = []; updatePanel(true); }
   // Tahmini sonuç: hesaplanmış yarışın son karesi
   function predicted() { return st.frames.length ? st.frames[st.frames.length - 1] : null; }
 
@@ -855,6 +859,7 @@
     pb.classList.toggle('paused', !d.live || d.paused);
     pb.title = !d.live ? 'Start ver: yarış başlar, elle sürmeye devam edersin (boşluk)' : d.paused ? 'Zaman devam etsin (boşluk)' : 'Zamanı durdur (boşluk)';
     $('hpGo').querySelector('.hp-go-lbl').textContent = d.live ? 'Otomatik' : 'Bitir';
+    $('hpReset').classList.toggle('hidden', !d.live);   // kurulumda sıfırlanacak yarış yok
     $('hpGo').title = d.live ? 'Elle sürmeyi bitir: yarış devam eder, teknen orsaya gider; tramolalar yine senin (Enter)' : 'Elle sürmeyi bitir: teknen burada bekler, start\'ta otomatik hızlanır (Enter)';
   }
   // basılı tutulan düğmeler (dümen, iskota): parmak kalkınca biter
@@ -1364,6 +1369,7 @@
   // ---------- olaylar ----------
   $('btnPlay').addEventListener('click', togglePlay);
   $('btnReset').addEventListener('click', backToSetup);
+  $('hpReset').addEventListener('click', backToSetup);
   $('speedSeg').addEventListener('click', e => { let b = e.target.closest('button'); if (!b) return;
     if (b.classList.contains('on') && phoneMq.matches) b = b.nextElementSibling || $('speedSeg').firstElementChild;   // telefonda yalnız seçili görünür: dokununca sıradaki hız
     st.speed = +b.dataset.v; [...$('speedSeg').children].forEach(x => x.classList.toggle('on', x === b)); });
@@ -1531,6 +1537,7 @@
       if (k === 'k' || k === 'K') { helmTurn('jibe'); flash('hpJibe'); return; }
       if (k === 'v' || k === 'V') { vmgToggle(); return; }
       if (k === 'i' || k === 'I') { sheetToggle(); return; }
+      if ((k === 'r' || k === 'R') && st.drive.live && !e.metaKey && !e.ctrlKey) { backToSetup(); return; }
       if (k === 'Escape' || k === 'Enter') { e.preventDefault(); $('hpGo').click(); return; }
       if (e.code === 'Space') { e.preventDefault(); drivePause(); return; }
     } else if ((e.key === 'd' || e.key === 'D') && !e.metaKey && !e.ctrlKey) { enterDrive(); return; }
@@ -1547,6 +1554,7 @@
     else if (e.key === '-') zoomBy(1 / 1.4);
     else if (e.key === '0') camFit();
     else if (e.key === 'f' || e.key === 'F') camFollow();
+    else if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey && st.mode !== 'setup') backToSetup();
     else if (e.key === 'ArrowLeft') setWind(-5);
     else if (e.key === 'ArrowRight') setWind(5);
   });

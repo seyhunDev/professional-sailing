@@ -424,6 +424,10 @@ body.driving .main-row, body.driving .strip-host, body.driving.lay-strip .bottom
 .drive-bar .tb { display: inline-flex; align-items: center; gap: 6px; height: 38px; min-height: 38px; padding: 0 13px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
 .db-done { background: #16a34a; border-color: #22c55e; color: #fff; }
 .db-done:hover { background: #15803d; }
+.db-reset { color: var(--muted); }
+@media (max-width: 640px) { .db-reset .db-lbl { display: none; } .drive-bar .db-reset { padding: 0 9px; } }
+.reset-btn { border: 1px solid var(--border); }
+.reset-btn .lbl { font-size: 13px; font-weight: 600; }
 .db-play.paused { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 body.lay-rail .drive-bar { right: calc(var(--rail-w) + 24px); }
 body.driving .mode-strip { display: none; }

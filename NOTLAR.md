@@ -171,6 +171,9 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Yarışı sıfırlama görünür (v1.84)
+- Kullanıcı: başlatıp durdurabiliyorum ama sıfırlayamıyorum. Alt çubuktaki ↺ yalnız simgeydi ve elle sürerken alt çubuk gizli olduğundan hiç yoktu. Artık alt çubukta "↺ Sıfırla" yazılı (kurulumda pasif), elle sürerken zaman kutusunda da "Sıfırla" (telefonda yalnız simge), kısayol R. `backToSetup` sürüşü de kapatır, kamerayı geri alır, bildirim gösterir.
+
 ### 2026-11-13 · Elle sürmede yakınlaştırma yalnız + / − (v1.83)
 - Kullanıcı: yakınlaştırma/uzaklaştırma parmakla değil + / − düğmeleriyle olsun, tekne yine ortada. Sürerken kaydırma ve pinch kapatıldı, zoom kutusunda yalnız + / − kaldı.
 
