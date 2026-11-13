@@ -29,7 +29,7 @@
 
   <main class="trim-main">
     <section class="trim-stage">
-      <svg id="side" viewBox="0 0 640 560" preserveAspectRatio="xMidYMid meet" aria-label="Optimist yandan görünüş">
+      <svg id="side" viewBox="-40 -64 720 630" preserveAspectRatio="xMidYMid meet" aria-label="Optimist yandan görünüş">
         <defs>
           <linearGradient id="sailFill" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0" stop-color="#f8fafc" stop-opacity=".96"/>
@@ -54,8 +54,10 @@
         <g id="callouts"></g>
       </svg>
       <div class="sec-card">
-        <div class="sec-head">Üstten kesitler <span>kambur ve twist</span></div>
+        <div class="sec-tabs"><button data-t="kesit" class="on">Kesitler</button><button data-t="plan">Yelken planı</button></div>
+        <div class="full-badge" id="fullTxt"></div>
         <svg id="sections" viewBox="0 0 300 230" aria-label="Yelken kesitleri üstten"></svg>
+        <svg id="plan" viewBox="0 0 300 230" aria-label="Yelken planı, düz yatırılmış" hidden></svg>
       </div>
       <div class="zoom-card">
         <div class="sec-head">Yakın: direk bağları</div>
@@ -82,7 +84,7 @@
         <div class="seg-lbl">Kaynak</div>
         <select id="brandSel" class="brand-sel" aria-label="Yelken markası kılavuzu"></select>
       </div>
-      <div class="seg-row">
+      <div class="seg-row wrap">
         <div class="seg-lbl">Ayar</div>
         <div class="seg" id="segMode">
           <button data-v="orijinal">Orijinal</button><button data-v="ozel">Özel</button>

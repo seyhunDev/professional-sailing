@@ -334,13 +334,18 @@
   function shape(v, w, wave) {
     const twist = 4 + (1 - v.vang) * (6 + 10 * w) + 2 * wave;
     const lift = (1 - v.vang) * w * 9;
-    const midGap = v.ties.slice(2, 6).reduce((a, b) => a + b, 0) / 4;
+    // Orsa kavisi: yelkenin orsa yakası kesimde dışa ovaldir. Orta bağlar uçlardan yakın bağlanırsa (ör. uçlar 2-3, orta 1 mm)
+    // bu kavis yelkenin içine itilir → torluluk artar (hafif hava). Orta gevşek, uçlar sıkı (0,1,2,3,3,2,1,0) → yelken düzleşir.
+    const t = v.ties;
+    const ends = (t[0] + t[NTIES - 1]) / 2, midGap = (t[3] + t[4]) / 2;
+    const feed = ends - midGap;                                   // mm, + = kavis yelkene
+    const topFeed = t[0] - (t[1] + t[2]) / 2;
     const foot = 5 + (1 - v.out) * 9 + (v.sprit - 0.5) * 3;
-    const mid = foot * 0.85 + 2 + (v.sprit - 0.5) * 4 + (midGap - 2) * 0.4;
-    const top = mid * 0.75;
+    const mid = Math.max(3, foot * 0.85 + 2 + (v.sprit - 0.5) * 4 + feed * 0.9);
+    const top = Math.max(2.5, mid * 0.75 + topFeed * 0.5);
     const sheet = 9 + w * 5;
     const draftPos = 0.48 - v.luff * 0.1;
-    return { twist, lift, depth: [foot, mid, top], sheet, draftPos };
+    return { twist, lift, depth: [foot, mid, top], sheet, draftPos, feed };
   }
 
   // ---------- yandan görünüş ----------
@@ -387,25 +392,48 @@
   const mix = (a, b, t) => P(lerp(a.x, b.x, t), lerp(a.y, b.y, t));
   const rakeDeg = cm => 1 + (281 - cm) * 0.6;
 
+  // Ölçüler: Optimist sınıf kuralları (mm, üst sınırlar): orsa yakası 1730, tepe 1240, arka yaka 2800; alt yaka ≈ 1900
+  // (bumba en çok 2057). Direk 2350, gırcala 2286. Ekran ölçeği gövdeyle aynı (2310 mm ≈ 350 px).
+  const K = 0.1515;
+  const SAIL = { luff: 1730, head: 1240, leech: 2800, foot: 1900, boom: 2010, mast: 2350, sprit: 2286 };
+  function circles(A, r1, B, r2) {            // iki çemberin kesişimi: üstteki (y küçük) nokta
+    const dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy);
+    const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, r1 * r1 - a * a));
+    const xm = A.x + a * dx / d, ym = A.y + a * dy / d;
+    const p1 = P(xm + h * dy / d, ym - h * dx / d), p2 = P(xm - h * dy / d, ym + h * dx / d);
+    return p1.y < p2.y ? p1 : p2;
+  }
   function geom(v, sh) {
     const bh = 40;
     const G = P(0, -bh);
     const la = sh.lift * Math.PI / 180;
-    const C = add(G, P(272 * Math.cos(la), -272 * Math.sin(la)));
-    const S = P(0, -112);
-    let Pk = P(178, -350);
-    Pk = add(Pk, mul(unit(sub(Pk, S)), (v.sprit - 0.5) * 14));
-    const yTop = -292, yBot = -bh - 4;
+    const bdir = P(Math.cos(la), -Math.sin(la));
+    const C = add(G, mul(bdir, SAIL.foot * K));
+    const BE = add(G, mul(bdir, SAIL.boom * K));
+    const yBot = -bh - 4, yTop = yBot - SAIL.luff * K;
     const luff = v.ties.map((g, i) => P(3 + g * GAP_PX, lerp(yTop, yBot, i / (NTIES - 1))));
-    return { G, C, S, Pk, luff, T: luff[NTIES - 1], H: luff[0] };
+    const H = luff[0], T = luff[NTIES - 1];
+    let Pk = circles(P(3, yTop), SAIL.head * K, C, SAIL.leech * K);
+    const sl = SAIL.sprit * K;
+    const S = P(0, Pk.y + Math.sqrt(Math.max(0, sl * sl - Pk.x * Pk.x)));   // gırcala boyu sabit: alt ucu direkte
+    Pk = add(Pk, mul(unit(sub(Pk, S)), (v.sprit - 0.5) * 12));              // gırcala gerginliği tepeyi iter
+    const mtop = yTop - 20 * K;                                              // en üst bağ deliği tepeden 20 mm
+    return { G, C, BE, S, Pk, luff, T, H, mtop, mbot: mtop + SAIL.mast * K };
   }
   function sailPath(g, sh) {
     const { C, Pk, luff } = g;
+    // arka yaka: tepeden köşeye dışa doğru oval (roach)
     const nrm = unit(P(-(C.y - Pk.y), C.x - Pk.x));
-    const L1 = add(mix(Pk, C, 0.5), mul(nrm, -(16 - sh.twist * 0.35)));
-    const headMid = add(mix(luff[0], Pk, 0.5), P(0, -6));
+    const lm = mix(Pk, C, 0.48), T0 = luff[NTIES - 1];
+    const out = len(sub(add(lm, nrm), T0)) > len(sub(add(lm, mul(nrm, -1)), T0)) ? nrm : mul(nrm, -1);   // karuladan uzağa = dışa
+    const L1 = add(lm, mul(out, 13 - sh.twist * 0.25));
+    const headMid = add(mix(luff[0], Pk, 0.5), P(-2, -7));
+    // orsa yakası: bağlar arasında öne doğru hafif oval (yelkenin kesimindeki orsa kavisi)
     let d = `M${pt(tp(luff[NTIES - 1]))}`;
-    for (let i = NTIES - 2; i >= 0; i--) d += ` L${pt(tp(luff[i]))}`;
+    for (let i = NTIES - 2; i >= 0; i--) {
+      const m = add(mix(luff[i + 1], luff[i], 0.5), P(-1.6, 0));
+      d += ` Q${pt(tp(m))} ${pt(tp(luff[i]))}`;
+    }
     d += ` Q${pt(tp(headMid))} ${pt(tp(Pk))} Q${pt(tp(L1))} ${pt(tp(C))} Z`;
     return d;
   }
@@ -426,8 +454,8 @@
 
     // direk (alüminyum, metal parıltı) — yelkenin arkasında
     const mw = 3.6;
-    D(`M${pt(tp(P(-mw, 30)))} L${pt(tp(P(-mw + 0.8, -300)))} L${pt(tp(P(mw - 0.8, -300)))} L${pt(tp(P(mw, 30)))} Z`, { fill: 'url(#metalGrad)', stroke: '#0f172a', 'stroke-width': 1 });
-    D(`M${pt(tp(P(-mw - 0.6, -298)))} L${pt(tp(P(-mw - 0.6, -306)))} L${pt(tp(P(mw + 0.6, -306)))} L${pt(tp(P(mw + 0.6, -298)))} Z`, { fill: '#0f172a' }); // tepe kapağı
+    D(`M${pt(tp(P(-mw, g.mbot)))} L${pt(tp(P(-mw + 0.8, g.mtop)))} L${pt(tp(P(mw - 0.8, g.mtop)))} L${pt(tp(P(mw, g.mbot)))} Z`, { fill: 'url(#metalGrad)', stroke: '#0f172a', 'stroke-width': 1 });
+    D(`M${pt(tp(P(-mw - 0.6, g.mtop + 2)))} L${pt(tp(P(-mw - 0.6, g.mtop - 6)))} L${pt(tp(P(mw + 0.6, g.mtop - 6)))} L${pt(tp(P(mw + 0.6, g.mtop + 2)))} Z`, { fill: '#0f172a' }); // tepe kapağı
 
     // yelken: zemin + çapraz kesim panelleri + köşe takviyeleri (yelken içine kırpılı)
     const clip = el('clipPath', { id: 'sailClip' }, gRig);
@@ -445,9 +473,28 @@
       el('path', { d: `M${pt(tp(c))} L${pt(tp(p1))} Q${pt(tp(mix(mix(p1, p2, .5), c, -.15)))} ${pt(tp(p2))} Z`, fill: '#cbd5e1', opacity: .55, stroke: '#94a3b8', 'stroke-width': .6 }, cl);
     };
     patch(Pk, H, C, 46); patch(C, Pk, T, 44); patch(T, H, C, 30); patch(H, Pk, T, 28);
-    // yelken numarası
-    const nP = tp(add(mix(T, Pk, 0.5), P(18, 40)));
-    el('text', { x: nP.x, y: nP.y, transform: `rotate(${rot.toFixed(2)} ${nP.x.toFixed(1)} ${nP.y.toFixed(1)})`, class: 'sail-no', 'text-anchor': 'middle' }, cl).textContent = 'TUR 123';
+    // balen cepleri (sınıf kuralı: arka yakada 2 cep); uzunluk şematik
+    const bat = [];
+    for (const f of [0.3, 0.62]) {
+      const a = mix(Pk, C, f), b = add(a, mul(inw, 58));
+      bat.push(a);
+      el('line', { x1: tp(a).x, y1: tp(a).y, x2: tp(b).x, y2: tp(b).y, stroke: '#cbd5e1', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: .9 }, cl);
+      el('line', { x1: tp(a).x, y1: tp(a).y, x2: tp(b).x, y2: tp(b).y, stroke: '#64748b', 'stroke-width': 1.2, 'stroke-linecap': 'round' }, cl);
+    }
+    // torluluk gölgesi: kamburun en derin yerinin arkasında koyulaşan bant (derinlikle artar)
+    const midL = mix(T, H, 0.5), midR = mix(C, Pk, 0.5);
+    const a0 = tp(midL), a1 = tp(midR);
+    const dep = (sh.depth[0] + sh.depth[1] + sh.depth[2]) / 3;
+    const gid = 'camberShade';
+    const defs = el('defs', {}, gRig);
+    const lg = el('linearGradient', { id: gid, gradientUnits: 'userSpaceOnUse', x1: a0.x, y1: a0.y, x2: a1.x, y2: a1.y }, defs);
+    const k = clamp((dep - 4) / 10, 0, 1);
+    [[0, 0], [sh.draftPos * 0.6, 0.05 * k], [sh.draftPos + 0.12, 0.34 * k], [0.88, 0.12 * k], [1, 0]].forEach(([o, a]) =>
+      el('stop', { offset: o, 'stop-color': '#1e3a5f', 'stop-opacity': a.toFixed(3) }, lg));
+    el('path', { d: sp, fill: `url(#${gid})` }, cl);
+    // yelken numarası (üst balen cebinin altında, orsa yakasından içeride)
+    const nP = tp(add(mix(H, T, 0.42), P(70, 0)));
+    el('text', { x: nP.x, y: nP.y, transform: `rotate(${rot.toFixed(2)} ${nP.x.toFixed(1)} ${nP.y.toFixed(1)})`, class: 'sail-no', 'text-anchor': 'start' }, cl).textContent = 'TUR 123';
     D(sp, { fill: 'none', stroke: '#0b1724', 'stroke-width': 1.5, 'stroke-linejoin': 'round' });
     // orsa yakası şeridi (luff tape) ve arka yaka şeridi
     D(`M${luff.map(q => pt(tp(q))).join(' L')}`, { fill: 'none', stroke: '#e2e8f0', 'stroke-width': 3.2, 'stroke-linejoin': 'round' });
@@ -492,7 +539,7 @@
     });
 
     // rüzgar gülü: çubuk, ok, kuyruk kanadı, karşı ağırlık
-    const vb = tp(P(0, -306)), vt = tp(P(0, -330));
+    const vb = tp(P(0, g.mtop - 6)), vt = tp(P(0, g.mtop - 30));
     el('line', { x1: vb.x, y1: vb.y, x2: vt.x, y2: vt.y, stroke: '#0f172a', 'stroke-width': 1.6 }, gRig);
     const sway = Math.sin(performance.now() / 650) * 2.5;
     const nose = { x: vt.x - 16, y: vt.y - sway * .25 }, tail = { x: vt.x + 20, y: vt.y + sway * .35 };
@@ -504,13 +551,14 @@
     // bumba: alüminyum boru, direk çatalı (jaw), uç başlığı
     const bw = 3;
     const bn = unit(P(-(C.y - G.y), C.x - G.x));
-    D(`M${pt(tp(add(G, mul(bn, bw))))} L${pt(tp(add(C, mul(bn, bw * .9))))} L${pt(tp(add(C, mul(bn, -bw * .9))))} L${pt(tp(add(G, mul(bn, -bw))))} Z`, { fill: 'url(#metalGrad)', stroke: '#0f172a', 'stroke-width': 1 });
+    const BE = g.BE;
+    D(`M${pt(tp(add(G, mul(bn, bw))))} L${pt(tp(add(BE, mul(bn, bw * .9))))} L${pt(tp(add(BE, mul(bn, -bw * .9))))} L${pt(tp(add(G, mul(bn, -bw))))} Z`, { fill: 'url(#metalGrad)', stroke: '#0f172a', 'stroke-width': 1 });
     D(`M${pt(tp(add(G, P(-6, -5))))} L${pt(tp(add(G, P(8, -5))))} L${pt(tp(add(G, P(8, 5))))} L${pt(tp(add(G, P(-6, 5))))} Z`, { fill: '#1e293b' });
-    D(`M${pt(tp(add(C, P(-2, -4))))} L${pt(tp(add(C, P(8, -4))))} L${pt(tp(add(C, P(8, 4))))} L${pt(tp(add(C, P(-2, 4))))} Z`, { fill: '#1e293b' });
+    D(`M${pt(tp(add(BE, P(-4, -4))))} L${pt(tp(add(BE, P(3, -4))))} L${pt(tp(add(BE, P(3, 4))))} L${pt(tp(add(BE, P(-4, 4))))} Z`, { fill: '#1e293b' });
     // köşe gergisi (outhaul): köşe → bumba ucu makarası → bumba üzerinde kurtağzı
     const Cc = add(G, mul(unit(sub(C, G)), 200));
-    L(C, add(C, P(8, 0)), { stroke: '#ef4444', 'stroke-width': 2 });
-    L(add(C, P(8, 2)), add(Cc, P(0, 2)), { stroke: '#ef4444', 'stroke-width': 1.3 });
+    L(C, BE, { stroke: '#ef4444', 'stroke-width': 1.2 + v.out * 1.6 });
+    L(add(BE, P(0, 2.5)), add(Cc, P(0, 2.5)), { stroke: '#ef4444', 'stroke-width': 1.2 });
     el('rect', { x: tp(Cc).x - 4, y: tp(Cc).y + 1, width: 8, height: 4, rx: 1, fill: '#0f172a', transform: `rotate(${rot.toFixed(2)} ${tp(Cc).x.toFixed(1)} ${tp(Cc).y.toFixed(1)})` }, gRig);
 
     // Cunningham / orsa yakası gergisi: karula kuşgözü → bumba çatalına → kurtağzı
@@ -545,13 +593,13 @@
       const keep = rot; rot = rakeDeg(ghostV.rake) + pitch;
       const gg = geom(ghostV, ghostSh);
       el('path', { d: sailPath(gg, ghostSh), fill: 'none', stroke: '#fbbf24', 'stroke-width': 1.6, 'stroke-dasharray': '7 5', opacity: 0.85 }, gGhost);
-      const a = tp(P(0, 0)), b = tp(P(0, -300));
+      const a = tp(P(0, 0)), b = tp(P(0, gg.mtop));
       el('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: '#fbbf24', 'stroke-width': 1.4, 'stroke-dasharray': '5 5', opacity: 0.7 }, gGhost);
       rot = keep;
     }
 
     // direk eğimi ölçüsü: direk tepesinden kıç aynaya şerit metre
-    const mt = tp(P(0, -304)), tr = { x: 470, y: 403 + bob };
+    const mt = tp(P(0, g.mtop - 4)), tr = { x: 470, y: 403 + bob };
     const onR = st.active === 'rake';
     el('line', { x1: mt.x, y1: mt.y, x2: tr.x, y2: tr.y, stroke: onR ? '#fde047' : 'rgba(253,224,71,.45)', 'stroke-width': onR ? 1.8 : 1.2, 'stroke-dasharray': '3 4' }, gRig);
     const mid = { x: lerp(mt.x, tr.x, .62), y: lerp(mt.y, tr.y, .62) };
@@ -638,15 +686,62 @@
       const c = chord[i], h = 2 * (s.depth[i] / 100) * c * 1.6;
       const E = { x: O.x + dir.x * c, y: O.y + dir.y * c };
       const Q = { x: O.x + dir.x * c * s.draftPos * 0.85 + n.x * h, y: O.y + dir.y * c * s.draftPos * 0.85 + n.y * h };
-      el('path', { d: `M${O.x},${O.y} Q${Q.x.toFixed(1)},${Q.y.toFixed(1)} ${E.x.toFixed(1)},${E.y.toFixed(1)}`, fill: 'none', ...attrs }, secSvg);
+      if (attrs.fillc) el('path', { d: `M${O.x},${O.y} Q${Q.x.toFixed(1)},${Q.y.toFixed(1)} ${E.x.toFixed(1)},${E.y.toFixed(1)} Z`, fill: attrs.fillc, opacity: 0.16, stroke: 'none' }, secSvg);
+      const { fillc, ...a2 } = attrs; void fillc;
+      el('path', { d: `M${O.x},${O.y} Q${Q.x.toFixed(1)},${Q.y.toFixed(1)} ${E.x.toFixed(1)},${E.y.toFixed(1)}`, fill: 'none', ...a2 }, secSvg);
       return E;
     };
     for (let i = 0; i < 3; i++) {
       if (ghostSh) curve(ghostSh, i, { stroke: '#fbbf24', 'stroke-width': 1.2, 'stroke-dasharray': '4 3', opacity: 0.8 });
-      const E = curve(sh, i, { stroke: cols[i], 'stroke-width': 3, 'stroke-linecap': 'round' });
+      const E = curve(sh, i, { stroke: cols[i], 'stroke-width': 3, 'stroke-linecap': 'round', fillc: cols[i] });
       el('text', { x: E.x + 6, y: E.y + 4, fill: cols[i], class: 'sec-lbl' }, secSvg).textContent = `${names[i]} %${Math.round(sh.depth[i])}`;
     }
     el('text', { x: 296, y: 222, 'text-anchor': 'end', class: 'sec-note' }, secSvg).textContent = `twist ≈ ${Math.round(sh.twist)}°`;
+  }
+
+  // ---------- torluluk etiketi ----------
+  function fullness(sh) {
+    const m = sh.depth[1];
+    const [txt, cls] = m >= 11 ? ['Torlu (güçlü)', 'full'] : m >= 8 ? ['Orta derinlik', 'mid'] : ['Düz, duvar gibi', 'flat'];
+    const e = $('fullTxt');
+    e.className = 'full-badge ' + cls;
+    e.textContent = `${txt} · orta kesit %${Math.round(m)}` + (Math.abs(sh.feed) >= 0.5 ? (sh.feed > 0 ? ' · orsa kavisi yelkene verildi' : ' · orsa kavisi geri alındı') : '');
+  }
+
+  // ---------- yelken planı (düz yatırılmış, sınıf kuralı ölçüleri) ----------
+  function drawPlan() {
+    const svg = $('plan'); if (!svg) return;
+    svg.innerHTML = '';
+    const s2 = 0.072, ox = 78, oy = 210;          // mm → px; karula sol altta
+    const M = (x, y) => ({ x: ox + x * s2, y: oy - y * s2 });
+    const T0 = { x: 0, y: 0 }, H0 = { x: 0, y: SAIL.luff }, C0 = { x: SAIL.foot, y: 0 };
+    const P0 = circles({ x: 0, y: -SAIL.luff }, SAIL.head, { x: SAIL.foot, y: 0 }, SAIL.leech);   // y aşağı pozitif uzayda çöz
+    const Pk0 = { x: P0.x, y: -P0.y };
+    const t = M(T0.x, T0.y), h = M(H0.x, H0.y), c = M(C0.x, C0.y), pk = M(Pk0.x, Pk0.y);
+    const luffMid = M(-110, SAIL.luff / 2);           // orsa kavisi (abartılı)
+    const lm = { x: (pk.x + c.x) / 2, y: (pk.y + c.y) / 2 };
+    const ln = { x: -(c.y - pk.y), y: c.x - pk.x }, lnl = Math.hypot(ln.x, ln.y);
+    const sg = ((lm.x + ln.x - t.x) ** 2 + (lm.y + ln.y - t.y) ** 2) > ((lm.x - ln.x - t.x) ** 2 + (lm.y - ln.y - t.y) ** 2) ? 1 : -1;   // dışa (karuladan uzağa)
+    const leechC = { x: lm.x + sg * ln.x / lnl * 14, y: lm.y + sg * ln.y / lnl * 14 };
+    el('path', { d: `M${t.x},${t.y} Q${luffMid.x},${luffMid.y} ${h.x},${h.y} L${pk.x},${pk.y} Q${leechC.x.toFixed(1)},${leechC.y.toFixed(1)} ${c.x},${c.y} Z`, fill: 'rgba(248,250,252,.9)', stroke: '#0b1724', 'stroke-width': 1.2 }, svg);
+    el('line', { x1: t.x, y1: t.y, x2: h.x, y2: h.y, stroke: '#64748b', 'stroke-width': 1, 'stroke-dasharray': '3 3' }, svg);
+    el('line', { x1: pk.x, y1: pk.y, x2: c.x, y2: c.y, stroke: '#64748b', 'stroke-width': 1, 'stroke-dasharray': '3 3' }, svg);
+    for (let i = 0; i < NTIES; i++) {            // 8 orsa kuşgözü (tepe ve karula dahil)
+      const f = i / (NTIES - 1), y = lerp(t.y, h.y, f);
+      const bx = lerp(t.x, h.x, f) - Math.sin(Math.PI * f) * 4;
+      el('circle', { cx: bx.toFixed(1), cy: y.toFixed(1), r: 2, fill: '#f59e0b' }, svg);
+    }
+    for (const f of [0.3, 0.62]) {               // balen cepleri
+      const a = { x: lerp(pk.x, c.x, f), y: lerp(pk.y, c.y, f) };
+      el('line', { x1: a.x, y1: a.y, x2: a.x - 26, y2: a.y - 3, stroke: '#94a3b8', 'stroke-width': 3, 'stroke-linecap': 'round' }, svg);
+    }
+    const lab = (x, y, txt, anchor = 'middle') => { const e = el('text', { x, y, 'text-anchor': anchor, class: 'plan-lbl' }, svg); e.textContent = txt; };
+    lab(t.x - 10, (t.y + h.y) / 2, 'orsa 1730', 'end');
+    lab((h.x + pk.x) / 2 - 6, (h.y + pk.y) / 2 - 6, 'tepe 1240', 'end');
+    lab((pk.x + c.x) / 2 + 12, (pk.y + c.y) / 2, 'arka yaka 2800', 'start');
+    lab((t.x + c.x) / 2, t.y + 13, 'alt yaka ≈1900');
+    lab(t.x - 10, (t.y + h.y) / 2 + 14, 'orsa kavisi ↔', 'end');
+    el('text', { x: 296, y: 12, 'text-anchor': 'end', class: 'sec-note' }, svg).textContent = 'mm, sınıf kuralı üst sınırları · kavis abartılı';
   }
 
   // ---------- yakın görünüş: direk bağları (gerçek oranlı büyütme) ----------
@@ -663,6 +758,9 @@
       el('polyline', { points: ys.map((y, i) => `${X0 + ov.ties[i] * PX},${y}`).join(' '), fill: 'none', stroke: '#fbbf24', 'stroke-width': 1.4, 'stroke-dasharray': '4 3' }, tieSvg);
     }
     el('polyline', { points: pts.map(p => `${p.x},${p.y}`).join(' '), fill: 'none', stroke: '#f8fafc', 'stroke-width': 2.4 }, tieSvg);
+    // yelkenin kesimdeki orsa kavisi: uçlar hizasında düz bir yaka olsaydı ortası öne doğru taşardı (abartılı)
+    const lr = 3 * PX;
+    el('path', { d: `M${pts[0].x},${pts[0].y} Q${(pts[0].x + pts[NTIES - 1].x) / 2 - lr * 2},${(pts[0].y + pts[NTIES - 1].y) / 2} ${pts[NTIES - 1].x},${pts[NTIES - 1].y}`, fill: 'none', stroke: '#a78bfa', 'stroke-width': 1.3, 'stroke-dasharray': '3 3' }, tieSvg);
     pts.forEach((p, i) => {
       const on = st.focusTie === i;
       if (p.x > X0 + 1) el('line', { x1: X0, y1: p.y, x2: p.x, y2: p.y, stroke: '#f59e0b', 'stroke-width': 3, 'stroke-linecap': 'round' }, tieSvg);
@@ -717,11 +815,16 @@
     drawCallouts(k);
     $('legend').hidden = !differs;
     const key = JSON.stringify(st.val) + st.active + st.wind + st.sea + st.focusTie + differs + Math.round(windNow * 50) + Math.round(waveNow * 50);
-    if (key !== lastKey) { drawSections(sh, gsh); drawTiesZoom(st.val, differs ? ov : null); warnings(st.val, sh); lastKey = key; }
+    if (key !== lastKey) { drawSections(sh, gsh); drawTiesZoom(st.val, differs ? ov : null); warnings(st.val, sh); fullness(sh); lastKey = key; }
     requestAnimationFrame(frame);
   }
 
   drawHull();
+  drawPlan();
+  for (const b of document.querySelectorAll('.sec-tabs button')) b.addEventListener('click', () => {
+    for (const x of document.querySelectorAll('.sec-tabs button')) x.classList.toggle('on', x === b);
+    $('sections').toggleAttribute('hidden', b.dataset.t !== 'kesit'); $('plan').toggleAttribute('hidden', b.dataset.t !== 'plan');
+  });
   if (window.VeloraAuth && window.VeloraAuth.getDoc) Cloud.start(); else document.addEventListener('velora-ready', () => Cloud.start(), { once: true });
   syncTop();
   Cloud.show();
