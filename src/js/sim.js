@@ -153,6 +153,19 @@
       el('line', { x1: cx - d.x * len / 2, y1: cy - d.y * len / 2, x2: cx + d.x * len / 2, y2: cy + d.y * len / 2,
         stroke: 'rgba(255,255,255,0.14)', 'stroke-width': 2, 'stroke-linecap': 'round' }, g);
     }
+    // akıntı: suda akış yönünde kayan turkuaz oklar (güce göre sık ve hızlı); yönlü akıntı ayarı görünsün
+    const sea = (st.sim && st.sim.sea) || st.sea;
+    if (sea && sea.current) {
+      const c = E.fwd((sea.from == null ? w : sea.from) + 180), cp = { x: -c.y, y: c.x }, sp = 190 - sea.current * 25, m = Math.ceil(2 * R / sp);
+      for (let i = 0; i < m; i++) for (let j = 0; j < m; j++) {
+        if ((i + j) % 2) continue;
+        const along = ((t * (6 + sea.current * 5) + j * sp) % (2 * R)) - R, lat = -R + i * sp + (j % 3) * 20;
+        const x = cx0 + cp.x * lat + c.x * along, y = cy0 + cp.y * lat + c.y * along;
+        if (x < vb.x - 20 || x > vb.x + vb.w + 20 || y < vb.y - 20 || y > vb.y + vb.h + 20) continue;
+        el('path', { d: `M${(x - c.x * 9 + cp.x * 6).toFixed(1)},${(y - c.y * 9 + cp.y * 6).toFixed(1)} L${x.toFixed(1)},${y.toFixed(1)} L${(x - c.x * 9 - cp.x * 6).toFixed(1)},${(y - c.y * 9 - cp.y * 6).toFixed(1)}`,
+          fill: 'none', stroke: 'rgba(94,234,212,0.28)', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, g);
+      }
+    }
   }
 
   function drawGusts(v) {
@@ -340,7 +353,7 @@
     // elle sürerken yelken iskotaya göre (fazla salıksa pırpırlar); yarışta iskota salınmışsa da öyle
     const drv = !!(st.drive && b.mine), tt = drv ? performance.now() / 1000 : t;
     const sheet = drv ? b.sheet : b.sheetOff ? E.sailState(b.h, w).boom + b.sheetOff : null;
-    const pose = E.sailPose(b.h, w, { v: drv ? null : b.v, base: 55, t: tt, seed, sheet });
+    const pose = E.sailPose(b.h, w, { v: drv ? null : b.v, base: 55, t: tt, seed, sheet, back: !!b.back && (drv || b.hand) });
     if (drv) {                                          // kavançada bumba bir yandan öbürüne savrulur (anında atlamaz)
       const now = performance.now(), p = boomSm;
       if (p.beta != null && now - p.ts < 300) pose.beta = p.beta + Math.max(-p.k * (now - p.ts), Math.min(p.k * (now - p.ts), pose.beta - p.beta));
@@ -369,7 +382,7 @@
     if (st.show.speed && (drv || b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs' || b.phase === 'penalty')) {
       const up = b.inGust > 0.25, down = b.shadow > 0.05;   // gölgedeki her tekne ↓ gösterir
       const col = down ? '#f87171' : up ? '#4ade80' : 'rgba(226,232,240,.85)';
-      const txt = `${S.knots(b.v).toFixed(1)} kn${down ? ' ↓' : up ? ' ↑' : ''}`;
+      const txt = b.v < -0.5 ? `geri ${S.knots(-b.v).toFixed(1)} kn` : `${S.knots(Math.max(0, b.v)).toFixed(1)} kn${down ? ' ↓' : up ? ' ↑' : ''}`;
       el('text', { x: 0, y: b.sailor ? 33 : 22, 'text-anchor': 'middle', fill: col, 'font-size': 10.5, 'font-weight': down || up ? 800 : 600,
         'paint-order': 'stroke', stroke: 'rgba(2,12,22,.85)', 'stroke-width': 3, 'font-variant-numeric': 'tabular-nums' }, lab).textContent = txt;
     }
@@ -455,7 +468,7 @@
     let y2 = Y + H + 8;
     const sea = v.sea || st.sea;
     if (sea && (sea.current || sea.waves)) {
-      const txt = [sea.current ? `Akıntı ${SEA_TXT.current[sea.current]}` : '', sea.waves ? `Dalga ${SEA_TXT.waves[sea.waves]}` : ''].filter(Boolean).join(' · ');
+      const txt = [sea.current ? `Akıntı ${SEA_TXT.current[sea.current]}${sea.from != null ? ' · ' + S.CURRENT_FROM[sea.from] : ''}` : '', sea.waves ? `Dalga ${SEA_TXT.waves[sea.waves]}` : ''].filter(Boolean).join(' · ');
       const tw = textW(txt, 10.5, 600) + 24;
       el('rect', { x: X, y: y2, width: tw, height: 22, rx: 11, fill: 'rgba(9,20,33,0.86)', stroke: 'rgba(125,211,252,.4)' }, hg);
       el('text', { x: X + tw / 2, y: y2 + 15, 'text-anchor': 'middle', fill: '#bae6fd', 'font-size': 10.5, 'font-weight': 600 }, hg).textContent = txt;
@@ -551,7 +564,10 @@
     const sea = v.sea || st.sea;
     [...$('seaCurrent').children].forEach(x => x.classList.toggle('on', +x.dataset.v === sea.current));
     [...$('seaWaves').children].forEach(x => x.classList.toggle('on', +x.dataset.v === sea.waves));
-    $('seaState').textContent = sea.current || sea.waves ? 'tekneler rüzgaraltına kayar' : 'sakin';
+    [...$('seaFrom').children].forEach(x => x.classList.toggle('on', x.dataset.v === (sea.from == null ? 'w' : String(sea.from))));
+    $('seaFrom').classList.toggle('off', !sea.current);
+    $('seaFromTxt').textContent = !sea.current ? 'Akıntı yok: önce gücünü seç' : FROM_EFFECT[sea.from == null ? 'w' : sea.from];
+    $('seaState').textContent = sea.current || sea.waves ? (sea.current && sea.from != null ? `akıntı ${S.CURRENT_FROM[sea.from]} gelir` : 'tekneler rüzgaraltına kayar') : 'sakin';
     $('seaState').classList.toggle('changed', !!(sea.current || sea.waves));
     boatUpdate();
     saveSetup();
@@ -873,7 +889,7 @@
     if (st.camPrev && !st.camPrev.follow && !keep) { Object.assign(st.cam, st.camPrev); applyCam(); }
     st.camPrev = null;
     if (m) {
-      m.helm = null; m.note = ''; m.hand = false;
+      m.helm = null; m.note = ''; m.hand = false; m.back = false;
       // otomatiğe dönünce iskota tam trim (eskiden elle salık bırakılan iskota yarışın sonuna kadar kalıyor, tekne yavaş gidiyordu)
       if (!keep) m.sheetOff = 0;
       // Manuel ve rota elle sürmeden önceki haline döner: otomatikte teknen yine kendi tramolasını atar
@@ -911,7 +927,7 @@
   }
   function driveTick(dt) {
     const d = st.drive, ctx = driveCtx(), m = ctx.boats.find(b => b.mine); if (!m) return;
-    const inp = { rudder: Math.max(-1, Math.min(1, d.keyRud + d.touchRud)), autoTrim: d.autoTrim, hold: d.hold };
+    const inp = { rudder: Math.max(-1, Math.min(1, d.keyRud + d.touchRud)), autoTrim: d.autoTrim, hold: d.back ? null : d.hold, back: !!d.back };
     if (inp.rudder && d.hold) { d.hold = null; lastHelmKey = ''; }   // dümene dokununca Orsa bırakır
     if (!d.live) driveEvents(m, S.drive(ctx, m, inp, dt * DRIVE_TEMPO));
     else if (!d.paused) {
@@ -983,6 +999,7 @@
   }
   function sheetToggle() {
     const d = st.drive, m = driveBoat(); if (!m) return;
+    if (d.back) { d.back = false; m.sheetOff = 0; m.sheet = null; flash('hpSheet'); lastHelmKey = ''; return; }   // terslenmiş yelkeni bırak: iskotayı çek, yelken dolsun
     const k = sheetState(m, driveCtx().wind, d.autoTrim);
     if (d.autoTrim) m.sheetOff = k.st === 'eased' ? 0 : S.SHEET_OFF_MAX;
     else m.sheet = k.st === 'trim' ? Math.min(S.SHEET_MAX, k.ideal + S.SHEET_OFF_MAX) : k.ideal;
@@ -992,8 +1009,17 @@
   // Orsa (VMG): tekne bu kontrada orsa rotasına girer, iskota tam çekilir; dümene dokununca bırakır
   function vmgToggle() {
     const d = st.drive, m = driveBoat(); if (!m) return;
-    d.hold = d.hold === 'orsa' ? null : 'orsa';
+    d.hold = d.hold === 'orsa' ? null : 'orsa'; d.back = false;
     if (d.hold) { m.helm = null; if (d.autoTrim) m.sheetOff = 0; else m.sheet = null; toast('Orsa: teknen orsa rotasına giriyor ve orada kalıyor · dümene dokununca bırakır'); }
+    lastHelmKey = '';
+  }
+  // Yelkeni tersle (backing): bumbayı rüzgara karşı it. Tekne frenler, durur, sonra geri gider (K22.3: geri giden tekne
+  // herkese yol verir). Yeniden dokun ya da Çek: yelken dolar. Geri giderken dümen ters çalışır.
+  function backToggle() {
+    const d = st.drive, m = driveBoat(); if (!m) return;
+    d.back = !d.back; d.hold = null; m.helm = null;
+    if (d.back) toast('Yelken ters: tekne frenliyor, durunca geri gider. Geri giderken dümen ters çalışır. Bırakmak için yeniden dokun ya da Çek');
+    else { m.sheetOff = 0; m.sheet = null; }
     lastHelmKey = '';
   }
   // dümen paneli (en altta, yalnız elle sürerken)
@@ -1013,21 +1039,24 @@
     const trimTxt = abs < 30 ? 'Rüzgara karşı: yelken boş' : dlt > 8 ? 'Fazla salık: pırpırlıyor' : dlt < -8 ? 'Fazla çekik: boğuluyor' : 'İskota iyi';
     const rem = (v.startAt - v.t) * S.CLOCK_SCALE, tTxt = !d.live ? 'Kurulum' : rem > 0 ? `Start'a ${S.fmt(rem / S.CLOCK_SCALE)}` : `Yarış ${S.fmt(-rem / S.CLOCK_SCALE)}`;
     const sk = sheetState(m, v.wind, d.autoTrim);
-    const key = [d.live, d.paused, d.hold, sk.st, Math.round(abs), Math.round(sheet), Math.round(eff * 100), stb, m.v.toFixed(1), d.autoTrim, m.phase, tTxt].join('|');
+    const key = [d.live, d.paused, d.hold, d.back, sk.st, Math.round(abs), Math.round(sheet), Math.round(eff * 100), stb, m.v.toFixed(1), d.autoTrim, m.phase, tTxt].join('|');
     if (key === lastHelmKey) return; lastHelmKey = key;
-    $('hpSpeed').textContent = `${S.knots(m.v).toFixed(1).replace('.', ',')} kn`;
+    $('hpSpeed').textContent = m.v < -0.5 ? `${S.knots(-m.v).toFixed(1).replace('.', ',')} kn geri` : `${S.knots(Math.max(0, m.v)).toFixed(1).replace('.', ',')} kn`;
+    $('hpBack').classList.toggle('on', !!d.back); $('hpBack').setAttribute('aria-pressed', !!d.back);
+    $('hpBackLbl').textContent = d.back ? (m.v < -0.5 ? 'Geri' : 'Fren') : 'Tersle';
     $('hpPoint').textContent = `${POS(abs)} · ${stb ? 'sancak' : 'iskele'} kontra`;
     $('hpLeftSub').textContent = stb ? 'kafa aç' : 'orsa'; $('hpRightSub').textContent = stb ? 'orsa' : 'kafa aç';
     const tg = $('hpGauge'), pct = x => `${Math.max(0, Math.min(100, x / 90 * 100)).toFixed(1)}%`;
     tg.querySelector('.tg-ideal').style.left = pct(ideal); tg.querySelector('.tg-knob').style.left = pct(sheet);
     tg.className = 'trim-gauge ' + (abs < 30 ? 'off' : Math.abs(dlt) <= 8 ? 'ok' : Math.abs(dlt) <= 20 ? 'meh' : 'bad');
-    $('hpTrimTxt').textContent = `${trimTxt} · güç %${Math.round(eff * 100)}`;
+    $('hpTrimTxt').textContent = d.back ? (m.v < -0.5 ? 'Yelken ters: geri gidiyor (dümen ters)' : m.v > 0.5 ? 'Yelken ters: frenliyor' : 'Yelken ters: durdu') : `${trimTxt} · güç %${Math.round(eff * 100)}`;
     $('hpVmg').classList.toggle('on', d.hold === 'orsa'); $('hpVmg').setAttribute('aria-pressed', d.hold === 'orsa');
     const sb = $('hpSheet');
     sb.className = 'hp-sheetbtn ' + sk.st;
     $('hpSheetLbl').textContent = sk.st === 'trim' ? 'Sal' : 'Çek';
     $('hpSheetSub').textContent = sk.st === 'eased' ? 'iskota salık' : sk.st === 'over' ? 'fazla çekik' : 'iskota çekili';
     if (sk.st === 'over') $('hpSheetLbl').textContent = 'Sal';
+    if (d.back) { sb.className = 'hp-sheetbtn eased'; $('hpSheetLbl').textContent = 'Çek'; $('hpSheetSub').textContent = 'yelkeni doldur'; }
     // tek manevra düğmesi: orsadan apaza kadar Tramola, apazı geçince (rüzgar açısı ≥ 100°) Kavança
     const jibe = abs >= JIBE_MIN, tb = $('hpTack');
     tb.classList.toggle('jibe', jibe); $('hpTackLbl').textContent = jibe ? 'Kavança' : 'Tramola';
@@ -1552,7 +1581,7 @@
     const sea = v.sea || st.sea, b = st.boat, D = S.BOAT_DEFAULT, C = S.COURSE_DEFAULT;
     const on = {
       mine: !!(mine && (mine.manual || mine.ignoresRules || (mine.speedK || 1) !== 1 || (mine.route && mine.route.length) || mine.sheetOff)),
-      wind: Math.round(E.norm180(v.wind)) !== 0 || b.windKn !== D.windKn, gust: (v.gusts || []).length > 0, sea: !!(sea.current || sea.waves),
+      wind: Math.round(E.norm180(v.wind)) !== 0 || b.windKn !== D.windKn, gust: (v.gusts || []).length > 0, sea: !!(sea.current || sea.waves || sea.from != null),
       fleet: b.cls !== D.cls || b.accelAt !== D.accelAt || b.pre !== D.pre || b.vis !== D.vis, course: st.course.lineLen !== C.lineLen || st.course.markDist !== C.markDist || (st.course.flag || 'P') !== 'P'
     };
     [...document.querySelectorAll('#catRail [data-cat]')].forEach(x => x.classList.toggle('dot', !!on[x.dataset.cat]));
@@ -1708,6 +1737,11 @@
     applyChange({ k: 'sea', key, val });
   }
   $('seaCurrent').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setSea('current', +x.dataset.v); });
+  const FROM_EFFECT = { w: 'Rüzgarla aynı yönden: tekneleri rüzgaraltına taşır', 0: 'Karşıdan: tekneleri aşağı taşır (orsa uzar)', 180: 'Arkadan: tekneleri ileri, şamandıraya taşır (start\'ta erken çıkma riski)',
+    90: 'Sağdan: tekneleri sola taşır', 270: 'Soldan: tekneleri sağa taşır', 45: 'Sağ üstten: sola ve aşağı taşır', 315: 'Sol üstten: sağa ve aşağı taşır', 135: 'Sağ alttan: sola ve yukarı taşır', 225: 'Sol alttan: sağa ve yukarı taşır' };
+  $('seaFrom').addEventListener('click', e => { const x = e.target.closest('button'); if (!x) return; const v = x.dataset.v === 'w' ? null : +x.dataset.v;
+    if (!(st.mode === 'setup' ? st.sea : (st.sim.sea || st.sea)).current) setSea('current', 2);   // yön seçilince akıntı yoksa orta güçte açılır
+    setSea('from', v); });
   $('seaWaves').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setSea('waves', +x.dataset.v); });
   $('selRules').addEventListener('click', e => { const x = e.target.closest('button'); if (x) selEdit('ignoresRules', x.dataset.v === 'vermez', 'rules'); });
   function toggleManual() {
@@ -1775,6 +1809,7 @@
   holdBtn('hpRight', () => { if (st.drive) st.drive.touchRud = 1; }, () => { if (st.drive) st.drive.touchRud = 0; });
   $('hpSheet').addEventListener('click', sheetToggle);
   $('hpVmg').addEventListener('click', vmgToggle);
+  $('hpBack').addEventListener('click', backToggle);
   $('hpTack').addEventListener('click', () => { helmTurn('auto'); flash('hpTack'); });
   $('hpGo').addEventListener('click', () => { if (!st.drive) return; const live = st.drive.live, run = live && !st.drive.paused; exitDrive(live ? run : false); });
   $('hpPlay').addEventListener('click', drivePause);
@@ -1792,6 +1827,7 @@
       if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); sheetBy(1); return; }
       if (k === 't' || k === 'T' || k === 'k' || k === 'K') { helmTurn('auto'); flash('hpTack'); return; }
       if (k === 'v' || k === 'V') { vmgToggle(); return; }
+      if (k === 'b' || k === 'B') { backToggle(); return; }
       if (k === 'i' || k === 'I') { sheetToggle(); return; }
       if ((k === 'r' || k === 'R') && st.drive.live && !e.metaKey && !e.ctrlKey) { backToSetup(); return; }
       if (k === 'Escape' || k === 'Enter') { e.preventDefault(); $('hpGo').click(); return; }

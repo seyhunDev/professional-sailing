@@ -47,10 +47,22 @@
     if (D <= 0) return brg;
     return brg - Math.asin(clamp(D * Math.sin(E.norm180(w + 180 - brg) * E.DEG) / Math.max(v, 20), -0.9, 0.9)) / E.DEG;
   }
+  // Kayma (px/sim-sn) vektör olarak: dalga ve yalpalama hep rüzgaraltına; akıntı `sea.from` yönünden gelir
+  // (pusula, 0 = ekranın üstünden; yoksa rüzgarla aynı yönden = rüzgaraltına). Arkadan gelen akıntı tekneleri ileri
+  // (şamandıraya doğru), karşıdan gelen aşağı, sağdan gelen sola taşır (kullanıcı 2026-11-13).
+  // akıntı gerçek zamanda aynı hızdadır: hızlı teknede 1 sim. sn daha kısa → px/sim-sn olarak az
+  function driftVec(s, b, w) {
+    const sea = s.sea || SEA_DEFAULT, wf = w != null ? w : s.wind;
+    const lw = E.fwd(wf + 180), kW = ((SEA.waveDrift[sea.waves] || 0) + (SEA.boatDrift[b.drift || 0] || 0)) / SPD;
+    const kC = (SEA.current[sea.current] || 0) / SPD, cd = sea.from == null ? lw : E.fwd(sea.from + 180);
+    let x = lw.x * kW + cd.x * kC, y = lw.y * kW + cd.y * kC;
+    const m = Math.hypot(x, y); if (m > 13) { x *= 13 / m; y *= 13 / m; }   // en fazla 13: orsada yine de ilerler
+    return { x, y };
+  }
+  // tekneyi rüzgaraltına iten kısım (otomatik teknelerin akıntı payı, layline): yönlü akıntının rüzgaraltı bileşeni
   function driftOf(s, b) {
-    const sea = s.sea || SEA_DEFAULT;
-    // akıntı gerçek zamanda aynı hızdadır: hızlı teknede 1 sim. sn daha kısa → px/sim-sn olarak az
-    return Math.min(13, ((SEA.current[sea.current] || 0) + (SEA.waveDrift[sea.waves] || 0) + (SEA.boatDrift[b.drift || 0] || 0)) / SPD);   // en fazla 13: orsada yine de ilerler
+    const v = driftVec(s, b), lw = E.fwd(s.wind + 180);
+    return Math.max(0, v.x * lw.x + v.y * lw.y);
   }
   const SHADOW_LEN = E.SHADOW.len;   // rüzgar gölgesi (pis rüzgar): engine.SHADOW ile ortak (~1 boy kıçtan)
   const SHADOW_LOSS = E.SHADOW.loss; // gölgenin tam ortasında hız kaybı
@@ -382,15 +394,16 @@
   // Fazla salınmış yelken pırpırlar (40° fazlası: neredeyse durur), fazla çekik yelken boğulur (en çok %65 kayıp).
   const SHEET_MAX = 88, SHEET_OFF_MAX = 36;
   const idealSheet = abs => E.sailState(abs, 0).boom;
-  const trimEff = d => (d >= 0 ? Math.max(0.1, 1 - d / 40) : Math.max(0.35, 1 + d / 45));
+  const trimEff = d => (d >= 0 ? Math.max(0, 1 - d / 36) : Math.max(0.35, 1 + d / 45));   // tamamen boş yelken (36°) itmez: tekne süzülüp durur
   // Elle sürme: zaman durur, diğer tekneler yerinde kalır; yalnız `b` hareket eder (dt sim. saniyesi kadar).
   // inp: { rudder: −1 (sola) … +1 (sağa), autoTrim: iskota rüzgar açısına göre kendiliğinden ayarlanır }
   // b.sheet: bumba açısı (iskota), b.sheetOff: otomatik iskotada ideale göre salma payı, b.helm: Tramola/Kavança düğmesiyle dönüş.
   // Dönen: olaylar dizisi ('tack' | 'jibe' | 'contact:ID' | 'hit')
   // Dümen / Tramola-Kavança / Orsa: H sim. saniyesi kadar dönüş. Tekne hızlandıkça daha çabuk döner (dururken dümen az tutar).
   function steer(w, b, inp, H) {
-    const rate = (30 + 55 * clamp(b.v / BASE, 0, 1)) * H;
-    if (inp.rudder) { b.h = E.norm360(b.h + clamp(inp.rudder, -1, 1) * rate); b.helm = null; b.v *= 1 - 0.12 * H * Math.abs(inp.rudder); }
+    const rate = (30 + 55 * clamp(Math.abs(b.v) / BASE, 0, 1)) * H;
+    // geri giderken dümen ters çalışır (su dümene arkadan gelir): sola basınca kıç sola, baş sağa döner
+    if (inp.rudder) { const rev = b.v < -2 ? -1 : 1; b.h = E.norm360(b.h + rev * clamp(inp.rudder, -1, 1) * rate); b.helm = null; b.v *= 1 - 0.12 * H * Math.abs(inp.rudder); }
     else if (b.helm) { const st = Math.min(b.helm.left, rate); b.h = E.norm360(b.h + b.helm.dir * st); b.helm.left -= st; if (b.helm.left <= 0.01) b.helm = null; }
     else if (inp.hold === 'orsa') {                      // Orsa (VMG): bu kontrada orsa rotasına gir ve orada kal (rüzgar dönse de)
       const r0 = E.norm180(b.h - w), want = E.tackHeading(w, r0 < 0 ? 'starboard' : 'port');
@@ -422,11 +435,21 @@
       const sh = E.shadowK({ x: b.x, y: b.y, ref: b }, casters, w, BASE);
       b.shadow = sh.k; b.shadowBy = sh.by ? sh.by.id : null;
       const sea = s.sea || SEA_DEFAULT, upw = abs < 75 ? 1 : 0.4;
-      const vt = E.speedFor(abs, BASE) * eff * (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow) * (b.speedK || 1) *
-        (1 - upw * ((SEA.waveLoss[sea.waves] || 0) + (SEA.boatLoss[b.drift || 0] || 0)));
-      b.v += (vt - b.v) * Math.min(1, H / (vt > b.v ? TAU : TAU * 1.4));   // yelkeni boşaltınca tekne kısa süre süzülür
-      const f = E.fwd(b.h), dw = E.fwd(w + 180), dr = driftOf(s, b), x0 = b.x, y0 = b.y;
-      b.x += (f.x * b.v + dw.x * dr) * H; b.y += (f.y * b.v + dw.y * dr) * H;
+      // Yelkeni tersle (inp.back): bumba rüzgar tarafına itilir, yelken ters dolar: tekne frenler, durur, sonra geri gider
+      // (en hızlı rüzgara baş verirken; geniş seyirde yelken ters dolmaz, yalnız frenler). Rüzgara dönük (abs < 30) ya da
+      // yelken tamamen boşken itiş yok: tekne süzülüp yavaşça durur (eskiden 0,2-0,6 knot ile gitmeye devam ediyordu).
+      b.back = !!inp.back;
+      let vt, tau;
+      if (b.back) { vt = -BASE * 0.2 * (abs < 100 ? 1 : 0.35); tau = TAU * 0.9; }
+      else {
+        vt = (abs < 30 ? 0 : E.speedFor(abs, BASE)) * eff * (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow) * (b.speedK || 1) *
+          (1 - upw * ((SEA.waveLoss[sea.waves] || 0) + (SEA.boatLoss[b.drift || 0] || 0)));
+        tau = vt > b.v ? TAU : TAU * 1.4;                                   // yelkeni boşaltınca tekne kısa süre süzülür
+      }
+      b.v += (vt - b.v) * Math.min(1, H / tau);
+      if (vt === 0 && Math.abs(b.v) < 0.5) b.v = 0;                        // süzülme biter: tam durur
+      const f = E.fwd(b.h), dv = driftVec(s, b, w), x0 = b.x, y0 = b.y;
+      b.x += (f.x * b.v + dv.x) * H; b.y += (f.y * b.v + dv.y) * H;
       // şamandıra, pin, hakem botu ve duran teknelerin içine giremez: yaklaşan adım geri alınır, tekne durur
       // (eskiden dışarı itiliyordu: tekne öbürünün kenarı boyunca yan yan kayıyordu)
       const blocked = (o, R0) => { const d1 = Math.hypot(b.x - o.x, b.y - o.y); return d1 < R0 && d1 < Math.hypot(x0 - o.x, y0 - o.y); };
@@ -797,12 +820,11 @@
     }
 
     // hareket
-    const dw = E.fwd(w + 180);                                    // rüzgaraltı yönü
     for (const b of active) {
       if (b.hand) continue;                                       // elle sürülen tekne drive() ile zaten ilerledi
-      const f = E.fwd(b.h), dr = b.phase === 'done' || b.phase === 'wait' ? 0 :   // start'tan önce akıntıyı tekne kendisi karşılar (uzun geri sayımda alan dışına sürüklenmesin)
-        driftOf(s, b) * (b.phase === 'round' ? 0.3 : 1);   // dönüşte kısa süre: az kayar
-      b.x += (f.x * b.v + dw.x * dr) * DT; b.y += (f.y * b.v + dw.y * dr) * DT;
+      const f = E.fwd(b.h), k = b.phase === 'done' || b.phase === 'wait' ? 0 :   // start'tan önce akıntıyı tekne kendisi karşılar (uzun geri sayımda alan dışına sürüklenmesin)
+        (b.phase === 'round' ? 0.3 : 1), dv = k ? driftVec(s, b, w) : { x: 0, y: 0 };   // dönüşte kısa süre: az kayar
+      b.x += (f.x * b.v + dv.x * k) * DT; b.y += (f.y * b.v + dv.y * k) * DT;
     }
     // temas: üst üste binmeyi engelle, kaydet
     const live = active.filter(b => b.phase !== 'done');
@@ -880,7 +902,7 @@
   }
   // Kayıttan tekrar: elle sürülen bölümde senin teknenin adım adım durumu (yol) uygulanır, diğerleri yeniden hesaplanır
   const HAND_KEYS = ['x', 'y', 'h', 'v', 'sheet'];
-  const handRow = b => [...HAND_KEYS.map(k => +(+b[k] || 0).toFixed(2)), b.tack === 'port' ? 1 : 0];
+  const handRow = b => [...HAND_KEYS.map(k => +(+b[k] || 0).toFixed(2)), b.tack === 'port' ? 1 : 0, b.back ? 1 : 0];
   function runHand(s0, path) {
     const s = clone(s0), frames = [clone(s)], b = s.boats.find(o => o.mine);
     if (!b) return frames;
@@ -888,6 +910,7 @@
     path.forEach((p, i) => {
       HAND_KEYS.forEach((k, j) => { b[k] = p[j]; });
       const tk = p[5] ? 'port' : 'starboard'; if (tk !== b.tack) { b.tack = tk; b.lastTack = s.t; }
+      b.back = !!p[6];
       b.drv = true; b.hand = true; step(s);
       if (Math.round(s.t / DT) % 2 === 0 || i === path.length - 1) frames.push(clone(s));
     });
@@ -960,6 +983,9 @@
   // Her değişiklik yazılabilir bir "işlem" (op). Kayıtlı yarışı tekrar oynatırken aynı karede yeniden uygulanır;
   // hesap deterministik olduğu için yarış birebir aynı çıkar. (2026-11-13'e kadar sim.js'teydi.)
   const SEA_TXT = { current: ['yok', 'hafif', 'orta', 'güçlü'], waves: ['yok', 'küçük', 'büyük'] };
+  // akıntının geldiği yön (pusula, 0 = ekranın üstü = şamandıra tarafı); null: rüzgarla aynı yönden
+  const CURRENT_FROM = { 0: 'karşıdan', 45: 'sağ üstten', 90: 'sağdan', 135: 'sağ alttan', 180: 'arkadan', 225: 'sol alttan', 270: 'soldan', 315: 'sol üstten' };
+  const currentFromTxt = v => (v == null ? 'rüzgarla aynı yönden (rüzgaraltına)' : (CURRENT_FROM[E.norm360(v)] || Math.round(E.norm360(v)) + '°\'den') + ' gelir');
   const GUST_BASE = { rx: 120, ry: 190 };
   const GUST_FX = {
     scale: (a, i, k) => { const g = a[i], f = Math.max(0.4, Math.min(2.5, (g.rx / GUST_BASE.rx) * k)); g.rx = GUST_BASE.rx * f; g.ry = GUST_BASE.ry * f; },
@@ -972,7 +998,7 @@
     gustClear: r => { r.gusts.length = 0; r.events.push({ t: r.t, text: 'Sağanak geçti', kind: 'wind' }); },
     gustMove: (r, o) => { if (r.gusts[o.i]) { Object.assign(r.gusts[o.i], o.pos); r.events.push({ t: r.t, text: 'Sağanak taşındı', kind: 'wind' }); } },
     gust: (r, o) => { if (r.gusts[o.i] && GUST_FX[o.fx]) { GUST_FX[o.fx](r.gusts, o.i, o.f); r.events.push({ t: r.t, text: o.text, kind: 'wind' }); } },
-    sea: (r, o) => { r.sea = { ...(r.sea || SEA_DEFAULT), [o.key]: o.val }; r.events.push({ t: r.t, text: o.key === 'current' ? `Akıntı: ${SEA_TXT.current[o.val]}` : `Dalga: ${SEA_TXT.waves[o.val]}`, kind: 'wind' }); },
+    sea: (r, o) => { r.sea = { ...(r.sea || SEA_DEFAULT), [o.key]: o.val }; r.events.push({ t: r.t, text: o.key === 'current' ? `Akıntı: ${SEA_TXT.current[o.val]}` : o.key === 'from' ? `Akıntı yönü: ${currentFromTxt(o.val)}` : `Dalga: ${SEA_TXT.waves[o.val]}`, kind: 'wind' }); },
     cmd: (r, o) => command(r, o.c, o.v, o.id)
   };
   const jcopy = o => JSON.parse(JSON.stringify(o));
@@ -998,7 +1024,7 @@
   }
 
   global.SailSim = {
-    OPS, GUST_FX, GUST_BASE, SEA_TXT, replayRecord, spliceHand,
+    OPS, GUST_FX, GUST_BASE, SEA_TXT, CURRENT_FROM, currentFromTxt, driftVec, replayRecord, spliceHand,
     runToEnd,
     DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, PRE_SEC, VIS, setBoat, upwindKn, BOAT,
     get START_AT() { return START_AT; }, get CLOCK_SCALE() { return CLOCK_SCALE; }, MAN_MARGIN, bounds, PERSONAS, MINE_COLOR, OBSTACLES,

@@ -261,12 +261,12 @@ for (const wind of [-12, 0, 12]) {
     const boat = { cls: CLS[k % CLS.length], windKn: S.WIND_KN[(k * 3) % S.WIND_KN.length], accelAt: S.ACCEL_AT[k % S.ACCEL_AT.length], pre: S.PRE_SEC[k % S.PRE_SEC.length] };
     const wind = [-40, 40, 0, -20, 25][k % 5];
     const gusts = k % 2 ? [{ x: S.WORLD.w * 0.25, y: S.WORLD.h * 0.45, rx: 300, ry: 470 }, { x: S.WORLD.w * 0.75, y: S.WORLD.h * 0.35, rx: 48, ry: 76 }] : [];
-    const sea = { current: k % 4, waves: k % 3 };
+    const sea = { current: k % 4, waves: k % 3, from: [null, 0, 90, 180, 270, 45][k % 6] };
     const t0 = Date.now();
     const frames = S.runToEnd(S.newRace(fleet, { wind, gusts, course, sea, boat }));
     const ms = Date.now() - t0; worst = Math.max(worst, ms); n++;
     const last = frames[frames.length - 1];
-    const tag = `#${k} ${size} tekne ${boat.cls} ${boat.windKn} kn rüzgar ${wind}° parkur ${course.lineLen}/${course.markDist} bayrak ${course.flag} akıntı ${sea.current} dalga ${sea.waves}`;
+    const tag = `#${k} ${size} tekne ${boat.cls} ${boat.windKn} kn rüzgar ${wind}° parkur ${course.lineLen}/${course.markDist} bayrak ${course.flag} akıntı ${sea.current} (${sea.from}) dalga ${sea.waves}`;
     const left = last.boats.filter(b => !b.finish && !b.dsq);
     if (left.length) bad.push(`${tag}: ${left.length} tekne bitirmedi (${left.map(b => b.id + ':' + b.phase).join(' ')})`);
     if (last.boats.some(b => !Number.isFinite(b.x) || !Number.isFinite(b.y) || !Number.isFinite(b.h))) bad.push(`${tag}: konum sayı değil`);
@@ -275,6 +275,41 @@ for (const wind of [-12, 0, 12]) {
   S.setCourse(S.COURSE_DEFAULT);
   console.log(`• Ayar kombinasyonları (${n} uç kurulum): ${bad.length ? 'SORUN' : `hepsi bitti, en uzun hesap ${worst} ms`}`);
   if (bad.length) { problems++; bad.slice(0, 5).forEach(x => console.log('  ⚠', x)); }
+}
+// Elle sürme: yelken boşken tekne süzülüp TAM durur; "Yelkeni tersle" frenler, durdurur, geri götürür
+{
+  S.setCourse(S.COURSE_DEFAULT);
+  const f = S.defaultFleet(2), me = f.find(b => b.mine), bad = [];
+  const ctx = { t: 0, wind: 0, gusts: [], boats: [me], sea: { current: 0, waves: 0 } };
+  Object.assign(me, { x: 500, y: 450, h: -45, v: 40, manual: true, sheetOff: S.SHEET_OFF_MAX });
+  let tStop = null; for (let i = 0; i < 400; i++) { S.drive(ctx, me, { autoTrim: true }, 0.05); if (me.v === 0 && tStop == null) tStop = i * 0.05; }
+  if (tStop == null) bad.push(`yelken boşken durmadı (${S.knots(me.v).toFixed(2)} kn)`);
+  Object.assign(me, { x: 500, y: 450, h: -10, v: 0, sheetOff: 0 });   // rüzgara dönük: itiş yok
+  for (let i = 0; i < 100; i++) S.drive(ctx, me, { autoTrim: true }, 0.05);
+  if (me.v !== 0) bad.push('rüzgara dönükken hareket ediyor');
+  Object.assign(me, { x: 500, y: 450, h: -45, v: 40, sheetOff: 0 });
+  const y0 = me.y; let tZero = null, vMin = 0;
+  for (let i = 0; i < 200; i++) { S.drive(ctx, me, { autoTrim: true, back: true }, 0.05); if (me.v <= 0 && tZero == null) tZero = i * 0.05; vMin = Math.min(vMin, me.v); }
+  const f0 = { x: Math.sin(-45 * Math.PI / 180), y: -Math.cos(-45 * Math.PI / 180) };
+  if (tZero == null) bad.push('tersleyince durmadı');
+  if (!(vMin < -5)) bad.push('tersleyince geri gitmedi');
+  console.log(`• Elle sürme durma / tersleme: ${bad.length ? 'SORUN' : `yelken boşken ${tStop.toFixed(1)} sim. sn'de durdu · tersleyince ${tZero.toFixed(1)} sn'de durdu, geri ${S.knots(-vMin).toFixed(1)} kn`}`);
+  if (bad.length) { problems++; console.log('  ⚠ Durma:', bad.join(', ')); }
+}
+// Akıntı yönü: arkadan gelen tekneyi ileri (yukarı), karşıdan gelen aşağı, sağdan gelen sola, sağ üstten gelen sol aşağı taşır
+{
+  const bad = [], b = { drift: 0 }, want = { 180: [0, -1], 0: [0, 1], 90: [-1, 0], 270: [1, 0], 45: [-1, 1], null: [0, 1] };
+  for (const k of Object.keys(want)) {
+    const from = k === 'null' ? null : +k, v = S.driftVec({ wind: 0, sea: { current: 3, waves: 0, from } }, b);
+    const [ex, ey] = want[k], ok = Math.sign(Math.round(v.x * 100)) === ex && Math.sign(Math.round(v.y * 100)) === ey;
+    if (!ok) bad.push(`${k}: (${v.x.toFixed(1)}, ${v.y.toFixed(1)})`);
+  }
+  // yarışta: arkadan akıntıda tekneler daha erken bitirir, karşıdan akıntıda daha geç
+  const fin = from => { S.setCourse(S.COURSE_DEFAULT); const s = S.newRace(S.defaultFleet(8), { wind: 0, sea: { current: 3, waves: 0, from } }); while (s.t < s.startAt + 200 && s.boats.some(o => !o.finish)) S.step(s); return s.boats.filter(o => o.finish).reduce((a, o) => a + o.finishT, 0) / Math.max(1, s.boats.filter(o => o.finish).length); };
+  const tBack = fin(180), tFront = fin(0), tSide = fin(90);
+  if (!(tBack < tFront)) bad.push(`arkadan ${tBack.toFixed(1)} s, karşıdan ${tFront.toFixed(1)} s`);
+  console.log(`• Akıntı yönü: ${bad.length ? 'SORUN' : `doğru yöne taşıyor · ortalama bitiş arkadan ${tBack.toFixed(1)} s, sağdan ${tSide.toFixed(1)} s, karşıdan ${tFront.toFixed(1)} s`}`);
+  if (bad.length) { problems++; console.log('  ⚠ Akıntı:', bad.join(', ')); }
 }
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);

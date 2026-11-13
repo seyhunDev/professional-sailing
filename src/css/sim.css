@@ -414,6 +414,10 @@ body.driving .main-row, body.driving .strip-host, body.driving.lay-strip .bottom
 .hp-col { display: flex; flex-direction: column; gap: 8px; width: 132px; }
 .hp-col .tb { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 0 10px; font-size: 15px; font-weight: 800; border-radius: 14px; }
 .hp-col .ci { width: 18px; height: 18px; }
+.hp-col:has(.hp-back) .tb { min-height: 40px; }
+.hp-back { background: rgba(248,113,113,.12); border-color: rgba(248,113,113,.5); color: #fecaca; }
+.hp-back:hover { background: rgba(248,113,113,.22); }
+.hp-back.on { background: #ef4444; border-color: #f87171; color: #fff; }
 .hp-tack { background: rgba(251,146,60,.16); border-color: rgba(251,146,60,.6); color: #fed7aa; }
 .hp-tack:hover { background: rgba(251,146,60,.26); }
 .hp-tack.jibe { background: rgba(167,139,250,.16); border-color: rgba(167,139,250,.6); color: #ddd6fe; }   /* kavança: mor, tramoladan ayırt edilsin */
@@ -648,3 +652,13 @@ body.lay-strip .cat-rail .cr-reset { min-width: 64px; }
 @media (max-width: 900px) { .bottombar .play.start { height: 42px; padding: 0 16px 0 12px; font-size: 14px; } }
 /* alçak yatay ekran (ör. iPad 1024×768): "Varsayılan" rozeti görünürken ray taşmasın */
 @media (max-height: 790px) and (min-height: 501px) { body.lay-rail .cat-rail button { min-height: 51px; gap: 3px; } }
+
+/* akıntı yönü: 3×3 pusula (ok akıntının aktığı yönü gösterir, ortadaki R = rüzgarla) */
+.cur-wrap { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; }
+.cur-dir { display: grid; grid-template-columns: repeat(3, 38px); grid-template-rows: repeat(3, 34px); gap: 3px; padding: 3px; background: var(--raised); border: 1px solid var(--border); border-radius: 11px; flex: 0 0 auto; }
+.cur-dir button { border: 0; border-radius: 8px; background: transparent; color: var(--text2); font-size: 17px; font-weight: 700; padding: 0; }
+.cur-dir button:hover { background: var(--raised2); color: var(--text); }
+.cur-dir button.on { background: var(--accent); color: var(--accent-ink); }
+.cur-dir .cur-w { font-size: 12px; color: var(--muted); }
+.cur-dir.off { opacity: .45; }
+.cur-txt { flex: 1 1 120px; min-width: 0; font-size: 12px; color: var(--muted); line-height: 1.35; }

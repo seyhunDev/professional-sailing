@@ -40,7 +40,7 @@ for (let k = 0; k < N; k++) {
   }     // her 3 yarıştan birinde bir "yol vermez" tekne
   const gusts = rnd() < 0.5 ? [{ x: rnd() < 0.5 ? 230 : 770, y: 250 + rnd() * 300, rx: 120, ry: 190 }] : [];
   // her 3 yarıştan birinde akıntı / dalga ve sürüklenen bir tekne (ayrı üreteç)
-  const sea = k % 3 === 1 ? { current: (k * 7) % 4, waves: (k * 5) % 3 } : null;
+  const sea = k % 3 === 1 ? { current: (k * 7) % 4, waves: (k * 5) % 3, from: [null, 0, 90, 180, 270, 135][k % 6] } : null;   // akıntı yönü de değişir
   if (sea) fleet[(k * 3) % n].drift = 1 + (k % 2);
   // tekne sınıfı, rüzgar hızı ve hızlanma anı (ayrı üreteç; her 2 yarıştan birinde varsayılan dışı)
   let qb = k * 6151 + 3; const rb = () => (qb = (qb * 48271) % 2147483647) / 2147483647;

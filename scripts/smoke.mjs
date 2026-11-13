@@ -103,6 +103,11 @@ const shot = async (p, name) => { if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: 
   // yarışta elle sür → çık
   await p.keyboard.press('d'); await p.waitForTimeout(1200);
   await shot(p, 'sim-elle.png');
+  await p.keyboard.press('i'); await p.waitForTimeout(2500);         // iskotayı çek, hızlan
+  await p.keyboard.press('b'); await p.waitForTimeout(5000);         // yelkeni tersle: fren, dur, geri
+  const backTxt = await p.$eval('#hpSpeed', e => e.textContent), backOn = await p.$eval('#hpBack', e => e.classList.contains('on'));
+  ok(backOn && /geri/.test(backTxt), `Tersle (B): ${backTxt}`);
+  await p.keyboard.press('b');
   await p.click('#hpGo'); await p.waitForTimeout(400);
   ok(!(await p.$eval('#btnManual', e => e.classList.contains('on'))), 'yarışta elle sürdükten sonra Manuel kapalı (tekne kendi tramolasını atar)');
 

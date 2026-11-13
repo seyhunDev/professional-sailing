@@ -233,6 +233,8 @@
     opts = opts || {};
     const st = sailState(h, windFrom);
     const t = opts.t || 0, seed = opts.seed || 0;
+    // yelken terslenmiş (backing): bumba rüzgar tarafına itilmiş, yelken öbür yüzünden dolu (tekne frenler / geri gider)
+    if (opts.back) { const side = st.abs < 8 ? 1 : -st.side; return { beta: side * 72 + 1.5 * Math.sin(t * 9 + seed), flutter: 0.15, belly: -side * 8, slack: 0, sail: st, back: true }; }
     const base = opts.base || 55;
     let slack = 0;
     if (opts.v != null) slack = Math.max(0, Math.min(1, (0.45 - opts.v / base) / 0.3)); // v ≤ %15 → tamamen boş, ≥ %45 → trimli
