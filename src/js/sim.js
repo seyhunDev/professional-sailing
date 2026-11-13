@@ -720,7 +720,8 @@
   }
   function driveTick(dt) {
     const d = st.drive, ctx = driveCtx(), m = ctx.boats.find(b => b.mine); if (!m) return;
-    const inp = { rudder: Math.max(-1, Math.min(1, d.keyRud + d.touchRud)), autoTrim: d.autoTrim };
+    const inp = { rudder: Math.max(-1, Math.min(1, d.keyRud + d.touchRud)), autoTrim: d.autoTrim, hold: d.hold };
+    if (inp.rudder && d.hold) { d.hold = null; lastHelmKey = ''; }   // dümene dokununca Orsa bırakır
     if (!d.live) driveEvents(m, S.drive(ctx, m, inp, dt * DRIVE_TEMPO));
     else if (!d.paused) {
       // canlı yarış: sabit adımlarla (DT) herkes birlikte ilerler; ekran karesi başına en çok 8 adım
@@ -772,6 +773,27 @@
     if (nv !== (m.sheetOff || 0)) applyChange({ k: 'cmd', c: 'sheet', v: nv });
     else toast(dir < 0 ? 'İskota tam çekili: teknen tam hızda' : 'İskota tamamen boş: daha fazla yavaşlayamaz');
   }
+  // İskota tek düğme: salıksa çek (tam trim), trimliyse sal (yelken boşalır, yavaşlar); fazla çekikse ideale sal
+  function sheetState(m, w, autoTrim) {
+    const abs = Math.abs(E.norm180(m.h - w)), ideal = S.idealSheet(abs);
+    const dl = autoTrim ? (m.sheetOff || 0) : (m.sheet != null ? m.sheet : ideal) - ideal;
+    return { abs, ideal, st: dl > 8 ? 'eased' : dl < -8 ? 'over' : 'trim' };
+  }
+  function sheetToggle() {
+    const d = st.drive, m = driveBoat(); if (!m) return;
+    const k = sheetState(m, driveCtx().wind, d.autoTrim);
+    if (d.autoTrim) m.sheetOff = k.st === 'eased' ? 0 : S.SHEET_OFF_MAX;
+    else m.sheet = k.st === 'trim' ? Math.min(S.SHEET_MAX, k.ideal + S.SHEET_OFF_MAX) : k.ideal;
+    if (k.abs < 30) toast('Burnun rüzgarda: iskota işe yaramaz. Önce kafa aç ya da Orsa\'ya bas');
+    flash('hpSheet'); lastHelmKey = '';
+  }
+  // Orsa (VMG): tekne bu kontrada orsa rotasına girer, iskota tam çekilir; dümene dokununca bırakır
+  function vmgToggle() {
+    const d = st.drive, m = driveBoat(); if (!m) return;
+    d.hold = d.hold === 'orsa' ? null : 'orsa';
+    if (d.hold) { m.helm = null; if (d.autoTrim) m.sheetOff = 0; else m.sheet = null; toast('Orsa: teknen orsa rotasına giriyor ve orada kalıyor · dümene dokununca bırakır'); }
+    lastHelmKey = '';
+  }
   function toggleAutoTrim() {
     if (!st.drive) return;
     const m = driveBoat(); st.drive.autoTrim = st.autoTrim = !st.drive.autoTrim;
@@ -790,9 +812,9 @@
     const dlt = sheet - ideal, eff = abs < 30 ? 1 : S.trimEff(dlt), stb = E.norm180(m.h - v.wind) < 0;
     const trimTxt = abs < 30 ? 'Rüzgara karşı: yelken boş' : dlt > 8 ? 'Fazla salık: pırpırlıyor' : dlt < -8 ? 'Fazla çekik: boğuluyor' : 'İskota iyi';
     const rem = (v.startAt - v.t) * S.CLOCK_SCALE, tTxt = !d.live ? 'Kurulum · start yok' : rem > 0 ? `Start'a ${S.fmt(rem / S.CLOCK_SCALE)}` : `Yarış ${S.fmt(-rem / S.CLOCK_SCALE)}`;
-    const key = [d.live, d.paused, Math.round(abs), Math.round(sheet), Math.round(eff * 100), stb, m.v.toFixed(1), d.autoTrim, m.phase, tTxt].join('|');
+    const sk = sheetState(m, v.wind, d.autoTrim);
+    const key = [d.live, d.paused, d.hold, sk.st, Math.round(abs), Math.round(sheet), Math.round(eff * 100), stb, m.v.toFixed(1), d.autoTrim, m.phase, tTxt].join('|');
     if (key === lastHelmKey) return; lastHelmKey = key;
-    $('hpTitle').textContent = d.live && d.paused ? 'Zaman durdu' : 'Elle sürüyorsun';
     $('hpSpeed').textContent = `${S.knots(m.v).toFixed(1).replace('.', ',')} kn`;
     $('hpPoint').textContent = `${POS(abs)} · ${stb ? 'sancak' : 'iskele'} kontra`;
     $('hpTime').textContent = tTxt;
@@ -802,6 +824,12 @@
     tg.className = 'trim-gauge ' + (abs < 30 ? 'off' : Math.abs(dlt) <= 8 ? 'ok' : Math.abs(dlt) <= 20 ? 'meh' : 'bad');
     $('hpTrimTxt').textContent = `${trimTxt} · güç %${Math.round(eff * 100)}`;
     $('hpAuto').classList.toggle('on', !!d.autoTrim);
+    $('hpVmg').classList.toggle('on', d.hold === 'orsa'); $('hpVmg').setAttribute('aria-pressed', d.hold === 'orsa');
+    const sb = $('hpSheet');
+    sb.className = 'hp-sheetbtn ' + sk.st;
+    $('hpSheetLbl').textContent = sk.st === 'trim' ? 'Sal' : 'Çek';
+    $('hpSheetSub').textContent = sk.st === 'eased' ? 'iskota salık' : sk.st === 'over' ? 'fazla çekik' : 'iskota çekili';
+    if (sk.st === 'over') $('hpSheetLbl').textContent = 'Sal';
     $('hpJibe').disabled = abs < 100;
     // zaman: yarışta Durdur / Devam; kurulumda Start ▶ (elle sürmeye devam ederek yarışı başlatır)
     const pb = $('hpPlay');
@@ -1463,8 +1491,8 @@
   // elle sürme: dümen paneli ve klavye
   holdBtn('hpLeft', () => { if (st.drive) st.drive.touchRud = -1; }, () => { if (st.drive) st.drive.touchRud = 0; });
   holdBtn('hpRight', () => { if (st.drive) st.drive.touchRud = 1; }, () => { if (st.drive) st.drive.touchRud = 0; });
-  holdBtn('hpEase', () => sheetBy(1), null, 140);
-  holdBtn('hpTrim', () => sheetBy(-1), null, 140);
+  $('hpSheet').addEventListener('click', sheetToggle);
+  $('hpVmg').addEventListener('click', vmgToggle);
   $('hpAuto').addEventListener('click', toggleAutoTrim);
   $('hpTack').addEventListener('click', () => { helmTurn('tack'); flash('hpTack'); });
   $('hpJibe').addEventListener('click', () => { helmTurn('jibe'); flash('hpJibe'); });
@@ -1485,6 +1513,8 @@
       if (k === 't' || k === 'T') { helmTurn('tack'); flash('hpTack'); return; }
       if (k === 'k' || k === 'K') { helmTurn('jibe'); flash('hpJibe'); return; }
       if (k === 'o' || k === 'O') { toggleAutoTrim(); return; }
+      if (k === 'v' || k === 'V') { vmgToggle(); return; }
+      if (k === 'i' || k === 'I') { sheetToggle(); return; }
       if (k === 'Escape' || k === 'Enter') { e.preventDefault(); $('hpGo').click(); return; }
       if (e.code === 'Space') { e.preventDefault(); drivePause(); return; }
     } else if ((e.key === 'd' || e.key === 'D') && !e.metaKey && !e.ctrlKey) { enterDrive(); return; }

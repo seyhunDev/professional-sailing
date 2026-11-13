@@ -387,6 +387,10 @@
       const rate = (30 + 55 * clamp(b.v / BASE, 0, 1)) * H;
       if (inp.rudder) { b.h = E.norm360(b.h + clamp(inp.rudder, -1, 1) * rate); b.helm = null; b.v *= 1 - 0.12 * H * Math.abs(inp.rudder); }
       else if (b.helm) { const st = Math.min(b.helm.left, rate); b.h = E.norm360(b.h + b.helm.dir * st); b.helm.left -= st; if (b.helm.left <= 0.01) b.helm = null; }
+      else if (inp.hold === 'orsa') {                      // Orsa (VMG): bu kontrada orsa rotasına gir ve orada kal (rüzgar dönse de)
+        const r0 = E.norm180(b.h - w), want = E.tackHeading(w, r0 < 0 ? 'starboard' : 'port');
+        b.h = E.norm360(b.h + clamp(E.norm180(want - b.h), -Math.max(rate, 40 * H), Math.max(rate, 40 * H)));
+      }
       const rel = E.norm180(b.h - w), abs = Math.abs(rel), tk = rel < 0 ? 'starboard' : 'port';
       if (tk !== b.tack) { out.push(abs < 90 ? 'tack' : 'jibe'); b.tack = tk; b.lastTack = s.t; }
       // iskota

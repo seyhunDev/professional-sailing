@@ -4,7 +4,7 @@
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 require('../src/js/engine.js'); require('../src/js/rules.js'); require('../src/js/sim-core.js');
-const S = globalThis.SailSim;
+const S = globalThis.SailSim, EN = globalThis.SailEngine;
 const cases = [
   { name: 'rüzgar 0°', wind: 0 },
   { name: 'rüzgar 15° (hakem botu avantajlı)', wind: 15 },
@@ -178,6 +178,19 @@ for (const wind of [-12, 0, 12]) {
   if (Math.hypot(hm.x - m.x, hm.y - m.y) > 2) bad.push('tekrar oynatmada teknen başka yerde');
   console.log(`• canlı elle sürme: 10 sim. sn'de teknen ${(adv(m) / 50).toFixed(1)} boy, diğerleri ort. ${(avg / 50).toFixed(1)} boy, otomatikte teknen ${(autoAdv / 50).toFixed(1)} boy`);
   if (bad.length) { problems++; console.log('  ⚠ canlı elle sürme:', bad.join(', ')); }
+}
+// Orsa (VMG) düğmesi: apazdan ya da pupadan bu kontrada orsa rotasına girer, rüzgar dönünce de orsada kalır
+{
+  S.setCourse(S.COURSE_DEFAULT);
+  const f = S.defaultFleet(2), me = f.find(b => b.mine), bad = [];
+  Object.assign(me, { x: 500, y: 450, h: 150, v: 40, manual: true });
+  const ctx = { t: 0, wind: 0, gusts: [], boats: [me] };
+  for (let i = 0; i < 80; i++) S.drive(ctx, me, { hold: 'orsa', autoTrim: true }, 0.05);
+  if (Math.abs(EN.norm180(me.h - 45)) > 2) bad.push(`pupadan orsaya girmedi (${me.h.toFixed(0)}°)`);
+  ctx.wind = 10; for (let i = 0; i < 40; i++) S.drive(ctx, me, { hold: 'orsa', autoTrim: true }, 0.05);
+  if (Math.abs(EN.norm180(me.h - 55)) > 2) bad.push('rüzgar dönünce orsada kalmadı');
+  console.log(`• Orsa (VMG): pupadan orsaya ${bad.length ? 'SORUN' : 'girdi, rüzgar dönünce de kaldı'}`);
+  if (bad.length) { problems++; console.log('  ⚠ Orsa:', bad.join(', ')); }
 }
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);
