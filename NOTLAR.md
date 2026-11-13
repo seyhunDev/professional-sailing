@@ -71,6 +71,7 @@
 - [ ] **Kullanıcı senaryoları (sonraki aşama):** Firebase Auth + Firestore, link ile paylaşım, Firebase Hosting. Simülatör yarış kayıtları için biçim hazır: `SailRecords` girdisi (`setup` + `ops` + `summary`) aynen Firestore belgesi olabilir.
 
 ## Kararlar
+- 2026-11-13 · **Elle sürmede zaman seçili hızla akar (1× gerçek zaman), dümen her karede.** Kullanıcı varsayılanın standart süre olmasını istedi; dümen gecikmesin diye dönüş kare başına uygulanır.
 - 2026-11-13 · **Elle sürmede iskota hep otomatik.** Oto iskota düğmesi kaldırıldı (kullanıcı: elle iskota için bir çalışma yok, seçilebilir olmasın).
 - 2026-11-13 · **Depo/adres `velora-sailing`** (kullanıcı onayı): site https://seyhundev.github.io/velora-sailing/. Eski adres yönlendirilmez. Dosya biçimlerindeki `app:'professional-sailing'` ve localStorage `ps.*` anahtarları eski kayıtlarla uyum için aynı kalır.
 - 2026-11-13 · **Velora ile ortak giriş (onaylandı, Firebase kütüphanesi eklenebilir):** Velora (`seyhunDev/sesliasistan`, Firebase `sesliasistan-3e95a`) Velora Sanal için kullandığı yöntemle: Velora sunucusu `createCustomToken(uid)` üretir, `…/velora-sailing/#t=<anahtar>` açılır, burada `signInWithCustomToken` + `#` silinir. Doğrudan gelen için Velora e-posta/şifre girişi, misafir kalır.
@@ -171,6 +172,12 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Tramola/Kavança tek düğme, ayarlanabilir geri sayım, elle sürmede gerçek zaman (v1.85)
+- Kullanıcı: Tramola ve Kavança tek düğme olsun (orsada Tramola, apazdan sonra Kavança); yarış varsayılan gerçek zamanda, 5 dk geri sayım; süre 2 dk'ya çekilebilsin; hızlandırılıp yavaşlatılabilsin.
+- `#hpTack` seyre göre: rüzgar açısı < 100° Tramola (turuncu), ≥ 100° Kavança (mor), `helmTurn('auto')`; T ve K aynı düğme. Ortadaki Kavança kaldırıldı.
+- Geri sayım: `BOAT.pre` (sn; `PRE_SEC` 2/3/4/5 dk, varsayılan 300), Filo → Geri sayım. `START_AT = pre / CLOCK_SCALE`, `CREEP_T = min(240, pre−20)`. Eski kayıtlarda alan yok → 300.
+- Hız: ½× eklendi. **Elle sürme artık seçili hızla akar** (eskiden sabit `LIVE_TEMPO` ≈16×): 1× = gerçek zaman. Gerçek zamanda yarış adımı ~1.8 sn'de bir olduğu için dümen her ekran karesinde `S.steer` ile en az `LIVE_TEMPO` temposunda döner (tramola ~2 sn), `handStep`'e `noTurn` gider. Zaman kutusunda tek hız düğmesi (`#dbSpeed`, dokun → sıradaki). Not: 1×'te senin teknen diğerlerinden hızlı tramola atar (diğerleri sim. zamanında döner); kullanıcı fark ederse konuşulacak.
+
 ### 2026-11-13 · Yarışı sıfırlama görünür (v1.84)
 - Kullanıcı: başlatıp durdurabiliyorum ama sıfırlayamıyorum. Alt çubuktaki ↺ yalnız simgeydi ve elle sürerken alt çubuk gizli olduğundan hiç yoktu. Artık alt çubukta "↺ Sıfırla" yazılı (kurulumda pasif), elle sürerken zaman kutusunda da "Sıfırla" (telefonda yalnız simge), kısayol R. `backToSetup` sürüşü de kapatır, kamerayı geri alır, bildirim gösterir.
 

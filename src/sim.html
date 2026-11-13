@@ -113,6 +113,7 @@
     <div id="driveBar" class="drive-bar hidden" role="toolbar" aria-label="Elle sürüş zamanı">
       <span class="db-dot"></span>
       <span id="hpTime" class="db-time"></span>
+      <button class="tb db-speed" id="dbSpeed" title="Yarışın hızı · dokun → sıradaki">1×</button>
       <button class="tb db-play" id="hpPlay" title="Zamanı durdur / devam (boşluk)"><svg class="ci"><use href="#i-pause"/></svg><span id="hpPlayLbl">Durdur</span></button>
       <button class="tb db-done" id="hpGo" title="Elle sürmeyi bitir (Enter)"><svg class="ci"><use href="#i-check"/></svg><span class="hp-go-lbl">Bitir</span></button>
       <button class="tb db-reset" id="hpReset" title="Yarışı sıfırla: kuruluma dön (R)"><svg class="ci"><use href="#i-reset"/></svg><span class="db-lbl">Sıfırla</span></button>
@@ -167,7 +168,7 @@
         <button data-cat="wind" title="Rüzgar yönü ve hızı"><svg><use href="#i-wind"/></svg><span>Rüzgar</span></button>
         <button data-cat="gust" title="Sağanak ekle / kaldır"><svg><use href="#i-gust"/></svg><span>Sağanak</span></button>
         <button data-cat="sea" title="Akıntı ve dalga"><svg><use href="#i-wave"/></svg><span>Deniz</span></button>
-        <button data-cat="fleet" title="Tekne sayısı, sınıf, hızlanma"><svg><use href="#i-fleet"/></svg><span>Filo</span></button>
+        <button data-cat="fleet" title="Tekne sayısı, sınıf, geri sayım, hızlanma"><svg><use href="#i-fleet"/></svg><span>Filo</span></button>
         <button data-cat="course" title="Start hattı ve şamandıra"><svg><use href="#i-flag"/></svg><span>Parkur</span></button>
         <button data-cat="show" title="Sahnede ne görünsün"><svg><use href="#i-eye"/></svg><span>Göster</span></button>
         <button data-cat="rank" title="Sıralama ve olaylar"><svg><use href="#i-list"/></svg><span>Sıralama</span></button>
@@ -298,10 +299,14 @@
             <div class="seg" id="boatCls" title="Tekne hızı sınıfın bilinen ortalama orsa hızından gelir"></div>
           </div>
           <div class="sel-row wrap">
+            <span class="lbl">Geri sayım</span>
+            <div class="seg" id="boatPre" title="Start'a kaç dakika kala yarış başlar (varsayılan 5 dk)"></div>
+          </div>
+          <div class="sel-row wrap">
             <span class="lbl">Hızlanma</span>
             <div class="seg" id="boatAccel" title="Start'a kaç saniye kala yelkenler doldurulup hızlanılır"></div>
           </div>
-          <div class="sel-row cat-foot"><small id="boatState"></small><button class="tb sm" id="btnBoatReset" title="Optimist, 8 knot rüzgar, 30 sn kala hızlanma">Varsayılan</button></div>
+          <div class="sel-row cat-foot"><small id="boatState"></small><button class="tb sm" id="btnBoatReset" title="Optimist, 8 knot rüzgar, 30 sn kala hızlanma, 5 dk geri sayım">Varsayılan</button></div>
         </section>
         <section id="courseBox" class="sel-box course-box" data-cat="course">
           <div class="box-head"><span><small id="courseState"></small></span><button class="tb sm" id="btnCourseReset" title="Varsayılan parkura dön">Varsayılan</button></div>
@@ -338,9 +343,9 @@
             <li><b>Rüzgar ve sağanak:</b> <b>Rüzgar</b>'dan yönü döndür ve hızını seç; <b>Sağanak</b>'tan bir tarafa sağanak ekle. Sağanağa dokununca <b>Sağanak ayarları</b> kartı açılır: <b>Boyut − / +</b>, <b>Sıfırla</b>, <b>Sil</b>; sağanağı sürükleyerek de taşırsın.</li>
             <li><b>Parkur ve filo:</b> <b>Parkur</b>'dan start hattının uzunluğunu ve orsa şamandırasının uzaklığını, <b>Filo</b>'dan tekne sayısını, sınıfı (Optimist, ILCA 4 / 6 / 7) ve start'a kaç saniye kala hızlanılacağını seç (yalnız kurulumda).</li>
             <li><b>↺ Sıfırla</b> (R): yarışı bitirip kuruluma döner; tekneler, rüzgar ve parkur yerinde kalır, ▶ ile yeniden başlatırsın.</li>
-            <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 5 dakikalık geri sayım başlar. 1× gerçek zamandır (start → şamandıra yaklaşık 15 dakika); hızlı izlemek için 5×, 15× ya da 40× seç. Rüzgar, sağanak ya da komut değişince yarış o andan yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
+            <li><b>▶ Start:</b> yarış baştan sona hesaplanır, geri sayım başlar (varsayılan 5 dakika; <b>Filo → Geri sayım</b>'dan 2, 3 ya da 4 dakika seçebilirsin). 1× gerçek zamandır (start → şamandıra yaklaşık 15 dakika); yavaş izlemek için ½×, hızlı izlemek için 5×, 15× ya da 40× seç. Rüzgar, sağanak ya da komut değişince yarış o andan yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
             <li><b>Teknem:</b> <b>Manuel</b> açıkken teknen start'tan sonra kendi kendine tramola atmaz; ne zaman dönüleceğine alttaki <b>Tramola</b> (ya da T) ile sen karar verirsin. Kapalıyken taktiğine (<b>Sol</b>, <b>Orta</b>, <b>Sağ</b>, <b>Sağanak</b>) göre kendisi karar verir. Yarışta <b>İskota Sal / Çek</b> ile hızını düşürüp artırırsın. <b>Rota çiz</b> ile teknenin gideceği yolu parmağınla çizersin.</li>
-            <li><b>Elle sür:</b> alttaki <b>Elle sür</b> (ya da D) ile en altta dümen paneli açılır. iPad'i iki elle tutar gibi: <b>sol</b>da dümen (<b>◀ Sola / Sağa ▶</b>, basılı tut; klavyede ← →), <b>sağ</b>da <b>İskota</b> düğmesi (dokun → çek, yeniden dokun → sal; ↑ ↓ ile ince ayar) ve hemen yanında <b>Orsa</b> (V: teknen bu kontrada orsa rotasına girer, rüzgar dönse de orada kalır, dümene dokununca bırakır) ile <b>Tramola</b>. İskota hep kendiliğinden ayarlanır: çekikken seyrine göre en iyi ayara, salıkken rüzgara göre bayrak gibi. Ortada hız, iskota göstergesi ve <b>Kavança</b>. Zaman ve yarış düğmeleri ayrı bir kutuda, sahnenin üstünde (telefonda panelin üstünde): saat, <b>Durdur / Devam</b> (kurulumda <b>Start</b>), <b>Otomatik</b> (kurulumda <b>Bitir</b>) ve yarışta <b>Sıfırla</b>. Sürerken kamera tekneni hep ortada tutar ve onunla birlikte ilerler; yakınlaştırma da tekne ortadayken yapılır. Sürerken harita parmakla kaydırılmaz ve iki parmakla yakınlaşmaz; yakınlaştırmak / uzaklaştırmak için soldaki (telefonda sağ üstteki) <b>+ / −</b> düğmeleri, tekne yine ortada kalır. Kurulumda start'tan önce yerini alırsın (diğerleri bekler); yarışta zaman akar, bütün tekneler birlikte hareket eder. Şamandıraya gelince dönüşü ve ceza turunu otomatik yapar.</li>
+            <li><b>Elle sür:</b> alttaki <b>Elle sür</b> (ya da D) ile en altta dümen paneli açılır. iPad'i iki elle tutar gibi: <b>sol</b>da dümen (<b>◀ Sola / Sağa ▶</b>, basılı tut; klavyede ← →), <b>sağ</b>da <b>İskota</b> düğmesi (dokun → çek, yeniden dokun → sal; ↑ ↓ ile ince ayar) ve hemen yanında <b>Orsa</b> (V: teknen bu kontrada orsa rotasına girer, rüzgar dönse de orada kalır, dümene dokununca bırakır) ile tek manevra düğmesi: orsadan apaza kadar <b>Tramola</b>, apazı geçip pupaya doğru <b>Kavança</b> olur (T ya da K). İskota hep kendiliğinden ayarlanır: çekikken seyrine göre en iyi ayara, salıkken rüzgara göre bayrak gibi. Ortada hız ve iskota göstergesi. Zaman ve yarış düğmeleri ayrı bir kutuda, sahnenin üstünde (telefonda panelin üstünde): saat, <b>Durdur / Devam</b> (kurulumda <b>Start</b>), <b>Otomatik</b> (kurulumda <b>Bitir</b>) ve yarışta <b>Sıfırla</b>. Sürerken kamera tekneni hep ortada tutar ve onunla birlikte ilerler; yakınlaştırma da tekne ortadayken yapılır. Sürerken harita parmakla kaydırılmaz ve iki parmakla yakınlaşmaz; yakınlaştırmak / uzaklaştırmak için soldaki (telefonda sağ üstteki) <b>+ / −</b> düğmeleri, tekne yine ortada kalır. Kurulumda start'tan önce yerini alırsın (diğerleri bekler); yarışta zaman akar, bütün tekneler birlikte hareket eder. Şamandıraya gelince dönüşü ve ceza turunu otomatik yapar.</li>
             <li><b>Yakınlaştır / kaydır:</b> parkurda iki parmakla (ya da fare tekerleğiyle) yakınlaştır, boş yeri sürükleyerek kaydır. <b>Tümü</b> bütün parkuru gösterir, <b>Takip</b> kamerayı senin teknene kilitler.</li>
             <li><b>Akıntı ve dalga:</b> <b>Deniz</b>'den akıntıyı ve dalgayı seç; tekneler rüzgaraltına kayar, orsada yavaş yükselir. Yalpalayan bir sporcuyu göstermek için tekneye dokunup <b>Kayma</b>yı <b>Az</b> ya da <b>Çok</b> yap.</li>
             <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
@@ -365,7 +370,7 @@
       </div>
       <span class="time" id="timeLabel">5:00</span>
       <div class="speed" id="speedSeg" role="radiogroup" aria-label="Hız">
-        <button data-v="1" class="on" title="Gerçek zaman">1×</button><button data-v="5">5×</button><button data-v="15">15×</button><button data-v="40">40×</button>
+        <button data-v="0.5" title="Yavaş: gerçek zamanın yarısı">½×</button><button data-v="1" class="on" title="Gerçek zaman">1×</button><button data-v="5">5×</button><button data-v="15">15×</button><button data-v="40">40×</button>
       </div>
       <div class="quick" id="quick">
         <button class="tb accent" id="btnTack" title="Tramola (T)"><svg class="ci"><use href="#i-tack"/></svg><span class="q-lbl">Tramola</span></button>
@@ -381,7 +386,7 @@
         <button class="hp-rud" id="hpLeft" title="Dümen: sola dön (← ya da A, basılı tut)"><span class="hp-arrow">◀</span><b>Sola</b><small id="hpLeftSub">kafa aç</small></button>
         <button class="hp-rud" id="hpRight" title="Dümen: sağa dön (→ ya da D, basılı tut)"><span class="hp-arrow">▶</span><b>Sağa</b><small id="hpRightSub">orsa</small></button>
       </div>
-      <!-- orta: hız, iskota göstergesi, seyrek kullanılanlar -->
+      <!-- orta: hız ve iskota göstergesi -->
       <div class="hp-mid">
         <div class="hp-stat">
           <span class="hp-dot"></span>
@@ -392,15 +397,12 @@
           <div class="trim-gauge" id="hpGauge" aria-hidden="true"><span class="tg-ideal"></span><span class="tg-knob"></span></div>
           <span id="hpTrimTxt" class="hp-trimtxt"></span>
         </div>
-        <div class="hp-actions">
-          <button class="tb" id="hpJibe" title="Kavança: pupadan öbür kontraya (K)">Kavança</button>
-        </div>
       </div>
-      <!-- sağ başparmak: Orsa ve Tramola, yanında iskota (tek düğme: çek / sal) -->
+      <!-- sağ başparmak: Orsa ve Tramola/Kavança (seyre göre tek düğme), yanında iskota (tek düğme: çek / sal) -->
       <div class="hp-right">
         <div class="hp-col">
           <button class="tb hp-vmg" id="hpVmg" title="Orsa (VMG): tekne kendiliğinden orsa rotasına girer ve rüzgar dönse de orsada kalır; dümene dokununca bırakır (V)"><svg class="ci"><use href="#i-wind"/></svg>Orsa</button>
-          <button class="tb hp-tack" id="hpTack" title="Tramola: rüzgarın içinden öbür kontraya (T)"><svg class="ci"><use href="#i-tack"/></svg>Tramola</button>
+          <button class="tb hp-tack" id="hpTack" title="Tramola: rüzgarın içinden öbür kontraya (T)"><svg class="ci"><use href="#i-tack"/></svg><span id="hpTackLbl">Tramola</span></button>
         </div>
         <button class="hp-sheetbtn" id="hpSheet" title="İskota: dokun → çek, yeniden dokun → sal (↑ ↓ ile ince ayar)"><span class="hp-sheeticon" aria-hidden="true"></span><b id="hpSheetLbl">Çek</b><small id="hpSheetSub">iskota</small></button>
       </div>

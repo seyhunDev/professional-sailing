@@ -20,7 +20,7 @@
   // zaman ölçeğidir. 2 kat hızlı tekne için 1 sim. saniyesi yarı kadar gerçek zamandır: ekranda (1×) iki kat hızlı gider,
   // aynı 5 dakikalık geri sayımda iki kat yol alır. Böylece kural/kaçış/şamandıra ayarları her sınıfta aynı çalışır.
   const CLOCK_REF = 300 / 8.4;    // Optimist 8 knot (3.5 kn orsa): 1 sim. sn = 35.7 gerçek sn
-  let CLOCK_SCALE = CLOCK_REF, START_AT = 300 / CLOCK_SCALE;   // geri sayım her zaman 5:00 (gerçek)
+  let CLOCK_SCALE = CLOCK_REF, START_AT = 300 / CLOCK_SCALE;   // geri sayım varsayılan 5:00 (gerçek), BOAT.pre ile 2-5 dk
   const MAN_MARGIN = 320;         // manuel tekne parkur kenarını bu kadar aşabilir (deniz parkurla bitmez); ötesinde zorunlu tramola
   const TURN_RATE = 110;          // derece/sn
   let GUST_GAIN = 0.25;           // sağanakta hız artışı (setBoat: rüzgar +5 knot olunca sınıfın hızı ne kadar artıyor; en fazla eski sabit %25)
@@ -96,7 +96,8 @@
   // (Optimist: hafif havada ~2.5, orta havada ~3.5-4, kuvvetlide fazla güçlenir, artmaz; ILCA: 10 knot üstünde ~5-5.5).
   // acc: hızlanma süresi sabiti (gerçek sn) – yelkeni doldurduktan sonra tam hıza ~3×acc sn'de çıkar.
   const CLASSES = E.BOAT_CLASSES;   // sınıf hız tablosu engine.js'te (senaryolarla ortak)
-  const BOAT_DEFAULT = { cls: 'optimist', windKn: 8, accelAt: 30 };   // accelAt: start'a kaç gerçek sn kala yelken doldurulur
+  const BOAT_DEFAULT = { cls: 'optimist', windKn: 8, accelAt: 30, pre: 300 };   // pre: start geri sayımı (gerçek sn)
+  const PRE_SEC = [120, 180, 240, 300];   // accelAt: start'a kaç gerçek sn kala yelken doldurulur
   const WIND_KN = [4, 6, 8, 10, 12, 15, 18];
   const ACCEL_AT = [60, 45, 30, 20, 15, 10];
   const upwindKn = E.upwindKn;
@@ -105,10 +106,11 @@
   function setBoat(c) {
     const cls = CLASSES[c && c.cls] ? c.cls : BOAT_DEFAULT.cls;
     const windKn = clamp(+(c && c.windKn) || BOAT_DEFAULT.windKn, 2, 30), accelAt = clamp(+(c && c.accelAt) || BOAT_DEFAULT.accelAt, 5, 120);
-    const key = cls + '|' + windKn + '|' + accelAt; if (key === boatKey) return; boatKey = key;
-    Object.assign(BOAT, { cls, windKn, accelAt });
-    SPD = upwindKn(cls, windKn) / 3.5; CLOCK_SCALE = CLOCK_REF / SPD; START_AT = 300 / CLOCK_SCALE;
-    CREEP_T = 240 / CLOCK_SCALE;     // hızlanmadan önceki son 4 dk: yelken yarı boş, hızlanma noktasına yavaşça sokulur
+    const pre = clamp(+(c && c.pre) || BOAT_DEFAULT.pre, 60, 600);
+    const key = cls + '|' + windKn + '|' + accelAt + '|' + pre; if (key === boatKey) return; boatKey = key;
+    Object.assign(BOAT, { cls, windKn, accelAt, pre });
+    SPD = upwindKn(cls, windKn) / 3.5; CLOCK_SCALE = CLOCK_REF / SPD; START_AT = pre / CLOCK_SCALE;
+    CREEP_T = Math.min(240, pre - 20) / CLOCK_SCALE;     // hızlanmadan önceki son 4 dk: yelken yarı boş, hızlanma noktasına yavaşça sokulur
     GUST_GAIN = clamp(upwindKn(cls, windKn + 5) / upwindKn(cls, windKn) - 1, 0.06, 0.25);
     TAU_START = E.accelTau(cls, windKn, CLOCK_SCALE);   // sınıf tablosundan, senaryolarla aynı formül (hafif havada daha yavaş)
     // Hızlanma: beklerken (yelken boş) orsa hızına çıkarken T saniyede alınan yol (tablo)
@@ -372,6 +374,16 @@
   // inp: { rudder: −1 (sola) … +1 (sağa), autoTrim: iskota rüzgar açısına göre kendiliğinden ayarlanır }
   // b.sheet: bumba açısı (iskota), b.sheetOff: otomatik iskotada ideale göre salma payı, b.helm: Tramola/Kavança düğmesiyle dönüş.
   // Dönen: olaylar dizisi ('tack' | 'jibe' | 'contact:ID' | 'hit')
+  // Dümen / Tramola-Kavança / Orsa: H sim. saniyesi kadar dönüş. Tekne hızlandıkça daha çabuk döner (dururken dümen az tutar).
+  function steer(w, b, inp, H) {
+    const rate = (30 + 55 * clamp(b.v / BASE, 0, 1)) * H;
+    if (inp.rudder) { b.h = E.norm360(b.h + clamp(inp.rudder, -1, 1) * rate); b.helm = null; b.v *= 1 - 0.12 * H * Math.abs(inp.rudder); }
+    else if (b.helm) { const st = Math.min(b.helm.left, rate); b.h = E.norm360(b.h + b.helm.dir * st); b.helm.left -= st; if (b.helm.left <= 0.01) b.helm = null; }
+    else if (inp.hold === 'orsa') {                      // Orsa (VMG): bu kontrada orsa rotasına gir ve orada kal (rüzgar dönse de)
+      const r0 = E.norm180(b.h - w), want = E.tackHeading(w, r0 < 0 ? 'starboard' : 'port');
+      b.h = E.norm360(b.h + clamp(E.norm180(want - b.h), -Math.max(rate, 40 * H), Math.max(rate, 40 * H)));
+    }
+  }
   function drive(s, b, inp, dt) {
     if (s.course) setCourse(s.course);
     setBoat(s.boat || BOAT_DEFAULT);
@@ -383,14 +395,7 @@
     const n = Math.max(1, Math.ceil(dt / DT - 1e-9)), H = dt / n;   // ekran karesi kadar (kesirli) adımlar
     for (let i = 0; i < n; i++) {
       const h0 = b.h;
-      // dümen: tekne hızlandıkça daha çabuk döner (dururken dümen az tutar)
-      const rate = (30 + 55 * clamp(b.v / BASE, 0, 1)) * H;
-      if (inp.rudder) { b.h = E.norm360(b.h + clamp(inp.rudder, -1, 1) * rate); b.helm = null; b.v *= 1 - 0.12 * H * Math.abs(inp.rudder); }
-      else if (b.helm) { const st = Math.min(b.helm.left, rate); b.h = E.norm360(b.h + b.helm.dir * st); b.helm.left -= st; if (b.helm.left <= 0.01) b.helm = null; }
-      else if (inp.hold === 'orsa') {                      // Orsa (VMG): bu kontrada orsa rotasına gir ve orada kal (rüzgar dönse de)
-        const r0 = E.norm180(b.h - w), want = E.tackHeading(w, r0 < 0 ? 'starboard' : 'port');
-        b.h = E.norm360(b.h + clamp(E.norm180(want - b.h), -Math.max(rate, 40 * H), Math.max(rate, 40 * H)));
-      }
+      if (!inp.noTurn) steer(w, b, inp, H);   // canlı elle sürmede dümen her ekran karesinde ayrıca uygulanır (sim.js)
       const rel = E.norm180(b.h - w), abs = Math.abs(rel), tk = rel < 0 ? 'starboard' : 'port';
       if (tk !== b.tack) { out.push(abs < 90 ? 'tack' : 'jibe'); b.tack = tk; b.lastTack = s.t; }
       // iskota
@@ -828,8 +833,8 @@
 
   global.SailSim = {
     runToEnd,
-    DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, setBoat, upwindKn, BOAT,
+    DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, PRE_SEC, setBoat, upwindKn, BOAT,
     get START_AT() { return START_AT; }, get CLOCK_SCALE() { return CLOCK_SCALE; }, MAN_MARGIN, PERSONAS, MINE_COLOR, OBSTACLES,
-    SHADOW_LEN, SEA, SEA_DEFAULT, knots, drive, helmTurn, idealSheet, trimEff, SHEET_MAX, SHEET_OFF_MAX, defaultFleet, handStep, runHand, handRow, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
+    SHADOW_LEN, SEA, SEA_DEFAULT, knots, drive, steer, helmTurn, idealSheet, trimEff, SHEET_MAX, SHEET_OFF_MAX, defaultFleet, handStep, runHand, handRow, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
 })(typeof window !== 'undefined' ? window : globalThis);

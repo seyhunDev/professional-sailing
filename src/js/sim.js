@@ -657,7 +657,9 @@
   // iskotası sende. (Eskiden yarışta da zaman donuyordu: teknen tek başına ~25× hızla gidip diğerlerinin önüne fırlıyordu.)
   // Bitir: yarış o andan otomatik devam eder, teknen orsaya gider; tramolalar yine senin (Manuel açık kalır).
   const DRIVE_TEMPO = 0.7;                                // kurulumda: 1 gerçek sn = 0.7 sim. sn (tekne ~1 boy/sn)
-  const LIVE_TEMPO = 0.45;                                // yarışta: herkes için aynı akış (saat ~16×; tramola ~2 sn)
+  // yarışta zaman seçili hızla akar (1× = gerçek zaman, saat 5:00'ten gerçek 5 dakikada iner). Dümen ise her ekran karesinde
+  // en az bu tempoyla döner (tramola ~2 sn): gerçek zamanda yarışın adımları seyrek, dümen gecikmesin.
+  const LIVE_TEMPO = 0.45;
   const SHEET_STEP = 6;                                   // Çek / Sal: bir dokunuş (derece)
   function driveCtx() {
     const d = st.drive;
@@ -747,11 +749,14 @@
     if (!d.live) driveEvents(m, S.drive(ctx, m, inp, dt * DRIVE_TEMPO));
     else if (!d.paused) {
       // canlı yarış: sabit adımlarla (DT) herkes birlikte ilerler; ekran karesi başına en çok 8 adım
-      d.acc = Math.min(d.acc + dt * LIVE_TEMPO, S.DT * 8);
+      const tempo = st.speed / S.CLOCK_SCALE;
+      S.steer(ctx.wind, m, inp, dt * Math.max(tempo, LIVE_TEMPO));   // dümen hemen tepki versin
+      const sinp = { ...inp, noTurn: true };
+      d.acc = Math.min(d.acc + dt * tempo, S.DT * 8);
       while (d.acc >= S.DT - 1e-9) {
         d.acc -= S.DT;
         d.prev = d.s.boats.map(b => ({ x: b.x, y: b.y, h: b.h }));
-        driveEvents(m, S.handStep(d.s, m, inp, d.path));
+        driveEvents(m, S.handStep(d.s, m, sinp, d.path));
         d.n++;
         if (d.n % 2 === 0) d.frames.push(S.clone(d.s));
         if (!m.hand || d.s.boats.every(b => b.finish || b.gone)) {      // şamandıra dönüşü / ceza turu: otomatik devralır
@@ -766,7 +771,7 @@
     if (d.live) {
       // ekranda iki adım arası ara değer: yarış 0.05 sn'lik adımlarla ilerler, tekneler (ve kamera) titremeden kaysın
       const a = Math.max(0, Math.min(1, d.acc / S.DT)), P = d.prev;
-      d.view = P && P.length === ctx.boats.length ? { ...ctx, boats: ctx.boats.map((b, i) => ({ ...b, x: P[i].x + (b.x - P[i].x) * a, y: P[i].y + (b.y - P[i].y) * a, h: E.lerpAngle(P[i].h, b.h, a) })) } : ctx;
+      d.view = P && P.length === ctx.boats.length ? { ...ctx, boats: ctx.boats.map((b, i) => ({ ...b, x: P[i].x + (b.x - P[i].x) * a, y: P[i].y + (b.y - P[i].y) * a, h: b.mine ? b.h : E.lerpAngle(P[i].h, b.h, a) })) } : ctx;
     }
   }
   function drivePause() {
@@ -776,10 +781,12 @@
     if (d.paused) { d.keyRud = 0; d.touchRud = 0; }
     lastHelmKey = '';
   }
+  const JIBE_MIN = 100;                                  // bu rüzgar açısından sonra manevra kavançadır
   function helmTurn(kind) {
     const m = driveBoat(); if (!m) return;
     const w = driveCtx().wind, abs = Math.abs(E.norm180(m.h - w));
-    if (kind === 'jibe' && abs < 100) { toast('Kavança pupadan atılır: önce kafa aç (rüzgarı kıçtan al)'); return; }
+    if (kind === 'auto') kind = abs >= JIBE_MIN ? 'jibe' : 'tack';
+    if (kind === 'jibe' && abs < JIBE_MIN) { toast('Kavança pupadan atılır: önce kafa aç (rüzgarı kıçtan al)'); return; }
     S.helmTurn(m, w, kind);
   }
   // İskota: elle sürerken Çek / Sal; yarışta (otomatik) hız düşür / artır
@@ -851,7 +858,10 @@
     $('hpSheetLbl').textContent = sk.st === 'trim' ? 'Sal' : 'Çek';
     $('hpSheetSub').textContent = sk.st === 'eased' ? 'iskota salık' : sk.st === 'over' ? 'fazla çekik' : 'iskota çekili';
     if (sk.st === 'over') $('hpSheetLbl').textContent = 'Sal';
-    $('hpJibe').disabled = abs < 100;
+    // tek manevra düğmesi: orsadan apaza kadar Tramola, apazı geçince (rüzgar açısı ≥ 100°) Kavança
+    const jibe = abs >= JIBE_MIN, tb = $('hpTack');
+    tb.classList.toggle('jibe', jibe); $('hpTackLbl').textContent = jibe ? 'Kavança' : 'Tramola';
+    tb.title = jibe ? 'Kavança: rüzgarı kıçtan alıp öbür kontraya (T)' : 'Tramola: rüzgarın içinden öbür kontraya (T)';
     // zaman: yarışta Durdur / Devam; kurulumda Start ▶ (elle sürmeye devam ederek yarışı başlatır)
     const pb = $('hpPlay');
     pb.querySelector('use').setAttribute('href', d.live && !d.paused ? '#i-pause' : '#i-play');
@@ -1350,7 +1360,7 @@
     const on = {
       mine: !!(mine && (mine.manual || mine.ignoresRules || (mine.speedK || 1) !== 1 || (mine.route && mine.route.length) || mine.sheetOff)),
       wind: Math.round(E.norm180(v.wind)) !== 0 || b.windKn !== D.windKn, gust: (v.gusts || []).length > 0, sea: !!(sea.current || sea.waves),
-      fleet: b.cls !== D.cls || b.accelAt !== D.accelAt, course: st.course.lineLen !== C.lineLen || st.course.markDist !== C.markDist
+      fleet: b.cls !== D.cls || b.accelAt !== D.accelAt || b.pre !== D.pre, course: st.course.lineLen !== C.lineLen || st.course.markDist !== C.markDist
     };
     [...document.querySelectorAll('#catRail [data-cat]')].forEach(x => x.classList.toggle('dot', !!on[x.dataset.cat]));
   }
@@ -1372,7 +1382,16 @@
   $('hpReset').addEventListener('click', backToSetup);
   $('speedSeg').addEventListener('click', e => { let b = e.target.closest('button'); if (!b) return;
     if (b.classList.contains('on') && phoneMq.matches) b = b.nextElementSibling || $('speedSeg').firstElementChild;   // telefonda yalnız seçili görünür: dokununca sıradaki hız
-    st.speed = +b.dataset.v; [...$('speedSeg').children].forEach(x => x.classList.toggle('on', x === b)); });
+    setSpeed(+b.dataset.v); });
+  const SPEEDS = [0.5, 1, 5, 15, 40], spTxt = v => (v === 0.5 ? '½' : v) + '×';
+  function setSpeed(v) {
+    st.speed = v; [...$('speedSeg').children].forEach(x => x.classList.toggle('on', +x.dataset.v === v));
+    $('dbSpeed').textContent = spTxt(v); $('dbSpeed').classList.toggle('changed', v !== 1);
+    $('dbSpeed').title = `Yarışın hızı: ${spTxt(v)}${v === 1 ? ' (gerçek zaman)' : v < 1 ? ' (yavaş)' : ' (hızlı)'} · dokun → sıradaki`;
+  }
+  // elle sürerken: zaman kutusunda tek düğme, dokununca sıradaki hız (½× → 1× → 5× → 15× → 40×)
+  $('dbSpeed').addEventListener('click', () => { const v = SPEEDS[(SPEEDS.indexOf(st.speed) + 1) % SPEEDS.length]; setSpeed(v); toast(`Yarışın hızı ${spTxt(v)}${v === 1 ? ': gerçek zaman' : v < 1 ? ': yavaş' : ''}`); });
+  setSpeed(st.speed || 1);
   $('scrub').addEventListener('input', e => {
     if (!st.frames.length || st.drive) return;
     st.playT = +e.target.value; st.sim = viewAt(st.playT);
@@ -1423,17 +1442,19 @@
   function setBoatCfg(c) {
     const cls = S.CLASSES[c.cls] ? c.cls : S.BOAT_DEFAULT.cls;
     const windKn = Math.max(2, Math.min(30, +c.windKn || S.BOAT_DEFAULT.windKn)), accelAt = Math.max(5, Math.min(120, +c.accelAt || S.BOAT_DEFAULT.accelAt));
-    st.boat = { cls, windKn, accelAt }; S.setBoat(st.boat);   // zaman ölçeği ve geri sayım buna göre
+    const pre = Math.max(60, Math.min(600, +c.pre || S.BOAT_DEFAULT.pre));
+    st.boat = { cls, windKn, accelAt, pre }; S.setBoat(st.boat);   // zaman ölçeği ve geri sayım buna göre
   }
   const segHtml = (vals, txt) => vals.map(v => `<button data-v="${v}">${txt(v)}</button>`).join('');
   $('boatCls').innerHTML = segHtml(Object.keys(S.CLASSES), k => S.CLASSES[k].name);
   $('boatWind').innerHTML = segHtml(S.WIND_KN, v => `${v} kn`);
   $('boatAccel').innerHTML = segHtml(S.ACCEL_AT, v => `${v} sn`);
+  $('boatPre').innerHTML = segHtml(S.PRE_SEC, v => `${v / 60} dk`);
   function boatUpdate() {
     const b = st.boat, setup = st.mode === 'setup', D = S.BOAT_DEFAULT;
-    [['boatCls', b.cls], ['boatWind', b.windKn], ['boatAccel', b.accelAt]].forEach(([id, val]) =>
+    [['boatCls', b.cls], ['boatWind', b.windKn], ['boatAccel', b.accelAt], ['boatPre', b.pre]].forEach(([id, val]) =>
       [...$(id).children].forEach(x => { x.classList.toggle('on', x.dataset.v === String(val)); x.disabled = !setup; }));
-    const def = b.cls === D.cls && b.windKn === D.windKn && b.accelAt === D.accelAt;
+    const def = b.cls === D.cls && b.windKn === D.windKn && b.accelAt === D.accelAt && b.pre === D.pre;
     $('boatState').textContent = `orsada ≈${S.upwindKn(b.cls, b.windKn).toFixed(1).replace('.', ',')} kn`;
     $('boatState').classList.toggle('changed', !def);
     $('btnBoatReset').disabled = !setup || def;
@@ -1441,12 +1462,14 @@
   function changeBoat(key, val) {
     if (st.mode !== 'setup') return;
     setBoatCfg({ ...st.boat, [key]: val }); updatePanel(true);
+    if (key === 'pre') { toast(`Start geri sayımı ${val / 60} dakika`); return; }
     toast(key === 'accelAt' ? `Tekneler start'a ${val} sn kala yelken doldurup hızlanacak` : `${S.CLASSES[st.boat.cls].name}, ${st.boat.windKn} knot rüzgar: orsada ≈${S.upwindKn(st.boat.cls, st.boat.windKn).toFixed(1).replace('.', ',')} kn`);
   }
   $('boatCls').addEventListener('click', e => { const x = e.target.closest('button'); if (x) changeBoat('cls', x.dataset.v); });
   $('boatWind').addEventListener('click', e => { const x = e.target.closest('button'); if (x) changeBoat('windKn', +x.dataset.v); });
   $('boatAccel').addEventListener('click', e => { const x = e.target.closest('button'); if (x) changeBoat('accelAt', +x.dataset.v); });
-  $('btnBoatReset').addEventListener('click', () => { if (st.mode !== 'setup') return; setBoatCfg({ ...S.BOAT_DEFAULT }); updatePanel(true); toast('Varsayılan: Optimist, 8 knot rüzgar, 30 sn kala hızlanma'); });
+  $('boatPre').addEventListener('click', e => { const x = e.target.closest('button'); if (x) changeBoat('pre', +x.dataset.v); });
+  $('btnBoatReset').addEventListener('click', () => { if (st.mode !== 'setup') return; setBoatCfg({ ...S.BOAT_DEFAULT }); updatePanel(true); toast('Varsayılan: Optimist, 8 knot rüzgar, 30 sn kala hızlanma, 5 dk geri sayım'); });
   function setSea(key, val) {
     if (st.mode === 'setup') { st.sea = { ...st.sea, [key]: val }; updatePanel(true); return; }
     applyChange({ k: 'sea', key, val });
@@ -1517,8 +1540,7 @@
   holdBtn('hpRight', () => { if (st.drive) st.drive.touchRud = 1; }, () => { if (st.drive) st.drive.touchRud = 0; });
   $('hpSheet').addEventListener('click', sheetToggle);
   $('hpVmg').addEventListener('click', vmgToggle);
-  $('hpTack').addEventListener('click', () => { helmTurn('tack'); flash('hpTack'); });
-  $('hpJibe').addEventListener('click', () => { helmTurn('jibe'); flash('hpJibe'); });
+  $('hpTack').addEventListener('click', () => { helmTurn('auto'); flash('hpTack'); });
   $('hpGo').addEventListener('click', () => { if (!st.drive) return; const live = st.drive.live, run = live && !st.drive.paused; exitDrive(live ? run : false); });
   $('hpPlay').addEventListener('click', drivePause);
   $('btnDrive').addEventListener('click', () => (st.drive ? $('hpGo').click() : enterDrive()));
@@ -1533,8 +1555,7 @@
       if (RUD_KEYS[k] != null) { e.preventDefault(); st.drive.keyRud = RUD_KEYS[k]; return; }
       if (k === 'ArrowUp' || k === 'w' || k === 'W') { e.preventDefault(); sheetBy(-1); return; }
       if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); sheetBy(1); return; }
-      if (k === 't' || k === 'T') { helmTurn('tack'); flash('hpTack'); return; }
-      if (k === 'k' || k === 'K') { helmTurn('jibe'); flash('hpJibe'); return; }
+      if (k === 't' || k === 'T' || k === 'k' || k === 'K') { helmTurn('auto'); flash('hpTack'); return; }
       if (k === 'v' || k === 'V') { vmgToggle(); return; }
       if (k === 'i' || k === 'I') { sheetToggle(); return; }
       if ((k === 'r' || k === 'R') && st.drive.live && !e.metaKey && !e.ctrlKey) { backToSetup(); return; }
