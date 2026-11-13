@@ -192,5 +192,23 @@ for (const wind of [-12, 0, 12]) {
   console.log(`• Orsa (VMG): pupadan orsaya ${bad.length ? 'SORUN' : 'girdi, rüzgar dönünce de kaldı'}`);
   if (bad.length) { problems++; console.log('  ⚠ Orsa:', bad.join(', ')); }
 }
+// Start bayrakları (5-4-1): son dakikada hattın üstündeki tekne P → OCS döner, I → uçtan dolaşır, Z → %20, U/Siyah → UFD/BFD
+{
+  const bad = [], want = { P: b => !b.dsq && !b.zPen && b.finish, I: b => b.iDone && b.finish, Z: b => b.zPen && b.finish, U: b => b.dsq === 'UFD', Siyah: b => b.dsq === 'BFD' };
+  for (const flag of Object.keys(want)) {
+    S.setCourse(S.COURSE_DEFAULT);
+    const fleet = S.defaultFleet(12), b3 = fleet.find(b => b.id === '3'); b3.x = 430; b3.y = S.LINE.pin.y - 120;
+    const s = S.newRace(fleet, { wind: 0, course: { ...S.COURSE_DEFAULT, flag } });
+    while (s.t < 160 && s.boats.some(b => !b.finish)) S.step(s);
+    const b = s.boats.find(o => o.id === '3');
+    if (!want[flag](b)) bad.push(`${flag}: 3 numara beklenen sonucu almadı`);
+    if (s.boats.some(o => o.id !== '3' && (o.dsq || o.zPen || o.iDone))) bad.push(`${flag}: başka tekne cezalandı`);
+    if (s.boats.some(o => !o.finish)) bad.push(`${flag}: bitirmeyen var`);
+    const sig = s.events.filter(e => e.kind === 'flag').length;
+    if (sig !== 4) bad.push(`${flag}: ${sig} işaret (4 olmalı)`);
+  }
+  console.log(`• Start bayrakları (P/I/Z/U/Siyah): ${bad.length ? 'SORUN' : 'işaretler ve cezalar doğru'}`);
+  if (bad.length) { problems++; console.log('  ⚠ Bayrak:', bad.join(', ')); }
+}
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);

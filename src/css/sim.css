@@ -490,3 +490,16 @@ body.lay-strip .mode-strip { top: 12px !important; right: 12px !important; }
 @media (max-width: 640px) { body.lay-strip .mode-strip { top: 160px !important; right: 10px !important; flex-direction: column !important; align-items: flex-end !important; gap: 4px; } .ms-chip { height: 28px; font-size: 12px; } }
 .ph-pause { background: var(--panel-solid); color: #e2e8f0; border-color: var(--border-strong); }
 .ph-end { background: var(--panel-solid); color: #cbd5e1; }
+
+/* Start bayrakları (Parkur → 5-4-1): hazırlık bayrağı seçimi, işaret sırası, kural açıklaması */
+.flag-seg { flex: 1 1 100%; flex-wrap: nowrap; }
+.flag-seg button { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 5px; padding: 0 6px; }
+.flag-ico { width: 21px; height: 15px; flex: 0 0 auto; display: block; }
+.flag-seq { list-style: none; margin: 8px 0 6px; padding: 0; display: grid; gap: 2px; }
+.flag-seq li { display: flex; align-items: baseline; gap: 8px; font-size: 12px; line-height: 1.35; color: var(--text2); padding: 4px 8px; border-radius: 7px; }
+.flag-seq li b { font-variant-numeric: tabular-nums; width: 32px; flex: 0 0 32px; color: var(--muted); font-weight: 700; }
+.flag-seq li.now { background: var(--accent-soft); color: var(--text); }
+.flag-seq li.now b { color: var(--accent); }
+.flag-seq li.past { opacity: .5; }
+.flag-box .box-head small { margin-left: auto; }
+.events li.flag { border-color: #fbbf24; color: #fde68a; }

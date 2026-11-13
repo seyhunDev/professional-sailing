@@ -10,7 +10,7 @@
   const WORLD = { w: 1000, h: 900 };
   // Parkur: start hattı boyu ve orsa şamandırasının hatta uzaklığı ayarlanabilir (setCourse).
   // Nesneler yerinde güncellenir; arayüz aynı nesneleri (S.LINE, S.MARK, S.WORLD) okur.
-  const COURSE_DEFAULT = { lineLen: 400, markDist: 650 };
+  const COURSE_DEFAULT = { lineLen: 400, markDist: 650, flag: 'P' };   // flag: hazırlık bayrağı (P, I, Z, U, Siyah)
   const LINE = { pin: { x: 300, y: 740 }, boat: { x: 700, y: 740 } };
   const MARK = { x: 500, y: 90, label: 'Orsa şamandırası' };
   const BASE = 55, TAU = 1.2, HOLD_V = BASE * 0.04;
@@ -447,6 +447,85 @@
     b.helm = { dir, left: E.norm360((target - b.h) * dir), kind };
   }
 
+  // ---------- Start işaretleri (5-4-1) ve hazırlık bayrağının kuralı (K26, K30) ----------
+  // Geri sayım gerçek saniyeyle: 5:00 uyarı (sınıf bayrağı), 4:00 hazırlık (P/I/Z/U/Siyah), 1:00 hazırlık bayrağı iner,
+  // 0:00 start (sınıf bayrağı iner). Son dakikada: I → hattın ya da uzantılarının üstüne geçen uçlardan dolaşır (K30.1);
+  // Z → pin, hakem botu ve orsa şamandırası üçgenine giren %20 puan cezası (K30.2); U → aynı üçgen, diskalifiye UFD
+  // (K30.3); Siyah → aynı üçgen, diskalifiye BFD (K30.4).
+  const FLAG_RULE = { P: '', I: 'I', Z: 'tri', U: 'tri', Siyah: 'tri' };
+  const flagOf = s => (s.course && FLAG_RULE[s.course.flag] != null ? s.course.flag : 'P');
+  // Gerçek saniye cinsinden start'a kalan; 0..60 arası "son dakika"
+  const remReal = (s, t) => (s.startAt - (t == null ? s.t : t)) * CLOCK_SCALE;
+  function signalState(s, t) {
+    const r = remReal(s, t), f = flagOf(s);
+    return { rem: r, flag: f, classUp: r > 0, prepUp: r <= 240 && r > 60, lastMin: r <= 60 && r > 0, rule: FLAG_RULE[f] };
+  }
+  function signals(s, t) {
+    const r0 = remReal(s, t), r1 = remReal(s, t + DT), f = flagOf(s), cls = (CLASSES[BOAT.cls] || {}).name || 'sınıf';
+    const crossed = x => r0 > x + 1e-6 && r1 <= x + 1e-6;
+    const at = x => { const e = s.events[s.events.length - 1]; if (e && e.kind === 'flag') e.t = +(s.startAt - x / CLOCK_SCALE).toFixed(4); };   // olay zamanı = işaretin tam anı
+    const L = { P: 'P bayrağı: özel kural yok, erken çıkan hattın içine geri dönüp start eder',
+      I: 'I bayrağı: son dakikada hattın ya da uzantılarının üstüne geçen, bir ucun uzantısından dolaşıp gelir (K30.1)',
+      Z: 'Z bayrağı: son dakikada pin, hakem botu ve şamandıra üçgenine giren %20 puan cezası alır (K30.2)',
+      U: 'U bayrağı: son dakikada pin, hakem botu ve şamandıra üçgenine giren diskalifiye olur, UFD (K30.3)',
+      Siyah: 'Siyah bayrak: son dakikada üçgene giren diskalifiye olur, BFD; genel geri çağırmada yeniden start\'a da giremez (K30.4)' };
+    if (t === 0) log(s, r0 >= 299 ? `Uyarı işareti (5:00): ${cls} sınıf bayrağı çekildi, 1 ses` : `Geri sayım ${fmt(s.startAt)}: ${cls} sınıf bayrağı yukarıda`, 'flag');
+    if (t === 0 && r0 <= 240 && r0 > 60) log(s, `Hazırlık bayrağı yukarıda: ${L[f]}`, 'flag');
+    if (crossed(240)) { log(s, `Hazırlık işareti (4:00): ${f === 'Siyah' ? 'siyah bayrak' : f + ' bayrağı'} çekildi, 1 ses. ${L[f]}`, 'flag'); at(240); }
+    if (crossed(60)) { log(s, `Son dakika (1:00): ${f === 'Siyah' ? 'siyah bayrak' : f + ' bayrağı'} indi, 1 uzun ses${FLAG_RULE[f] ? ', yasaklı bölge geçerli' : ''}`, 'flag'); at(60); }
+    if (crossed(0)) { log(s, `Start (0:00): sınıf bayrağı indi, 1 ses${FLAG_RULE[f] ? '. Yasaklı bölge kalktı' : ''}`, 'flag'); at(0); }
+  }
+  // Gövdenin noktaları (burun, orta, kıç): "gövdenin herhangi bir parçası" için
+  const hullPts = b => { const f = E.fwd(b.h); return [{ x: b.x + f.x * BOW, y: b.y + f.y * BOW }, b, { x: b.x - f.x * BOW, y: b.y - f.y * BOW }]; };
+  const lineN = () => { const p = LINE.pin, q = LINE.boat, L = Math.hypot(q.x - p.x, q.y - p.y); return { x: -(q.y - p.y) / L, y: (q.x - p.x) / L }; };   // start tarafı
+  const courseSide = p => { const n = lineN(); return (p.x - LINE.pin.x) * n.x + (p.y - LINE.pin.y) * n.y < 0; };
+  function inTriangle(p) {
+    const A = LINE.pin, B = LINE.boat, C = MARK;
+    const cr = (a, b, c) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    const d1 = cr(A, B, p), d2 = cr(B, C, p), d3 = cr(C, A, p);
+    return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+  }
+  // Son dakikada yasaklı bölgeye giren tekne (bir kez işaretlenir; I bayrağında dolaşınca yeniden girerse yine)
+  function zoneCheck(s, b) {
+    const f = flagOf(s), rule = FLAG_RULE[f];
+    if (!rule || b.gone || b.phase === 'done') return;
+    const pts = hullPts(b);
+    if (rule === 'I') {
+      if (b.iFlag || !pts.some(courseSide)) return;
+      b.iFlag = true;
+      note(b, s, 'I bayrağı · uçlardan dolaş', 'bad', 3.5);
+      log(s, `${b.id} son dakikada hattın üstüne geçti (I bayrağı): start için bir ucun uzantısından dolaşıp geri gelmeli (K30.1)`, 'bad', 'ibay' + b.id);
+    } else {
+      if (b.zPen || b.dsq || !pts.some(inTriangle)) return;
+      if (f === 'Z') {
+        b.zPen = true; note(b, s, 'Z · %20 puan cezası', 'bad', 3.5);
+        log(s, `${b.id} son dakikada üçgene girdi (Z bayrağı): %20 puan cezası (K30.2). Start'ta hattın üstündeyse yine geri dönmeli`, 'bad');
+      } else {
+        b.dsq = f === 'U' ? 'UFD' : 'BFD'; note(b, s, `${b.dsq} · diskalifiye`, 'bad', 4);
+        log(s, `${b.id} son dakikada üçgene girdi (${f === 'U' ? 'U bayrağı' : 'siyah bayrak'}): ${b.dsq}, diskalifiye (K30.${f === 'U' ? 3 : 4}). Geri dönmesi bir şey değiştirmez`, 'bad');
+      }
+    }
+  }
+  // Start anında teknenin evresi (bekleyen tekne için)
+  function startPhase(b, s) {
+    if (b.dsq) { b.phase = 'race'; if (lineSide(b) === -1) b.started = true; return; }   // diskalifiye: geri dönmez, yarışa devam eder (sayılmaz)
+    if (b.iFlag) { b.phase = 'ocs'; b.go = true; note(b, s, 'I bayrağı · uçlardan dolaş', 'bad', 3.5); return; }
+    b.phase = lineSide(b) === -1 ? 'ocs' : 'race'; if (b.phase === 'ocs') ocs(b, s);
+  }
+  // I bayrağında dolaşma rotası: hattın üstündeyken yakın ucun dışına, uzantıyı geçince rüzgaraltına
+  function roundEndsTarget(b, w) {
+    const u = R.lineParam(LINE, b), p = LINE.pin, q = LINE.boat, L = Math.hypot(q.x - p.x, q.y - p.y);
+    const dx = (q.x - p.x) / L, dy = (q.y - p.y) / L, n = lineN(), pinEnd = u < 0.5;
+    const e = pinEnd ? p : q, o = pinEnd ? -1 : 1, out = pinEnd ? u < -0.12 : u > 1.12;
+    if (lineSide(b) === -1) {
+      if (out) return w + 180;
+      return bearing(b, { x: e.x + dx * o * 60 - n.x * 30, y: e.y + dy * o * 60 - n.y * 30 });
+    }
+    return bearing(b, { x: e.x + dx * o * 70 - n.x * 40, y: e.y + dy * o * 70 - n.y * 40 });   // içeride kaldıysa: önce uzantının üstüne çık
+  }
+  const finishNo = (b, s) => (b.dsq ? 900 + (s.dsqN = (s.dsqN || 0) + 1) : ++s.finished);
+  const finNote = b => (b.dsq ? `Bitirdi · ${b.dsq}, sayılmaz` : `${b.finish}. bitirdi`);
+
   // ---------- Bir adım ----------
   function step(s) {
     if (s.course) setCourse(s.course);                      // parkur bu yarışınki (değişmediyse işlem yok)
@@ -455,6 +534,7 @@
     const racing = b => b.phase === 'race' || b.phase === 'ocs' || b.phase === 'round';
     const snap = active.filter(b => b.phase !== 'done').map(b => ({ ref: b, x: b.x, y: b.y, h: b.h, v: b.v }));
     const rulesOn = t >= s.startAt + 0.5;
+    signals(s, t);
 
     for (const b of active) {
       const remain = s.startAt - t;
@@ -483,7 +563,7 @@
           target = hA;                                    // yelken yarı boş, hızlanma noktasına sokul; varınca rotada bekle
           creepV = clamp((d0 - dGo) / Math.max(0.15, remain - tGo), 0, BASE * 0.3) + dr * 0.9;
         } else { target = w + (b.tack === 'starboard' ? -25 : 25); holding = true; }
-        if (remain <= 0) { b.phase = lineSide(b) === -1 ? 'ocs' : 'race'; if (b.phase === 'ocs') ocs(b, s); }
+        if (remain <= 0) startPhase(b, s);
       }
       if (b.phase === 'race') {
         const routing = !b.manual && b.started && b.route && b.routeIdx < b.route.length;
@@ -546,9 +626,9 @@
           b.phase = 'penalty'; b.penWait = true; b.penTurn = 0; b.penaltyAt = null; b.man = null; b.penFinish = true;
           note(b, s, 'Önce cezasını atmalı', 'bad', 2.5);
         } else if (markAngle(b, w) < -100 || t - b.roundAt > 8) {
-          b.phase = 'done'; b.finish = ++s.finished; b.finishT = t - s.startAt; b.doneAt = t;
-          note(b, s, `${b.finish}. bitirdi`, 'good', 3);
-          log(s, `${b.id} şamandırayı ${b.finish}. sırada döndü`, 'good');
+          b.phase = 'done'; b.finish = finishNo(b, s); b.finishT = t - s.startAt; b.doneAt = t;
+          note(b, s, finNote(b), b.dsq ? 'bad' : 'good', 3);
+          log(s, b.dsq ? `${b.id} şamandırayı döndü ama ${b.dsq} (diskalifiye), sıraya girmez` : `${b.id} şamandırayı ${b.finish}. sırada döndü`, b.dsq ? '' : 'good');
         }
       }
       if (b.phase === 'done') {
@@ -582,12 +662,13 @@
       } else if (b.phase === 'penalty') {
         target = b.h - 170; turnDir = -1; speedK = 0.55;
         if (b.penTurn >= 720 && b.penFinish) {
-          b.penFinish = false; b.phase = 'done'; b.finish = ++s.finished; b.finishT = t - s.startAt; b.doneAt = t;
-          note(b, s, `Ceza tamam · ${b.finish}. bitirdi`, 'good', 3);
-          log(s, `${b.id} cezasını tamamladı, ${b.finish}. sırada bitirdi`, 'good');
+          b.penFinish = false; b.phase = 'done'; b.finish = finishNo(b, s); b.finishT = t - s.startAt; b.doneAt = t;
+          note(b, s, `Ceza tamam · ${finNote(b)}`, 'good', 3);
+          log(s, `${b.id} cezasını tamamladı, ${b.dsq ? b.dsq + ' (sayılmaz)' : b.finish + '. sırada bitirdi'}`, 'good');
         } else if (b.penTurn >= 720) { b.phase = 'race'; note(b, s, 'Ceza tamam, yarışa dönüyor', 'good', 2); log(s, `${b.id} cezasını tamamladı`, 'good'); }
       }
-      if (b.phase === 'ocs') {
+      if (b.phase === 'ocs' && b.iFlag) target = roundEndsTarget(b, w);   // I bayrağı: uçların dışından dolaş
+      else if (b.phase === 'ocs') {
         target = w + 180;
         if (lineSide(b) === 1 && distToLine(b, w) > 8) { b.phase = 'race'; b.started = false; note(b, s, b.outside ? 'Geri döndü, şimdi hattın içinden' : 'Geri döndü, şimdi start', '', 2); }
       }
@@ -722,13 +803,26 @@
     }
     // start'tan önce hattı yalnız manuel (ya da elle sürülen) tekne geçebilir: diğerlerinin burnu hattın altında kalır
     if (t < s.startAt) for (const b of active) if (b.phase === 'wait' && !b.manual) keepBehindLine(b);
+    // son dakika: hazırlık bayrağının yasaklı bölgesi (I: hattın/uzantılarının üstü; Z, U, Siyah: üçgen)
+    const rem1 = remReal(s, t);
+    if (rem1 <= 60 && rem1 > 0) for (const b of active) zoneCheck(s, b);
     // start hattı geçişleri (temas itmesi dahil, tüm hareketten sonra)
     for (const b of active) {
       const side = lineSide(b), was = b.prevSide == null ? side : b.prevSide;
       b.prevSide = side;
+      if (b.iFlag && was === -1 && side === 1) {                // I bayrağı: bir ucun uzantısından aşağı geçti → dolaşma tamam
+        const u = R.lineParam(LINE, b);
+        if (u < 0 || u > 1) {
+          b.iFlag = false; b.iDone = true;
+          if (b.phase === 'ocs') { b.phase = t < s.startAt ? 'wait' : 'race'; b.started = false; b.outside = false; }
+          note(b, s, 'Uçtan dolaştı · şimdi hattın içinden', 'good', 2.5);
+          log(s, `${b.id} I bayrağı: ${u < 0 ? 'pin' : 'hakem botu'} ucunun uzantısından dolaştı, şimdi hattın içinden start edebilir`, 'good');
+        }
+      }
       if (!(was === 1 && side === -1)) continue;
-      if (b.phase === 'wait' && t < s.startAt) { ocs(b, s); continue; }
+      if (b.phase === 'wait' && t < s.startAt) { if (!b.dsq) ocs(b, s); continue; }
       if ((b.phase === 'race' || b.phase === 'wait' || b.phase === 'penalty') && !b.started) {
+        if (b.dsq) { b.started = true; continue; }          // diskalifiye: start sayılmaz zaten, uçtan geçmesi fark etmez
         const u = R.lineParam(LINE, b);
         if (u >= -0.05 && u <= 1.05) b.started = true;    // gövde payı: merkez uca 20 px'e kadar dışarıda olabilir
         else {
@@ -743,8 +837,8 @@
   // Elle sürülen tekne (canlı elle sürme): hareketi drive() yapar; burada yalnız yarış evreleri ilerler.
   // Şamandıra dönüşü ve ceza turu otomatiğe geçer (b.hand kalkar, arayüz elle sürmeyi bitirir).
   function handPhase(b, s, t, w, remain) {
-    if (b.phase === 'wait' && remain <= 0) { b.phase = lineSide(b) === -1 ? 'ocs' : 'race'; if (b.phase === 'ocs') ocs(b, s); }
-    else if (b.phase === 'ocs' && lineSide(b) === 1 && distToLine(b, w) > 8) { b.phase = 'race'; b.started = false; note(b, s, b.outside ? 'Geri döndü, şimdi hattın içinden' : 'Geri döndü, şimdi start', '', 2); }
+    if (b.phase === 'wait' && remain <= 0) startPhase(b, s);
+    else if (b.phase === 'ocs' && !b.iFlag && lineSide(b) === 1 && distToLine(b, w) > 8) { b.phase = 'race'; b.started = false; note(b, s, b.outside ? 'Geri döndü, şimdi hattın içinden' : 'Geri döndü, şimdi start', '', 2); }
     if (b.phase === 'race' && b.started) {
       const wp = waypoint(w), dWp = Math.hypot(wp.x - b.x, wp.y - b.y), dM = Math.hypot(b.x - MARK.x, b.y - MARK.y), phi = markAngle(b, w);
       // şamandıraya ~1.5 boy yaklaşınca (hangi yandan gelirse gelsin) dönüşü otomatik yapar
@@ -795,6 +889,7 @@
   }
   function ocs(b, s) {
     b.phase = 'ocs'; b.go = true;
+    if (b.iFlag) return;                                     // I bayrağı: notu zoneCheck verdi, dolaşacak
     if (!b.ocsOnce) { b.ocsOnce = true; note(b, s, 'ERKEN · OCS – geri dön', 'bad', 3.5); log(s, `${b.id} erken çıktı (OCS), geri dönüyor`, 'bad'); }
   }
 
@@ -803,15 +898,19 @@
     const w = s.wind, wp = waypoint(w), up = E.fwd(w), right = E.fwd(w + 90);
     return s.boats.map(b => {
       let key, status;
-      if (b.finish) { key = -1000 + b.finish; status = `${b.finish}. · ${fmt(b.finishT)}${b.penalties ? ' · ' + b.penalties + ' ceza' : ''}`; }
+      const zp = zPoints(s);
+      if (b.finish && b.dsq) { key = 10000 + b.finish; status = `${b.dsq} · diskalifiye (bitirdi, sayılmaz)`; }
+      else if (b.finish) { key = -1000 + b.finish; status = `${b.finish}. · ${fmt(b.finishT)}${b.penalties ? ' · ' + b.penalties + ' ceza' : ''}${b.zPen ? ` · Z: ${b.finish}+${zp} = ${b.finish + zp} puan` : ''}`; }
       else {
         const along = Math.max(0, dot({ x: wp.x - b.x, y: wp.y - b.y }, up)), lat = Math.abs(dot({ x: b.x - wp.x, y: b.y - wp.y }, right));
-        key = along + Math.max(0, lat - along) + (b.phase === 'ocs' ? 400 : 0);
-        status = b.phase === 'wait' ? (s.t < s.startAt ? 'Bekliyor' : 'Yarışta') : b.phase === 'ocs' ? 'OCS · geri dönüyor' : b.phase === 'round' ? 'Şamandırayı dönüyor' : b.phase === 'penalty' ? 'Ceza turu' : `${(key / HULL).toFixed(1)} boy kaldı`;
+        key = along + Math.max(0, lat - along) + (b.phase === 'ocs' ? 400 : 0) + (b.dsq ? 10000 : 0);
+        status = b.phase === 'wait' ? (s.t < s.startAt ? 'Bekliyor' : 'Yarışta') : b.phase === 'ocs' ? (b.iFlag ? 'I · uçlardan dolaşıyor' : 'OCS · geri dönüyor') : b.phase === 'round' ? 'Şamandırayı dönüyor' : b.phase === 'penalty' ? 'Ceza turu' : `${(key % 10000 / HULL).toFixed(1)} boy kaldı`;
+        if (b.dsq) status = `${b.dsq} · diskalifiye · ${status}`; else if (b.zPen) status += ' · Z %20 ceza';
       }
       return { b, key, status };
     }).sort((a, c) => a.key - c.key);
   }
+  const zPoints = s => Math.max(1, Math.round(0.2 * s.boats.length));   // Z: kayıtlı tekne sayısının %20'si (K44.3c)
   const fmt = t => `${Math.floor(t * CLOCK_SCALE / 60)}:${String(Math.floor(t * CLOCK_SCALE % 60)).padStart(2, '0')}`;
 
   // Durumun kopyası (geri sarma için)
@@ -835,6 +934,6 @@
     runToEnd,
     DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, PRE_SEC, setBoat, upwindKn, BOAT,
     get START_AT() { return START_AT; }, get CLOCK_SCALE() { return CLOCK_SCALE; }, MAN_MARGIN, PERSONAS, MINE_COLOR, OBSTACLES,
-    SHADOW_LEN, SEA, SEA_DEFAULT, knots, drive, steer, helmTurn, idealSheet, trimEff, SHEET_MAX, SHEET_OFF_MAX, defaultFleet, handStep, runHand, handRow, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
+    FLAG_RULE, signalState, inTriangle, zPoints, SHADOW_LEN, SEA, SEA_DEFAULT, knots, drive, steer, helmTurn, idealSheet, trimEff, SHEET_MAX, SHEET_OFF_MAX, defaultFleet, handStep, runHand, handRow, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
 })(typeof window !== 'undefined' ? window : globalThis);

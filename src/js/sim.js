@@ -18,7 +18,7 @@
     fleet: S.defaultFleet(12),
     wind: 0, gusts: [],
     sim: null, frames: [], rec: null, speed: 1, lastTs: 0, acc: 0,
-    show: { speed: true, shadow: true, startLay: false },   // pis rüzgar konileri varsayılan açık; hat layline'ları ayarlardan
+    show: { speed: true, shadow: true, startLay: false, zone: true },   // pis rüzgar konileri varsayılan açık; hat layline'ları ayarlardan
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
     cam: { z: 1, x: null, y: null, follow: false }, base: null, pinch: null, pts: new Map(),
     course: { ...S.COURSE_DEFAULT }, sea: { ...S.SEA_DEFAULT }, boat: { ...S.BOAT_DEFAULT }, gsel: null, drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
@@ -184,6 +184,99 @@
   }
 
   let cbNode = null;
+  // ---------- Start bayrakları (5-4-1) ve hazırlık bayrağının yasaklı bölgesi ----------
+  const FLAGS = ['P', 'I', 'Z', 'U', 'Siyah'];
+  const FLAG_INFO = {
+    P: { name: 'P bayrağı', short: 'Özel kural yok · erken çıkan geri döner', zone: '',
+      text: "Standart hazırlık bayrağı, ek kısıtlama yok. Start işaretinde gövdesinin bir parçası hattın üstünde olan tekne erken (OCS) sayılır: hattın altına tamamen dönüp yeniden start eder (K28, K29.1)." },
+    I: { name: 'I bayrağı', short: 'Son 1 dk hattın üstü: uçlardan dolaş', zone: 'Hattın ve uzantılarının üstü',
+      text: "Son dakikada gövdesinin bir parçası hattın ya da uzantılarının üstünde olan tekne, start etmeden önce bir ucun (pin ya da hakem botu) uzantısından dolaşıp hattın altına geçmeli; hattın içinden geri dönmek yetmez (K30.1)." },
+    Z: { name: 'Z bayrağı', short: 'Son 1 dk üçgen: %20 puan cezası', zone: 'Pin · hakem botu · şamandıra üçgeni',
+      text: "Son dakikada pin, hakem botu ve orsa şamandırasının üçgenine giren tekne duruşmasız %20 puan cezası alır (kayıtlı tekne sayısının %20'si, K30.2). Start'ta hattın üstündeyse yine geri dönüp start etmeli." },
+    U: { name: 'U bayrağı', short: 'Son 1 dk üçgen: diskalifiye (UFD)', zone: 'Pin · hakem botu · şamandıra üçgeni',
+      text: "Son dakikada aynı üçgene giren tekne duruşmasız diskalifiye edilir: UFD (K30.3). Geri dönmesi cezayı kaldırmaz. Yalnız yarış yeniden başlatılırsa (genel geri çağırma) ceza silinir." },
+    Siyah: { name: 'Siyah bayrak', short: 'Son 1 dk üçgen: diskalifiye (BFD)', zone: 'Pin · hakem botu · şamandıra üçgeni',
+      text: "En sert start kuralı. Son dakikada üçgene giren tekne duruşmasız diskalifiye edilir: BFD (K30.4). Genel geri çağırmada yelken numarası ilan edilir, yeniden start'a da katılamaz." }
+  };
+  const flagNow = v => ((v && v.course) || st.course).flag || 'P';
+  const remReal = v => (v.startAt - v.t) * S.CLOCK_SCALE;
+  // Bayrak çizimi (30×20 kutu; işaret bayraklarının gerçek desenleri). Sınıf bayrağı: beyaz zemin, sınıfın kısa adı
+  function flagMarkup(f, cls) {
+    const R = (x, y, w, h, c) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`;
+    const P = (d, c) => `<path d="${d}" fill="${c}"/>`;
+    let in_ = '';
+    if (f === 'P') in_ = R(0, 0, 30, 20, '#1d4ed8') + R(10, 6.5, 10, 7, '#fff');
+    else if (f === 'I') in_ = R(0, 0, 30, 20, '#facc15') + '<circle cx="15" cy="10" r="5.6" fill="#111"/>';
+    else if (f === 'Z') in_ = P('M0,0H30L15,10Z', '#facc15') + P('M30,0V20L15,10Z', '#1d4ed8') + P('M0,20H30L15,10Z', '#dc2626') + P('M0,0V20L15,10Z', '#111');
+    else if (f === 'U') in_ = R(0, 0, 15, 10, '#dc2626') + R(15, 0, 15, 10, '#fff') + R(0, 10, 15, 10, '#fff') + R(15, 10, 15, 10, '#dc2626');
+    else if (f === 'Siyah') in_ = R(0, 0, 30, 20, '#111');
+    else in_ = R(0, 0, 30, 20, '#fff') + `<text x="15" y="13.6" text-anchor="middle" font-size="${cls && cls.length > 4 ? 7 : 8.5}" font-weight="800" fill="#1d3557" style="font-size:${cls && cls.length > 4 ? 7 : 8.5}px">${esc(cls || 'SINIF')}</text>`;
+    return in_ + '<rect x="0" y="0" width="30" height="20" fill="none" stroke="rgba(15,23,42,.75)" stroke-width="1"/>';
+  }
+  const flagSvgTag = f => `<svg class="flag-ico" viewBox="-1 -1 32 22" aria-hidden="true">${flagMarkup(f)}</svg>`;
+  const classShort = () => { const n = (S.CLASSES[st.boat.cls] || {}).name || 'Sınıf'; return n.split(' ')[0].slice(0, 4).toUpperCase(); };
+  function flagG(parent, f, x, y, sc) {
+    const g = el('g', { transform: `translate(${x.toFixed(1)},${y.toFixed(1)}) scale(${sc})` }, parent);
+    g.innerHTML = flagMarkup(f, classShort());
+    return g;
+  }
+  // Hangi bayrak hangi yükseklikte (0 = aşağıda/yok, 1 = yukarıda); çekilip inerken ~2.5 gerçek sn kayar
+  function flagHoist(rem) {
+    const ramp = (a, b) => Math.max(0, Math.min(1, (a - b) / 2.5));
+    const cls = rem > 0 ? Math.min(1, ramp(300.01, rem) + (rem < 299 ? 1 : 0)) : Math.max(0, 1 + rem / 2.5);
+    const prep = rem > 60 ? (rem <= 240 ? ramp(240, rem) : 0) : Math.max(0, 1 - (60 - rem) / 2.5);
+    return { cls: Math.min(1, cls), prep };
+  }
+  // Hakem botunun direğinde sinyal bayrakları (sahnede; dünya koordinatı, okunur kalsın diye dönmez)
+  function drawSignalMast(g, v) {
+    const { boat } = S.LINE, setup = st.mode === 'setup', rem = setup ? 300 : remReal(v), f = flagNow(v);
+    const hz = setup ? { cls: 1, prep: 0 } : flagHoist(rem);
+    if (!setup && rem < -2.5) return;
+    const mx = boat.x + 46, top = boat.y - 92, bot = boat.y - 2;
+    el('line', { x1: mx, y1: bot, x2: mx, y2: top, stroke: '#e2e8f0', 'stroke-width': 1.6, 'stroke-linecap': 'round' }, g);
+    el('line', { x1: mx - 9, y1: top + 4, x2: mx + 9, y2: top + 4, stroke: '#e2e8f0', 'stroke-width': 1.2 }, g);   // seren
+    const slot = (k, i) => bot - 26 - (bot - 26 - (top + 6 + i * 32)) * k;   // aşağıdan yuvasına
+    if (hz.cls > 0) flagG(g, 'cls', mx + 1, slot(hz.cls, 0), 1.3);
+    if (hz.prep > 0 && f) flagG(g, f, mx + 1, slot(hz.prep, 1), 1.3);
+  }
+  // Son dakikanın yasaklı bölgesi: I → hattın ve uzantılarının üstü (uçlardan dolaşma okları); Z/U/Siyah → üçgen
+  function drawZone(g, v) {
+    const f = flagNow(v), info = FLAG_INFO[f], rule = S.FLAG_RULE[f];
+    if (!rule || !st.show.zone) return;
+    const setup = st.mode === 'setup', rem = setup ? null : remReal(v);
+    let level;                                                // 'preview' | 'soon' | 'on'
+    if (setup) { if (st.cat !== 'course') return; level = 'preview'; }
+    else if (rem > 60 && rem <= 240) level = 'soon';
+    else if (rem > 0 && rem <= 60) level = 'on';
+    else return;
+    const pulse = level === 'on' ? 0.5 + 0.5 * Math.sin(performance.now() / 260) : 0;
+    const fillA = level === 'on' ? 0.22 + 0.1 * pulse : level === 'preview' ? 0.2 : 0.09;
+    const strokeA = level === 'soon' ? 0.55 : 0.95, dash = level === 'on' ? 'none' : '9 7';
+    const { pin, boat } = S.LINE, M = S.MARK, zg = el('g', { class: 'flag-zone', 'pointer-events': 'none' }, g);
+    const red = a => `rgba(248,60,60,${a.toFixed(2)})`;
+    const cx = (pin.x + boat.x) / 2, ly = pin.y;
+    if (rule === 'tri') {
+      el('path', { d: `M${pin.x},${pin.y} L${boat.x},${boat.y} L${M.x},${M.y} Z`, fill: red(fillA), stroke: red(strokeA), 'stroke-width': level === 'on' ? 2.5 : 1.8, 'stroke-dasharray': dash, 'stroke-linejoin': 'round' }, zg);
+    } else {
+      const x0 = st.vb.x - 50, x1 = st.vb.x + st.vb.w + 50, bh = 120;
+      if (!$('zoneGrad')) {
+        const lg = el('linearGradient', { id: 'zoneGrad', x1: 0, y1: 1, x2: 0, y2: 0 }, $('course').querySelector('defs') || el('defs', {}, $('course')));
+        el('stop', { offset: 0, 'stop-color': '#ef4444', 'stop-opacity': 1 }, lg); el('stop', { offset: 1, 'stop-color': '#ef4444', 'stop-opacity': 0 }, lg);
+      }
+      el('rect', { x: x0, y: ly - bh, width: x1 - x0, height: bh, fill: 'url(#zoneGrad)', opacity: (fillA * 2.2).toFixed(2) }, zg);
+      el('line', { x1: x0, y1: ly, x2: x1, y2: ly, stroke: red(strokeA), 'stroke-width': level === 'on' ? 2.5 : 1.8, 'stroke-dasharray': '10 7' }, zg);
+      // uçlardan dolaşma okları (hattın üstünden, ucun dışından, hattın altına)
+      const arrow = (ex, o, r) => `M${ex - o * 34},${ly - 46} C${ex + o * (r - 10)},${ly - 70} ${ex + o * (r + 18)},${ly - 6} ${ex + o * (r - 6)},${ly + 30}`;
+      for (const [ex, o, r] of [[pin.x, -1, 46], [boat.x, 1, 92]])
+        el('path', { d: arrow(ex, o, r), fill: 'none', stroke: level === 'on' ? '#fca5a5' : red(0.7), 'stroke-width': 2.2, 'stroke-dasharray': '6 5', 'marker-end': 'url(#arrowHead)' }, zg);
+    }
+    const t1 = level === 'preview' ? `Önizleme · ${info.name}: son dakikada yasaklı bölge` : level === 'soon' ? `${info.name}: son dakikada burası yasak` : `YASAKLI BÖLGE · ${info.name} · son dakika`;
+    const t2 = info.short;
+    const ty = rule === 'tri' ? ly - Math.min(150, (ly - M.y) * 0.3) : ly - 92;
+    const tt = { 'text-anchor': 'middle', 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.85)', 'stroke-width': 3.5 };
+    el('text', { x: cx, y: ty, fill: level === 'on' ? '#fecaca' : '#fca5a5', 'font-size': 13, 'font-weight': 800, ...tt }, zg).textContent = t1;
+    el('text', { x: cx, y: ty + 16, fill: '#fee2e2', 'font-size': 11.5, 'font-weight': 600, ...tt }, zg).textContent = t2;
+  }
   function drawCourse(v) {
     const g = $('courseLayer'); g.innerHTML = '';
     const { pin, boat } = S.LINE, M = S.MARK, w = v.wind;
@@ -199,6 +292,7 @@
     el('text', { x: wp.x - rf.x * 230 + 8, y: wp.y - rf.y * 230, fill: 'rgba(134,239,172,.8)', 'font-size': 11 }, g).textContent = 'sancak layline';
     // ayarlardaki anahtar: pin ve hakem botu layline'ları
     if (st.show.startLay) E.drawStartLaylines(el, g, S.LINE, w);
+    drawZone(g, v);                                     // hazırlık bayrağının yasaklı bölgesi (son dakika)
     // start hattı
     el('line', { x1: pin.x, y1: pin.y, x2: boat.x, y2: boat.y, stroke: '#ffd166', 'stroke-width': 2, 'stroke-dasharray': '10 8', opacity: .9 }, g);
     el('circle', { cx: pin.x, cy: pin.y, r: 7, fill: '#ff8c42', stroke: '#fff', 'stroke-width': 1.5 }, g);
@@ -207,6 +301,7 @@
     g.appendChild(cbNode);
     cbNode.setAttribute('transform', E.committeeBoatTransform(boat.x, boat.y, w));
     el('text', { x: boat.x + 14, y: boat.y + 60, 'text-anchor': 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
+    drawSignalMast(g, v);
     // hat avantajı (bias)
     const bias = E.norm180(w);                          // hat yatay: rüzgar sağa döndükçe hakem botu ucu avantajlı
     const bt = Math.abs(bias) < 3 ? 'Hat dik: iki uç eşit' : (bias > 0 ? `Hakem botu ucu avantajlı (${Math.round(bias)}°)` : `Pin ucu avantajlı (${Math.round(-bias)}°)`);
@@ -351,6 +446,31 @@
     const bw = Math.max(pw, btxt.length * 5.9 + 18);
     el('rect', { x: px, y: py + ph + 5, width: bw, height: 18, rx: 9, fill: acc ? 'rgba(251,191,36,.92)' : 'rgba(7,18,30,0.72)', stroke: acc ? 'none' : 'rgba(255,255,255,.18)' }, hg);
     el('text', { x: px + bw / 2, y: py + ph + 18, 'text-anchor': 'middle', fill: acc ? '#1c1300' : 'rgba(255,255,255,.82)', 'font-size': 10.5, 'font-weight': 700 }, hg).textContent = btxt;
+    drawSignalCard(hg, v, px, py + ph + 28);
+  }
+  // Sinyal kartı: o an direkte hangi bayraklar var, sıradaki işaret ve kural (eğitici)
+  function drawSignalCard(hg, v, x, y) {
+    const f = flagNow(v), info = FLAG_INFO[f], setup = st.mode === 'setup', rem = setup ? 300 : remReal(v);
+    if (!setup && rem < -20) return;                               // start'tan ~20 sn sonra kart kalkar
+    const fn = f === 'Siyah' ? 'Siyah bayrak' : `${f} bayrağı`;
+    let t1, t2, tone = 'info';
+    if (setup) { t1 = `Start 5-4-1 · hazırlık: ${fn}`; t2 = info.short; }
+    else if (rem > 240) { t1 = 'Uyarı (5:00) · sınıf bayrağı'; t2 = `4:00'te ${fn} çekilecek`; }
+    else if (rem > 60) { t1 = `Hazırlık (4:00) · ${fn}`; t2 = info.short; tone = S.FLAG_RULE[f] ? 'warn' : 'info'; }
+    else if (rem > 0) { t1 = `Son dakika · ${fn} indi`; t2 = S.FLAG_RULE[f] ? info.short : 'Erken çıkan geri dönüp start eder'; tone = S.FLAG_RULE[f] ? 'bad' : 'warn'; }
+    else { t1 = 'Start · sınıf bayrağı indi'; t2 = S.FLAG_RULE[f] ? 'Yasaklı bölge kalktı' : 'İyi yarışlar!'; }
+    const hz = setup ? { cls: 1, prep: 1 } : flagHoist(rem);
+    const tw = Math.max(t1.length * 6.2, t2.length * 5.7), w = 74 + tw + 14, h = 44;
+    const col = { info: 'rgba(255,255,255,.18)', warn: 'rgba(251,191,36,.7)', bad: 'rgba(248,113,113,.85)' }[tone];
+    el('rect', { x, y, width: w, height: h, rx: 12, fill: 'rgba(7,18,30,0.78)', stroke: col, 'stroke-width': tone === 'info' ? 1 : 1.5 }, hg);
+    // iki bayrak yuvası: sınıf + hazırlık (inmişse soluk çerçeve)
+    [['cls', hz.cls], [f, hz.prep]].forEach(([k, on], i) => {
+      const fx = x + 9 + i * 31, fy = y + 13;
+      if (on > 0.5) flagG(hg, k, fx, fy, 0.9);
+      else el('rect', { x: fx, y: fy, width: 27, height: 18, rx: 2, fill: 'none', stroke: 'rgba(255,255,255,.28)', 'stroke-dasharray': '3 3' }, hg);
+    });
+    el('text', { x: x + 74, y: y + 18, fill: tone === 'bad' ? '#fca5a5' : tone === 'warn' ? '#fcd34d' : '#fff', 'font-size': 11.5, 'font-weight': 800 }, hg).textContent = t1;
+    el('text', { x: x + 74, y: y + 34, fill: 'rgba(255,255,255,.82)', 'font-size': 10.5, 'font-weight': 600 }, hg).textContent = t2;
   }
 
   function render() {
@@ -374,7 +494,7 @@
   let lastPanelKey = '';
   function updatePanel(force) {
     const v = view();
-    const key = st.mode + '|' + st.course.lineLen + 'x' + st.course.markDist + '|' + st.gsel + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + JSON.stringify(v.sea || st.sea) + v.boats.map(b => b.id + (b.sailor || '') + (b.drift || 0) + (b.manual ? 'M' : '') + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
+    const key = st.mode + '|' + st.course.lineLen + 'x' + st.course.markDist + (st.course.flag || 'P') + '|' + st.gsel + '|' + st.frames.length + '|' + (v.t * 4 | 0) + '|' + st.sel + '|' + v.events.length + '|' + st.mineOnly + '|' + st.fleet.length + '|' + JSON.stringify(v.sea || st.sea) + v.boats.map(b => b.id + (b.sailor || '') + (b.drift || 0) + (b.manual ? 'M' : '') + b.tack + b.persona + b.mine + (b.ignoresRules ? '!' : '') + (b.speedK || 1) + (b.penalties || 0) + b.phase).join();
     if (!force && key === lastPanelKey) return;
     lastPanelKey = key;
     courseUpdate(); gustBarUpdate();
@@ -382,9 +502,9 @@
     st.phaseLabel = label;
     const mine = v.boats.find(b => b.mine);
     $('phaseSub').textContent = st.mode === 'setup' ? 'Tekneleri yerleştir, rüzgarı ayarla, start ver'
-      : st.mode === 'end' ? (mine && mine.finish ? `Senin teknen ${mine.finish}. oldu` : 'Herkes şamandırayı döndü')
-      : mine ? (mine.finish ? `Senin teknen ${mine.finish}. bitirdi` : (() => { const p = predicted(), pm = p && p.boats.find(b => b.mine);
-          return pm && pm.finish ? `Tahmin: senin teknen ${pm.finish}. olacak · ${S.PERSONAS[mine.persona]}` : `Senin teknen: ${S.PERSONAS[mine.persona]}`; })()) : '';
+      : st.mode === 'end' ? (mine && mine.finish ? `Senin teknen ${finTxt(mine)}` : 'Herkes şamandırayı döndü')
+      : mine ? (mine.finish ? `Senin teknen ${finTxt(mine)}` : mine.dsq ? `Senin teknen ${mine.dsq}: diskalifiye` : (() => { const p = predicted(), pm = p && p.boats.find(b => b.mine);
+          return pm && pm.finish && !pm.dsq ? `Tahmin: senin teknen ${pm.finish}. olacak · ${S.PERSONAS[mine.persona]}` : `Senin teknen: ${S.PERSONAS[mine.persona]}`; })()) : '';
     // seçili tekne
     const sb = st.sel && (st.mode === 'setup' ? st.fleet : v.boats).find(b => b.id === st.sel);
     const setupSel = st.mode === 'setup';
@@ -411,7 +531,7 @@
       `<span class="boat-id" style="background:${r.b.color}">${esc(r.b.id)}</span><span class="nm">${esc(nameOf(r.b))}</span><span class="stt">${esc(r.status)}</span></li>`).join('');
     // olaylar
     const evs = v.events.filter(e => !st.mineOnly || /(^|\s)SEN\b/.test(e.text)).slice(-40).reverse();
-    $('events').innerHTML = evs.length ? evs.map(e => `<li class="${e.kind}"><span class="et">${S.fmt(Math.max(0, e.t - v.startAt))}</span>${esc(e.text)}</li>`).join('')
+    $('events').innerHTML = evs.length ? evs.map(e => `<li class="${e.kind}"><span class="et">${e.t < v.startAt - 1e-6 ? '−' + S.fmt(v.startAt - e.t) : S.fmt(e.t - v.startAt)}</span>${esc(e.text)}</li>`).join('')
       : `<li class="empty">${st.mode === 'setup' ? 'Start verilince kural olayları burada görünür.' : 'Henüz olay yok.'}</li>`;
     $('btnClearSaved').disabled = st.mode !== 'setup';
     const sea = v.sea || st.sea;
@@ -423,6 +543,7 @@
     saveSetup();
   }
   const nameOf = b => b.sailor || (b.mine ? 'Sen' : b.name);
+  const finTxt = b => (b.dsq ? `${b.dsq} (diskalifiye)` : `${b.finish}. oldu${b.zPen ? ` · Z cezasıyla ${b.finish + S.zPoints({ boats: st.fleet })} puan` : ''}`);
   // ---------- Kurulumu bu cihazda sakla (ileride Firebase'e taşınacak) ----------
   const SAVE_KEY = 'ps.sim.setup.v1';
   const BOAT_KEYS = ['id', 'x', 'y', 'tack', 'persona', 'speedK', 'drift', 'manual', 'ignoresRules', 'mine', 'sailor', 'route', 'drv', 'h', 'sheetOff'];
@@ -628,7 +749,7 @@
       if (st.playT >= lastT()) {
         st.playT = lastT(); st.mode = 'end';
         const mine = st.frames[st.frames.length - 1].boats.find(b => b.mine);
-        if (!askSave()) toast(mine && mine.finish ? `Yarış bitti · Senin teknen ${mine.finish}. oldu` : 'Yarış bitti');
+        if (!askSave()) toast(mine && mine.finish ? `Yarış bitti · Senin teknen ${finTxt(mine)}` : 'Yarış bitti');
       }
       st.sim = viewAt(st.playT);
     }
@@ -930,7 +1051,7 @@
   const COURSE_LIM = { lineLen: [200, 1000, 50], markDist: [400, 1500, 50] };
   function changeCourse(next) {
     if (st.mode !== 'setup') return;
-    const c = { lineLen: Math.max(COURSE_LIM.lineLen[0], Math.min(COURSE_LIM.lineLen[1], next.lineLen)), markDist: Math.max(COURSE_LIM.markDist[0], Math.min(COURSE_LIM.markDist[1], next.markDist)) };
+    const c = { lineLen: Math.max(COURSE_LIM.lineLen[0], Math.min(COURSE_LIM.lineLen[1], next.lineLen)), markDist: Math.max(COURSE_LIM.markDist[0], Math.min(COURSE_LIM.markDist[1], next.markDist)), flag: next.flag || st.course.flag || 'P' };
     const o = { cx: S.MARK.x, ly: S.LINE.pin.y, my: S.MARK.y, L: S.LINE.boat.x - S.LINE.pin.x };
     st.course = c; S.setCourse(c);
     const n = { cx: S.MARK.x, ly: S.LINE.pin.y, my: S.MARK.y, L: S.LINE.boat.x - S.LINE.pin.x };
@@ -949,6 +1070,23 @@
     $('btnCourseReset').disabled = !setup || def;
     $('courseState').textContent = !setup ? 'Yarışta değiştirilemez (kurulumda ayarlanır)' : def ? 'Varsayılan parkur' : 'Değiştirildi';
     $('courseState').classList.toggle('changed', setup && !def);
+    flagUpdate();
+  }
+  // Ayarlar → Parkur → Start bayrakları
+  function flagUpdate() {
+    const v = view(), f = flagNow(v), setup = st.mode === 'setup', info = FLAG_INFO[f];
+    [...$('flagSeg').children].forEach(x => { x.classList.toggle('on', x.dataset.v === f); x.disabled = !setup; });
+    const fn = f === 'Siyah' ? 'siyah bayrak' : `${f} bayrağı`, rem = setup ? 301 : remReal(v);
+    const steps = [[300, '5:00', 'Uyarı: sınıf bayrağı çekilir, 1 ses'], [240, '4:00', `Hazırlık: ${fn} çekilir, 1 ses`], [60, '1:00', `${fn[0].toUpperCase() + fn.slice(1)} iner, 1 uzun ses`], [0, '0:00', 'Start: sınıf bayrağı iner, 1 ses']];
+    const cur = setup ? -1 : steps.findIndex((s0, i) => rem <= s0[0] + 1e-6 && (i === steps.length - 1 || rem > steps[i + 1][0]));
+    $('flagSeq').innerHTML = steps.map((s0, i) => `<li class="${i === cur ? 'now' : i < cur ? 'past' : ''}"><b>${s0[1]}</b><span>${esc(s0[2])}</span></li>`).join('');
+    $('flagNote').textContent = info.text + (S.FLAG_RULE[f] ? ` Yasaklı bölge (${info.zone.toLowerCase()}) son dakikada sahnede kırmızı görünür, start'ta kalkar.` : '');
+    $('flagState').textContent = setup ? '' : 'Yarışta değiştirilemez';
+  }
+  function setFlag(f) {
+    if (st.mode !== 'setup' || !FLAG_INFO[f]) return;
+    st.course = { ...st.course, flag: f }; saveSetup();
+    updatePanel(true); render();
   }
 
   function gustList() { return st.mode === 'setup' ? st.gusts : st.sim.gusts; }
@@ -1199,7 +1337,7 @@
   function raceSummary() {
     const last = st.frames[st.frames.length - 1], boats = last.boats;
     const mine = boats.find(b => b.mine), win = boats.find(b => b.finish === 1);
-    return { boats: boats.length, cls: st.boat.cls, windKn: st.boat.windKn, mine: mine ? mine.finish || null : null, mineName: mine ? nameOf(mine) : '',
+    return { boats: boats.length, cls: st.boat.cls, windKn: st.boat.windKn, mine: mine && !mine.dsq ? mine.finish || null : null, mineName: mine ? nameOf(mine) : '',
       winner: win ? nameOf(win) : '', penalties: boats.reduce((n, b) => n + (b.penalties || 0), 0), changes: st.rec.ops.length,
       dur: Math.max(0, Math.round((last.t - last.startAt) * S.CLOCK_SCALE)) };
   }
@@ -1341,7 +1479,7 @@
   // ---------- panel aç/kapa ----------
   function setPanelOpen(open) { if (!open) openCat(null); else if (!st.cat) openCat('rank'); }
   // ---------- Ayar kategorileri: dokun → aç, yeniden dokun → kapat (aynı anda bir kategori) ----------
-  const CAT_TITLE = { mine: 'Senin teknen', wind: 'Rüzgar', gust: 'Sağanak', sea: 'Deniz', fleet: 'Filo ve tekne sınıfı', course: 'Parkur', show: 'Sahnede göster', rank: 'Sıralama ve olaylar', help: 'Nasıl kullanılır', sel: 'Seçili tekne' };
+  const CAT_TITLE = { mine: 'Senin teknen', wind: 'Rüzgar', gust: 'Sağanak', sea: 'Deniz', fleet: 'Filo ve tekne sınıfı', course: 'Parkur ve start bayrakları', show: 'Sahnede göster', rank: 'Sıralama ve olaylar', help: 'Nasıl kullanılır', sel: 'Seçili tekne' };
   function openCat(cat, keep) {
     if (!keep && cat && cat === st.cat) cat = null;      // aynı düğme: kapat
     if (st.cat === 'sel' && cat !== 'sel' && st.sel) { st.sel = null; st.selShown = null; }   // seçili tekne kartından çıkınca seçim kalkar
@@ -1360,7 +1498,7 @@
     const on = {
       mine: !!(mine && (mine.manual || mine.ignoresRules || (mine.speedK || 1) !== 1 || (mine.route && mine.route.length) || mine.sheetOff)),
       wind: Math.round(E.norm180(v.wind)) !== 0 || b.windKn !== D.windKn, gust: (v.gusts || []).length > 0, sea: !!(sea.current || sea.waves),
-      fleet: b.cls !== D.cls || b.accelAt !== D.accelAt || b.pre !== D.pre, course: st.course.lineLen !== C.lineLen || st.course.markDist !== C.markDist
+      fleet: b.cls !== D.cls || b.accelAt !== D.accelAt || b.pre !== D.pre, course: st.course.lineLen !== C.lineLen || st.course.markDist !== C.markDist || (st.course.flag || 'P') !== 'P'
     };
     [...document.querySelectorAll('#catRail [data-cat]')].forEach(x => x.classList.toggle('dot', !!on[x.dataset.cat]));
   }
@@ -1400,6 +1538,9 @@
   });
   $('btnShowSpeed').addEventListener('click', () => { st.show.speed = !st.show.speed; $('btnShowSpeed').classList.toggle('on', st.show.speed); });
   $('btnShowShadow').addEventListener('click', () => { st.show.shadow = !st.show.shadow; $('btnShowShadow').classList.toggle('on', st.show.shadow); });
+  $('btnShowZone').addEventListener('click', () => { st.show.zone = !st.show.zone; $('btnShowZone').classList.toggle('on', st.show.zone); });
+  $('flagSeg').innerHTML = FLAGS.map(f => `<button data-v="${f}" title="${esc(FLAG_INFO[f].name + ': ' + FLAG_INFO[f].short)}">${flagSvgTag(f)}<span>${f}</span></button>`).join('');
+  $('flagSeg').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setFlag(x.dataset.v); });
   $('btnWindL').addEventListener('click', () => setWind(-5));
   $('btnWindR').addEventListener('click', () => setWind(5));
   $('btnGustL').addEventListener('click', () => addGust('L'));
@@ -1419,7 +1560,7 @@
   $('btnLinePlus').addEventListener('click', () => changeCourse({ ...st.course, lineLen: st.course.lineLen + LS }));
   $('btnMarkMinus').addEventListener('click', () => changeCourse({ ...st.course, markDist: st.course.markDist - MS }));
   $('btnMarkPlus').addEventListener('click', () => changeCourse({ ...st.course, markDist: st.course.markDist + MS }));
-  $('btnCourseReset').addEventListener('click', () => { changeCourse({ ...S.COURSE_DEFAULT }); toast('Parkur varsayılana döndü'); });
+  $('btnCourseReset').addEventListener('click', () => { changeCourse({ ...S.COURSE_DEFAULT, flag: st.course.flag }); toast('Parkur varsayılana döndü'); });
   $('gbMinus').addEventListener('click', () => gustScale(1 / 1.2));
   $('gbPlus').addEventListener('click', () => gustScale(1.2));
   $('gbReset').addEventListener('click', gustReset);

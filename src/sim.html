@@ -169,7 +169,7 @@
         <button data-cat="gust" title="Sağanak ekle / kaldır"><svg><use href="#i-gust"/></svg><span>Sağanak</span></button>
         <button data-cat="sea" title="Akıntı ve dalga"><svg><use href="#i-wave"/></svg><span>Deniz</span></button>
         <button data-cat="fleet" title="Tekne sayısı, sınıf, geri sayım, hızlanma"><svg><use href="#i-fleet"/></svg><span>Filo</span></button>
-        <button data-cat="course" title="Start hattı ve şamandıra"><svg><use href="#i-flag"/></svg><span>Parkur</span></button>
+        <button data-cat="course" title="Start hattı, şamandıra ve start bayrakları (5-4-1)"><svg><use href="#i-flag"/></svg><span>Parkur</span></button>
         <button data-cat="show" title="Sahnede ne görünsün"><svg><use href="#i-eye"/></svg><span>Göster</span></button>
         <button data-cat="rank" title="Sıralama ve olaylar"><svg><use href="#i-list"/></svg><span>Sıralama</span></button>
         <button data-cat="help" title="Nasıl kullanılır"><svg><use href="#i-help"/></svg><span>Yardım</span></button>
@@ -308,6 +308,14 @@
           </div>
           <div class="sel-row cat-foot"><small id="boatState"></small><button class="tb sm" id="btnBoatReset" title="Optimist, 8 knot rüzgar, 30 sn kala hızlanma, 5 dk geri sayım">Varsayılan</button></div>
         </section>
+        <section id="flagBox" class="sel-box course-box flag-box" data-cat="course">
+          <div class="box-head"><span>Start bayrakları · 5-4-1</span><small id="flagState"></small></div>
+          <div class="sel-row">
+            <div class="seg flag-seg" id="flagSeg" title="4:00'te çekilen hazırlık bayrağı: hangi start kuralı uygulanıyor"></div>
+          </div>
+          <ol class="flag-seq" id="flagSeq"></ol>
+          <p class="cat-note flag-note" id="flagNote"></p>
+        </section>
         <section id="courseBox" class="sel-box course-box" data-cat="course">
           <div class="box-head"><span><small id="courseState"></small></span><button class="tb sm" id="btnCourseReset" title="Varsayılan parkura dön">Varsayılan</button></div>
           <div class="sel-row">
@@ -324,6 +332,7 @@
             <div class="seg seg-tgl grow-seg">
               <button class="on" id="btnShowSpeed" title="Teknelerin hızı (knot): sağanakta ↑, pis rüzgarda ↓">Hız</button>
               <button class="on" id="btnShowShadow" title="Rüzgar gölgesi (pis rüzgar)">Pis rüzgar</button>
+              <button class="on" id="btnShowZone" title="Hazırlık bayrağının yasaklı bölgesi (I, Z, U, siyah): son dakikada kırmızı">Yasaklı bölge</button>
             </div>
           </div>
           <p class="cat-note">Pin ve hakem botu layline'ı sağ üstteki hesap menüsünde.</p>
