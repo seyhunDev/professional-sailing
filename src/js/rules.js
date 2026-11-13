@@ -175,14 +175,18 @@
      (simülatördeki ignoresRules gibi), hak sahibi filo teknesi ona karşı biraz daha erken K14 yapar.
      specs: [{pos:{x,y}, tack}] ya da start senaryosunda [{slot:{x,y}, tack}] (hat üstündeki hedef geçiş noktası)
      scripted: [{track}]  → her spec için örnek dizisi [{t,x,y,h,v,note}] */
+  /* Start öncesi bekleyen filo (kullanıcı 2026-11-13, bildirim #20): gerçek Optimist startı gibi hattın dibinde,
+     burun ~0,1-0,5 boy altta, neredeyse kıpırdamadan bekler; 1.6 animasyon sn (clockScale 4 → ~6 gerçek sn) kala
+     doldurup hattı ~%80 hızla geçer. Eskiden 2.5 sn / %4 sürünme: filo hattın 1-1,3 boy altında bekliyordu. */
+  const CROWD = { goBefore: 1.6, creep: 0.015 };
   const TURN_RATE = 110;   // derece/sn, simülatörle aynı
   function simulate(scn, specs, scripted) {
     const base = scn.baseSpeed || 55, TAU = E.scenarioTau(scn);
     const isStart = !!(scn.line && scn.startAt > 0);
-    const goAt = isStart ? Math.max(0, scn.startAt - (scn.goBefore || 2.5)) : 0;   // küçük tekne: sinyalden önce yelkeni doldur
+    const goAt = isStart ? Math.max(0, scn.startAt - (scn.goBefore || CROWD.goBefore)) : 0;   // küçük tekne: sinyalden önce yelkeni doldur
     const rulesFrom = scn.line ? (scn.startAt || 0) + 0.5 : 0;                      // simülatör gibi: kurallar sinyalden 0.5 s sonra
     const w0 = E.windAt(scn.wind, 0);
-    const HOLD_V = base * 0.04;
+    const HOLD_V = base * (scn.holdCreep != null ? scn.holdCreep : CROWD.creep);   // bekleyen filonun öne sürünme hızı
     const obstacles = E.obstaclesOf(scn);
     const marks = scn.marks || [];
     const shadowsOn = scn.shadows !== false;
