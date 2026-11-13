@@ -76,6 +76,7 @@ src/
   js/rules.js         kural motoru: eklenen tekneler K10/K11/K12/K14'e göre manevra yapar
   js/scenarios.js     senaryo tanımları (A1, A2, B1, B8, C1 ...)
   js/app.js           çizim (SVG), zaman döngüsü, kontroller, bilgi kartı, tekne ekleme
+  js/rigview.js       İleri Teknik: Optimist yandan görünüş paneli (iskota, bumba, palanga; scn.rig)
   sim.html            yarış simülatörü sayfası (css/sim.css)
   js/sim-core.js      simülatör çekirdeği (DOM yok): canlı adım, taktik, yol hakları, sıralama
   js/sim.js           simülatör arayüzü: sürükle-bırak, rüzgar/sağanak, geri sarma, panel
@@ -109,6 +110,9 @@ S.push({
 ```
 
 Kuvvetli rüzgar: `windKn` (göstergede şiddet, ≥15 "kuvvetli"), `leeway: {from, ramp, rate}` (start öncesi bekleyen filo rüzgaraltına kayar), `hold` segmentinde `drift` / `driftH` (senaryo teknesi beklerken kayar). `spots: [{x, y, r, from, to, label}]` sahnede kesikli halka.
+
+Yandan görünüş paneli (İleri Teknik dersleri, `js/rigview.js`): `rig: { kn, label, steps: ['…'], mark, keys: [{ t, sheet, vang, push, hand, p }], ghost: { label, short, from, keys } }`.
+`sheet` iskota 0 (kaçık) … 1 (sonuna kadar alınmış), `vang` palanga 0 (boş) … 1 (çok sıkı), `push` bumbayı bastırma 0…1, `hand` elin yeri (`sheet` / `release` / `boom` / `vang` / `tiller`), `p` adım şeridinde vurgulanan adım (0'dan; −1 hiçbiri). Sayılar anahtar kareler arasında doğrusal geçer. `mark` palanga çubuğundaki sarı hedef çizgisi, `ghost` aynı anahtar karelerle kesikli kırmızı karşılaştırma yelkeni (`from` sn'den sonra, yalnız belirgin farkta). Model şematiktir (açılar ölçüm değil).
 
 Segment modları: `closehauled` (rüzgara 45°, kontrayı takip eder; rüzgar dönerse rota da döner),
 `run` (pupa 150°), `heading` (sabit pusula), `hold` (orsalayıp bekleme, yelken boş), `back` (yelken ters basılı, tekne rotasını koruyup `speed` × taban hızla geri gider; K22.3).

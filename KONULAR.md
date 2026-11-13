@@ -129,6 +129,15 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | G6 | Hızlanma ve durma (start için) | Orsalayarak durma, bordalayarak hızlanma; A2 ile ilişkili. | ⬜ |
 | G7 | Sağanakta tekne dengesi ve dümen | Sağanak gelince ne yapılır. | ⬜ |
 
+## İT. İleri Teknik (yarışan Optimist sporcuları; sahnede "Yandan görünüş" paneli)
+
+| # | Konu | Animasyonda ne gösterilecek | Durum |
+|---|------|-----------------------------|-------|
+| İT1 | Pupaya dönmeden palangayı al (orta-sert) | Rüzgarüstü şamandıra öncesi: iskotayı sonuna kadar al → bumbayı bastır → palangayı elle al → iskotayı kaçır, kafa aç. Palangayı almayan B: bumba kalkar, tepe açılır, tekne yuvarlanır. | ✅ |
+| İT1b | Hafif havada palanga: yalnız boşluğu al | Aynı sıra; palanga sıkılmaz, boş kalmayacak kadar alınır. Hiç alınmasa / fazla sıkılsa ne olur. | ✅ |
+| İT2 | Arka yaka (leech) ayarı | Arka yaka şeritleri, gırcala/palanga/iskota ile arka yakanın açılıp kapanması. (kullanıcı istedi, sonraki ders) | ⬜ |
+| İT3 | Gırcala (sprit) ayarının önemi | Az basılmış (köşeden tepeye kırışık) / çok basılmış (tepeden karulaya kırışık) gırcalanın yelkene ve hıza etkisi. (kullanıcı istedi, sonraki ders) | ⬜ |
+
 ## Öncelik sırası
 **Önce Taktik → Start (A) tamamlanır, sonra Kurallar (B), sonra Teknik (G).**
 Start sırası: A1 ölçüm yöntemleri → A3 pin avantajlı → A4 hakem botu avantajlı → A5 hat yayı → A6 transit → A7 boşluk → A8 bekleme → A9 ilk 2 dakika → A10 iskele start → A11-A15.

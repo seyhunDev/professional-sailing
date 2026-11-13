@@ -1295,5 +1295,115 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // =====================================================================
+  // İLERİ TEKNİK: donanım ve tekne kullanımı. Sahnede üstten görünüş + "Yandan görünüş" paneli (js/rigview.js, scn.rig).
+  // =====================================================================
+
+  // Rüzgarüstü şamandıra: aynı rota iki senaryoda, rüzgar şiddeti ve palanga miktarı farklı
+  const VANG_MARK = { x: 640, y: 130, label: 'Orsa şamandırası (iskelede bırak)', zone: true };
+  const VANG_STEPS = ['İskotayı sonuna kadar al', 'Bumbayı aşağı bastır', 'Palangayı elle al', 'İskotayı kaçır, kafa aç'];
+  const vangKeys = (up, set) => [
+    { t: 0, sheet: 0.85, vang: up, push: 0, p: -1 },
+    { t: 4, sheet: 0.85, vang: up, push: 0, hand: 'sheet', p: 0 },
+    { t: 5.2, sheet: 1, vang: up, push: 0, hand: 'sheet', p: 0 },
+    { t: 5.6, sheet: 1, vang: up, push: 0, hand: 'boom', p: 1 },
+    { t: 6.4, sheet: 1, vang: up, push: 1, hand: 'boom', p: 1 },
+    { t: 7, sheet: 1, vang: up, push: 1, hand: 'vang', p: 2 },
+    { t: 8.8, sheet: 1, vang: set, push: 1, hand: 'vang', p: 2 },
+    { t: 9.2, sheet: 1, vang: set, push: 1, p: 2 },
+    { t: 9.8, sheet: 1, vang: set, push: 0, p: 2 },
+    { t: 11, sheet: 1, vang: set, push: 0, hand: 'release', p: 3 },
+    { t: 13.6, sheet: 0.1, vang: set, push: 0, hand: 'tiller', p: 3 },
+    { t: 15, sheet: 0.1, vang: set, push: 0, p: 4 }
+  ];
+  const vangGhost = up => [
+    { t: 0, sheet: 0.85, vang: up }, { t: 11, sheet: 1, vang: up }, { t: 13.6, sheet: 0.1, vang: up }
+  ];
+  const vangBoatA = (name) => ({ id: 'A', name, role: 'dogru', color: '#2a9d8f',
+    start: { x: 894, y: 362, h: 315 }, v0: 28,
+    segs: [
+      { mode: 'closehauled', tack: 'starboard', dur: 4, turn: 0 },
+      { mode: 'closehauled', tack: 'starboard', dur: 5, turn: 0, note: 'İskota · bumba · palanga' },
+      { mode: 'closehauled', tack: 'starboard', dur: 2.2, turn: 0 },
+      { mode: 'heading', h: 250, dur: 1.4, turn: 1.2 },
+      { mode: 'run', tack: 'starboard', angle: 178, dur: 9.4, turn: 1.6 }
+    ] });
+
+  // ---------- İT1: orta-sert havada palangayı al, sonra pupaya dön ----------
+  S.push({
+    id: 'it1-vang-strong',
+    category: 'İleri Teknik', topic: 'Şamandıra · Palanga',
+    title: 'İT1 · Pupaya dönmeden palangayı al (orta-sert hava)',
+    summary: 'Optimist\'te orsada bumbayı aşağıda tutan iskotadır. Rüzgarüstü şamandırada iskotayı kaçırınca bumbayı tutan tek şey palanga (boom vang) kalır. Bu yüzden şamandıradan önce sırayla: iskotayı sonuna kadar al, bumbayı aşağı bastır, palangayı elle al, sonra iskotayı kaçırıp kafa aç. Orta-sert havada palanga belirgin sıkı olur. Sol alttaki "Yandan görünüş" panelinde her adımı izleyin; kesikli kırmızı çizgi palangayı almayan B\'nin yelkenidir.',
+    duration: 22,
+    baseSpeed: 28,
+    wind: 0,
+    windKn: 14,
+    marks: [VANG_MARK],
+    rig: { kn: 14, label: 'ORTA-SERT', steps: VANG_STEPS, mark: 0.9, keys: vangKeys(0.3, 0.9),
+      ghost: { label: 'Kesikli kırmızı: palangayı almayan B', short: 'B', from: 11, keys: vangGhost(0.3) } },
+    boats: [
+      vangBoatA('Palangayı alan'),
+      { id: 'B', name: 'Palangayı almayan', role: 'hata', color: '#e76f51',
+        noShadow: true,                               // B'nin yavaşlaması palangadan; A'nın gölgesi karışmasın
+        start: { x: 824, y: 292, h: 315 }, v0: 28,
+        segs: [
+          { mode: 'closehauled', tack: 'starboard', dur: 7.7, turn: 0 },
+          { mode: 'heading', h: 250, dur: 1.4, turn: 1.2 },
+          { mode: 'run', tack: 'starboard', angle: 170, dur: 1.2, turn: 1.4, speed: 0.9 },
+          { mode: 'heading', h: 215, dur: 0.9, turn: 0.7, speed: 0.85, note: 'Bumba kalktı · tekne yuvarlanıyor' },
+          { mode: 'heading', h: 190, dur: 0.9, turn: 0.7, speed: 0.85, note: 'Bumba kalktı · tekne yuvarlanıyor' },
+          { mode: 'heading', h: 215, dur: 0.9, turn: 0.7, speed: 0.85, note: 'Bumba kalktı · tekne yuvarlanıyor' },
+          { mode: 'heading', h: 190, dur: 0.9, turn: 0.7, speed: 0.85 },
+          { mode: 'heading', h: 215, dur: 0.9, turn: 0.7, speed: 0.85, note: 'Bumba kalktı · tekne yuvarlanıyor' },
+          { mode: 'heading', h: 190, dur: 0.9, turn: 0.7, speed: 0.85 },
+          { mode: 'heading', h: 215, dur: 0.9, turn: 0.7, speed: 0.85 },
+          { mode: 'heading', h: 190, dur: 0.9, turn: 0.7, speed: 0.85 },
+          { mode: 'heading', h: 210, dur: 4.5, turn: 1.2, speed: 0.85 }
+        ] }
+    ],
+    steps: [
+      { t: 0, title: 'Layline\'da, orsa', text: 'A (yeşil) sancak kontra layline\'da, 14 knot rüzgarda orsa gidiyor. Optimist\'te orsada bumbayı aşağıda tutan asıl iskotadır; palanga gevşek ya da az gergindir. Şamandırada iskotayı kaçıracağız: o an bumbayı tutacak tek şey palanga olacak.' },
+      { t: 3.5, title: 'Zone\'dan önce hazırlan', text: 'Bu işi zone\'a (3 boy) girmeden, tekne düz ve sakinken yapın. Zone\'da gözünüz şamandırada, dümende ve çevrenizdeki teknelerde olmalı; palangayla uğraşacak zaman yok.' },
+      { t: 4, title: '1 · İskotayı sonuna kadar al', text: 'İskotayı sonuna kadar alın (çekin). Bumba en alçak yerine iner, palanga halatı gevşer. Palanga yüklüyken elle çekilemez; bumbayı önce iskotayla indiriyoruz ki halat kolay gelsin.' },
+      { t: 5.6, title: '2 · Bumbayı aşağı bastır', text: 'İskota elinizdeyken bumbayı direğe yakın yerinden aşağı bastırın. Bumba palanganın sınırının da altına iner ve palangada boşluk açılır. North Sails Optimist kılavuzu da sert havada "bumbayı sertçe aşağı bastırıp palangayı çekin" der.' },
+      { t: 7, title: '3 · Palangayı elle al', text: 'Açılan boşluğu elle alın ve kurtağzına sıkıştırın. Orta-sert havada belirgin sıkı: panelde sarı çizgiye kadar. Halata bir işaret koyarsanız her seferinde aynı ayarı yaparsınız.' },
+      { t: 9.6, title: 'Bumba artık kilitli', text: 'Bumbayı bıraktınız. İskota hâlâ alınmış; palanga şimdi bumbanın kalkabileceği en yüksek yeri belirliyor. B (turuncu) bu işi yapmadı, palangası gevşek duruyor.' },
+      { t: 11, title: '4 · İskotayı kaçır, kafa aç', text: 'Şamandırada iskotayı kaçırın, ağırlığı dışarıda tutup dümenle kafa açın (pupaya/apaza dönün). Bumba dışarı açılıyor ama yukarı kalkmıyor: palanga tutuyor (panelde kırmızı, gergin halat).' },
+      { t: 14, title: 'Neden? Yelkenin tepesi', text: 'Bumba kalkmayınca yelkenin tepesi fazla açılmaz (tepe açılması, twist). Yelken gücünü tutar, tekne sağa sola yuvarlanmaz (rolling), dümen hafif kalır. Paneldeki "üstten" daire bumba ile yelken tepesi arasındaki açıyı gösterir.' },
+      { t: 16.8, title: 'B: palangayı almayan', text: 'B iskotayı kaçırınca bumbası kalktı, yelkenin tepesi rüzgaraltına açıldı (paneldeki kesikli kırmızı). Tepe güç kaybediyor, tekne sağa sola yuvarlanıyor, sporcu dümenle düzeltmeye uğraşıyor ve yavaşlıyor. Sert havada bu yuvarlanma rüzgar altına devrilmeye (death roll) kadar gidebilir.' },
+      { t: 19.5, title: 'Fazlası da zarar', text: 'Çok sıkı palanga da iyi değil: apazda sağanakta bumba ucu suya değer, tekne orsalar (round up). Böyle bir sağanakta palangayı ya da iskotayı biraz kaçırın. Doğru miktar yelkene, sporcunun kilosuna ve dalgaya göre değişir; antrenmanda deneyip halata işaret koyun.' }
+    ],
+    addBoat: { pin: { x: 710, y: 560 }, middle: { x: 830, y: 620 }, committee: { x: 650, y: 620 } },
+    addBoatLabels: { pin: 'Arkada', middle: 'Daha arkada', committee: 'Rüzgaraltında' }
+  });
+
+  // ---------- İT1b: hafif havada yalnız boşluğu al ----------
+  S.push({
+    id: 'it1b-vang-light',
+    category: 'İleri Teknik', topic: 'Şamandıra · Palanga',
+    title: 'İT1b · Hafif havada palanga: yalnız boşluğu al',
+    summary: 'Hafif havada sıra aynı (iskotayı al, bumbayı bastır, palangayı al, iskotayı kaçır), ama palanga sıkılmaz: yalnızca boş kalmayacak kadar alınır. Bumba zıplamaz, yelken şeklini korur; yelkenin tepesi de hafif havada gerektiği gibi biraz açık kalır.',
+    duration: 20,
+    baseSpeed: 28,
+    wind: 0,
+    windKn: 6,
+    marks: [VANG_MARK],
+    rig: { kn: 6, label: 'HAFİF', steps: VANG_STEPS, mark: 0.55, keys: vangKeys(0.05, 0.55),
+      ghost: { label: 'Kesikli kırmızı: palanga hiç alınmasaydı', short: 'palangasız', from: 11, keys: vangGhost(0.05) } },
+    boats: [vangBoatA('Boşluğu alan')],
+    steps: [
+      { t: 0, title: 'Hafif hava, orsa', text: '6 knot rüzgarda orsa gidiyoruz. Palanga tamamen gevşek: orsada bumbayı iskota tutuyor. Hafif havada da şamandıradan önce palangaya bakılır, ama amaç sıkmak değil, boşluğu almaktır.' },
+      { t: 4, title: '1 · İskotayı al', text: 'İskotayı sonuna kadar alın, bumba en alçak yerine insin. Hafif havada tekneyi yatırmadan, ağırlığı ortada tutarak yapın.' },
+      { t: 5.6, title: '2 · Bumbayı bastır', text: 'Bumbayı hafifçe aşağı bastırın. Hafif havada çok kuvvet gerekmez; amaç palanga halatının boşluğunu görmek.' },
+      { t: 7, title: '3 · Yalnız boşluğu al', text: 'Palangayı boş kalmayacak kadar alın: halat gergin ama sıkı değil (panelde sarı çizgi). Sıkarsanız arka yaka kapanır.' },
+      { t: 11, title: '4 · İskotayı kaçır, kafa aç', text: 'İskotayı kaçırıp kafa açın. Bumba biraz kalkıyor ve palangaya yaslanıyor; yelkenin tepesi bir miktar açık. Hafif havada bu istenen şey: yelken nefes alır, hava akışı kopmaz.' },
+      { t: 14, title: 'Neden boş bırakmıyoruz?', text: 'Palanga hiç alınmasaydı (kesikli kırmızı) bumba çok kalkar, yelkenin tepesi fazla açılır ve güç kaybedilir. Dalgada bumba aşağı yukarı oynar, yelken şeklini kaybeder.' },
+      { t: 17, title: 'Neden sıkmıyoruz?', text: 'Hafif havada sıkı palanga arka yakayı kapatır, yelken tepeden boğulur (stall), tekne yavaşlar. Kural: hafif havada boşluğu al, orta-sert havada belirgin sık (bkz. İT1).' }
+    ],
+    addBoat: { pin: { x: 710, y: 560 }, middle: { x: 830, y: 620 }, committee: { x: 650, y: 620 } },
+    addBoatLabels: { pin: 'Arkada', middle: 'Daha arkada', committee: 'Rüzgaraltında' }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);

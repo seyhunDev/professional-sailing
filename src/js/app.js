@@ -14,7 +14,7 @@
   const HULL = 50;                 // tekne boyu (px)
   const COURSE = { w: 1000, h: 680 };   // senaryo koordinat alanı
   const EXTRA_COLORS = ['#ffd166', '#c77dff', '#90be6d', '#f9844a', '#48cae4', '#f94144', '#b5e48c'];
-  const CAT_COLORS = { 'Taktik': 'var(--c-taktik)', 'İleri Taktik': 'var(--c-ileri)', 'Kurallar': 'var(--c-kural)', 'Teknik': 'var(--c-teknik)' };
+  const CAT_COLORS = { 'Taktik': 'var(--c-taktik)', 'İleri Taktik': 'var(--c-ileri)', 'Kurallar': 'var(--c-kural)', 'Teknik': 'var(--c-teknik)', 'İleri Teknik': 'var(--c-ileri-teknik)' };
   // tekne rolleri: sahnede etiket kenarı + simge, kartta rozet
   const ROLES = {
     hak:   { label: 'Hak sahibi', glyph: '✓', color: '#34d399' },
@@ -163,6 +163,7 @@
     document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', c.dataset.id === scn.id));
     setFollow(true);
     buildLegend(); buildTimeline(); buildSideOptions(); drawCourse(); updatePlayButton();
+    if (window.SailRigView) { SailRigView.show(scn.rig); document.body.classList.toggle('has-rig', !!scn.rig); }
     showStep(0, false); render();
     if (window.SailTrack) SailTrack.log('scenario', { id: scn.id, title: scn.title, category: scn.category });
   }
@@ -592,6 +593,7 @@
     for (const b of [...state.boats, ...state.extras]) drawBoat(bl, b, E.sampleTrack(b.track, state.t), w);
     drawNotes(el('g', {}, bl));
     drawHud(w);
+    if (scn.rig && window.SailRigView) SailRigView.draw(state.t);
     const sc = $('scrub'); sc.value = state.t; sc.style.setProperty('--p', (state.t / scn.duration * 100) + '%');
     $('timeLabel').innerHTML = `${fmtClock(state.t)}<span class="tot"> / ${fmtClock(scn.duration)}</span>`;
     [...$('ticks').children].forEach((b, k) => b.classList.toggle('done', scn.steps[k].t <= state.t + 1e-6));
@@ -683,7 +685,7 @@
   window.addEventListener('resize', () => setInfoOpen(state.infoOpen));   // görünüm + marka konumu yeniden
 
   // ---------- Senaryo seçici (kategori sekmeleri + kartlar) ----------
-  const CATS = ['Taktik', 'İleri Taktik', 'Kurallar', 'Teknik'];
+  const CATS = ['Taktik', 'İleri Taktik', 'Kurallar', 'Teknik', 'İleri Teknik'];
   let pickerCat = 'Taktik';
   let query = '';
   function openPicker(open) {
@@ -781,6 +783,7 @@
   $('chkZoom').checked = camOn();
   phoneMq.addEventListener('change', () => { if (state.zoom == null) $('chkZoom').checked = camOn(); });
 
+  if (window.SailRigView) SailRigView.mount($('rigPanel'));
   const fromHash = () => {
     const s = SCENARIOS.find(s => s.id === location.hash.slice(1)) || SCENARIOS[0];
     if (lockedScn(s)) { SailAccess.guard('scn.ileri'); return state.scn || SCENARIOS.find(x => !lockedScn(x)); }
