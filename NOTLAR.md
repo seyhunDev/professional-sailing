@@ -4,6 +4,7 @@
 > Kısa ve güncel tut: eskiyen maddeleri sil, tarih ver.
 
 ## Güncel durum (2026-11-13)
+- **Yelken ayarı sayfası `ayar.html` (TASLAK, 2026-11-13):** Optimist yandan görünüş (direk, gırcala, bumba, palanga, Cunningham, 8 direk bağı, rüzgar gülü) + üstten 3 kesit (kambur/twist) + direk bağları yakın görünüşü (mm). Hava (hafif/orta/sert) × deniz (düz/dalgalı) × kaynak (OneSails / North / Quantum kılavuzu; J-Sails, Olimpic, CD bekleniyor) × Orijinal/Özel. Henüz menüden bağlı değil; kullanıcı onayından sonra 3D (three.js) aşaması.
 - **İleri start paketi İA7-İA13 (kullanıcı 2026-11-13, v1.104-v1.110):** hepsi `category: 'İleri Taktik'`, filo hattın dibinde (`CROWD`), `clockScale: 4`. İA7 `ia7-hold-climb` kaydıkça yüksel (iskota çek, ikili tramola + dur, yerinde tramola, kafayı açıp orsala; iki grup arasında rüzgarüstü W'nin altına geçiş; H tam dolu yelkenle öne fırlar) · İA8 `ia8-pin-chaos` pin'de karmaşa (layline üstünde kal; altına düşen K13/K10; geç gelen 2. sırada) · İA9 `ia9-brake-back` fren: orsala, yelkeni ters bas, geri git (K22.3) · İA10 `ia10-defend-gap` boşluğunu savun · İA11 `ia11-plan-b` B planı · İA12 `ia12-late-port-tack` son saniyede iskele kontradan boşluğa tramola (HATA: dar boşluk → K13/K15, protesto) · İA13 `ia13-black-flag` genel geri çağırma sonrası siyah bayrak (B BFD, C son dakikadan önce üstte: ceza yok, S transitle yarım boy altta). KONULAR H11-H16 ve H6 ✅.
 - **Motor: `mode: 'back'` segmenti (2026-11-13):** senaryo teknesi yelkeni ters basıp geri gider (`speed` × baseSpeed geri, varsayılan 0.2); örnekler `back: true` taşır, `app.js` yelkeni `sailPose(back)` ile rüzgar tarafında çizer. README'de belgeli.
 - **Start filosu hattın dibinde ve sık (bildirim #20, 2026-11-13):** kalabalık filo (`rules.js` → `CROWD`) burnu hattın ~0,1-0,5 boy altında, neredeyse kıpırdamadan bekler (`holdCreep` 0.015, eskiden 0.04) ve 1.6 animasyon sn (~6 gerçek sn) kala doldurur (`goBefore` varsayılanı, eskiden 2.5 ve her senaryoda yazılıydı). A2 bilerek `goBefore: 2.5` tutar (ders "10-12 sn kala doldur"). İA3/İA5/İA6 12-13 tekne, ön sıra 39-45 px arayla + 2. sıra; İA1 9, İA4 7, İA2 10, A2 7 tekne. Ders tekneleri (İA3 H, İA5 D/Y, İA1 Y, İA4 S/H, İA2b 4 numara, İA4 W) filoya göre yeniden ayarlandı.
@@ -84,6 +85,7 @@
 - [ ] **Kullanıcı senaryoları (sonraki aşama):** Firebase Auth + Firestore, link ile paylaşım, Firebase Hosting. Simülatör yarış kayıtları için biçim hazır: `SailRecords` girdisi (`setup` + `ops` + `summary`) aynen Firestore belgesi olabilir.
 
 ## Kararlar
+- **2026-11-13 · Yelken ayarı veri biçimi (`src/js/ayar.js`):** `BRANDS[marka][hava] = { rake: cm, ties: [8 mm, tepeden], sprit/vang/out/luff: 0-1 göreli, note: {alan: kılavuz metni} }`; kılavuzda olmayan alan → `DEF` taslak varsayılanı ve panelde "?" rozeti. Dalgalı deniz: köşe ve palanga −0,1 (North: "güçte kal"). Özel ayar `localStorage 'ps.trim.v1'` → `custom['marka|hava|deniz']`; Özel farklıysa orijinal sarı kesikli hayalet çizilir. Gırcala kırışığı: gevşek → direk tepesinden köşeye, fazla sıkı → tepeden karulaya (North kılavuzuyla uyumlu). Gerekçe: kullanıcı marka kılavuzlarını hem orijinal hem özelleştirilmiş göstermek, bağ boşluğu mm değişimini animasyonda görmek istedi.
 - **2026-11-13 · Geri gitme (backing) senaryo motorunda:** `engine.buildTrack` → `mode: 'back'` (hedef hız −base·speed, yön `h` ya da mevcut). Gerekçe: İA7/İA9/İA13'te yelkeni ters basıp durma/geri gitme gösterilmeli; elle sürmedeki Tersle ile aynı görünüm (`sailPose(back)`). Kural denetimi (K22.3) yalnız simülatörde; senaryo teknesi geri giderken kimseye 30 px'den yakın olmamalı.
 - **2026-11-13 · Start filosu yakın ve sık (kullanıcı, bildirim #20):** "tekneler hatta çok uzak, az ve seyrek; tüm senaryolarda aynı olsun; bu sınıf tekneler birbirine yakın seyreder". Ortak varsayılan `rules.js` → `CROWD = { goBefore: 1.6, creep: 0.015 }`; senaryo `goBefore` / `holdCreep` ile değiştirebilir. Sık dizilimde sınır: rüzgar 0-350° ve yatay hatta ön sıra aralığı ≥ 50 px olmalı, yoksa start öncesi "öndekinin kıçına girme" kuralı yan komşuyu öndeki sayar ve filo kademeli geç çıkar (İA1'de görüldü). Rüzgar 5° ile 39-45 px yeterli.
 - 2026-11-13 · **Kuvvetli rüzgarda kayma senaryoda** (İA6): bekleyen teknenin rüzgaraltına kayması iki yerden verilir: senaryo teknesi `hold` segmentinde `drift` (px/sn, `driftH` yoksa rüzgaraltı + kontraya göre 30° yana; engine.buildTrack), filo için senaryoda `leeway` (rules.simulate, yalnız start öncesi bekleme). İkisi de yalnız tanımlı senaryoda çalışır; simülatöre dokunulmadı.
@@ -137,6 +139,7 @@
 - 2026-11-13 · **Simülatörde ayarlar kategorilere, elle sürme canlı.** Kullanıcı: çok ayar animasyonu kapatıyor, yatayda sağdan kategori seçip aç; elle sürünce tekne anında öne fırladı. Yarışta zaman donarken teknenin tek başına ilerlemesi adil değildi (hata). Canlı sürmede herkes birlikte ilerler; kurulumda (saat yokken) yer almak için donuk sürme kaldı.
 
 ## Açık sorular (kullanıcıya)
+- Yelken ayarı: 3D aşaması için three.js (CDN ya da vendored) eklensin mi? (CLAUDE.md: bağımlılıktan önce sor.) J-Sails, Olimpic, CD kılavuzları (PDF) kullanıcıdan bekleniyor; "Van" hangi marka? OneSails mm dizisinin bağ sırası tepeden mi? Bumba yüksekliği kılavuzlarda yok (North: üst emniyet halatı sert havada yelkeni aşağı alır).
 - Misafire hangi bölümler kapalı olsun? Şimdilik İleri Taktik + Elle sür + yarış kaydı. Kayıt izni kutusu varsayılan işaretli; KVKK/GDPR'ye sıkı uyum için işaretsiz (açık rıza) olması daha doğru, kullanıcı karar verecek.
 - Hedef sınıf: simülatörde artık seçilebiliyor (Optimist / ILCA 4-6-7). Senaryolar hâlâ Optimist ölçeğinde; tekne boyu her sınıfta 50 px.
 - Sınıf hız tablosu (`sim-core.js` → `CLASSES`) yaklaşık ortalamalar; kullanıcı kendi sporcularının ölçtüğü hızları verirse güncellenir.
@@ -202,8 +205,12 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
-
+### 2026-11-13 · Optimist yelken ayarı: 2D taslak (`ayar.html`)
+- Kullanıcı: tekne sürati/trim animasyonları; hafif/orta/sert, düz/dalgalı; gırcala, tepe, köşe, palanga, direk eğimi, bumba; önce çizim, sonra 3D. Ek: marka kılavuzları (Van, CD, J-Sails, Olimpic) orijinal + özel; bağ boşluğu 4 → 3 mm animasyonda görünsün, 0 = bitişik; tepe bağları önemli; rüzgar gülü; palanga, Cunningham.
+- Yapılan: `src/ayar.html`, `src/css/ayar.css`, `src/js/ayar.js`. Kaynaklar: OneSails PDF (rake cm + mm dizisi), North hız kılavuzu (göreli; Cunningham yok, bumba emniyeti), Quantum (kiloya göre rake, bağ 1-2 mm, sert havada uç bağlar 0). Ekran görüntüleri proje dosyaları `yelken-ayari/`.
+- Yarım: kullanıcı onayı, menüye bağlantı, 3D, eksik marka kılavuzları, pupa/apaz ayarları, vücut hareketleri (hiking, ağırlık).
 - **2026-11-13 · Bildir onayı:** gönderince (GitHub/Kopyala/Dosya) pencere kapanır, not temizlenir, Bildir düğmesi 4 sn yeşil onay + "Gönderildi" (veri adrese sığmadıysa 9 sn "Panoda"). Duman testi bunu denetliyor. Otomatik bildirim kontrolü kurulmadı (kullanıcı "ben söylerim" dedi).
+
 ### 2026-11-13 · İleri start paketi: hatta yer tutma ve 6 taktik (İA7-İA13)
 - Kullanıcı: "hepsini sırayla yap, bana sorma"; önce hatta durma/yükselme (iskota, ikili tramola, yerinde tramola, kafayı açıp yükselme; iki grup arasında rüzgarüstü tekneye yaklaşma), sonra önerilen 6 fikir (pin karmaşası, fren/geri gitme, boşluğu savun, B planı, son saniye iskele yaklaşma, genel geri çağırma + siyah bayrak).
 - Yapılan: İA7-İA13 (v1.104-v1.110), motor `back` segmenti, KONULAR H6 + H11-H16 ✅. `npm run check` ve `npm run smoke` temiz. Görüntüler: proje dosyaları `ileri-start/`.

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1724">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Velora">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>Velora Sailing · Optimist Yelken Ayarı</title>
+  <link rel="icon" href="img/velora-mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/icon-180.png">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/app-shell.js"></script>
+  <link rel="stylesheet" href="css/ayar.css">
+</head>
+<body class="trim">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <header class="topbar">
+    <a class="tool back-btn" href="./" title="Senaryolara dön"><svg><use href="#i-back"/></svg><span class="lbl">Senaryolar</span></a>
+    <h1 class="trim-h1">Optimist yelken ayarı <span class="draft">taslak</span></h1>
+  </header>
+
+  <main class="trim-main">
+    <section class="trim-stage">
+      <svg id="side" viewBox="0 0 640 560" preserveAspectRatio="xMidYMid meet" aria-label="Optimist yandan görünüş">
+        <defs>
+          <linearGradient id="sailFill" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#f8fafc" stop-opacity=".96"/>
+            <stop offset="1" stop-color="#dbe7f3" stop-opacity=".92"/>
+          </linearGradient>
+          <marker id="wArrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#7dd3fc"/></marker>
+        </defs>
+        <g id="windLayer"></g>
+        <g id="water"></g>
+        <g id="ghost"></g>
+        <g id="rig"></g>
+        <g id="hull"></g>
+        <g id="callouts"></g>
+      </svg>
+      <div class="sec-card">
+        <div class="sec-head">Üstten kesitler <span>kambur ve twist</span></div>
+        <svg id="sections" viewBox="0 0 300 230" aria-label="Yelken kesitleri üstten"></svg>
+      </div>
+      <div class="zoom-card">
+        <div class="sec-head">Yakın: direk bağları</div>
+        <svg id="tiesZoom" viewBox="0 0 210 192" aria-label="Direk bağları yakın görünüş"></svg>
+      </div>
+      <div class="legend" id="legend" hidden><i></i> Sarı kesikli: kılavuzun orijinal ayarı</div>
+      <div class="warn" id="warn" hidden></div>
+    </section>
+
+    <aside class="trim-panel">
+      <div class="seg-row">
+        <div class="seg-lbl">Rüzgar</div>
+        <div class="seg" id="segWind">
+          <button data-v="hafif">Hafif</button><button data-v="orta">Orta</button><button data-v="sert">Sert</button>
+        </div>
+      </div>
+      <div class="seg-row">
+        <div class="seg-lbl">Deniz</div>
+        <div class="seg" id="segSea">
+          <button data-v="duz">Düz</button><button data-v="dalgali">Dalgalı</button>
+        </div>
+      </div>
+      <div class="seg-row">
+        <div class="seg-lbl">Kaynak</div>
+        <select id="brandSel" class="brand-sel" aria-label="Yelken markası kılavuzu"></select>
+      </div>
+      <div class="seg-row">
+        <div class="seg-lbl">Ayar</div>
+        <div class="seg" id="segMode">
+          <button data-v="orijinal">Orijinal</button><button data-v="ozel">Özel</button>
+        </div>
+        <button id="btnResetCustom" class="reset-c" title="Özel ayarı kılavuz değerlerine döndür" hidden>Sıfırla</button>
+      </div>
+      <p class="cond" id="condText"></p>
+      <p class="src" id="srcText"></p>
+
+      <div id="ctrls"></div>
+
+      <details class="note">
+        <summary>Bu değerler ne kadar kesin?</summary>
+        <p>Direk eğimi (cm) ve bağ boşlukları (mm) kılavuzdaki sayılardır; gırcala, palanga, köşe ve orsa yakası
+        kaydırıcıları <b>göreli</b> (kılavuzlar bunları kırışık ve görüntüyle tarif ediyor, sayı vermiyor).
+        <b>?</b> işaretli değer o kılavuzda yok, taslak varsayılanıdır. Yelken şekli şematik, gerçek ölçekli değil.
+        Özel ayarların bu cihazda saklanır.</p>
+      </details>
+    </aside>
+  </main>
+
+  <script src="js/track.js"></script>
+  <script src="js/report.js"></script>
+  <script src="js/access.js"></script>
+  <script type="module" src="js/velora-auth.js"></script>
+  <script src="js/ayar.js"></script>
+</body>
+</html>
