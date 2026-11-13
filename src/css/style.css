@@ -563,7 +563,7 @@ html:not([data-role="sahip"]) .report-btn { display: none; }
 .rep-foot b { color: var(--text2); }
 
 /* ===== Yandan görünüş paneli (İleri Teknik: js/rigview.js) ===== */
-.rig-panel { position: absolute; left: 14px; bottom: 48px; z-index: 3; width: 400px; max-width: calc(100vw - 28px);
+.rig-panel { position: absolute; left: 14px; bottom: 48px; z-index: 3; width: 360px; max-width: calc(100vw - 28px);
   display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
   box-shadow: var(--shadow); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); overflow: hidden; }
 .rig-panel.hidden { display: none; }
@@ -575,18 +575,20 @@ html:not([data-role="sahip"]) .report-btn { display: none; }
 .rig-min::before { content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 2px; margin: -1px 0 0 -7px; background: currentColor; border-radius: 1px; }
 .rig-panel.min .rig-min::after { content: ""; position: absolute; left: 50%; top: 50%; width: 2px; height: 14px; margin: -7px 0 0 -1px; background: currentColor; border-radius: 1px; }
 .rig-min:hover { background: var(--raised); }
-.rig-steps { list-style: none; margin: 0; padding: 0 12px 4px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.rig-steps { list-style: none; margin: 0; padding: 0 12px 4px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.rig-steps li { align-items: center; }
 .rig-steps li { display: flex; align-items: flex-start; gap: 5px; font-size: 11px; line-height: 1.25; color: var(--muted); padding: 5px 6px; border-radius: 8px; background: var(--raised); min-width: 0; }
 .rig-steps li b { flex: 0 0 auto; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; background: rgba(255,255,255,.08); color: var(--text2); }
-.rig-steps li span { overflow-wrap: anywhere; }
+.rig-steps li span { overflow-wrap: break-word; min-width: 0; }
 .rig-steps li.done { color: var(--text2); }
 .rig-steps li.done b { background: rgba(52,211,153,.25); color: #34d399; }
 .rig-steps li.on { color: #111827; background: #fde047; font-weight: 600; }
 .rig-steps li.on b { background: rgba(0,0,0,.15); color: #111827; }
-.rig-svg { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; }
-.rig-svg .rig-tag { font-size: 12px; font-weight: 700; fill: #fde047; paint-order: stroke; stroke: rgba(9,20,33,.85); stroke-width: 3px; }
-.rig-svg .rig-ghost { font-size: 12px; font-weight: 800; fill: #f87171; paint-order: stroke; stroke: rgba(9,20,33,.85); stroke-width: 3px; }
-.rig-svg .rig-small { font-size: 10px; font-weight: 600; fill: rgba(255,255,255,.6); }
+.rig-svg { display: block; width: 100%; height: auto; aspect-ratio: 412 / 512; max-height: max(220px, calc(100vh - 470px)); }
+.rig-svg .rig-no { font-size: 15px; font-weight: 800; fill: #1e3a5f; opacity: .55; letter-spacing: 1px; }
+.rig-svg .rig-tag { font-size: 14px; font-weight: 700; fill: #fde047; paint-order: stroke; stroke: rgba(9,20,33,.85); stroke-width: 3px; }
+.rig-svg .rig-ghost { font-size: 14px; font-weight: 800; fill: #f87171; paint-order: stroke; stroke: rgba(9,20,33,.85); stroke-width: 3px; }
+.rig-svg .rig-small { font-size: 12px; font-weight: 600; fill: rgba(255,255,255,.6); }
 .rig-gauges { padding: 2px 14px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text2); }
 .rg-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .rg-k { flex: 0 0 58px; font-weight: 600; color: var(--muted); }
@@ -599,7 +601,7 @@ html:not([data-role="sahip"]) .report-btn { display: none; }
 .rg-legend .dash { flex: 0 0 22px; height: 0; border-top: 2px dashed #f87171; }
 .rig-panel.min .rig-steps, .rig-panel.min .rig-svg, .rig-panel.min .rig-gauges { display: none; }
 .rig-panel.min { width: auto; }
-@media (max-width: 1100px) { .rig-panel { width: 340px; } }
+@media (max-width: 1100px) { .rig-panel { width: 330px; } }
 @media (max-width: 1100px) and (orientation: portrait) { .rig-panel { width: min(420px, 52vw); bottom: 56px; } }
 /* yatay telefon: küçük panel, adım şeridinde yalnız etkin adımın yazısı */
 @media (max-height: 460px) {

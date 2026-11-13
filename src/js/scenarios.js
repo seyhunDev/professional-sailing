@@ -1301,7 +1301,7 @@
 
   // Rüzgarüstü şamandıra: aynı rota iki senaryoda, rüzgar şiddeti ve palanga miktarı farklı
   const VANG_MARK = { x: 640, y: 130, label: 'Orsa şamandırası (iskelede bırak)', zone: true };
-  const VANG_STEPS = ['İskotayı sonuna kadar al', 'Bumbayı aşağı bastır', 'Palangayı elle al', 'İskotayı kaçır, kafa aç'];
+  const VANG_STEPS = ['İskotayı sonuna kadar al', 'Bumbayı bastır', 'Palangayı al', 'İskotayı kaçır, kafa aç'];
   const vangKeys = (up, set) => [
     { t: 0, sheet: 0.85, vang: up, push: 0, p: -1 },
     { t: 4, sheet: 0.85, vang: up, push: 0, hand: 'sheet', p: 0 },
