@@ -36,7 +36,7 @@
 
   const state = {
     scn: null, boats: [], extras: [], t: 0, playing: false, speed: 1, lastTs: 0,
-    show: { wind: true, rungs: true, labels: true, trails: false, shadows: true },
+    show: { wind: true, rungs: true, labels: true, trails: false, shadows: true, startLay: false },
     vb: { x: 0, y: 0, w: COURSE.w, h: COURSE.h },      // ekranı dolduran görünüm alanı
     follow: true, stepIdx: 0, infoOpen: true, zoom: null, rungNotes: [], ls: 1
   };
@@ -387,6 +387,8 @@
   function drawOverlays(w) {
     const g = $('overlayLayer'); g.innerHTML = '';
     const scn = state.scn; state.rungNotes = [];
+    // ayarlardaki anahtar: pin ve hakem botu layline'ları (rüzgara göre her karede)
+    if (state.show.startLay && scn.line) E.drawStartLaylines(el, g, scn.line, w);
     if (state.show.rungs && scn.rungs && state.t >= scn.rungs.from && (scn.rungs.to == null || state.t <= scn.rungs.to)) {
       const b = state.boats.find(x => x.id === scn.rungs.boat);
       const s = E.sampleTrack(b.track, state.t);
@@ -594,6 +596,7 @@
   $('scrub').oninput = e => { state.t = +e.target.value; setFollow(true); render(); };
   $('btnAdd').onclick = addBoat; $('btnRemove').onclick = removeBoat;
   $('chkWind').onchange = e => { state.show.wind = e.target.checked; render(); };
+  $('chkStartLay').onchange = e => { state.show.startLay = e.target.checked; render(); };
   $('chkRungs').onchange = e => { state.show.rungs = e.target.checked; render(); };
   $('chkLabels').onchange = e => { state.show.labels = e.target.checked; buildLegend(); render(); };
   $('chkShadows').onchange = e => { state.show.shadows = e.target.checked; render(); };

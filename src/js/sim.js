@@ -18,7 +18,7 @@
     fleet: S.defaultFleet(12),
     wind: 0, gusts: [],
     sim: null, frames: [], rec: null, speed: 1, lastTs: 0, acc: 0,
-    show: { speed: true, shadow: true },   // pis rüzgar konileri varsayılan açık
+    show: { speed: true, shadow: true, startLay: false },   // pis rüzgar konileri varsayılan açık; hat layline'ları ayarlardan
     sel: null, vb: { x: 0, y: 0, w: W.w, h: W.h }, drag: null, mineOnly: false, viewT: 0,
     cam: { z: 1, x: null, y: null, follow: false }, base: null, pinch: null, pts: new Map(),
     course: { ...S.COURSE_DEFAULT }, sea: { ...S.SEA_DEFAULT }, boat: { ...S.BOAT_DEFAULT }, gsel: null, drawMode: false, drawPts: null, routeMode: 'acili', draft: [], steps: [], legPrev: null
@@ -184,6 +184,8 @@
     el('text', { x: wp.x - lf.x * 230 - 8, y: wp.y - lf.y * 230, 'text-anchor': 'end', fill: 'rgba(252,165,165,.8)', 'font-size': 11 }, g).textContent = 'iskele layline';
     const rf = E.fwd(E.tackHeading(w, 'starboard'));
     el('text', { x: wp.x - rf.x * 230 + 8, y: wp.y - rf.y * 230, fill: 'rgba(134,239,172,.8)', 'font-size': 11 }, g).textContent = 'sancak layline';
+    // ayarlardaki anahtar: pin ve hakem botu layline'ları
+    if (st.show.startLay) E.drawStartLaylines(el, g, S.LINE, w);
     // start hattı
     el('line', { x1: pin.x, y1: pin.y, x2: boat.x, y2: boat.y, stroke: '#ffd166', 'stroke-width': 2, 'stroke-dasharray': '10 8', opacity: .9 }, g);
     el('circle', { cx: pin.x, cy: pin.y, r: 7, fill: '#ff8c42', stroke: '#fff', 'stroke-width': 1.5 }, g);
@@ -1356,6 +1358,7 @@
   // komut düğmesine basınca kısa parlama: komutun alındığı görülsün
   const flash = id => { const x = $(id); x.classList.remove('fired'); void x.offsetWidth; x.classList.add('fired'); };
   $('btnTack').addEventListener('click', () => flash('btnTack'));
+  $('chkStartLay').addEventListener('change', e => { st.show.startLay = e.target.checked; render(); });
   $('chkMineOnly').addEventListener('change', e => { st.mineOnly = e.target.checked; updatePanel(true); });
   $('btnPanel').addEventListener('click', () => setPanelOpen($('panel').classList.contains('hidden')));
   $('btnPanelClose').addEventListener('click', () => setPanelOpen(false));

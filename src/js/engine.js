@@ -356,10 +356,39 @@
   }
   const committeeBoatTransform = (x, y, windFrom) => `translate(${x},${y}) rotate(${norm360(windFrom).toFixed(1)})`;
 
+  /* Start hattı layline'ları (ayarlardaki anahtar, senaryolar ve simülatör): pin'den ve hakem botundan
+     rüzgaraltına, iki kontranın orsa rotası boyunca. Bu çizginin üstünde (rüzgarüstünde) olan tekne o kontrada
+     ucu tutar; altında kalan tutamaz. Pin çizgileri belirgin, hakem botununkiler soluk.
+     line: {pin, boat}, w: rüzgarın geldiği yön, opts: { len, angle, scale (yazı ölçeği) } */
+  function drawStartLaylines(el, g, line, w, opts) {
+    opts = opts || {};
+    const len = opts.len || 520, fs = 11 * (opts.scale || 1);
+    const ends = [
+      { p: line.pin, name: 'pin', strong: true },
+      { p: line.boat, name: 'hakem botu', strong: false }
+    ];
+    const COL = { starboard: '#4ade80', port: '#f87171' };
+    for (const e of ends) {
+      for (const tack of ['starboard', 'port']) {
+        const f = fwd(tackHeading(w, tack, opts.angle)), bx = -f.x, by = -f.y;   // uçtan rüzgaraltına
+        const x2 = e.p.x + bx * len, y2 = e.p.y + by * len;
+        el('line', { x1: e.p.x, y1: e.p.y, x2, y2, stroke: COL[tack], 'stroke-width': e.strong ? 2 : 1.5,
+          'stroke-dasharray': e.strong ? '10 6' : '3 7', opacity: e.strong ? 0.9 : 0.55, 'stroke-linecap': 'round', class: 'start-layline' }, g);
+        // yazı çizgi boyunca, soldan sağa okunur; uçtaki yazı ve tekneyle çakışmasın diye 150-200 px uzakta
+        let ang = Math.atan2(by, bx) / DEG; if (ang > 90 || ang < -90) ang += 180;
+        const d = e.strong ? 150 : 200, tx = e.p.x + bx * d, ty = e.p.y + by * d;
+        const t = el('text', { x: 0, y: -5, transform: `translate(${tx.toFixed(1)},${ty.toFixed(1)}) rotate(${ang.toFixed(1)})`,
+          'text-anchor': 'middle', fill: COL[tack], 'font-size': fs, 'font-weight': e.strong ? 700 : 500,
+          opacity: e.strong ? 0.95 : 0.7, 'paint-order': 'stroke', stroke: 'rgba(2,21,38,.75)', 'stroke-width': 3 }, g);
+        t.textContent = `${e.name} · ${tack === 'starboard' ? 'sancak' : 'iskele'} layline`;
+      }
+    }
+  }
+
   function seedOf(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) % 1000; return h / 37; }
 
   global.SailEngine = {
-    sailPose, sailShape, seedOf, drawCommitteeBoat, committeeBoatTransform,
+    sailPose, sailShape, seedOf, drawCommitteeBoat, committeeBoatTransform, drawStartLaylines,
     SHADOW, shadowStrength, shadowOf, shadowK, shadowPolygon,
     DEG, norm180, norm360, lerp, lerpAngle, fwd,
     windAt, tackHeading, runHeading, buildTrack, sampleTrack, sailState, speedFor, obstaclesOf, avoidDir, steerAround,
