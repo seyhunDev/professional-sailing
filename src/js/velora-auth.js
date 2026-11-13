@@ -10,10 +10,10 @@
 // CONFIG.apiKey boşsa modül hiçbir şey yapmaz (Velora girişi görünmez, site eskisi gibi çalışır).
 // Web ayarları gizli değildir (her web sitesinin kaynağında görünür); güvenlik Firebase kurallarındadır.
 const CONFIG = {
-  apiKey: '',
+  apiKey: 'AIzaSyDOiKPuOfTnfYTDNxv6ElknzECRwiQ5qx8',
   authDomain: 'sesliasistan-3e95a.firebaseapp.com',
   projectId: 'sesliasistan-3e95a',
-  appId: '',
+  appId: '1:828345188662:web:b951d19cf1f647c14b3397',
 };
 const V = '10.14.1';
 const CDN = `https://www.gstatic.com/firebasejs/${V}`;
