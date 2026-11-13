@@ -7,9 +7,10 @@
   "scripts": {
     "dev": "python3 -m http.server 8000 --directory src",
     "build": "node scripts/build.mjs",
-    "check": "node scripts/check-scenarios.mjs && node scripts/check-sim.mjs && node scripts/fuzz-sim.mjs 60",
+    "check": "node scripts/check-scenarios.mjs && node scripts/check-sim.mjs && node scripts/fuzz-sim.mjs 60 && node scripts/check-reports.mjs",
     "preview": "python3 -m http.server 8080 --directory dist",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "report": "node scripts/report.mjs"
   },
   "license": "MIT"
 }

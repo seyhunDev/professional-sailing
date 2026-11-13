@@ -134,7 +134,7 @@
         go.disabled = false;
         if (msg) { err.textContent = msg; T.log('velora', { ok: false }); }
       };
-      setTimeout(() => body.querySelector('#gvMail').focus(), 30);
+      setTimeout(() => body.querySelector('#gvMail')?.focus(), 30);   // hızlı dokunuşta ekran değişmiş olabilir (rastgele tıklama testi buldu)
     } else if (gateMode === 'locked') {
       body.innerHTML = `
         <div class="gate-hero"><span class="gate-logo lock">${LOCK}</span>
@@ -163,7 +163,7 @@
       body.querySelectorAll('.gate-chip').forEach(c => c.onclick = () => body.querySelectorAll('.gate-chip').forEach(x => { x.classList.toggle('on', x === c); x.setAttribute('aria-checked', x === c); }));
       body.querySelector('#gfBack').onclick = back;
       body.querySelector('#gateForm').onsubmit = e => { e.preventDefault(); doSignup(); };
-      setTimeout(() => body.querySelector('#gfName').focus(), 30);
+      setTimeout(() => body.querySelector('#gfName')?.focus(), 30);   // hızlı dokunuşta ekran değişmiş olabilir (rastgele tıklama testi buldu)
     } else if (gateMode === 'owner') {
       body.innerHTML = `
         <button class="gate-back" id="goBack">${BACK}Geri</button>
@@ -179,7 +179,7 @@
         const ok = await ownerLogin(body.querySelector('#goKey').value);
         if (!ok) { body.querySelector('#goErr').textContent = 'Anahtar doğru değil.'; T.log('owner', { ok: false }); }
       };
-      setTimeout(() => body.querySelector('#goKey').focus(), 30);
+      setTimeout(() => body.querySelector('#goKey')?.focus(), 30);   // hızlı dokunuşta ekran değişmiş olabilir (rastgele tıklama testi buldu)
     }
   }
 

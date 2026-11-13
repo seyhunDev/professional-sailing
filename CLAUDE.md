@@ -44,5 +44,6 @@ Canlı site: https://seyhundev.github.io/velora-sailing/ (main'e push → GitHub
 - `src/index.html` arayüz · `src/css/style.css` · `src/js/engine.js` motor · `src/js/rules.js` kural motoru (ek tekneler) · `src/js/scenarios.js` senaryolar · `src/js/app.js` arayüz mantığı · `src/js/thumbs.js` seçici küçük resimleri · `src/img/velora-mark.svg` logo
 - `src/js/app-shell.js` uygulama kabuğu (kaymaz, büyümez, telefonda yatay zorunlu; her sayfada ilk betik) · `src/manifest.webmanifest` ana ekrana ekleme
 - `src/js/track.js` ziyaret/olay kaydı · `src/js/access.js` giriş ekranı, roller, kilitler (her sayfada uygulama betiğinden önce) · `src/js/velora-auth.js` Velora hesabıyla giriş (Firebase, modül) · `src/ziyaret.html` ziyaret kayıtları (sahip)
+- `src/js/report.js` Bildir düğmesi (sahip): not + işlemler + durum → GitHub konusu "Bildirim: …" · `scripts/report.mjs` bildirimi çözer, yarışı yeniden kurar, hata avcısı · `tests/bildirimler/` bildirim testleri · `npm run smoke` tarayıcı + rastgele tıklama testi (Playwright varsa)
 - `scripts/build.mjs` derleme · `.github/workflows/deploy.yml` yayın
 - `KONULAR.md` müfredat ve durumları · `NOTLAR.md` sohbetler arası hafıza · `README.md` kullanım ve geliştirme

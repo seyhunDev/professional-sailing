@@ -80,6 +80,8 @@
 - [ ] **Kullanıcı senaryoları (sonraki aşama):** Firebase Auth + Firestore, link ile paylaşım, Firebase Hosting. Simülatör yarış kayıtları için biçim hazır: `SailRecords` girdisi (`setup` + `ops` + `summary`) aynen Firestore belgesi olabilir.
 
 ## Kararlar
+- 2026-11-13 · **Bildirim gönder** (kullanıcı isteği): `js/report.js` her sayfada (track.js'ten hemen sonra). Sahip hesabında üst çubukta **Bildir**: not + bu sekmedeki son 400 işlem (tıklama, tuş, sayfa olayı; sessionStorage `ps.report.buf`) + yakalanan hatalar + cihaz + sayfanın durumu (`SailReport.source`; simülatörde kurulum, yarış kaydı, elle sürme yolu). Gönderme: GitHub konusu (`seyhunDev/velora-sailing/issues/new`, başlık "Bildirim: …", veri gzip+base64 ```velora-report bloğunda; adrese sığmazsa panoya), Kopyala, Dosya. Son 10 bildirim `ps.reports.v1`. **Claude bildirimleri GitHub konularından okur** (başlık "Bildirim:"), `node scripts/report.mjs <dosya>` ile çözer, yarışı yeniden kurar ve hata avcısından geçirir. Düzeltilen bildirim `tests/bildirimler/`e konursa `npm run check` onu her seferinde dener.
+- 2026-11-13 · **Yarış işlemleri ve tekrar oynatma çekirdekte:** `OPS`, `GUST_FX`, `GUST_BASE`, `SEA_TXT`, `replayRecord`, `spliceHand` artık `sim-core.js`te (`S.*`); sim.js bunları kullanır. Gerekçe: bildirimler ve testler yarışı node'da aynen kurabilsin. `gust` işleminde katsayı alanı `f` (eskiden `k`, işlem türünü eziyordu).
 - 2026-11-13 · **Kalıcı kurulum yalnız yerleşim** (kullanıcı onayı): `ps.sim.setup.v1` artık filo (yer, kontra, isim, taktik, rota), parkur boyu ve ekranda hız tutar. Rüzgar, sağanak, akıntı/dalga, sınıf/rüzgar hızı/geri sayım, bayrak, yol vermez, manuel, hız farkı, yalpalama her açılışta varsayılan. `ps.sim.fastPre` kaydedilmez. Ray'da "Varsayılan" (sayılı rozet, yalnız kurulumda, değişen ayar varsa görünür) tek dokunuşla ayarları geri alır, yerleşim kalır; "Tümünü sıfırla" yerleşimi de siler.
 - 2026-11-13 · **Yarışta rüzgar değişikliği bekletilir:** art arda basışlar `WIND_WAIT` (450 ms) toplanıp tek `applyChange` olur (her basış yarışı yeniden hesaplıyordu).
 - 2026-11-13 · **`runToEnd` sınırı start'a göre:** `startAt + RACE_MAX` (300 sim. sn). Eski sabit 200, gerçek zamanlı 5 dk geri sayımda (ILCA, sert rüzgar: start ~200 sim. sn) yarışı start'ta ya da ortasında kesiyordu; check-sim'deki ayar kombinasyonu testi buldu.
@@ -190,6 +192,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Bildirim gönder + davranış testleri
+- Kullanıcı: her türlü davranışı test edelim; denerken "bildirim gönder" ile o ana kadarki veri + not bana gelsin. Yapılanlar Kararlar'da (Bildirim gönder, işlemler çekirdekte).
+- `npm run smoke` genişledi: Bildir akışı (dosya + GitHub adresi + node'da yeniden kurma) ve **rastgele davranış testi** (sim 400, senaryolar 250 rastgele tıklama/tuş; `--tohum=N`). İlk koşuda 2 gerçek hata buldu, düzeltildi: giriş ekranında hızlı dokunuşta `focus` null hatası (access.js); **yarışta sağanak büyüt/küçült/sil her zaman hata veriyordu** (işlem nesnesinde `k` iki kez). 4 tohumda temiz.
+- Yeni: `scripts/report.mjs` (okuyucu + hata avcısı), `scripts/check-reports.mjs` (check'e bağlı), `tests/bildirimler/`.
+- Sonraki (kullanıcı aynı sohbette istedi): elle sürmede yelken boşken teknenin yavaşça durması, "yelkeni tersle" (yavaşla, dur, geri git), akıntı yönü her yönden.
 ### 2026-11-13 · Sağlık incelemesi 2. tur: kalıcı kayıt, rüzgar bekletme, Varsayılan rozeti, testler (v1.99)
 - Kullanıcı kalan dört öneriyi onayladı, "testler yapalım, geliştirme devam etsin" dedi. Yapılanlar Kararlar'da (üç madde).
 - Testler: check-sim'e 24 uç ayar kombinasyonu (yayında da koşar); `scripts/smoke.mjs` (`npm run smoke`): Playwright varsa 16 senaryo + simülatör akışları + yatay telefon; yoksa atlanır. Bağımlılık eklenmedi (burada `NODE_PATH=$(npm root -g)` ile çalıştı).

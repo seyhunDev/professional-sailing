@@ -778,6 +778,12 @@
   });
   const ds = document.body.dataset;
   $('versionLabel').textContent = ds.version ? `Sürüm ${ds.ver || ds.version} · ${ds.version} · ${ds.built}` : 'Geliştirme sürümü';
+  // Bildirim gönder (report.js): hangi senaryo, hangi an
+  if (window.SailReport) SailReport.source('senaryo', () => ({
+    ozet: `senaryo ${state.scn ? state.scn.id : '-'} · ${state.t.toFixed(1)} / ${state.scn ? state.scn.duration : '-'} sn · ${state.playing ? 'oynuyor' : 'duruyor'} · hız ${state.speed}×`,
+    id: state.scn && state.scn.id, t: state.t, playing: state.playing, speed: state.speed, follow: state.follow, stepIdx: state.stepIdx,
+    infoOpen: state.infoOpen, show: { ...state.show }, extras: state.extras.length, zoom: state.zoom
+  }));
   fitViewBox(); loadScenario(fromHash()); setInfoOpen(true);
   requestAnimationFrame(ts => { state.lastTs = ts; requestAnimationFrame(tick); });
 })();

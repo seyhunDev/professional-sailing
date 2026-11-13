@@ -956,7 +956,49 @@
     return frames;
   }
 
+  // ---------- Yarış sırasındaki işlemler ve kayıttan tekrar oynatma (arayüz ve node ortak) ----------
+  // Her değişiklik yazılabilir bir "işlem" (op). Kayıtlı yarışı tekrar oynatırken aynı karede yeniden uygulanır;
+  // hesap deterministik olduğu için yarış birebir aynı çıkar. (2026-11-13'e kadar sim.js'teydi.)
+  const SEA_TXT = { current: ['yok', 'hafif', 'orta', 'güçlü'], waves: ['yok', 'küçük', 'büyük'] };
+  const GUST_BASE = { rx: 120, ry: 190 };
+  const GUST_FX = {
+    scale: (a, i, k) => { const g = a[i], f = Math.max(0.4, Math.min(2.5, (g.rx / GUST_BASE.rx) * k)); g.rx = GUST_BASE.rx * f; g.ry = GUST_BASE.ry * f; },
+    reset: (a, i) => { a[i].rx = GUST_BASE.rx; a[i].ry = GUST_BASE.ry; },
+    del: (a, i) => a.splice(i, 1)
+  };
+  const OPS = {
+    wind: (r, o) => { r.wind = E.norm180(r.wind + o.d); r.events.push({ t: r.t, text: `Rüzgar ${o.d > 0 ? 'sağa' : 'sola'} döndü → ${Math.round(E.norm360(r.wind))}°`, kind: 'wind' }); },
+    gustAdd: (r, o) => { r.gusts.push({ ...o.g }); r.events.push({ t: r.t, text: `${o.side === 'L' ? 'Sol' : 'Sağ'} tarafa sağanak geldi`, kind: 'wind' }); },
+    gustClear: r => { r.gusts.length = 0; r.events.push({ t: r.t, text: 'Sağanak geçti', kind: 'wind' }); },
+    gustMove: (r, o) => { if (r.gusts[o.i]) { Object.assign(r.gusts[o.i], o.pos); r.events.push({ t: r.t, text: 'Sağanak taşındı', kind: 'wind' }); } },
+    gust: (r, o) => { if (r.gusts[o.i] && GUST_FX[o.fx]) { GUST_FX[o.fx](r.gusts, o.i, o.f); r.events.push({ t: r.t, text: o.text, kind: 'wind' }); } },
+    sea: (r, o) => { r.sea = { ...(r.sea || SEA_DEFAULT), [o.key]: o.val }; r.events.push({ t: r.t, text: o.key === 'current' ? `Akıntı: ${SEA_TXT.current[o.val]}` : `Dalga: ${SEA_TXT.waves[o.val]}`, kind: 'wind' }); },
+    cmd: (r, o) => command(r, o.c, o.v, o.id)
+  };
+  const jcopy = o => JSON.parse(JSON.stringify(o));
+  // elle sürülen bölümün kareleri + bitiş durumundan otomatik devam
+  function spliceHand(frames, i, hf, end) {
+    const rest = runToEnd(end), last = hf[hf.length - 1];
+    return frames.slice(0, i).concat(hf, last && Math.abs(last.t - rest[0].t) < 1e-6 ? rest.slice(1) : rest);
+  }
+  // Kayıttaki kurulumu ve işlemleri sırayla uygula (tekrar oynatma). rec: { setup, ops }
+  function replayRecord(rec) {
+    if (rec.setup.boat) setBoat(rec.setup.boat);
+    let frames = runToEnd(newRace(jcopy(rec.setup.fleet), jcopy(rec.setup)));
+    for (const op of rec.ops) {
+      const i = Math.min(op.i, frames.length - 1);
+      let base;
+      if (op.k === 'hand') { frames = spliceHand(frames, i, runHand(frames[i], op.path || []), jcopy(op.end)); continue; }
+      if (op.k === 'snap') base = jcopy(op.state);
+      else if (OPS[op.k]) { base = clone(frames[i]); OPS[op.k](base, op); }
+      else continue;
+      frames = frames.slice(0, i).concat(runToEnd(base));
+    }
+    return frames;
+  }
+
   global.SailSim = {
+    OPS, GUST_FX, GUST_BASE, SEA_TXT, replayRecord, spliceHand,
     runToEnd,
     DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, PRE_SEC, VIS, setBoat, upwindKn, BOAT,
     get START_AT() { return START_AT; }, get CLOCK_SCALE() { return CLOCK_SCALE; }, MAN_MARGIN, bounds, PERSONAS, MINE_COLOR, OBSTACLES,

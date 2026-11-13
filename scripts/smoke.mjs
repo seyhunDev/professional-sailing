@@ -118,6 +118,62 @@ const shot = async (p, name) => { if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: 
   await p.context().close();
 }
 
+// ---------- Bildirim gönder: yarışta elle sür, not yaz, GitHub adresi + dosya; node'da yeniden kurulur ----------
+{
+  const p = await page();
+  await p.goto(BASE + '/sim.html'); await p.waitForTimeout(700);
+  await p.evaluate(() => { window.__opened = []; window.open = () => ({ set location(v) { window.__opened.push(v.href || v); }, get location() { return { set href(v) { window.__opened.push(v); } }; } }); });
+  await p.click('#btnPlay'); await p.waitForTimeout(800);
+  await p.keyboard.press('d'); await p.waitForTimeout(1500);
+  await p.keyboard.down('ArrowLeft'); await p.waitForTimeout(400); await p.keyboard.up('ArrowLeft');
+  ok(await p.isVisible('#btnReport'), 'sahip hesabında Bildir düğmesi görünüyor');
+  await p.click('#btnReport'); await p.waitForTimeout(200);
+  await p.fill('#repNote', 'Duman testi: elle sürerken bildirim');
+  await shot(p, 'bildirim.png');
+  const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#repFile')]);
+  const file = path.join(SHOTS || path.join(process.env.TMPDIR || '/tmp', 'velora-smoke'), 'bildirim.json');
+  fs.mkdirSync(path.dirname(file), { recursive: true }); await dl.saveAs(file);
+  await p.click('#repSend'); await p.waitForTimeout(600);
+  const urls = await p.evaluate(() => window.__opened);
+  const u = urls[0] ? new URL(urls[0]) : null;
+  ok(u && u.host === 'github.com' && /bildirim/.test(u.searchParams.get('labels')) && urls[0].length <= 7100, `GitHub konu adresi hazır (${urls[0] ? urls[0].length : 0} karakter)`);
+  const { decode, rebuild, inspect } = await import('./report.mjs');
+  const rep = decode(fs.readFileSync(file, 'utf8')), fromUrl = u && /velora-report/.test(u.searchParams.get('body')) ? decode(u.searchParams.get('body')) : null;
+  const r = rebuild(rep);
+  ok(rep.note.startsWith('Duman') && rep.events.some(e => e.type === 'click' && e.d.id === 'btnPlay') && rep.state.sim.drive && r && r.frames.length > 100,
+    `bildirim: ${rep.events.length} işlem, durum "${rep.state.sim.ozet.slice(0, 60)}…", ${r ? r.note : 'yeniden kurulamadı'}${fromUrl ? ', adresteki veri de çözüldü' : ', veri panoda'}`);
+  const probs = r ? inspect(r.frames) : [];
+  console.log(`  (bildirimden kurulan yarışta hata avcısı: ${probs.length ? probs.slice(0, 2).join(' | ') : 'temiz'})`);
+  ok(!p.errors.length, `bildirimde sayfa hatası yok${p.errors.length ? ': ' + p.errors[0] : ''}`);
+  await p.context().close();
+}
+
+// ---------- Rastgele davranış (her türlü tıklama): 400 rastgele görünür düğme / tuş, sayfa hatası ve donma olmamalı ----------
+for (const [pg, n] of [['sim.html', 400], ['index.html', 250]]) {
+  const p = await page();
+  await p.goto(BASE + '/' + pg); await p.waitForTimeout(700);
+  await p.evaluate(() => { window.open = () => null; window.print = () => {}; HTMLAnchorElement.prototype.click = function () {}; });
+  let q = +((process.argv.find(a => a.startsWith('--tohum=')) || '=4242').split('=')[1]); const rnd = () => (q = (q * 48271) % 2147483647) / 2147483647;
+  const keys = ['d', 't', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Escape', 'm', 'f', '0', '+', '-', 'r'];
+  const log = [];
+  for (let i = 0; i < n; i++) {
+    if (rnd() < 0.2) { const k = keys[Math.floor(rnd() * keys.length)]; log.push('tuş ' + k); await p.keyboard.press(k); continue; }
+    const cands = await p.$$eval('button:not([disabled]), [data-v], [data-cat], li[data-id]', els => els
+      .filter(e => { const r = e.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return false; const s = getComputedStyle(e); if (s.visibility === 'hidden' || s.pointerEvents === 'none') return false;
+        const x = r.left + r.width / 2, y = r.top + r.height / 2, top = document.elementFromPoint(x, y); return top && (top === e || e.contains(top)) && !e.closest('a[href]') && e.id !== 'btnReport' && e.id !== 'btnFull' && !/^(gateOut|btnLogout|accOut)/.test(e.id); })
+      .map(e => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: e.id || e.dataset.v || e.dataset.cat || e.dataset.id || e.textContent.trim().slice(0, 14) }; }));
+    if (!cands.length) { await p.keyboard.press('Escape'); continue; }
+    const c = cands[Math.floor(rnd() * cands.length)]; log.push(c.id);
+    await p.mouse.click(c.x, c.y); if (i % 25 === 0) await p.waitForTimeout(120);
+    if (p.errors.length) break;
+  }
+  // döngü canlı mı: oynatırken bir saniyede sahne değişmeli
+  const alive = await p.evaluate(() => new Promise(res => { const a = document.querySelector('svg').innerHTML; let n = 0; requestAnimationFrame(function f() { if (++n < 30) requestAnimationFrame(f); else res(n); }); setTimeout(() => res(-1), 3000); }));
+  ok(!p.errors.length && alive > 0, `rastgele ${n} tıklama/tuş (${pg}): ${p.errors.length ? 'HATA ' + p.errors[0] + ' · son işlemler: ' + log.slice(-8).join(', ') : 'hata yok, sayfa canlı'}`);
+  await shot(p, 'rastgele-' + pg.replace('.html', '') + '.png');
+  await p.context().close();
+}
+
 // ---------- Telefon (yatay) ----------
 {
   const p = await page({ width: 844, height: 390 });

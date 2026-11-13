@@ -504,7 +504,7 @@
   }
 
   const speedTxt = b => (b.speedK && Math.abs(b.speedK - 1) > 1e-6 ? ` · ${b.speedK > 1 ? '+' : '−'}${Math.round(Math.abs(b.speedK - 1) * 100)}% hız` : '') + (b.drift ? (b.drift > 1 ? ' · çok kayıyor' : ' · kayıyor') : '') + (b.manual ? ' · manuel' : '');
-  const SEA_TXT = { current: ['yok', 'hafif', 'orta', 'güçlü'], waves: ['yok', 'küçük', 'büyük'] };
+  const SEA_TXT = S.SEA_TXT;
   // ---------- panel ----------
   let lastPanelKey = '';
   function updatePanel(force) {
@@ -750,17 +750,9 @@
     if (matchMedia('(max-height: 500px) and (orientation: landscape)').matches && st.fleet.some(b => b.mine) && !st.cam.follow) { st.cam.follow = true; st.cam.panAt = null; if (st.cam.z < 2.2) st.cam.z = 2.2; applyCam(); }
     if (window.SailTrack) SailTrack.log('race_start', { boats: st.fleet.length, cls: st.boat && st.boat.cls, gusts: st.gusts.length });
   }
-  // Yarış sırasındaki değişiklikler: her biri yazılabilir bir "işlem" (op). Aynı işlem kayıtlı yarışı
-  // tekrar oynatırken aynı karede yeniden uygulanır; hesap deterministik olduğu için yarış birebir aynı çıkar.
-  const OPS = {
-    wind: (r, o) => { r.wind = E.norm180(r.wind + o.d); r.events.push({ t: r.t, text: `Rüzgar ${o.d > 0 ? 'sağa' : 'sola'} döndü → ${Math.round(E.norm360(r.wind))}°`, kind: 'wind' }); },
-    gustAdd: (r, o) => { r.gusts.push({ ...o.g }); r.events.push({ t: r.t, text: `${o.side === 'L' ? 'Sol' : 'Sağ'} tarafa sağanak geldi`, kind: 'wind' }); },
-    gustClear: r => { r.gusts.length = 0; r.events.push({ t: r.t, text: 'Sağanak geçti', kind: 'wind' }); },
-    gustMove: (r, o) => { if (r.gusts[o.i]) { Object.assign(r.gusts[o.i], o.pos); r.events.push({ t: r.t, text: 'Sağanak taşındı', kind: 'wind' }); } },
-    gust: (r, o) => { if (r.gusts[o.i]) { GUST_FX[o.fx](r.gusts, o.i, o.k); r.events.push({ t: r.t, text: o.text, kind: 'wind' }); } },
-    sea: (r, o) => { r.sea = { ...(r.sea || S.SEA_DEFAULT), [o.key]: o.val }; r.events.push({ t: r.t, text: o.key === 'current' ? `Akıntı: ${SEA_TXT.current[o.val]}` : `Dalga: ${SEA_TXT.waves[o.val]}`, kind: 'wind' }); },
-    cmd: (r, o) => S.command(r, o.c, o.v, o.id)
-  };
+  // Yarış sırasındaki değişiklikler (işlemler) ve kayıttan tekrar oynatma çekirdekte (sim-core: OPS, replayRecord):
+  // node'da da aynı yarış kurulabilsin (bildirimler, testler).
+  const OPS = S.OPS;
   // Şu anki kareden başlayarak değişikliği uygula ve yarışı ileriye yeniden hesapla.
   // op: { k: 'wind' | 'cmd' | ... } (kayda girer). Eski tarz fonksiyon da olur: o zaman kayda o karenin kopyası yazılır.
   function applyChange(op) {
@@ -777,20 +769,7 @@
     if (st.mode === 'end') st.mode = 'pause';
     updatePanel(true);
   }
-  // Kayıttaki kurulumu ve işlemleri sırayla uygula (tekrar oynatma)
-  function replay(rec) {
-    let frames = S.runToEnd(S.newRace(jcopy(rec.setup.fleet), jcopy(rec.setup)));
-    for (const op of rec.ops) {
-      const i = Math.min(op.i, frames.length - 1);
-      let base;
-      if (op.k === 'hand') { frames = spliceHand(frames, i, S.runHand(frames[i], op.path || []), jcopy(op.end)); continue; }
-      if (op.k === 'snap') base = jcopy(op.state);
-      else if (OPS[op.k]) { base = S.clone(frames[i]); OPS[op.k](base, op); }
-      else continue;
-      frames = frames.slice(0, i).concat(S.runToEnd(base));
-    }
-    return frames;
-  }
+  const replay = rec => S.replayRecord(rec);
   // Animasyon döngüsü hiçbir hatada durmaz: hata yakalanır, döngü sürer, kullanıcıya bir kez söylenir
   // (eskiden tek bir çizim hatası requestAnimationFrame zincirini koparıp sayfayı donuk bırakırdı).
   let tickErr = 0;
@@ -916,10 +895,7 @@
     updatePanel(true);
   }
   // elle sürülen bölümün kareleri + bitiş durumundan otomatik devam
-  function spliceHand(frames, i, hf, end) {
-    const rest = S.runToEnd(end), last = hf[hf.length - 1];
-    return frames.slice(0, i).concat(hf, last && Math.abs(last.t - rest[0].t) < 1e-6 ? rest.slice(1) : rest);
-  }
+  const spliceHand = (frames, i, hf, end) => S.spliceHand(frames, i, hf, end);
   function driveNote(m, text, kind) { m.note = text; m.noteKind = kind || ''; m.noteUntil = 1e9; st.drive.noteAt = performance.now() + 1700; }
   function driveEvents(m, ev) {
     const d = st.drive, now = performance.now();
@@ -1097,16 +1073,11 @@
     clearTimeout(windTimer); windTimer = setTimeout(windFlush, WIND_WAIT);
   }
   // ---------- Sağanak düzenleme: dokun → seç, boyut −/+, sıfırla, sil ----------
-  const GUST_BASE = { rx: 120, ry: 190 };
-  const GUST_FX = {
-    scale: (a, i, k) => { const g = a[i], f = Math.max(0.4, Math.min(2.5, (g.rx / GUST_BASE.rx) * k)); g.rx = GUST_BASE.rx * f; g.ry = GUST_BASE.ry * f; },
-    reset: (a, i) => { a[i].rx = GUST_BASE.rx; a[i].ry = GUST_BASE.ry; },
-    del: (a, i) => a.splice(i, 1)
-  };
+  const GUST_BASE = S.GUST_BASE, GUST_FX = S.GUST_FX;   // çekirdekte (kayıttan tekrar oynatma da kullanır)
   function gustEdit(fx, k, text) {
     const i = st.gsel; if (i == null) return;
     if (st.mode === 'setup') { if (st.gusts[i]) GUST_FX[fx](st.gusts, i, k); }
-    else applyChange({ k: 'gust', fx, i, k, text });
+    else applyChange({ k: 'gust', fx, i, f: k, text });   // f: büyütme katsayısı (eskiden 'k' adıyla işlem türünü eziyordu: yarışta sağanak büyüt/küçült/sil hata veriyordu)
     gustBarUpdate(); updatePanel(true);
   }
   function gustScale(k) { gustEdit('scale', k, `Sağanak ${st.gsel + 1} ${k > 1 ? 'büyüdü' : 'küçüldü'}`); }
@@ -1856,6 +1827,27 @@
   if (window.ResizeObserver) new ResizeObserver(() => fitViewBox()).observe($('course'));
 
   if (loadSetup()) toast('Son yerleşimin yüklendi (yerler, isimler, taktikler). Rüzgar, sağanak, akıntı varsayılanda');
+  // Bildirim gönder (report.js): o anki durum + yarış kaydı (kurulum + işlemler). scripts/report.mjs yarışı bundan
+  // node'da aynen kurar; elle sürme sürüyorsa teknenin yolu (path) da eklenir.
+  if (window.SailReport) SailReport.source('sim', () => {
+    const v = st.sim, boats = st.mode === 'setup' ? st.fleet : v ? v.boats : [], m = boats.find(b => b.mine);
+    const rem = v ? (v.startAt - v.t) * S.CLOCK_SCALE : 0;
+    const when = st.mode === 'setup' ? 'kurulum' : rem > 0 ? `start'a ${Math.ceil(rem)} sn` : `start'tan ${Math.round(-rem)} sn sonra`;
+    const pick = b => b && { id: b.id, x: +b.x.toFixed(1), y: +b.y.toFixed(1), h: Math.round(b.h || 0), v: +(b.v || 0).toFixed(1), phase: b.phase, tack: b.tack, persona: b.persona,
+      manual: !!b.manual, ignoresRules: !!b.ignoresRules, sheetOff: b.sheetOff || 0, hand: !!b.hand, finish: b.finish || null, penalties: b.penalties || 0, man: b.man || null };
+    return {
+      ozet: `${st.mode === 'setup' ? 'kurulum' : st.mode === 'run' ? 'yarış oynuyor' : st.mode === 'pause' ? 'yarış duraklatıldı' : 'yarış bitti'}${st.drive ? ' · ELLE SÜRÜYOR' + (st.drive.paused ? ' (durdu)' : '') : ''} · ${when} · ${boats.length} tekne · ${st.boat.cls} ${st.boat.windKn} kn · hız ${st.speed}×` +
+        (m ? ` · teknen ${m.phase || 'bekliyor'}${m.manual ? ', manuel' : ''}${m.finish ? ', ' + m.finish + '.' : ''}` : ''),
+      mode: st.mode, playT: st.playT, frame: st.frames.length ? frameIndexAt(st.playT) : null, frames: st.frames.length, lastT: lastT(),
+      speed: st.speed, fastPre: st.fastPre, cat: st.cat || null, drawMode: !!st.drawMode, sel: st.sel || null, show: { ...st.show },
+      cam: { z: +st.cam.z.toFixed(2), follow: !!st.cam.follow },
+      drive: st.drive ? { live: !!st.drive.live, paused: !!st.drive.paused, prev: st.drive.prev || null, i: st.drive.i == null ? null : st.drive.i, t: st.drive.s ? st.drive.s.t : null, path: (st.drive.path || []).slice(-2000) } : null,
+      setup: st.mode === 'setup' ? jcopy({ fleet: st.fleet, wind: st.wind, gusts: st.gusts, course: st.course, sea: st.sea, boat: st.boat }) : null,
+      rec: st.rec && st.mode !== 'setup' ? jcopy({ setup: st.rec.setup, ops: st.rec.ops }) : null,
+      mine: pick(m), boats: boats.map(pick),
+      simEvents: v ? v.events.slice(-40).map(e => ({ t: +(e.t - v.startAt).toFixed(1), text: e.text, kind: e.kind })) : []
+    };
+  });
   applyLayout();
   updatePanel(true);
   requestAnimationFrame(ts => { st.lastTs = ts; tick(ts); });

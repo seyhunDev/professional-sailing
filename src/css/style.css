@@ -532,3 +532,31 @@ html.is-phone.is-portrait .ver-badge { z-index: 1001; }
 .rg-arrow { opacity: .55; }
 @keyframes rgTurn { 0%, 25% { transform: rotate(0); } 55%, 80% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
 @media (prefers-reduced-motion: reduce) { .rg-dev { animation: none; transform: rotate(-90deg); } }
+
+/* ---------- Bildirim gönder (js/report.js) · yalnız sahip hesabında ---------- */
+html:not([data-role="sahip"]) .report-btn { display: none; }
+.report-btn { color: #fdba74; }
+.rep-dlg { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(4, 12, 22, .62); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.rep-dlg.hidden { display: none; }
+.rep-panel { width: min(520px, 100%); max-height: 100%; overflow-y: auto; background: var(--panel-solid); border: 1px solid var(--border);
+  border-radius: 18px; box-shadow: var(--shadow); padding: 18px 18px 14px; display: flex; flex-direction: column; gap: 10px; color: var(--text); }
+.rep-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.rep-head h2 { margin: 0; font-size: 19px; font-weight: 700; }
+.rep-head p { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
+.rep-x { width: 40px; height: 40px; flex: 0 0 auto; border: 0; border-radius: 10px; background: transparent; color: var(--text2); font-size: 16px; }
+.rep-x:hover { background: var(--hover); }
+.rep-panel label { font-size: 13px; font-weight: 600; color: var(--text2); }
+.rep-panel label small { font-weight: 400; color: var(--muted); }
+.rep-panel textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 92px; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid var(--border-strong); background: var(--raised); color: var(--text); font: inherit; font-size: 15px; line-height: 1.4;
+  -webkit-user-select: text; user-select: text; }
+.rep-panel textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.rep-sum { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.rep-sum b { color: var(--text2); }
+.rep-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.rep-b { height: 44px; padding: 0 16px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--raised); color: var(--text); font: inherit; font-size: 14px; font-weight: 600; }
+.rep-b:hover { background: var(--raised2); }
+.rep-b.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.rep-foot { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.rep-foot b { color: var(--text2); }
