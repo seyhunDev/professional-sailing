@@ -1092,5 +1092,72 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // ---------- İA11: B planı: seçtiğin boşluk dolarsa ----------
+  S.push({
+    id: 'ia11-plan-b',
+    category: 'İleri Taktik', topic: 'Start · Orta',
+    title: 'İA11 · B planı: seçtiğin boşluk dolarsa yoldaki ikinci boşluğa gir',
+    summary: 'İA2c\'nin devamı: S 2 dk kala hatta bakar, avantajlı hakem botu tarafındaki geniş boşluğu (A planı) seçer ve yoldaki orta boşluğu da aklına yazar (B planı). Filonun altından giderken gri F hakem botu tarafından gelip A boşluğunu doldurur. S bunu görünce hemen yanındaki B boşluğuna girer ve rahat start eder. Turuncu D aynı A planındadır ama B planı yoktur: dolan boşluğa gitmeye devam eder, F\'nin arkasında, ikinci sırada kalır.',
+    duration: 40,
+    baseSpeed: 40,
+    clockScale: 4,
+    wind: 5,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 32,
+    rungs: { boat: 'S', from: 32.5 },
+    sightline: { from: 0, to: 5, label: 'Transit: 2 dk kala hatta bak, iki boşluk seç' },
+    gaps: { from: 2, to: 29, items: [
+      { a: 4, b: 5, label: 'B planı', color: '#fbbf24' },
+      { a: 6, b: 7, label: 'A planı · avantajlı', color: '#34d399' }
+    ] },
+    boats: [
+      { id: 'S', name: 'A planı + B planı', role: 'dogru', color: '#2a9d8f',
+        start: { x: 88, y: 452, h: 90 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 90, dur: 4, speed: 0.04, turn: 0, note: 'İki boşluk seçti: A ve B' },
+          { mode: 'heading', h: 160, dur: 3.2, turn: 0.8, note: 'Hattın altına iniyor' },
+          { mode: 'heading', h: 90, dur: 7.2, turn: 1.0, note: 'Apaz: A planına doğru' },
+          { mode: 'heading', h: 40, dur: 2.0, turn: 0.8, speed: 1, note: 'A doldu! B planına gir' },
+          { mode: 'hold', h: 350, dur: 13.4, speed: 0.004, turn: 1.0, note: 'B boşluğunda, komşunun altında' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10.2, turn: 0.8 }
+        ] },
+      { id: 'D', name: 'Yalnızca A planı', role: 'hata', color: '#e76f51',
+        start: { x: 70, y: 585, h: 90 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 90, dur: 6, speed: 0.04, turn: 0 },
+          { mode: 'heading', h: 92, dur: 12.4, turn: 1.0, note: 'Apaz: yalnızca A planı' },
+          { mode: 'heading', h: 40, dur: 1.4, turn: 0.8, speed: 0.7, note: 'A dolu! B planı yok' },
+          { mode: 'hold', h: 350, dur: 10.8, speed: 0.01, turn: 1.0, note: 'F\'nin arkasında, ikinci sırada' },
+          { mode: 'closehauled', tack: 'starboard', dur: 9.4, turn: 0.8, note: 'Kirli havada' }
+        ] },
+      { id: 'F', name: 'A boşluğunu dolduran', color: '#8d99ae',
+        start: { x: 735, y: 612, h: 320 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 330, dur: 9, speed: 0.02, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 5.0, turn: 0.8, speed: 0.8, note: 'A boşluğuna giriyor' },
+          { mode: 'hold', h: 350, dur: 15.6, speed: 0.004, turn: 1.0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 10.4, turn: 0.8 }
+        ] }
+    ],
+    crowd: [
+      { slot: 0.06 }, { slot: 0.13 }, { slot: 0.20 }, { slot: 0.27 }, { slot: 0.34 },
+      { slot: 0.52 }, { slot: 0.59 }, { slot: 0.80 }, { slot: 0.87 },
+      { slot: 0.16, row: 1 }, { slot: 0.84, row: 1 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dk: iki boşluk seç', text: 'Rüzgar 5° sağda: hakem botu ucu biraz avantajlı. S hattın uzantısından bakıyor ve iki boşluk seçiyor: avantajlı taraftaki geniş boşluk (A planı, yeşil) ve yolda kalan orta boşluk (B planı, sarı).' },
+      { t: 4, title: 'Filonun altından A planına', text: 'S hattın altına inip apaz ile filonun altından A planına gidiyor. Yolda B boşluğunun altından geçecek: gözü hem A\'da hem B\'de.' },
+      { t: 9, title: 'F geliyor', text: 'Gri F hakem botu tarafından, sancak kontrada A boşluğuna doğru geliyor. A boşluğu hakem botuna daha yakın: F oraya S\'den önce varacak.' },
+      { t: 14.5, title: 'A doldu: B planı', text: 'S, F\'nin A boşluğuna girdiğini görüyor. Tam B boşluğunun altında: hemen orsalayıp B\'ye giriyor ve rüzgarüstü komşusunun altına yerleşiyor (İA4). Kararı hızlı vermek önemli: bir boy daha giderse B\'nin de gerisinde kalır.' },
+      { t: 17.5, title: 'D\'nin B planı yok', text: 'Turuncu D de A planına gidiyordu ama yedek planı yok. A\'nın dolduğunu görse de oraya gitmeye devam ediyor.' },
+      { t: 22, title: 'D ikinci sırada', text: 'D A boşluğuna geldiğinde F yerleşmiş. Araya girecek yer yok; F\'nin hemen arkasında, ikinci sırada kalıyor. Arkadaki tekne öndekine yol verir (Kural 12).' },
+      { t: 29.8, title: '9 sn kala doldur', text: 'S, B boşluğunda: altındaki açık suya biraz düşüp dolduruyor ve hızlanıyor.' },
+      { t: 32, title: 'START', text: 'S hat ortasından, temiz havada ve tam hızda. A ucu biraz avantajlıydı ama temiz bir start, kirli havada ikinci sıradan çok daha değerli. D, F\'nin pis rüzgarında.' },
+      { t: 36, title: 'Özet', text: 'Her zaman iki boşluk seç: A (en iyi) ve yolda kalan B. A dolarsa ya da rüzgar dönerse hemen B\'ye geç. Yedek planı olmayan, dolan boşluğa inatla gider ve ikinci sırada kalır.' }
+    ],
+    addBoat: { pin: { x: 290, y: 600 }, middle: { x: 500, y: 600 }, committee: { x: 720, y: 600 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);

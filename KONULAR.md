@@ -112,6 +112,7 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | H12 | Pin'de karmaşa: layline üstünde kal | Pin çok avantajlı, filo pin'e yığılır; doğru tekne erken, layline'ın üstünde pin'in yarım boy içinde bekler. HATA: kalabalıkta layline'ın altına düşen tekne pin'i dönemez, tramola atıp herkese yol verir (K13, K10); geç gelen ikinci sırada pis rüzgarda (K12). K31 pin'e değme. | ✅ (İA8) |
 | H13 | Fren yap: orsala, yelkeni ters bas, geri git | Hızla gelinen boşlukta durma: orsalayıp hızı kesme, yelkeni ters basıp (backing) bir boy geri gitme (K22.3: geri giden yol verir, arkana bak), yelken boş bekleme, kısa ters basışla yer tutma. HATA: yalnızca orsalayan tekne süzülüp hattın üstüne çıkar, dolaşırken yerini kaybeder. Motor: `mode: 'back'` segmenti (yelken ters çizilir). | ✅ (İA9) |
 | H14 | Boşluğunu savun | Rüzgarüstü komşunun altına yerleşen tekne, geç gelen biri rüzgaraltındaki boşluğa bakınca burnu hafif düşürüp yelken boş yanlamasına kayarak boşluğu kapatır (K12, K11, K15). HATA: boşluğun ortasında bekleyen tekne yarısını kaptırır, iki teknenin arasında hızlanamaz. | ✅ (İA10) |
+| H15 | B planı: seçtiğin boşluk dolarsa | 2 dk kala iki boşluk seç (A: avantajlı, B: yolda kalan). Filonun altından A'ya giderken A dolunca hemen B'ye gir. HATA: yedek planı olmayan dolan boşluğa gider, ikinci sırada kalır (K12). | ✅ (İA11) |
 
 # III. TEKNİK
 
