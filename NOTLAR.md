@@ -208,6 +208,7 @@
 ### 2026-11-13 · Optimist yelken ayarı: 2D taslak (`ayar.html`)
 - Kullanıcı: tekne sürati/trim animasyonları; hafif/orta/sert, düz/dalgalı; gırcala, tepe, köşe, palanga, direk eğimi, bumba; önce çizim, sonra 3D. Ek: marka kılavuzları (Van, CD, J-Sails, Olimpic) orijinal + özel; bağ boşluğu 4 → 3 mm animasyonda görünsün, 0 = bitişik; tepe bağları önemli; rüzgar gülü; palanga, Cunningham.
 - Yapılan: `src/ayar.html`, `src/css/ayar.css`, `src/js/ayar.js`. Kaynaklar: OneSails PDF (rake cm + mm dizisi), North hız kılavuzu (göreli; Cunningham yok, bumba emniyeti), Quantum (kiloya göre rake, bağ 1-2 mm, sert havada uç bağlar 0). Ekran görüntüleri proje dosyaları `yelken-ayari/`.
+- 2. tur (kullanıcı: çizimler daha profesyonel, denizci olmasın, direk ayarı hep metre): denizci kaldırıldı; gövde (kine, baş aynası, usturmaça), salma, dümen (iğne-yuva), yeke + uzatma, alüminyum direk/bumba/gırcala, gırcala halatı, palanga makaraları (3 kat), Cunningham kuşgözü, köşe gergisi, çapraz kesim panelleri, köşe takviyeleri, arka yaka şeritleri, rüzgar gülü; direk tepesinden kıç aynaya ölçü şeridi (m) ve kılavuz × hava direk eğimi tablosu (m).
 - Yarım: kullanıcı onayı, menüye bağlantı, 3D, eksik marka kılavuzları, pupa/apaz ayarları, vücut hareketleri (hiking, ağırlık).
 - **2026-11-13 · Bildir onayı:** gönderince (GitHub/Kopyala/Dosya) pencere kapanır, not temizlenir, Bildir düğmesi 4 sn yeşil onay + "Gönderildi" (veri adrese sığmadıysa 9 sn "Panoda"). Duman testi bunu denetliyor. Otomatik bildirim kontrolü kurulmadı (kullanıcı "ben söylerim" dedi).
 

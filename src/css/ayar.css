@@ -127,3 +127,16 @@
   .legend { bottom: auto; top: 8px; }
 }
 .warn.info { background: rgba(12,74,110,.85); border-color: rgba(56,189,248,.55); color: #e0f2fe; }
+.sail-no { font: 800 22px system-ui, -apple-system, sans-serif; fill: rgba(30,58,138,.55); letter-spacing: 2px; }
+.rake-lbl { font: 700 12px system-ui, -apple-system, sans-serif; fill: #fde68a; font-variant-numeric: tabular-nums; }
+.rake-lbl.on { fill: #1c1917; }
+.callout.plain { cursor: default; }
+.callout.plain rect { fill: rgba(11,23,36,.9); stroke: var(--border); }
+.callout.plain text { fill: #cbd5e1; font-weight: 500; }
+.rake-tab { width: 100%; border-collapse: collapse; margin: 8px 0 2px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.rake-tab th, .rake-tab td { padding: 4px 4px; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.rake-tab th { color: var(--muted); font-weight: 600; font-size: 11px; }
+.rake-tab th.cur { color: var(--accent); }
+.rake-tab td:first-child, .rake-tab th:first-child { text-align: left; color: var(--text2); }
+.rake-tab tr.cur td { background: rgba(56,189,248,.07); }
+.rake-tab tr.cur td.hit, .rake-tab td.hit { color: var(--accent-ink); background: var(--accent); font-weight: 700; border-radius: 4px; }
