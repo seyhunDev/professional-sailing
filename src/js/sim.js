@@ -548,7 +548,6 @@
     const evs = v.events.filter(e => !st.mineOnly || /(^|\s)SEN\b/.test(e.text)).slice(-40).reverse();
     $('events').innerHTML = evs.length ? evs.map(e => `<li class="${e.kind}"><span class="et">${e.t < v.startAt - 1e-6 ? '−' + S.fmt(v.startAt - e.t) : S.fmt(e.t - v.startAt)}</span>${esc(e.text)}</li>`).join('')
       : `<li class="empty">${st.mode === 'setup' ? 'Start verilince kural olayları burada görünür.' : 'Henüz olay yok.'}</li>`;
-    $('btnClearSaved').disabled = st.mode !== 'setup';
     const sea = v.sea || st.sea;
     [...$('seaCurrent').children].forEach(x => x.classList.toggle('on', +x.dataset.v === sea.current));
     [...$('seaWaves').children].forEach(x => x.classList.toggle('on', +x.dataset.v === sea.waves));
@@ -590,17 +589,29 @@
     renumber();
     return true;
   }
-  let clearArm = 0;
-  function clearSaved() {
-    if (st.mode !== 'setup') return;
-    if (Date.now() - clearArm > 3000) { clearArm = Date.now(); $('btnClearSaved').textContent = 'Emin misin?'; $('btnClearSaved').classList.add('warn');
-      setTimeout(() => { $('btnClearSaved').textContent = 'Kaydı sil'; $('btnClearSaved').classList.remove('warn'); }, 3000); return; }
-    clearArm = 0;
-    try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* yok say */ }
+  // Tümünü sıfırla (kullanıcı 2026-11-13: eklenen sağanak, akıntı vb. her açılışta geri geliyordu): kayıtlı kurulumu siler,
+  // yarışı / elle sürmeyi bitirir, her ayarı varsayılana döndürür. Yanlışlıkla basılmasın diye iki dokunuş (3 sn içinde).
+  let clearArm = 0, clearBtn = null;
+  const CLEAR_LBL = { btnResetAll: 'Tümünü sıfırla', btnClearSaved: 'Tümünü sıfırla' };
+  function clearArmReset() { for (const id in CLEAR_LBL) { const x = $(id); if (!x) continue; x.classList.remove('warn'); const sp = x.querySelector('span'); (sp || x).textContent = CLEAR_LBL[id]; } }
+  function clearSaved(e) {
+    const btn = (e && e.currentTarget) || $('btnResetAll');
+    if (Date.now() - clearArm > 3000 || clearBtn !== btn) {
+      clearArmReset(); clearArm = Date.now(); clearBtn = btn; btn.classList.add('warn');
+      const sp = btn.querySelector('span'); (sp || btn).textContent = 'Emin misin?';
+      toast('Her şey varsayılana dönecek: rüzgar, sağanaklar, akıntı, filo, parkur, isimler. Onaylamak için yeniden dokun');
+      setTimeout(() => { if (Date.now() - clearArm >= 2900) clearArmReset(); }, 3000); return;
+    }
+    clearArm = 0; clearBtn = null; clearArmReset();
+    if (st.drawMode) endDraw(false);
+    if (st.mode !== 'setup' || st.drive) backToSetup();
+    try { localStorage.removeItem(SAVE_KEY); localStorage.removeItem('ps.sim.fastPre'); } catch (er) { /* yok say */ }
     st.course = { ...S.COURSE_DEFAULT }; S.setCourse(st.course);
     st.wind = 0; st.sea = { ...S.SEA_DEFAULT }; setBoatCfg({ ...S.BOAT_DEFAULT }); st.gusts = []; st.gsel = null; st.sel = null; st.fleet = S.defaultFleet(12);
-    $('btnClearSaved').textContent = 'Kaydı sil'; $('btnClearSaved').classList.remove('warn');
-    fitViewBox(); updatePanel(true); toast('Kayıt silindi: isimler, taktikler ve parkur varsayılana döndü');
+    st.fastPre = true; setSpeed(1); setDriveSpeed(DRIVE_SPEED0);
+    st.cam.z = 1; st.cam.follow = false; st.cam.panAt = null; st.cam.x = st.cam.y = null;
+    openCat(null); fitViewBox(); applyCam(); updatePanel(true);
+    toast('Her şey sıfırlandı: varsayılan filo, rüzgar 0°, sağanak ve akıntı yok');
   }
 
   // ---------- Geri sayım: tekneler start öncesi neredeyse durur; son dakikaya kadar hızlı geç (varsayılan açık) ----------
@@ -1716,6 +1727,7 @@
   });
   $('selName').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
   $('btnClearSaved').addEventListener('click', clearSaved);
+  $('btnResetAll').addEventListener('click', clearSaved);
   $('btnMakeMine').addEventListener('click', () => { if (st.sel) { makeMine(st.sel); updatePanel(true); } });
   $('btnRemoveBoat').addEventListener('click', () => { if (st.sel) { removeOne(st.sel); updatePanel(true); } });
   $('btnSelClose').addEventListener('click', () => { st.sel = null; updatePanel(true); });

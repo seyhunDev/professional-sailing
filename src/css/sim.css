@@ -622,3 +622,14 @@ body.driving .drive-bar { left: 318px; margin: 0 auto; }
   .drive-bar .count-bar { padding-left: 2px; }
   body.driving .toast { top: calc(60px + var(--sat)); bottom: auto; left: auto; right: calc(8px + env(safe-area-inset-right, 0px)); transform: none; max-width: min(420px, calc(100% - 290px)); font-size: 12.5px; }
 }
+
+/* Tümünü sıfırla (rayın en altında, ayrı çizgiyle; iki dokunuşla onay) */
+.cr-sep { display: block; flex: 0 0 auto; background: var(--float-bd); }
+body.lay-rail .cr-sep { height: 1px; margin: 4px 8px; }
+body.lay-strip .cr-sep { width: 1px; margin: 6px 2px; }
+.cat-rail .cr-reset { color: #fca5a5; }
+.cat-rail .cr-reset:hover { background: rgba(248,113,113,.14); color: #fecaca; }
+.cat-rail .cr-reset.warn { background: #ef4444; color: #fff; }
+.cat-rail .cr-reset span { white-space: normal; text-align: center; line-height: 1.1; }
+body.lay-strip .cat-rail .cr-reset { min-width: 64px; }
+@media (max-width: 900px) { body.lay-strip .cat-rail button { min-width: 56px; } body.lay-strip .quick .tb { min-width: 60px; } }
