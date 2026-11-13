@@ -732,6 +732,8 @@
     st.frames = S.runToEnd(S.newRace(st.fleet, { wind: st.wind, gusts: st.gusts, course: st.course, sea: st.sea, boat: st.boat }));
     st.playT = 0; st.sim = viewAt(0); st.mode = 'run'; st.sel = null; st.ended = false;
     st.rec = Rec.begin(setup);
+    // yatay telefonda parkurun tamamı sığınca tekneler okunmuyor: yarış başlayınca kamera teknene yakından geçer (kaydırınca bırakır)
+    if (matchMedia('(max-height: 500px) and (orientation: landscape)').matches && st.fleet.some(b => b.mine) && !st.cam.follow) { st.cam.follow = true; st.cam.panAt = null; if (st.cam.z < 2.2) st.cam.z = 2.2; applyCam(); }
     if (window.SailTrack) SailTrack.log('race_start', { boats: st.fleet.length, cls: st.boat && st.boat.cls, gusts: st.gusts.length });
   }
   // Yarış sırasındaki değişiklikler: her biri yazılabilir bir "işlem" (op). Aynı işlem kayıtlı yarışı
