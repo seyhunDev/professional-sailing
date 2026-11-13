@@ -51,7 +51,7 @@
     'hangi düğmelere bastığın, ne zaman ve ne kadar kaldığın, cihaz/tarayıcı türü, dil ve geldiğin site. ' +
     'Kayıtlar şimdilik yalnızca bu tarayıcıda durur, kimseye gönderilmez.';
   const NOTICE_LONG = `
-    <p><b>Veri sorumlusu:</b> Professional Sailing site sahibi.</p>
+    <p><b>Veri sorumlusu:</b> Velora Sailing site sahibi.</p>
     <p><b>Toplanan veriler:</b> rastgele bir ziyaretçi kimliği (adın ya da IP adresin değil), açtığın sayfalar ve animasyonlar,
     simülatörde yaptığın işlemler (start, kayıt, elle sürme vb.), ziyaret zamanı ve süresi, cihaz türü, işletim sistemi, tarayıcı,
     dil, saat dilimi, ekran boyutu ve hangi siteden geldiğin. Kaydolursan verdiğin ad, e-posta, kulüp ve rol bilgisi.</p>
@@ -65,7 +65,7 @@
   let gate = null, gateMode = 'home', lockedFeature = null;
   function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
 
-  const LOGO = '<svg viewBox="0 0 24 24"><path d="M12 2.5 L12 17 L4.5 17 Z" fill="currentColor"/><path d="M13.5 5 C17 8 18.5 12 18.5 17 L13.5 17 Z" fill="currentColor" opacity=".6"/><path d="M3 19 C 7 21.5 17 21.5 21 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const LOGO = '<svg viewBox="0 0 100 100"><rect width="100" height="100" rx="23" fill="#0b1a33"/><circle cx="50" cy="52" r="30" fill="#fff"/><path d="M26 19 L35.6 19 C 42 35, 46 47.8, 50 55.8 L59.6 19 L74 19 L56.4 67 L43.6 67 Z" fill="#0b1a33"/></svg>';  // Velora logosu (img/velora-mark.svg)
   const LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
   const BACK = '<svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -95,7 +95,7 @@
     if (gateMode === 'home') {
       body.innerHTML = `
         <div class="gate-hero"><span class="gate-logo">${LOGO}</span>
-          <h2 id="gateTitle">Professional <em>Sailing</em></h2>
+          <h2 id="gateTitle">Velora <em>Sailing</em></h2>
           <p>Yarış yelkencileri için taktik ve kural animasyonları</p></div>
         <div class="gate-btns">
           <button class="gate-btn primary" id="gateGuest">Misafir olarak devam et</button>

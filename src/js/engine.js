@@ -1,4 +1,4 @@
-/* Professional Sailing – taktik animasyon motoru
+/* Velora Sailing – taktik animasyon motoru
    Koordinatlar: SVG, y aşağı doğru. Pusula: 0° = ekranın üstü (kuzey), 90° = sağ.
    windFrom: rüzgarın GELDİĞİ yön. heading: teknenin baktığı yön.
    TWA = heading - windFrom.  TWA < 0 → sancak kontra (rüzgar sancaktan), bumba iskeleye açılır.

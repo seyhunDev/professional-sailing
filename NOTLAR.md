@@ -3,7 +3,9 @@
 > Her sohbet başında okunur, sonunda güncellenir (protokol: `CLAUDE.md`).
 > Kısa ve güncel tut: eskiyen maddeleri sil, tarih ver.
 
-## Güncel durum (2026-11-12)
+## Güncel durum (2026-11-13)
+- Uygulamanın görünen adı **Velora Sailing** (2026-11-13), logo kullanıcının `seyhunDev/sesliasistan` deposundaki Velora işareti (`src/img/velora-mark.svg`, lacivert kare + beyaz daire içinde V). Depo adı ve site adresi (`professional-sailing`) değişmedi.
+- Senaryo sayfası sade (2026-11-13): seçici kare küçük resimli (`js/thumbs.js`, döngüde ön izleme), üst çubukta marka yok (sahnenin sol alt köşesinde), bilgi kartında "Canlı" anahtarı ve alt düğme satırı yok.
 - Canlı: https://seyhundev.github.io/professional-sailing/ — main'e push ile otomatik yayın (GitHub Actions, hash'li dosya adları, sağ altta sürüm damgası).
 - Start senaryolarında (A1, A2, A3, A4) kalabalık filo var; A3 hattı 600 px (12 boy), rüzgar 335°.
 - Yeni kategori **İleri Taktik** (4. sekme; `category: 'İleri Taktik'`), KONULAR.md → H bölümü. Start senaryoları uca göre üç konuda (2026-11-12): `topic` **'Start · Pin'** (İA1), **'Start · Orta'** (İA2, İA2b, İA2c), **'Start · Hakem botu'** (İA3); uçtan bağımsız yer tutma dersleri **'Start · Yer tutma'** (İA4). Seçici konuları senaryoların dosyadaki ilk geçiş sırasına göre dizer.
@@ -50,7 +52,7 @@
 - [x] **Simülatör 2b:** "ne oldu / kim haklı" ayrımı: yol vermeyen tekne → protesto + iki tur ceza (720°) animasyonu; temasta hak sahibi kaçınabilecekken kaçınmadıysa o da ceza (K14); "kural bilmeyen" tekne özelliği (kendi teknene de).
 - [x] **Simülatör 2c:** kendi teknene rota çizme (parmakla çizgi; rüzgara karşı kısımda otomatik zikzak; bitince şamandıraya).
 - [ ] **Yarış simülatörü – 2. aşama (eski liste):** rüzgar gölgesi (dirty air) etkisi, salınımlı rüzgar (otomatik kayma), sağanağın rüzgarla sürüklenmesi, şamandırada tam K18 (zone, iç tekneye yer), pupa ayağı ve bitiş hattı, senaryoyu linkle paylaşma, tekne döndürerek yerleştirme. Şamandırada 12 teknede 3-6 temas oluyor; zone mantığıyla azaltılabilir.
-- [ ] **Uygulama adı (ayrı sohbet):** "Professional Sailing" muhtemelen kullanımda. Yeni isim kriterleri: kısa, akılda kalıcı, Türkçe sporcuya da uluslararası kitleye de uyan, alan adı / GitHub adı boş, "taktik + yelken + öğrenme" çağrışımı. 10-15 aday üret, 3'e indir, kullanıcıya sun. Seçilince: GitHub depo adı, site adresi, `index.html` başlığı, README, CLAUDE.md, NOTLAR.md güncellenir (yayın adresi değişeceği için kullanıcıya haber verilir).
+- [x] ~~**Uygulama adı**~~ (2026-11-13: kullanıcı **Velora Sailing** dedi, görünen ad ve logo değişti). Kalan, istenirse: GitHub depo adı / site adresi. Eski not: "Professional Sailing" muhtemelen kullanımda. Yeni isim kriterleri: kısa, akılda kalıcı, Türkçe sporcuya da uluslararası kitleye de uyan, alan adı / GitHub adı boş, "taktik + yelken + öğrenme" çağrışımı. 10-15 aday üret, 3'e indir, kullanıcıya sun. Seçilince: GitHub depo adı, site adresi, `index.html` başlığı, README, CLAUDE.md, NOTLAR.md güncellenir (yayın adresi değişeceği için kullanıcıya haber verilir).
 - [ ] **Start paketi 2:** A5 hat yayı (line sag) ve transit (A6) · A7 rüzgaraltına boşluk (hole) · A8 bekleme teknikleri.
 - [ ] **Start paketi 3:** A9 start sonrası ilk 2 dk (temiz hava, lane) · A10 iskele kontra start · A11 Vanderbilt yaklaşması.
 - [ ] **Start paketi 4:** A12 bayraklar/sinyaller · A13 OCS düzeltme · A14 akıntı · A15 kalabalıkta sıra.
@@ -65,6 +67,8 @@
 - [ ] **Kullanıcı senaryoları (sonraki aşama):** Firebase Auth + Firestore, link ile paylaşım, Firebase Hosting. Simülatör yarış kayıtları için biçim hazır: `SailRecords` girdisi (`setup` + `ops` + `summary`) aynen Firestore belgesi olabilir.
 
 ## Kararlar
+- 2026-11-13 · **Ad "Velora Sailing", logo Velora işareti, marka sahnenin sol alt köşesinde.** Kullanıcı: "Uygulama başlığı artık Velora Sailing… logosunu kullanacağız… sol alt köşede olsun." Logo `sesliasistan` deposundaki `public/brand/velora-mark.svg`'den kopyalandı (`src/img/`, favicon da). Ana sayfada `.brand-corner` (tıklanmaz); telefonda alttaki bilgi çekmecesinin hemen üstünde (`--sheet`, app.js → setInfoOpen). Giriş ekranı logosu da aynı.
+- 2026-11-13 · **Senaryo seçici kare küçük resimli; bilgi kartı "Canlı" anahtarsız.** Kullanıcı: çok buton, çok yazı. Küçük resim senaryoyu `SailRules.buildScene` ile (uygulamayla aynı) hesaplar, ilk görünüşte ve kare başına bir tane (~25 ms); yalnız ekranda görünenler oynar, "hareketi azalt"ta durağan. Çerçeve anlatılan tekneler + şamandıralar (hat dahil değil, uzun hat tekneleri küçültüyordu). Kart her zaman animasyonu izler; elle gezince "Bu ana git" çıkar.
 - 2026-11-12 · **Telefonda sahne teknelere yakınlaşır (odak kamerası), parkurun tamamı sığdırılmaz.** Kullanıcı: telefonda animasyon çok uzak, bilgi kartı sahneyi kaplıyor. Dikey telefonda 1000×680 alan ~0.39 ölçekle sığıyordu (tekne ~19 px). Yakınlık zaman içinde yavaş değişir, kaydırma yumuşak; duraklatılmışken/zaman çizelgesinde anında oturur. Masaüstü ve tablet eski `fitViewBox` ile aynı.
 - 2026-11-12 · **Giriş/rol/ziyaret kaydı istemci tarafında, Firebase'e hazır.** Kullanıcı ziyaretçileri takip etmek ve sahip dışındaki hesapları sınırlamak istedi; site statik olduğu için şimdilik her şey tarayıcıda (localStorage). Sahip anahtarı düz metin değil SHA-256 özeti. Misafirden kapalı: İleri Taktik, Elle sür, yarış kaydı (öneri; `FEATURES` tablosundan değişir). IP toplanmadı (istemcide güvenilmez, üçüncü taraf servise ziyaretçi verisi göndermek "lokalde kalsın" isteğine aykırı).
 - 2026-11-12 · Senaryolarda kural değil taktik anlatılır: filo tekneleri kurala ancak gerçekten yakınlaşınca, kısa ve yumuşak tepki verir (`FEEL.SCENARIO`). Gerekçe: kullanıcı, gri teknelerin erken orsalayıp/kafa açıp rotadan çıkmasının anlatılan olayı böldüğünü söyledi. Simülatör ayarları değişmedi.
@@ -94,7 +98,7 @@
 
 ## Açık sorular (kullanıcıya)
 - Misafire hangi bölümler kapalı olsun? Şimdilik İleri Taktik + Elle sür + yarış kaydı. Kayıt izni kutusu varsayılan işaretli; KVKK/GDPR'ye sıkı uyum için işaretsiz (açık rıza) olması daha doğru, kullanıcı karar verecek.
-- Uygulama adı: karar bekliyor (ayrı sohbette adaylar üretilecek).
+- Depo adı ve site adresi de "velora-sailing" olsun mu? (adres değişirse eski bağlantılar kırılır)
 - Hedef sınıf: simülatörde artık seçilebiliyor (Optimist / ILCA 4-6-7). Senaryolar hâlâ Optimist ölçeğinde; tekne boyu her sınıfta 50 px.
 - Sınıf hız tablosu (`sim-core.js` → `CLASSES`) yaklaşık ortalamalar; kullanıcı kendi sporcularının ölçtüğü hızları verirse güncellenir.
 - Senaryolarda İngilizce terimlerin parantez içinde verilmesi devam etsin mi, yoksa yalnızca Türkçe mi?
@@ -155,6 +159,12 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Senaryo sayfası sadeleştirildi + Velora Sailing adı/logosu
+- Kullanıcı (iPad dikey ekran görüntüsü, v1.65): üst taraf ve bilgi yerleri karışık; senaryo seçimi yazı yerine kare küçük resim + otomatik kısa ön izleme + başlık; çok buton/yazı. Sonra: ad Velora Sailing, Velora logosu, sol alt köşede.
+- Yapılan: seçici kare küçük resimler (`js/thumbs.js`), özet/süre/tekne/adım yazıları kalktı (özet ipucunda). Üst çubuk: kategori satırı kalktı (başlık 2 satıra kadar), tam ekran Katmanlar menüsünde, marka sol alt köşede. Bilgi kartı: tek satır "Adım n/N · (Bu ana git) · ‹ › ×", tekrar eden senaryo başlığı, "0.0 sn", "Canlı" anahtarı, alttaki üç düğme ve "Tekneler" başlığı kalktı; S/İ açıklaması "Senaryo özeti ve simgeler" içinde. Sürüm etiketi alt çubuk düğmelerine binmiyor. Katmanlar menüsü alçak ekranda kayar.
+- Playwright: masaüstü 1400×800, iPad Pro 11 dikey/yatay, iPhone 13 dikey/yatay; kart başlığı satırındaki tüm öğelerin dikey merkezi aynı (ölçüldü), yatay taşma yok. `npm run check` temiz. Ekran görüntüleri proje dosyaları `sade-senaryo/`.
+- Yarım kalan / sonraki sohbete: telefonda üst çubukta Simülatör ve Bilgi çerçeveli, hesap ve Katmanlar çerçevesiz (eski tasarım; istenirse eşitlenir). Simülatör sayfasında marka yok (sayfa düzeni ayrı).
+
 ### 2026-11-13 · Giriş ekranı sadeleştirildi
 - Kullanıcı: giriş/kaydol ekranı daha sade olsun; yazı ve düğme hizalarına dikkat (iki satıra düşen yazı yanındaki düğmeyi kaydırmasın).
 - Yapılan: ortalanmış tek kart (logo, ad, tek satır tanıtım), ana düğme **Misafir olarak devam et**, ikincil **Kaydol · ücretsiz**, altta tek satır izin + "Ayrıntılar". Kilit ekranı aynı düzende (kilit simgesi, Kaydol / Şimdi değil). Kayıt formu: ad, rol çipleri (Sporcu/Antrenör/Veli/Diğer), kulüp, e-posta; "Geri" sol üstte. Gizlilik penceresi: izin anahtarı etiketli satır, iki eşit genişlikte düğme. Uzun metinlerde `text-wrap: balance`.

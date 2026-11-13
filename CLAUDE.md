@@ -1,4 +1,4 @@
-# Professional Sailing – Çalışma Kuralları
+# Velora Sailing (depo: professional-sailing) – Çalışma Kuralları
 
 Bu dosya her Claude Code oturumunda otomatik yüklenir. Proje birden çok sohbete bölünerek
 yürütülür; sohbetler arasındaki ortak hafıza **`NOTLAR.md`** dosyasıdır.
@@ -41,7 +41,7 @@ Canlı site: https://seyhundev.github.io/professional-sailing/ (main'e push → 
 - Eski depo `seyhunDev/python_deneme` kullanılmaz.
 
 ## Dosya haritası
-- `src/index.html` arayüz · `src/css/style.css` · `src/js/engine.js` motor · `src/js/rules.js` kural motoru (ek tekneler) · `src/js/scenarios.js` senaryolar · `src/js/app.js` arayüz mantığı
+- `src/index.html` arayüz · `src/css/style.css` · `src/js/engine.js` motor · `src/js/rules.js` kural motoru (ek tekneler) · `src/js/scenarios.js` senaryolar · `src/js/app.js` arayüz mantığı · `src/js/thumbs.js` seçici küçük resimleri · `src/img/velora-mark.svg` logo
 - `src/js/track.js` ziyaret/olay kaydı · `src/js/access.js` giriş ekranı, roller, kilitler (her sayfada uygulama betiğinden önce) · `src/ziyaret.html` ziyaret kayıtları (sahip)
 - `scripts/build.mjs` derleme · `.github/workflows/deploy.yml` yayın
 - `KONULAR.md` müfredat ve durumları · `NOTLAR.md` sohbetler arası hafıza · `README.md` kullanım ve geliştirme

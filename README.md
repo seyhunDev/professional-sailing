@@ -1,4 +1,4 @@
-# ⛵ Professional Sailing
+# ⛵ Velora Sailing
 
 Yarışa hazırlanan genç yelkenciler için **etkileşimli taktik ve kural animasyonları**.
 Tekne, yelken (rüzgara göre bumba konumu), tramola/kavança, start çizgisi, şamandıra ve rüzgar
@@ -42,9 +42,9 @@ Framework bağımlılığı yok; ileride gerekirse SVG katmanı olduğu gibi Rea
 
 ## Kullanım
 
-- Üst çubuk: senaryo seçimi, **Bilgi** kartı aç/kapat, **Katmanlar** (rüzgar çizgileri, merdiven basamağı, isimler, izler), tam ekran.
+- Üst çubuk: senaryo seçimi (kare küçük resimler, her biri animasyonun kısa ön izlemesini döngüde oynatır), **Bilgi** kartı aç/kapat, **Katmanlar** (rüzgar çizgileri, merdiven basamağı, isimler, izler, yakın görünüm, tam ekran). Velora logosu ve adı sahnenin sol alt köşesinde.
 - Alt çubuk: oynat/duraklat, başa al, hız, zaman çubuğu.
-- Bilgi kartı: **Canlı takip** açıkken animasyonla birlikte adım adım ilerler. Önceki/Sonraki ile kendiniz gezerseniz canlı takip kapanır; **Bu ana git** animasyonu o adımın anına götürür.
+- Bilgi kartı animasyonla birlikte adım adım ilerler. Üst satırdaki ‹ › ile kendiniz gezerseniz kart durur ve **Bu ana git** belirir; ona (ya da oynat / zaman çubuğu / başa al) basınca animasyon o ana gider, kart yeniden izler.
 - Klavye: Boşluk oynat/duraklat, ← → adımlar arasında gezinme, `i` bilgi kartı.
 
 ### Yarış simülatörü (`sim.html`)

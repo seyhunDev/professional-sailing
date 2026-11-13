@@ -154,14 +154,14 @@
     camWins = [];
     for (let t = 0; t <= scn.duration + 1e-6; t += CAM.dt) camWins.push(boxOf(Math.max(0, t - CAM.back), Math.min(scn.duration, t + CAM.ahead)));
     $('scrub').max = scn.duration;
-    $('scnTitle').textContent = scn.title;
     $('scnSummary').textContent = scn.summary;
     const [code, ttl] = splitTitle(scn.title);
     $('curCode').textContent = code; $('curTitle').textContent = ttl;
-    $('curCat').textContent = scn.category + (scn.topic ? ' · ' + scn.topic : '');
+    $('btnScenarios').title = `${scn.category}${scn.topic ? ' · ' + scn.topic : ''} · senaryo seç`;
     $('btnScenarios').style.setProperty('--cat', CAT_COLORS[scn.category] || 'var(--accent)');
-    document.title = `${scn.title} · Professional Sailing`;
+    document.title = `${scn.title} · Velora Sailing`;
     document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', c.dataset.id === scn.id));
+    setFollow(true);
     buildLegend(); buildTimeline(); buildSideOptions(); drawCourse(); updatePlayButton();
     showStep(0, false); render();
     if (window.SailTrack) SailTrack.log('scenario', { id: scn.id, title: scn.title, category: scn.category });
@@ -180,7 +180,7 @@
     const crowd = state.extras.filter(b => b.crowd).length;
     if (crowd) {
       const row = document.createElement('div'); row.className = 'boat-row crowd-row';
-      row.innerHTML = `<span class="boat-id">1–${crowd}</span><span class="boat-name">Filo: kurallara göre hareket eden ${crowd} tekne</span>`;
+      row.innerHTML = `<span class="boat-id">1–${crowd}</span><span class="boat-name">Filo · ${crowd} tekne, kurallara göre</span>`;
       c.appendChild(row);
     }
     const key = $('roleKey');
@@ -192,7 +192,7 @@
     ticks.innerHTML = ''; bar.innerHTML = '';
     scn.steps.forEach((st, i) => {
       const t = document.createElement('button'); t.style.left = (st.t / scn.duration * 100) + '%'; t.title = `${i + 1}. ${st.title}`;
-      t.onclick = () => { state.t = st.t; state.playing = false; updatePlayButton(); if (!state.follow) showStep(i, false); render(); };
+      t.onclick = () => { state.t = st.t; state.playing = false; updatePlayButton(); setFollow(true); render(); };
       ticks.appendChild(t);
       const b = document.createElement('button'); b.title = `${i + 1}. ${st.title}`; b.setAttribute('aria-label', `Adım ${i + 1}`);
       b.onclick = () => browse(i);
@@ -216,16 +216,19 @@
     const changed = i !== state.stepIdx; state.stepIdx = i;
     const s = steps[i];
     $('stepIdx').textContent = `Adım ${i + 1} / ${steps.length}`;
-    $('stepTime').textContent = `${s.t.toFixed(1)} sn`;
     [...$('stepBar').children].forEach((b, k) => { b.classList.toggle('cur', k === i); b.classList.toggle('done', k < i); });
-    $('stepTitle').textContent = s.title; $('stepText').textContent = s.text; $('stepMini').textContent = s.title;
+    $('stepTitle').textContent = s.title; $('stepText').textContent = s.text;
     $('btnPrev').disabled = i === 0; $('btnNext').disabled = i === steps.length - 1;
     if (flash && changed) { const c = $('infoCard'); c.classList.remove('flash'); void c.offsetWidth; c.classList.add('flash'); }
   }
   function setInfoOpen(open) {
     state.infoOpen = open; $('infoCard').classList.toggle('hidden', !open); $('btnInfo').classList.toggle('on', open);
     // kart açılıp kapanınca (ve telefonda daraltılınca) görünür alan değişir
-    requestAnimationFrame(() => { camCur = null; updateView(true); if (state.scn) render(); });
+    requestAnimationFrame(() => {
+      // telefonda marka (sol alt) çekmecenin hemen üstünde dursun
+      $('infoCard').parentNode.style.setProperty('--sheet', (phoneMq.matches && state.infoOpen ? $('infoCard').offsetHeight : 0) + 'px');
+      camCur = null; updateView(true); if (state.scn) render();
+    });
   }
 
   // ---------- Ek tekneler: kural motoruyla birlikte simüle edilir ----------
@@ -576,11 +579,11 @@
     const b = $('btnPlay'); b.querySelector('use').setAttribute('href', state.playing ? '#i-pause' : '#i-play');
     b.setAttribute('aria-label', state.playing ? 'Duraklat' : 'Oynat');
   }
-  function togglePlay() { if (state.t >= state.scn.duration) state.t = 0; state.playing = !state.playing; updatePlayButton(); }
+  function togglePlay() { if (state.t >= state.scn.duration) state.t = 0; state.playing = !state.playing; if (state.playing) setFollow(true); updatePlayButton(); }
 
   // ---------- Olaylar ----------
   $('btnPlay').onclick = togglePlay;
-  $('btnReset').onclick = () => { state.t = 0; state.playing = false; updatePlayButton(); render(); if (!state.follow) showStep(0, false); };
+  $('btnReset').onclick = () => { state.t = 0; state.playing = false; updatePlayButton(); setFollow(true); render(); };
   // hız: masaüstünde üç düğme; telefonda yalnız seçili görünür, dokununca sıradakine geçer
   $('speedSeg').onclick = e => {
     const btn = e.target.closest('button'); if (!btn) return;
@@ -588,7 +591,7 @@
     const next = phoneMq.matches && btn.classList.contains('on') ? all[(all.indexOf(btn) + 1) % all.length] : btn;
     all.forEach(x => x.classList.toggle('on', x === next)); state.speed = +next.dataset.v;
   };
-  $('scrub').oninput = e => { state.t = +e.target.value; render(); };
+  $('scrub').oninput = e => { state.t = +e.target.value; setFollow(true); render(); };
   $('btnAdd').onclick = addBoat; $('btnRemove').onclick = removeBoat;
   $('chkWind').onchange = e => { state.show.wind = e.target.checked; render(); };
   $('chkRungs').onchange = e => { state.show.rungs = e.target.checked; render(); };
@@ -600,15 +603,32 @@
   // tam ekran: iPad'de sistemin X düğmesi sol üste biner → üst çubukta yer aç
   const fsSync = () => document.documentElement.classList.toggle('is-fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
   document.addEventListener('fullscreenchange', fsSync); document.addEventListener('webkitfullscreenchange', fsSync);
-  $('btnFull').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); };
+  // tam ekran: Katmanlar menüsünde anahtar (desteklemeyen tarayıcıda, ör. iPhone Safari, gizli)
+  const fsOk = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+  if (!fsOk) $('rowFull').style.display = 'none';
+  const fsSyncChk = () => { $('chkFull').checked = !!(document.fullscreenElement || document.webkitFullscreenElement); };
+  document.addEventListener('fullscreenchange', fsSyncChk); document.addEventListener('webkitfullscreenchange', fsSyncChk);
+  $('chkFull').onchange = e => {
+    const de = document.documentElement;
+    if (!e.target.checked) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else (de.requestFullscreen || de.webkitRequestFullscreen).call(de);
+  };
   $('btnInfo').onclick = () => setInfoOpen(!state.infoOpen);
   $('btnInfoClose').onclick = () => setInfoOpen(false);
-  $('chkFollow').onchange = e => { state.follow = e.target.checked; if (state.follow) showStep(stepAt(state.t), true); };
-  // Önceki/Sonraki: kullanıcı kendi gezerse canlı takip kapanır, "Bu ana git" ile animasyon o adıma gider
-  function browse(i) { state.follow = false; $('chkFollow').checked = false; showStep(i, false); }
+  // Kart normalde animasyonu izler. Önceki/Sonraki ile gezince izleme durur ve "Bu ana git" belirir;
+  // ona basınca (ya da oynat / zaman çubuğu / başa al) animasyon o ana gider, kart yeniden izler.
+  function setFollow(on) {
+    state.follow = on; $('btnGoto').classList.toggle('hidden', on);
+    if (on && state.scn) showStep(stepAt(state.t), false);
+  }
+  function browse(i) {
+    if (!state.scn) return;
+    state.follow = false; showStep(i, false);
+    $('btnGoto').classList.toggle('hidden', stepAt(state.t) === state.stepIdx);
+  }
   $('btnPrev').onclick = () => browse(state.stepIdx - 1);
   $('btnNext').onclick = () => browse(state.stepIdx + 1);
-  $('btnGoto').onclick = () => { state.t = state.scn.steps[state.stepIdx].t; state.playing = false; updatePlayButton(); render(); };
+  $('btnGoto').onclick = () => { state.t = state.scn.steps[state.stepIdx].t; state.playing = false; updatePlayButton(); setFollow(true); render(); };
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { openPicker(false); $('layersMenu').classList.add('hidden'); return; }
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
@@ -621,7 +641,7 @@
     if (!e.target.closest('#layersMenu') && !e.target.closest('#btnLayers')) { $('layersMenu').classList.add('hidden'); $('btnLayers').classList.remove('on'); }
     if (phoneMq.matches && !e.target.closest('#addMenu') && !e.target.closest('#btnAddMenu')) $('addMenu').classList.add('hidden');
   });
-  window.addEventListener('resize', () => { camCur = null; updateView(true); render({ snap: true }); });
+  window.addEventListener('resize', () => setInfoOpen(state.infoOpen));   // görünüm + marka konumu yeniden
 
   // ---------- Senaryo seçici (kategori sekmeleri + kartlar) ----------
   const CATS = ['Taktik', 'İleri Taktik', 'Kurallar', 'Teknik'];
@@ -629,6 +649,7 @@
   let query = '';
   function openPicker(open) {
     $('picker').classList.toggle('hidden', !open);
+    if (!open && window.SailThumbs) SailThumbs.reset();
     if (open) {
       pickerCat = state.scn ? state.scn.category : pickerCat; query = ''; $('pickerSearch').value = ''; buildPicker();
       if (!phoneMq.matches) setTimeout(() => $('pickerSearch').focus(), 50);
@@ -644,11 +665,14 @@
     c.style.setProperty('--cat', CAT_COLORS[x.category] || 'var(--accent)');
     const active = state.scn && state.scn.id === x.id; c.classList.toggle('active', active);
     const locked = lockedScn(x); c.classList.toggle('locked', locked);
-    const nBoats = x.boats.length + (x.crowd || []).length;
-    c.innerHTML = `<div class="card-top"><span class="code-badge">${esc(code)}</span>${active ? '<span class="now">● Açık</span>' : ''}${locked ? '<span class="lock" title="Kayıtlı kullanıcılar için">Kaydol</span>' : ''}</div>` +
-      `<div class="ttl">${esc(ttl)}</div><div class="sum">${esc(x.summary)}</div>` +
-      `<div class="meta"><span><svg><use href="#i-clock"/></svg>${Math.round(x.duration)} sn</span>` +
-      `<span><svg><use href="#i-boat"/></svg>${nBoats} tekne</span><span><svg><use href="#i-steps"/></svg>${x.steps.length} adım</span></div>`;
+    // kare küçük resim (döngüde oynayan ön izleme) + altında kod ve başlık; özet yalnız ipucunda
+    c.title = x.summary;
+    const th = window.SailThumbs ? SailThumbs.make(x) : document.createElement('div');
+    th.classList.add('thumb');
+    th.insertAdjacentHTML('beforeend', `<span class="code-badge">${esc(code)}</span>` +
+      (active ? '<span class="now">Açık</span>' : '') + (locked ? '<span class="lock">Kaydol</span>' : ''));
+    c.appendChild(th);
+    c.insertAdjacentHTML('beforeend', `<div class="ttl">${esc(ttl)}</div>`);
     c.onclick = () => {
       if (lockedScn(x)) { SailAccess.guard('scn.ileri'); return; }
       location.hash = x.id; openPicker(false);
@@ -656,7 +680,7 @@
     return c;
   }
   function buildPicker() {
-    $('pickerSub').textContent = `${SCENARIOS.length} animasyon · konu seç ya da ara`;
+    if (window.SailThumbs) SailThumbs.reset();
     const tabs = $('pickerTabs'); tabs.innerHTML = '';
     for (const c of CATS) {
       const n = SCENARIOS.filter(x => x.category === c).length;
@@ -707,7 +731,7 @@
   // telefonda alttan çekmece: tutamağa ya da başlığa dokun → daralt/genişlet; aşağı/yukarı kaydır → aynısı
   function setCollapsed(c) { $('infoCard').classList.toggle('collapsed', c); setInfoOpen(state.infoOpen); }
   $('btnCollapse').onclick = () => setCollapsed(!$('infoCard').classList.contains('collapsed'));
-  $('infoHead').addEventListener('click', e => { if (phoneMq.matches && e.target.closest('.info-title-wrap')) setCollapsed(!$('infoCard').classList.contains('collapsed')); });
+  $('infoCard').addEventListener('click', e => { if (phoneMq.matches && e.target.closest('.step-meta, .step-title')) setCollapsed(!$('infoCard').classList.contains('collapsed')); });
   let swipeY = null;
   $('infoHead').addEventListener('touchstart', e => { swipeY = e.touches[0].clientY; }, { passive: true });
   $('infoHead').addEventListener('touchend', e => {
