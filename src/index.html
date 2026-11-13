@@ -42,7 +42,6 @@
     <div class="tool-group">
       <a id="lnkSim" class="tool sim-link" href="sim.html" title="Yarış simülatörü: tekneleri kendin yerleştir, rüzgarı değiştir"><svg><use href="#i-boat"/></svg><span class="lbl">Simülatör</span></a>
       <button id="btnInfo" class="tool" title="Bilgi kartı (i)"><svg><use href="#i-info"/></svg><span class="lbl">Bilgi</span></button>
-      <button id="btnLayers" class="tool" title="Katmanlar"><svg><use href="#i-layers"/></svg><span class="lbl">Katmanlar</span></button>
     </div>
   </header>
 
@@ -94,16 +93,17 @@
       </div>
     </aside>
 
-    <!-- KATMANLAR -->
-    <div id="layersMenu" class="popover layers hidden">
-      <div class="pop-title">Katmanlar</div>
+    <!-- SAYFA AYARLARI: en sağdaki yuvarlak hesap düğmesinin menüsüne taşınır (js/access.js → #pageSettings) -->
+    <div id="pageSettings" class="page-settings" hidden>
+      <div class="pop-title">Görünüm</div>
+      <label class="switch row-sw" title="Sahneyi teknelere yakın sığdırır, gerekirse olayı izler (telefonda varsayılan açık)"><span class="sw-lbl">Yakın görünüm</span><input type="checkbox" id="chkZoom"><span class="track"><span class="knob"></span></span></label>
+      <label class="switch row-sw" id="rowFull"><span class="sw-lbl">Tam ekran</span><input type="checkbox" id="chkFull"><span class="track"><span class="knob"></span></span></label>
+      <div class="pop-title">Sahnede göster</div>
       <label class="switch row-sw"><span class="sw-lbl">Rüzgar çizgileri</span><input type="checkbox" id="chkWind" checked><span class="track"><span class="knob"></span></span></label>
       <label class="switch row-sw"><span class="sw-lbl">Merdiven basamağı</span><input type="checkbox" id="chkRungs" checked><span class="track"><span class="knob"></span></span></label>
       <label class="switch row-sw"><span class="sw-lbl">Tekne etiketleri</span><input type="checkbox" id="chkLabels" checked><span class="track"><span class="knob"></span></span></label>
       <label class="switch row-sw"><span class="sw-lbl">Pis rüzgar (gölge)</span><input type="checkbox" id="chkShadows" checked><span class="track"><span class="knob"></span></span></label>
       <label class="switch row-sw"><span class="sw-lbl">Tekne izleri</span><input type="checkbox" id="chkTrails"><span class="track"><span class="knob"></span></span></label>
-      <label class="switch row-sw" title="Sahneyi teknelere yakın sığdırır, gerekirse olayı izler (telefonda varsayılan açık)"><span class="sw-lbl">Yakın görünüm</span><input type="checkbox" id="chkZoom"><span class="track"><span class="knob"></span></span></label>
-      <label class="switch row-sw" id="rowFull"><span class="sw-lbl">Tam ekran</span><input type="checkbox" id="chkFull"><span class="track"><span class="knob"></span></span></label>
       <div class="pop-foot version" id="versionLabel"></div>
     </div>
 

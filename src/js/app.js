@@ -599,7 +599,6 @@
   $('chkShadows').onchange = e => { state.show.shadows = e.target.checked; render(); };
   $('chkTrails').onchange = e => { state.show.trails = e.target.checked; render(); };
   $('chkZoom').onchange = e => { state.zoom = e.target.checked; camCur = null; updateView(true); render({ snap: true }); };
-  $('btnLayers').onclick = () => { const m = $('layersMenu'); m.classList.toggle('hidden'); $('btnLayers').classList.toggle('on', !m.classList.contains('hidden')); };
   // tam ekran: iPad'de sistemin X düğmesi sol üste biner → üst çubukta yer aç
   const fsSync = () => document.documentElement.classList.toggle('is-fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
   document.addEventListener('fullscreenchange', fsSync); document.addEventListener('webkitfullscreenchange', fsSync);
@@ -630,7 +629,7 @@
   $('btnNext').onclick = () => browse(state.stepIdx + 1);
   $('btnGoto').onclick = () => { state.t = state.scn.steps[state.stepIdx].t; state.playing = false; updatePlayButton(); setFollow(true); render(); };
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { openPicker(false); $('layersMenu').classList.add('hidden'); return; }
+    if (e.key === 'Escape') { openPicker(false); if (window.SailAccess && SailAccess.closeMenu) SailAccess.closeMenu(); return; }
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (e.code === 'ArrowRight') browse(state.stepIdx + 1);
@@ -638,7 +637,6 @@
     else if (e.key === 'i' || e.key === 'ı') setInfoOpen(!state.infoOpen);
   });
   document.addEventListener('click', e => {
-    if (!e.target.closest('#layersMenu') && !e.target.closest('#btnLayers')) { $('layersMenu').classList.add('hidden'); $('btnLayers').classList.remove('on'); }
     if (phoneMq.matches && !e.target.closest('#addMenu') && !e.target.closest('#btnAddMenu')) $('addMenu').classList.add('hidden');
   });
   window.addEventListener('resize', () => setInfoOpen(state.infoOpen));   // görünüm + marka konumu yeniden

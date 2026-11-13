@@ -6,6 +6,7 @@
 ## Güncel durum (2026-11-13)
 - Uygulamanın görünen adı **Velora Sailing** (2026-11-13), logo kullanıcının `seyhunDev/sesliasistan` deposundaki Velora işareti (`src/img/velora-mark.svg`, lacivert kare + beyaz daire içinde V). Depo adı ve site adresi (`professional-sailing`) değişmedi.
 - Senaryo sayfası sade (2026-11-13): seçici kare küçük resimli (`js/thumbs.js`, döngüde ön izleme), üst çubukta marka yok (sahnenin sol alt köşesinde), bilgi kartında "Canlı" anahtarı ve alt düğme satırı yok.
+- Üst çubuk (2026-11-13): solda senaryo, sağda Simülatör · Bilgi · en sağda yuvarlak hesap düğmesi (baş harf, halka rengi rol). Hesap düğmesinin menüsü = hesap + sayfanın ayarları (ana sayfada `#pageSettings`: Görünüm ve Sahnede göster anahtarları, sürüm). Katmanlar ve tam ekran düğmeleri ayrıca yok. Simülatör sayfasında da aynı yuvarlak düğme en sağda.
 - Canlı: https://seyhundev.github.io/professional-sailing/ — main'e push ile otomatik yayın (GitHub Actions, hash'li dosya adları, sağ altta sürüm damgası).
 - Start senaryolarında (A1, A2, A3, A4) kalabalık filo var; A3 hattı 600 px (12 boy), rüzgar 335°.
 - Yeni kategori **İleri Taktik** (4. sekme; `category: 'İleri Taktik'`), KONULAR.md → H bölümü. Start senaryoları uca göre üç konuda (2026-11-12): `topic` **'Start · Pin'** (İA1), **'Start · Orta'** (İA2, İA2b, İA2c), **'Start · Hakem botu'** (İA3); uçtan bağımsız yer tutma dersleri **'Start · Yer tutma'** (İA4). Seçici konuları senaryoların dosyadaki ilk geçiş sırasına göre dizer.
@@ -67,6 +68,7 @@
 - [ ] **Kullanıcı senaryoları (sonraki aşama):** Firebase Auth + Firestore, link ile paylaşım, Firebase Hosting. Simülatör yarış kayıtları için biçim hazır: `SailRecords` girdisi (`setup` + `ops` + `summary`) aynen Firestore belgesi olabilir.
 
 ## Kararlar
+- 2026-11-13 · **Hesap düğmesi = ayarlar.** Kullanıcı: "giriş yapan kişinin ikonu en sağda, yuvarlak, diğerleriyle uyumlu; ayarlara basınca kişiyi göster, ayarların içine konabilenleri orada göster, diğerleri dışarıda." access.js düğmeyi `.tool-group`un sonuna ekler; sayfa `#pageSettings` (gizli) verirse menünün altına taşır. Yeni sayfa ayarı eklenecekse ayrı düğme değil `#pageSettings` içine.
 - 2026-11-13 · **Ad "Velora Sailing", logo Velora işareti, marka sahnenin sol alt köşesinde.** Kullanıcı: "Uygulama başlığı artık Velora Sailing… logosunu kullanacağız… sol alt köşede olsun." Logo `sesliasistan` deposundaki `public/brand/velora-mark.svg`'den kopyalandı (`src/img/`, favicon da). Ana sayfada `.brand-corner` (tıklanmaz); telefonda alttaki bilgi çekmecesinin hemen üstünde (`--sheet`, app.js → setInfoOpen). Giriş ekranı logosu da aynı.
 - 2026-11-13 · **Senaryo seçici kare küçük resimli; bilgi kartı "Canlı" anahtarsız.** Kullanıcı: çok buton, çok yazı. Küçük resim senaryoyu `SailRules.buildScene` ile (uygulamayla aynı) hesaplar, ilk görünüşte ve kare başına bir tane (~25 ms); yalnız ekranda görünenler oynar, "hareketi azalt"ta durağan. Çerçeve anlatılan tekneler + şamandıralar (hat dahil değil, uzun hat tekneleri küçültüyordu). Kart her zaman animasyonu izler; elle gezince "Bu ana git" çıkar.
 - 2026-11-12 · **Telefonda sahne teknelere yakınlaşır (odak kamerası), parkurun tamamı sığdırılmaz.** Kullanıcı: telefonda animasyon çok uzak, bilgi kartı sahneyi kaplıyor. Dikey telefonda 1000×680 alan ~0.39 ölçekle sığıyordu (tekne ~19 px). Yakınlık zaman içinde yavaş değişir, kaydırma yumuşak; duraklatılmışken/zaman çizelgesinde anında oturur. Masaüstü ve tablet eski `fitViewBox` ile aynı.
@@ -159,6 +161,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Üst çubuk: yuvarlak hesap/ayarlar düğmesi
+- Kullanıcı: üstteki giriş, Simülatör, Bilgi, Katman, büyütme düğmeleri karışık; kişi simgesi en sağda, yuvarlak; ayarlar içinde kişi ve ayarlar, diğerleri dışarıda.
+- Yapılan: yuvarlak hesap düğmesi en sağda (her iki sayfada); menüsü kişi (avatar, ad, rol, e-posta), hesap işleri, Görünüm (yakın görünüm, tam ekran), Sahnede göster (rüzgar, merdiven, etiketler, gölge, izler), sürüm. Katmanlar düğmesi kalktı. Ölçüm: üst çubuktaki tüm düğmelerin dikey merkezi aynı (5 ekran boyu + simülatör 3 boy).
+
 ### 2026-11-13 · Senaryo sayfası sadeleştirildi + Velora Sailing adı/logosu
 - Kullanıcı (iPad dikey ekran görüntüsü, v1.65): üst taraf ve bilgi yerleri karışık; senaryo seçimi yazı yerine kare küçük resim + otomatik kısa ön izleme + başlık; çok buton/yazı. Sonra: ad Velora Sailing, Velora logosu, sol alt köşede.
 - Yapılan: seçici kare küçük resimler (`js/thumbs.js`), özet/süre/tekne/adım yazıları kalktı (özet ipucunda). Üst çubuk: kategori satırı kalktı (başlık 2 satıra kadar), tam ekran Katmanlar menüsünde, marka sol alt köşede. Bilgi kartı: tek satır "Adım n/N · (Bu ana git) · ‹ › ×", tekrar eden senaryo başlığı, "0.0 sn", "Canlı" anahtarı, alttaki üç düğme ve "Tekneler" başlığı kalktı; S/İ açıklaması "Senaryo özeti ve simgeler" içinde. Sürüm etiketi alt çubuk düğmelerine binmiyor. Katmanlar menüsü alçak ekranda kayar.

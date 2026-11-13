@@ -202,41 +202,50 @@
   }
 
   // ---------- hesap düğmesi ve menü (üst çubuk) ----------
-  let chip = null, menu = null;
+  let chip = null, menu = null, extra = null;
   function buildChip() {
     const bar = document.querySelector('.topbar .tool-group') || document.querySelector('.topbar');
     if (!bar) return;
-    chip = el(`<button id="btnAccount" class="tool acc-chip" title="Hesap ve gizlilik" aria-haspopup="menu">
+    // en sağda yuvarlak hesap düğmesi: adın baş harfi (yoksa kişi simgesi), halka rengi rol; menüde hesap + sayfanın ayarları
+    chip = el(`<button id="btnAccount" class="acc-chip" title="Hesap ve ayarlar" aria-haspopup="menu">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4.8 19.5c1.3-3.4 4-5 7.2-5s5.9 1.6 7.2 5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
-      <span class="lbl" id="accLbl"></span></button>`);
-    bar.insertBefore(chip, bar.firstChild);
+      <span class="acc-ini" id="accLbl"></span></button>`);
+    bar.appendChild(chip);
     menu = el('<div class="acc-menu hidden" role="menu"></div>');
     document.body.appendChild(menu);
     chip.onclick = e => { e.stopPropagation(); toggleMenu(); };
-    document.addEventListener('click', e => { if (!menu.contains(e.target)) menu.classList.add('hidden'); });
+    document.addEventListener('click', e => { if (!menu.contains(e.target)) toggleMenu(false); });
     chipUpdate();
   }
   function chipUpdate() {
     if (!chip) return;
     const r = role();
     chip.dataset.role = r;
-    chip.querySelector('#accLbl').textContent = r === 'kayitli' && acc.name ? acc.name.split(' ')[0] : ROLE_NAMES[r];
+    const nm = acc && acc.name ? acc.name.trim() : '';
+    chip.querySelector('#accLbl').textContent = nm ? nm[0].toLocaleUpperCase('tr') : '';
+    chip.classList.toggle('has-ini', !!nm);
+    chip.title = (nm || ROLE_NAMES[r]) + ' · hesap ve ayarlar';
   }
   function toggleMenu(force) {
     const open = force != null ? force : menu.classList.contains('hidden');
-    if (!open) { menu.classList.add('hidden'); return; }
+    if (!open) { menu.classList.add('hidden'); chip.classList.remove('on'); return; }
     const r = role(), c = T.consent();
     const b = chip.getBoundingClientRect();
     menu.style.top = (b.bottom + 6) + 'px';
     menu.style.right = Math.max(8, innerWidth - b.right) + 'px';
+    menu.style.maxHeight = `calc(100dvh - ${Math.round(b.bottom + 14)}px)`;
+    const who = acc && acc.name ? acc.name : r === 'misafir' ? 'Misafir ziyaretçi' : r === 'sahip' ? 'Site sahibi' : 'Hesabım';
     menu.innerHTML = `
-      <div class="acc-head"><span class="acc-role" data-role="${r}">${ROLE_NAMES[r]}</span>
-        <div class="acc-who">${esc(acc && acc.name ? acc.name : r === 'misafir' ? 'Misafir ziyaretçi' : '')}</div>
-        ${acc && acc.email ? `<div class="acc-mail">${esc(acc.email)}</div>` : ''}</div>
+      <div class="acc-head"><span class="acc-av" data-role="${r}">${chip.innerHTML}</span>
+        <div class="acc-id"><div class="acc-who">${esc(who)}</div>
+        <div class="acc-sub"><span class="acc-role" data-role="${r}">${ROLE_NAMES[r]}</span>${acc && acc.email ? `<span class="acc-mail">${esc(acc.email)}</span>` : ''}</div></div></div>
       ${r === 'misafir' ? '<button class="acc-item" data-a="signup">Kaydol <small>tüm bölümler açılır</small></button>' : ''}
       ${can('visits') ? '<a class="acc-item" href="ziyaret.html" data-a="visits">Ziyaret kayıtları</a>' : ''}
       <button class="acc-item" data-a="privacy">Gizlilik ve verilerim <small>${c === false ? 'kayıt kapalı' : 'kayıt açık'}</small></button>
       ${r !== 'misafir' ? '<button class="acc-item" data-a="logout">Çıkış yap</button>' : '<button class="acc-item" data-a="owner">Site sahibi girişi</button>'}`;
+    // sayfanın kendi ayarları (ör. ana sayfada görünüm anahtarları, #pageSettings) menünün altına
+    extra = extra || document.getElementById('pageSettings');      // ilk açılışta bulunur; sonra menüye taşınmış olarak saklanır
+    if (extra) { menu.appendChild(extra); extra.hidden = false; }
     menu.querySelectorAll('[data-a]').forEach(x => x.onclick = () => {
       const a = x.dataset.a; menu.classList.add('hidden');
       if (a === 'signup') openGate('signup');
@@ -244,7 +253,7 @@
       else if (a === 'privacy') openPrivacy();
       else if (a === 'logout') { T.log('logout', {}); setAccount(null, 'çıkış'); openGate('home'); }
     });
-    menu.classList.remove('hidden');
+    menu.classList.remove('hidden'); chip.classList.add('on');
   }
 
   function openPrivacy() {
@@ -282,7 +291,7 @@
     return false;
   }
 
-  window.SailAccess = { FEATURES, role, can, guard, account: () => acc, open: openGate, ownerLogin, ROLE_NAMES };
+  window.SailAccess = { FEATURES, role, can, guard, account: () => acc, open: openGate, ownerLogin, ROLE_NAMES, closeMenu: () => menu && toggleMenu(false) };
 
   // ---------- açılış ----------
   if (T.newSession) T.log('visit', T.context());
