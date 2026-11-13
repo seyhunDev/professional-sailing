@@ -31,6 +31,13 @@
     <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 4v5h7V4M8 20v-6h8v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-wind" viewBox="0 0 24 24"><path d="M12 3.5v15m-5.5-5.5L12 18.5l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 3.5h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 9c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 15c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-fleet" viewBox="0 0 24 24"><path d="M7 4c2 2.4 2.6 5.6 2.3 10H4.7C4.4 9.6 5 6.4 7 4zM17 8c2 2.4 2.6 5.6 2.3 10h-4.6c-.3-4.4.3-7.6 2.3-10z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M6 21V4m0 1h10l-2 3.5L16 12H6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 16.6v.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-helm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4M5.3 5.3l2.8 2.8M15.9 15.9l2.8 2.8M18.7 5.3l-2.8 2.8M8.1 15.9l-2.8 2.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
     <symbol id="i-boat" viewBox="0 0 24 24"><path d="M12 3c3 3.5 4 8 3.5 15h-7C8 11 9 6.5 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
   </svg>
 
@@ -40,7 +47,6 @@
     <div class="spacer"></div>
     <div class="tool-group">
       <button id="btnRecs" class="tool" title="Kayıtlı yarışlar: tekrar izle, dosyaya aktar"><svg><use href="#i-save"/></svg><span class="lbl">Kayıtlar</span></button>
-      <button id="btnPanel" class="tool on" title="Sıralama ve olaylar"><svg><use href="#i-list"/></svg><span class="lbl">Sıralama</span></button>
       <button id="btnFull" class="tool" title="Tam ekran"><svg><use href="#i-expand"/></svg></button>
     </div>
   </header>
@@ -103,32 +109,6 @@
       </div>
     </div>
 
-    <div id="helmPad" class="helm-pad hidden" role="toolbar" aria-label="Dümen ve iskota">
-      <button class="hp-rud" id="hpLeft" title="Dümen: sola dön (← ya da A, basılı tut)"><span class="hp-arrow">◀</span><b>Sola</b><small id="hpLeftSub">kafa aç</small></button>
-      <div class="hp-mid">
-        <div class="hp-head">
-          <span class="hp-dot"></span>
-          <div class="rb-text"><b id="hpTitle">Elle sürüyorsun</b><span id="hpHint"></span></div>
-          <button class="icon sm" id="hpClose" title="Elle sürmeyi bitir, teknen burada kalsın (Esc)"><svg><use href="#i-close"/></svg></button>
-        </div>
-        <div class="hp-stat"><span id="hpSpeed" class="hp-kn">0,0 kn</span><span id="hpPoint"></span></div>
-        <div class="hp-sheet">
-          <button class="tb" id="hpEase"><b>Sal</b><small>yavaşla</small></button>
-          <div class="hp-gwrap">
-            <div class="trim-gauge" id="hpGauge" aria-hidden="true"><span class="tg-ideal"></span><span class="tg-knob"></span></div>
-            <span id="hpTrimTxt" class="hp-trimtxt"></span>
-          </div>
-          <button class="tb" id="hpTrim"><b>Çek</b><small>hızlan</small></button>
-        </div>
-        <div class="hp-actions">
-          <button class="tb tgl" id="hpAuto" title="İskota rüzgar açısına göre kendiliğinden ayarlansın (O)">Oto<span class="hp-long">iskota</span></button>
-          <button class="tb" id="hpTack" title="Tramola: rüzgarın içinden öbür kontraya (T)"><svg class="ci"><use href="#i-tack"/></svg>Tramola</button>
-          <button class="tb" id="hpJibe" title="Kavança: pupadan öbür kontraya (K)">Kavança</button>
-          <button class="tb rb-done ready" id="hpGo" title="Otomatik: yarış devam etsin, teknen orsaya gitsin; tramolalar yine senin (Enter / boşluk)"><svg class="ci"><use href="#i-play"/></svg><span class="hp-go-lbl">Otomatik</span></button>
-        </div>
-      </div>
-      <button class="hp-rud" id="hpRight" title="Dümen: sağa dön (→ ya da D, basılı tut)"><span class="hp-arrow">▶</span><b>Sağa</b><small id="hpRightSub">orsa</small></button>
-    </div>
     <div id="modeStrip" class="mode-strip" aria-live="polite">
       <span id="msPhase" class="ms-chip"></span>
       <span id="msMine" class="ms-chip"></span>
@@ -170,17 +150,34 @@
       </div>
     </div>
 
-    <aside id="panel" class="info-card sim-panel">
+    <!-- Ayarlar: kategori düğmeleri (yatayda sahnenin sağında dikey, dikey ekranda altta yatay şerit).
+         Bir kategoriye dokununca yalnız onun ayarları açılır; varsayılan kapalı, animasyon ön planda. -->
+    <nav id="catRail" class="cat-rail" aria-label="Ayarlar">
+      <div class="cr-quick" id="crQuick"></div>
+      <div class="cr-cats">
+        <button data-cat="mine" class="cr-mine" title="Senin teknen: manuel, taktik, hız, rota"><svg><use href="#i-boat"/></svg><span>Teknem</span></button>
+        <button data-cat="wind" title="Rüzgar yönü ve hızı"><svg><use href="#i-wind"/></svg><span>Rüzgar</span></button>
+        <button data-cat="gust" title="Sağanak ekle / kaldır"><svg><use href="#i-gust"/></svg><span>Sağanak</span></button>
+        <button data-cat="sea" title="Akıntı ve dalga"><svg><use href="#i-wave"/></svg><span>Deniz</span></button>
+        <button data-cat="fleet" title="Tekne sayısı, sınıf, hızlanma"><svg><use href="#i-fleet"/></svg><span>Filo</span></button>
+        <button data-cat="course" title="Start hattı ve şamandıra"><svg><use href="#i-flag"/></svg><span>Parkur</span></button>
+        <button data-cat="show" title="Sahnede ne görünsün"><svg><use href="#i-eye"/></svg><span>Göster</span></button>
+        <button data-cat="rank" title="Sıralama ve olaylar"><svg><use href="#i-list"/></svg><span>Sıralama</span></button>
+        <button data-cat="help" title="Nasıl kullanılır"><svg><use href="#i-help"/></svg><span>Yardım</span></button>
+      </div>
+    </nav>
+
+    <aside id="panel" class="info-card sim-panel hidden" data-open="">
       <div class="info-head" id="panelHead">
         <button class="handle" id="btnCollapse" title="Daralt / genişlet"><span></span></button>
         <div class="info-title-wrap">
-          <div class="step-meta" id="phaseLabel">Kurulum</div>
-          <div class="info-scn" id="phaseSub">Tekneleri yerleştir, rüzgarı ayarla, start ver</div>
+          <div class="step-meta" id="catTitle">Ayarlar</div>
+          <div class="info-scn" id="phaseSub"></div>
         </div>
-        <button id="btnPanelClose" class="icon" title="Kapat"><svg><use href="#i-close"/></svg></button>
+        <button id="btnPanelClose" class="icon" title="Kapat (Esc)"><svg><use href="#i-close"/></svg></button>
       </div>
       <div class="panel-scroll">
-        <section id="selBox" class="sel-box hidden">
+        <section id="selBox" class="sel-box hidden" data-cat="sel">
           <div class="box-head"><span id="selTitle">Seçili tekne</span><button id="btnSelClose" class="icon sm" title="Seçimi kaldır"><svg><use href="#i-close"/></svg></button></div>
           <div class="sel-row">
             <span class="lbl">Sporcu</span>
@@ -211,34 +208,64 @@
             <button id="btnRemoveBoat" class="tb">Çıkar</button>
           </div>
         </section>
-        <section id="boatBox" class="sel-box course-box sea-box boat-box">
-          <div class="box-head"><span>Tekne ve rüzgar <small id="boatState"></small></span><button class="tb sm" id="btnBoatReset" title="Optimist, 8 knot rüzgar, 30 sn kala hızlanma">Varsayılan</button></div>
-          <div class="sel-row wrap">
-            <span class="lbl">Sınıf</span>
-            <div class="seg" id="boatCls" title="Tekne hızı sınıfın bilinen ortalama orsa hızından gelir"></div>
+        <section class="sel-box cat-box" data-cat="mine">
+          <div class="sel-row">
+            <button class="tb tgl grow" id="btnManual" title="Manuel: start'tan sonra tekne kendi kendine tramola atmaz, tramolayı sen atarsın (M)">Manuel</button>
+            <button class="tb tgl warn grow" id="btnMineRules" title="Senin teknen yol vermesin: kuralları bilmeyen tekne gibi davranır, protesto edilir">Yol vermez</button>
+          </div>
+          <div class="sel-row">
+            <span class="lbl">Taktik</span>
+            <select class="tb grow" id="selMinePersona" title="Taktik">
+              <option value="orta">Orta</option><option value="sol">Sol</option><option value="sag">Sağ</option><option value="saganak">Sağanak</option><option value="manuel" hidden>Sen (manuel)</option>
+            </select>
+          </div>
+          <div class="sel-row">
+            <span class="lbl">Hız</span>
+            <select class="tb grow" id="selMineSpeed" title="Teknenin hızı (tekne ve denizci farkı)">
+              <option value="0.9">−10%</option><option value="0.95">−5%</option><option value="1">Normal</option><option value="1.05">+5%</option><option value="1.1">+10%</option>
+            </select>
+          </div>
+          <div class="sel-row" id="mineRouteRow">
+            <span class="lbl">Rota</span>
+            <button class="tb grow" id="btnRoute" title="Teknenin rotasını çiz / düzenle"><svg class="ci"><use href="#i-route"/></svg><span class="lbl2">Rota çiz</span></button>
+          </div>
+          <div class="sel-row" id="mineSheetRow">
+            <span class="lbl">İskota</span>
+            <div class="sheet-ctl">
+              <button class="tb" id="btnSheetEase" title="İskotayı sal, yavaşla (↓)">Sal</button>
+              <span class="sheet-val" id="sheetVal">Tam hız</span>
+              <button class="tb" id="btnSheetTrim" title="İskotayı çek, hızlan (↑)">Çek</button>
+            </div>
+          </div>
+          <p class="cat-note" id="mineNote"></p>
+        </section>
+        <section class="sel-box cat-box" data-cat="wind">
+          <div class="sel-row">
+            <span class="lbl">Yön</span>
+            <div class="stepper" title="Rüzgar yönü (← → tuşları)">
+              <button id="btnWindL" title="Rüzgar 5° sola"><svg><use href="#i-rot-l"/></svg></button>
+              <span class="val" id="windVal">0°</span>
+              <button id="btnWindR" title="Rüzgar 5° sağa"><svg><use href="#i-rot-r"/></svg></button>
+            </div>
           </div>
           <div class="sel-row wrap">
-            <span class="lbl">Rüzgar</span>
+            <span class="lbl">Hız</span>
             <div class="seg" id="boatWind" title="Rüzgar hızı (knot): tekne hızı buna göre değişir"></div>
           </div>
-          <div class="sel-row wrap">
-            <span class="lbl">Hızlanma</span>
-            <div class="seg" id="boatAccel" title="Start'a kaç saniye kala yelkenler doldurulup hızlanılır"></div>
-          </div>
+          <p class="cat-note">Yön yarışta da değişir (yarış o andan yeniden hesaplanır). Rüzgar hızı yalnız kurulumda.</p>
         </section>
-        <section id="courseBox" class="sel-box course-box">
-          <div class="box-head"><span>Parkur <small id="courseState"></small></span><button class="tb sm" id="btnCourseReset" title="Varsayılan parkura dön">Varsayılan</button></div>
+        <section class="sel-box cat-box" data-cat="gust">
           <div class="sel-row">
-            <span class="lbl">Start hattı</span>
-            <div class="stepper"><button id="btnLineMinus" title="Hattı kısalt">−</button><span class="val" id="lineVal"></span><button id="btnLinePlus" title="Hattı uzat">+</button></div>
+            <div class="seg grow-seg">
+              <button id="btnGustL" title="Sol tarafa sağanak ekle">+ Sol</button>
+              <button id="btnGustR" title="Sağ tarafa sağanak ekle">+ Sağ</button>
+              <button id="btnGustClear" title="Sağanakları kaldır">Temizle</button>
+            </div>
           </div>
-          <div class="sel-row">
-            <span class="lbl">Şamandıra uzaklığı</span>
-            <div class="stepper"><button id="btnMarkMinus" title="Şamandırayı yaklaştır">−</button><span class="val" id="markVal"></span><button id="btnMarkPlus" title="Şamandırayı uzaklaştır">+</button></div>
-          </div>
+          <p class="cat-note">Sağanağa dokun: büyüt, küçült ya da sil. Sürükleyerek taşınır.</p>
         </section>
-        <section id="seaBox" class="sel-box course-box sea-box">
-          <div class="box-head"><span>Deniz <small id="seaState"></small></span></div>
+        <section id="seaBox" class="sel-box course-box sea-box" data-cat="sea">
+          <div class="box-head"><span><small id="seaState"></small></span></div>
           <div class="sel-row wrap">
             <span class="lbl">Akıntı</span>
             <div class="seg" id="seaCurrent" title="Tekneleri rüzgaraltına iter"><button data-v="0">Yok</button><button data-v="1">Hafif</button><button data-v="2">Orta</button><button data-v="3">Güçlü</button></div>
@@ -248,43 +275,79 @@
             <div class="seg" id="seaWaves" title="Orsada yavaşlatır ve rüzgaraltına kaydırır"><button data-v="0">Yok</button><button data-v="1">Küçük</button><button data-v="2">Büyük</button></div>
           </div>
         </section>
-        <section id="saveBox" class="save-box">
-          <span id="saveTxt">Kurulum bu cihazda saklanır</span>
-          <button class="tb sm" id="btnClearSaved" title="İsimler, taktikler, parkur ve sağanaklar silinir">Kaydı sil</button>
+        <section id="boatBox" class="sel-box cat-box boat-box" data-cat="fleet">
+          <div class="sel-row">
+            <span class="lbl">Tekne</span>
+            <div class="stepper">
+              <button id="btnFleetMinus" title="Tekne çıkar">−</button>
+              <span class="val" id="fleetVal">12</span>
+              <button id="btnFleetPlus" title="Tekne ekle">+</button>
+            </div>
+            <button class="tb" id="btnFleetLine" title="Tekneleri hatta yeniden diz">Diz</button>
+          </div>
+          <div class="sel-row wrap">
+            <span class="lbl">Sınıf</span>
+            <div class="seg" id="boatCls" title="Tekne hızı sınıfın bilinen ortalama orsa hızından gelir"></div>
+          </div>
+          <div class="sel-row wrap">
+            <span class="lbl">Hızlanma</span>
+            <div class="seg" id="boatAccel" title="Start'a kaç saniye kala yelkenler doldurulup hızlanılır"></div>
+          </div>
+          <div class="sel-row cat-foot"><small id="boatState"></small><button class="tb sm" id="btnBoatReset" title="Optimist, 8 knot rüzgar, 30 sn kala hızlanma">Varsayılan</button></div>
         </section>
-        <section id="howto" class="howto">
+        <section id="courseBox" class="sel-box course-box" data-cat="course">
+          <div class="box-head"><span><small id="courseState"></small></span><button class="tb sm" id="btnCourseReset" title="Varsayılan parkura dön">Varsayılan</button></div>
+          <div class="sel-row">
+            <span class="lbl">Start hattı</span>
+            <div class="stepper"><button id="btnLineMinus" title="Hattı kısalt">−</button><span class="val" id="lineVal"></span><button id="btnLinePlus" title="Hattı uzat">+</button></div>
+          </div>
+          <div class="sel-row">
+            <span class="lbl">Şamandıra uzaklığı</span>
+            <div class="stepper"><button id="btnMarkMinus" title="Şamandırayı yaklaştır">−</button><span class="val" id="markVal"></span><button id="btnMarkPlus" title="Şamandırayı uzaklaştır">+</button></div>
+          </div>
+        </section>
+        <section class="sel-box cat-box" data-cat="show">
+          <div class="sel-row">
+            <div class="seg seg-tgl grow-seg">
+              <button class="on" id="btnShowSpeed" title="Teknelerin hızı (knot): sağanakta ↑, pis rüzgarda ↓">Hız</button>
+              <button class="on" id="btnShowShadow" title="Rüzgar gölgesi (pis rüzgar)">Pis rüzgar</button>
+            </div>
+          </div>
+          <p class="cat-note">Pin ve hakem botu layline'ı sağ üstteki hesap menüsünde.</p>
+        </section>
+        <section class="boats-box" data-cat="rank">
+          <ol class="standings" id="standings"></ol>
+        </section>
+        <section class="boats-box" data-cat="rank">
+          <div class="box-head">Olaylar <label class="mini-sw"><input type="checkbox" id="chkMineOnly"> yalnızca benim teknem</label></div>
+          <ul class="events" id="events"></ul>
+        </section>
+        <section id="howto" class="howto" data-cat="help">
           <ol>
+            <li><b>Ayarlar:</b> yatay ekranda sağdaki, dikey ekranda alttaki düğmeler ayar kategorileridir (<b>Teknem, Rüzgar, Sağanak, Deniz, Filo, Parkur, Göster, Sıralama</b>). Birine dokun, yalnız onun ayarları açılır; yeniden dokun ya da × ile kapat. Varsayılandan farklı bir ayarı olan kategoride küçük turuncu nokta görünür.</li>
             <li><b>Sürükle:</b> tekneleri hattın dibine yerleştir. Turuncu tekne <b>senin teknen</b>; bir boşluğa koy.</li>
-            <li><b>Dokun:</b> bir tekneyi seç; kontrasını ve taktiğini değiştir, ya da onu senin teknen yap.</li>
-            <li><b>Rüzgar ve sağanak:</b> alttaki düğmelerle rüzgarı döndür, bir tarafa sağanak ekle (sağanağı da sürükleyebilirsin). Sağanak eklenince ya da ona dokununca sağ altta <b>Sağanak ayarları</b> kartı açılır, seçili sağanak haritada parlar: <b>Boyut − / +</b>, <b>Sıfırla</b> (ilk boyut) ve <b>Sil</b>; birden çok sağanaktan istediğini ayrı ayrı düzenlersin.</li>
-            <li><b>Parkur:</b> panelin üstündeki <b>Parkur</b> kutusundan start hattının uzunluğunu ve orsa şamandırasının uzaklığını değiştir; hız, rüzgar gölgesi ve kurallar yeni parkura göre hesaplanır. <b>Varsayılan</b> ile tek dokunuşla geri dönersin.</li>
-            <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 5 dakikalık geri sayım başlar. 1× gerçek zamandır (start → şamandıra yaklaşık 15 dakika); hızlı izlemek için 5×, 15× ya da 40× seç. Yarışta <b>Tramola</b> düğmesiyle teknene komut ver; rüzgar, sağanak ya da komut değişince yarış o andan itibaren yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
-            <li><b>Rota:</b> alttaki <b>Rota</b> düğmesine bas; üstte rota çubuğu açılır. <b>Açılı</b> (varsayılan): teknenden başlayarak sürükle; her sürükleme düz bir bacaktır ve orsadan darsa orsa açısına (rüzgara 45°) oturur. <b>Serbest</b>: parmağınla istediğin gibi çiz (hatalı gidişleri göstermek için). <b>Geri al</b> son bacağı siler; bitince yeşil <b>Tamam</b>. Yarışta da rotayı düzenleyebilirsin.</li>
-            <li><b>Yakınlaştır / kaydır:</b> parkurda iki parmakla (ya da fare tekerleğiyle) yakınlaştır, boş yeri sürükleyerek şamandıraya ya da start hattına kaydır. Sol alttaki <b>Tümü</b> bütün parkuru gösterir, <b>Takip</b> kamerayı senin teknene kilitler.</li>
-            <li><b>Taktik ve isim:</b> bir tekneye dokun; <b>Sporcu</b> kutusuna sporcunun adını yaz, <b>Taktik</b>ten <b>Sol</b> (pin tarafı), <b>Orta</b>, <b>Sağ</b> (hakem botu tarafı) ya da <b>Sağanak</b> seç. Yarış sırasında da bir tekneye dokunup taktiğini değiştirebilirsin. İsimler ve kurulum bu cihazda (tarayıcıda) saklanır; sayfayı yeniden açınca aynen gelir.</li>
-            <li><b>Tekne ve rüzgar:</b> panelin <b>Tekne ve rüzgar</b> kutusundan sınıfı (Optimist, ILCA 4 / 6 / 7) ve rüzgar hızını (knot) seç; tekne hızı sınıfın o rüzgardaki ortalama orsa hızından hesaplanır (ör. Optimist 8 knot rüzgarda ≈3.5 kn, ILCA 7 15 knot rüzgarda ≈5.5 kn). <b>Hızlanma</b> start'a kaç saniye kala yelkenlerin doldurulacağıdır: tekneler o ana kadar yelken boş, hattın gerisinde yavaşça yer tutar, sonra hızlanır. Geç hızlanan hatta yavaş varır; erken hızlanan yavaşlamak zorunda kalır.</li>
-            <li><b>Akıntı ve dalga:</b> panelin <b>Deniz</b> kutusundan akıntıyı (hafif / orta / güçlü) ve dalgayı (küçük / büyük) seç; tekneler rüzgaraltına kayar, orsada yavaş yükselir, layline'lar açılır. Yalpalayan, köre düşen bir sporcuyu göstermek için tekneye dokunup <b>Kayma</b>yı <b>Az</b> ya da <b>Çok</b> yap. Yarışta da değiştirebilirsin.</li>
-            <li><b>Manuel:</b> alttaki <b>Manuel</b> açıkken senin teknen start'tan sonra kendi kendine hiç tramola atmaz; ne zaman dönüleceğine sen <b>Tramola</b> (ya da T tuşu) ile karar verirsin. Start'a yaklaşma ve şamandırayı dönme yine otomatiktir. Kapalıyken tekne taktiğine göre kendisi karar verir.</li>
-            <li><b>Elle sür:</b> alttaki <b>Elle sür</b> (ya da D) ile teknenin dümeni ve iskotası sende; bu sırada zaman durur, diğer tekneler yerinde bekler. <b>◀ Sola / Sağa ▶</b> düğmelerini basılı tut (klavyede ← →): tekne orsalar ya da kafa açar; rüzgarın içinden geçince <b>tramola</b>, pupadan geçince <b>kavança</b> olur. <b>Oto iskota</b> açıkken iskota kendiliğinden ayarlanır; <b>Sal</b> (↓) ile yavaşlarsın (yelken pırpırlar), <b>Çek</b> (↑) ile hızlanırsın. Oto iskotayı kapatırsan kafa açarken iskotayı sen salmalısın, yoksa yelken boğulur. Teknen istediğin yere götürünce <b>Otomatik ▶</b>: yarış kaldığı yerden devam eder, teknen start'ı alır ve şamandırayı dönene kadar orsaya gider; tramolalara yine sen karar verirsin, yarışta da ↑ ↓ ile hızını değiştirirsin.</li>
-            <li><b>Tekne hızı:</b> bir tekneye (kendi teknene de) dokun, <b>Hız</b> satırından %5-10 hızlı ya da yavaş yap (kendi teknen için alttaki <b>Hız</b> seçimi, yarışta da). Aynı taktikle hızlı teknenin ne kadar öne geçtiğini görürsün.</li>
+            <li><b>Dokun:</b> bir tekneye dokununca <b>Seçili tekne</b> ayarları açılır: kontrası, taktiği, hızı, ismi ya da onu senin teknen yap.</li>
+            <li><b>Rüzgar ve sağanak:</b> <b>Rüzgar</b>'dan yönü döndür ve hızını seç; <b>Sağanak</b>'tan bir tarafa sağanak ekle. Sağanağa dokununca <b>Sağanak ayarları</b> kartı açılır: <b>Boyut − / +</b>, <b>Sıfırla</b>, <b>Sil</b>; sağanağı sürükleyerek de taşırsın.</li>
+            <li><b>Parkur ve filo:</b> <b>Parkur</b>'dan start hattının uzunluğunu ve orsa şamandırasının uzaklığını, <b>Filo</b>'dan tekne sayısını, sınıfı (Optimist, ILCA 4 / 6 / 7) ve start'a kaç saniye kala hızlanılacağını seç (yalnız kurulumda).</li>
+            <li><b>▶ Start:</b> yarış baştan sona hesaplanır, 5 dakikalık geri sayım başlar. 1× gerçek zamandır (start → şamandıra yaklaşık 15 dakika); hızlı izlemek için 5×, 15× ya da 40× seç. Rüzgar, sağanak ya da komut değişince yarış o andan yeniden hesaplanır. Zaman çubuğuyla ileri-geri sarabilirsin.</li>
+            <li><b>Teknem:</b> <b>Manuel</b> açıkken teknen start'tan sonra kendi kendine tramola atmaz; ne zaman dönüleceğine alttaki <b>Tramola</b> (ya da T) ile sen karar verirsin. Kapalıyken taktiğine (<b>Sol</b>, <b>Orta</b>, <b>Sağ</b>, <b>Sağanak</b>) göre kendisi karar verir. Yarışta <b>İskota Sal / Çek</b> ile hızını düşürüp artırırsın. <b>Rota çiz</b> ile teknenin gideceği yolu parmağınla çizersin.</li>
+            <li><b>Elle sür:</b> alttaki <b>Elle sür</b> (ya da D) ile en altta dümen paneli açılır; teknenin dümeni ve iskotası sende. <b>◀ Sola / Sağa ▶</b> düğmelerini basılı tut (klavyede ← →): tekne orsalar ya da kafa açar; rüzgarın içinden geçince <b>tramola</b>, pupadan geçince <b>kavança</b> olur. <b>Oto iskota</b> açıkken iskota kendiliğinden ayarlanır; <b>Sal</b> (↓) yavaşlatır, <b>Çek</b> (↑) hızlandırır. Kurulumda start'tan önce yerini alırsın (diğerleri bekler), <b>Start</b> ile yarış başlar ve sürmeye devam edersin. Yarışta zaman akar, bütün tekneler birlikte hareket eder; <b>Durdur</b> ile zamanı durdurursun. <b>Otomatik</b> ile teknen orsaya devam eder (tramolalar yine senin); şamandıraya gelince dönüşü ve ceza turunu otomatik yapar.</li>
+            <li><b>Yakınlaştır / kaydır:</b> parkurda iki parmakla (ya da fare tekerleğiyle) yakınlaştır, boş yeri sürükleyerek kaydır. <b>Tümü</b> bütün parkuru gösterir, <b>Takip</b> kamerayı senin teknene kilitler.</li>
+            <li><b>Akıntı ve dalga:</b> <b>Deniz</b>'den akıntıyı ve dalgayı seç; tekneler rüzgaraltına kayar, orsada yavaş yükselir. Yalpalayan bir sporcuyu göstermek için tekneye dokunup <b>Kayma</b>yı <b>Az</b> ya da <b>Çok</b> yap.</li>
             <li><b>Protesto:</b> yol vermesi gereken tekne vermezse ve hak sahibi temastan kaçmak zorunda kalırsa (ya da temas olursa) protesto edilir; <b>iki tur (720°) ceza</b> atar. Bir tekneyi ya da kendi tekneni <b>“Yol vermez”</b> yaparak bunu deneyebilirsin.</li>
-            <li><b>Kaydet:</b> yarış bitince <b>“Kaydedelim mi?”</b> diye sorulur; bir ad verip kaydet. Kurulum (tekneler, isimler, taktikler, parkur, rüzgar, deniz) ve yarışta yaptığın her şey (rüzgar dönüşleri, sağanaklar, tramolalar, rotalar) bu cihazda saklanır. Üstteki <b>Kayıtlar</b>'dan yarışı aynen <b>İzle</b>, yalnız <b>Kurulum</b>unu yükleyip değiştir, ya da <b>Dosya</b> olarak indirip başka cihazda <b>Dosyadan yükle</b> ile aç.</li>
+            <li><b>Kaydet:</b> yarış bitince <b>“Kaydedelim mi?”</b> diye sorulur. Kurulum ve yarışta yaptığın her şey (elle sürdüğün bölüm dahil) bu cihazda saklanır. Üstteki <b>Kayıtlar</b>'dan yarışı aynen <b>İzle</b>, ya da <b>Dosya</b> olarak başka cihaza taşı.</li>
             <li><b>Hız:</b> teknelerin altında knot olarak; sağanakta <span style="color:#4ade80">yeşil ↑</span>, başka bir teknenin rüzgar gölgesinde (pis rüzgar) <span style="color:#f87171">kırmızı ↓</span>.</li>
           </ol>
         </section>
-        <section class="boats-box">
-          <div class="box-head">Sıralama</div>
-          <ol class="standings" id="standings"></ol>
-        </section>
-        <section class="boats-box">
-          <div class="box-head">Olaylar <label class="mini-sw"><input type="checkbox" id="chkMineOnly"> yalnızca benim teknem</label></div>
-          <ul class="events" id="events"></ul>
+        <section id="saveBox" class="save-box" data-cat="help">
+          <span id="saveTxt">Kurulum bu cihazda saklanır</span>
+          <button class="tb sm" id="btnClearSaved" title="İsimler, taktikler, parkur ve sağanaklar silinir">Kaydı sil</button>
         </section>
       </div>
     </aside>
   </main>
 
-  <footer class="bottombar">
+  <footer class="bottombar" id="bottombar">
     <div class="row main-row">
       <button id="btnPlay" class="play" title="Start / duraklat (boşluk)"><svg><use href="#i-play"/></svg></button>
       <button id="btnReset" class="tool" title="Kuruluma dön (yerleşim korunur)"><svg><use href="#i-reset"/></svg></button>
@@ -295,58 +358,45 @@
       <div class="speed" id="speedSeg" role="radiogroup" aria-label="Hız">
         <button data-v="1" class="on" title="Gerçek zaman">1×</button><button data-v="5">5×</button><button data-v="15">15×</button><button data-v="40">40×</button>
       </div>
+      <div class="quick" id="quick">
+        <button class="tb accent" id="btnTack" title="Tramola (T)"><svg class="ci"><use href="#i-tack"/></svg><span class="q-lbl">Tramola</span></button>
+        <button class="tb drive-btn" id="btnDrive" title="Elle sür (D): dümen ve iskota sende"><svg class="ci"><use href="#i-helm"/></svg><span class="q-lbl">Elle sür</span></button>
+      </div>
     </div>
-    <div class="ctl-row">
-      <section class="cg" aria-label="Rüzgar">
-        <div class="cg-lbl">Rüzgar</div>
-        <div class="stepper" title="Rüzgar yönü (← → tuşları)">
-          <button id="btnWindL" title="Rüzgar 5° sola"><svg><use href="#i-rot-l"/></svg></button>
-          <span class="val" id="windVal">0°</span>
-          <button id="btnWindR" title="Rüzgar 5° sağa"><svg><use href="#i-rot-r"/></svg></button>
+    <div class="strip-host" id="stripHost"></div>
+
+    <!-- Elle sürme: en altta sabit kontrol paneli (dümen iki yanda, ortada iskota ve manevralar) -->
+    <div id="helmPad" class="helm-pad hidden" role="toolbar" aria-label="Dümen ve iskota">
+      <button class="hp-rud" id="hpLeft" title="Dümen: sola dön (← ya da A, basılı tut)"><span class="hp-arrow">◀</span><b>Sola</b><small id="hpLeftSub">kafa aç</small></button>
+      <div class="hp-mid">
+        <div class="hp-top">
+          <span class="hp-dot"></span>
+          <span id="hpTitle" class="hp-title">Elle sürüyorsun</span>
+          <span id="hpSpeed" class="hp-kn">0,0 kn</span>
+          <span id="hpPoint" class="hp-point"></span>
+          <span id="hpTime" class="hp-time"></span>
         </div>
-      </section>
-      <section class="cg" aria-label="Sağanak">
-        <div class="cg-lbl"><svg class="ci"><use href="#i-gust"/></svg>Sağanak</div>
-        <div class="seg">
-          <button id="btnGustL" title="Sol tarafa sağanak ekle">+ Sol</button>
-          <button id="btnGustR" title="Sağ tarafa sağanak ekle">+ Sağ</button>
-          <button id="btnGustClear" title="Sağanakları kaldır">Temizle</button>
-        </div>
-      </section>
-      <section class="cg cg-mine" aria-label="Senin teknen">
-        <div class="cg-lbl mine-lbl">Senin teknen</div>
-        <div class="cg-body">
-          <button class="tb tgl" id="btnManual" title="Manuel: start'tan sonra tekne kendi kendine tramola atmaz, tramolayı sen atarsın (M)">Manuel</button>
-          <button class="tb tgl" id="btnDrive" title="Elle sür (D): dümen ve iskota sende, diğer tekneler durur">Elle sür</button>
-          <button class="tb accent" id="btnTack" title="Tramola (T)"><svg class="ci"><use href="#i-tack"/></svg>Tramola</button>
-          <select class="tb" id="selMinePersona" title="Taktik">
-            <option value="orta">Taktik: Orta</option><option value="sol">Taktik: Sol</option><option value="sag">Taktik: Sağ</option><option value="saganak">Taktik: Sağanak</option><option value="manuel" hidden>Taktik: Sen</option>
-          </select>
-          <select class="tb" id="selMineSpeed" title="Teknenin hızı (tekne ve denizci farkı)">
-            <option value="0.9">Hız −10%</option><option value="0.95">Hız −5%</option><option value="1">Hız normal</option><option value="1.05">Hız +5%</option><option value="1.1">Hız +10%</option>
-          </select>
-          <button class="tb" id="btnRoute" title="Teknenin rotasını çiz / düzenle"><svg class="ci"><use href="#i-route"/></svg><span class="lbl2">Rota</span></button>
-          <button class="tb tgl warn" id="btnMineRules" title="Senin teknen yol vermesin: kuralları bilmeyen tekne gibi davranır, protesto edilir">Yol vermez</button>
-        </div>
-      </section>
-      <section class="cg" aria-label="Göster">
-        <div class="cg-lbl">Göster</div>
-        <div class="seg seg-tgl">
-          <button class="on" id="btnShowSpeed" title="Teknelerin hızı (knot): sağanakta ↑, pis rüzgarda ↓">Hız</button>
-          <button class="on" id="btnShowShadow" title="Rüzgar gölgesi (pis rüzgar)">Pis rüzgar</button>
-        </div>
-      </section>
-      <section class="cg fleet-ctl" aria-label="Filo">
-        <div class="cg-lbl"><svg class="ci"><use href="#i-boat"/></svg>Filo</div>
-        <div class="cg-body">
-          <div class="stepper">
-            <button id="btnFleetMinus" title="Tekne çıkar">−</button>
-            <span class="val" id="fleetVal">12</span>
-            <button id="btnFleetPlus" title="Tekne ekle">+</button>
+        <div class="hp-row">
+          <div class="hp-sheet">
+            <button class="tb" id="hpEase" title="İskotayı sal (↓)"><b>Sal</b></button>
+            <div class="hp-gwrap">
+              <div class="trim-gauge" id="hpGauge" aria-hidden="true"><span class="tg-ideal"></span><span class="tg-knob"></span></div>
+              <span id="hpTrimTxt" class="hp-trimtxt"></span>
+            </div>
+            <button class="tb" id="hpTrim" title="İskotayı çek (↑)"><b>Çek</b></button>
           </div>
-          <button class="tb" id="btnFleetLine" title="Tekneleri hatta yeniden diz">Diz</button>
+          <div class="hp-actions">
+            <button class="tb tgl" id="hpAuto" title="İskota rüzgar açısına göre kendiliğinden ayarlansın (O)">Oto iskota</button>
+            <button class="tb" id="hpTack" title="Tramola: rüzgarın içinden öbür kontraya (T)"><svg class="ci"><use href="#i-tack"/></svg>Tramola</button>
+            <button class="tb" id="hpJibe" title="Kavança: pupadan öbür kontraya (K)">Kavança</button>
+          </div>
+          <div class="hp-end">
+            <button class="tb hp-play" id="hpPlay" title="Zamanı durdur / devam (boşluk)"><svg class="ci"><use href="#i-pause"/></svg><span id="hpPlayLbl">Durdur</span></button>
+            <button class="tb hp-done" id="hpGo" title="Elle sürmeyi bitir: teknen otomatiğe geçer, tramolalar yine senin (Enter)"><svg class="ci"><use href="#i-check"/></svg><span class="hp-go-lbl">Bitir</span></button>
+          </div>
         </div>
-      </section>
+      </div>
+      <button class="hp-rud" id="hpRight" title="Dümen: sağa dön (→ ya da D, basılı tut)"><span class="hp-arrow">▶</span><b>Sağa</b><small id="hpRightSub">orsa</small></button>
     </div>
   </footer>
 

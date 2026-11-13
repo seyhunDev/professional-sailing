@@ -453,6 +453,7 @@
       const sh = b.phase === 'race' || b.phase === 'round' || b.phase === 'ocs' ? shadowAt(b, snap, w) : { k: 0, by: null };   // pis rüzgar seyreden tekneyi hep yavaşlatır (OCS dönüşü dahil; start öncesi bekleme ve ceza turu hariç)
       if (b.mine && sh.k > 0.25 && !(b.shadow > 0.25) && t > s.startAt) log(s, `${b.id} pis rüzgarda kaldı (${sh.by.id} numaranın rüzgar gölgesi), yavaşladı`, 'bad', 'golge' + b.id);
       b.shadow = sh.k; b.shadowBy = sh.by ? sh.by.id : null;
+      if (b.hand) { handPhase(b, s, t, w, remain); continue; }   // elle sürülen tekne: dümen/iskota kullanıcıda (drive), yalnız evre geçişleri
       let target = b.h, speedK = 1, holding = false, turnDir = 0, creepV = null;
 
       if (b.phase === 'wait') {
@@ -686,6 +687,7 @@
     // hareket
     const dw = E.fwd(w + 180);                                    // rüzgaraltı yönü
     for (const b of active) {
+      if (b.hand) continue;                                       // elle sürülen tekne drive() ile zaten ilerledi
       const f = E.fwd(b.h), dr = b.phase === 'done' ? 0 : driftOf(s, b) * (b.phase === 'round' ? 0.3 : 1);   // dönüşte kısa süre: az kayar
       b.x += (f.x * b.v + dw.x * dr) * DT; b.y += (f.y * b.v + dw.y * dr) * DT;
     }
@@ -729,6 +731,44 @@
     }
     s.t = +(t + DT).toFixed(4);
   }
+  // Elle sürülen tekne (canlı elle sürme): hareketi drive() yapar; burada yalnız yarış evreleri ilerler.
+  // Şamandıra dönüşü ve ceza turu otomatiğe geçer (b.hand kalkar, arayüz elle sürmeyi bitirir).
+  function handPhase(b, s, t, w, remain) {
+    if (b.phase === 'wait' && remain <= 0) { b.phase = lineSide(b) === -1 ? 'ocs' : 'race'; if (b.phase === 'ocs') ocs(b, s); }
+    else if (b.phase === 'ocs' && lineSide(b) === 1 && distToLine(b, w) > 8) { b.phase = 'race'; b.started = false; note(b, s, b.outside ? 'Geri döndü, şimdi hattın içinden' : 'Geri döndü, şimdi start', '', 2); }
+    if (b.phase === 'race' && b.started) {
+      const wp = waypoint(w), dWp = Math.hypot(wp.x - b.x, wp.y - b.y), dM = Math.hypot(b.x - MARK.x, b.y - MARK.y), phi = markAngle(b, w);
+      // şamandıraya ~1.5 boy yaklaşınca (hangi yandan gelirse gelsin) dönüşü otomatik yapar
+      const level = dot({ x: b.x - MARK.x, y: b.y - MARK.y }, E.fwd(w)) > -15;   // şamandıranın hizasına gelmiş (altından kesmiyor)
+      if (dWp < 20 || (level && dM < R_ROUND + 40) || (phi > -10 && phi < 110 && dM < R_ROUND + 26)) { b.phase = 'round'; b.roundAt = t; b.hand = false; }
+      else if (b.penaltyAt != null && t >= b.penaltyAt) b.hand = false;      // ceza turunu otomatik atar
+    }
+  }
+  // Canlı elle sürme: önce senin teknen dümen/iskotayla bir adım (DT) ilerler, sonra yarışın geri kalanı bir adım.
+  // Herkes aynı zamanda hareket eder (eskiden zaman donuyordu, teknen tek başına öne fırlıyordu).
+  function handStep(s, b, inp, path) {
+    const ev = drive(s, b, inp, DT);
+    if (path) path.push(handRow(b));                            // kayıt için: sürüşten sonraki, adımdan önceki durum
+    b.hand = true; step(s);
+    return ev;
+  }
+  // Kayıttan tekrar: elle sürülen bölümde senin teknenin adım adım durumu (yol) uygulanır, diğerleri yeniden hesaplanır
+  const HAND_KEYS = ['x', 'y', 'h', 'v', 'sheet'];
+  const handRow = b => [...HAND_KEYS.map(k => +(+b[k] || 0).toFixed(2)), b.tack === 'port' ? 1 : 0];
+  function runHand(s0, path) {
+    const s = clone(s0), frames = [clone(s)], b = s.boats.find(o => o.mine);
+    if (!b) return frames;
+    b.manual = true;
+    path.forEach((p, i) => {
+      HAND_KEYS.forEach((k, j) => { b[k] = p[j]; });
+      const tk = p[5] ? 'port' : 'starboard'; if (tk !== b.tack) { b.tack = tk; b.lastTack = s.t; }
+      b.drv = true; b.hand = true; step(s);
+      if (Math.round(s.t / DT) % 2 === 0 || i === path.length - 1) frames.push(clone(s));
+    });
+    b.hand = false;
+    return frames;
+  }
+
   // Temas itmesi: üst üste binen tekneler ayrılır. Yan yana ise itme çoğunlukla teknenin kendi rotası boyunca
   // (geri tutulur) uygulanır, yana kayma yarıya iner: tekne yan yan (yengeç gibi) gitmesin.
   function nudge(b, px, py) {
@@ -786,6 +826,6 @@
     runToEnd,
     DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, setBoat, upwindKn, BOAT,
     get START_AT() { return START_AT; }, get CLOCK_SCALE() { return CLOCK_SCALE; }, MAN_MARGIN, PERSONAS, MINE_COLOR, OBSTACLES,
-    SHADOW_LEN, SEA, SEA_DEFAULT, knots, drive, helmTurn, idealSheet, trimEff, SHEET_MAX, SHEET_OFF_MAX, defaultFleet, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
+    SHADOW_LEN, SEA, SEA_DEFAULT, knots, drive, helmTurn, idealSheet, trimEff, SHEET_MAX, SHEET_OFF_MAX, defaultFleet, handStep, runHand, handRow, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
 })(typeof window !== 'undefined' ? window : globalThis);

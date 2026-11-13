@@ -155,5 +155,29 @@ for (const wind of [-12, 0, 12]) {
   console.log(`• yarış kaydı tekrar oynatma: ${a === b ? 'birebir aynı' : 'FARKLI'}`);
   if (a !== b) { problems++; console.log('  ⚠ kayıttan tekrar oynatılan yarış farklı çıktı (deterministik değil)'); }
 }
+// Canlı elle sürme (yarışta): herkes aynı zamanda ilerler, teknen diğerlerinden hızlı gitmez (eskiden zaman donuyor,
+// teknen tek başına ilerleyip öne fırlıyordu). Kayıttan tekrar oynatınca (yol + bitiş durumu) sonuç aynı çıkmalı.
+{
+  S.setCourse(S.COURSE_DEFAULT);
+  const fr = S.runToEnd(S.newRace(S.defaultFleet(12), { wind: 0 }));
+  const k = fr.findIndex(f => f.t >= f.startAt + 3), auto = fr[Math.min(fr.length - 1, k + 100)];   // 10 sim. sn sonra (otomatik)
+  const s = S.clone(fr[k]), m = s.boats.find(b => b.mine), path = [];
+  Object.assign(m, { manual: true, route: null, sheet: null, hand: true });
+  const pos0 = Object.fromEntries(s.boats.map(b => [b.id, [b.x, b.y]]));
+  for (let i = 0; i < 200 && m.hand; i++) S.handStep(s, m, { autoTrim: true }, path);
+  const adv = b => pos0[b.id][1] - b.y;                       // rüzgarüstüne ilerleme (px)
+  const others = s.boats.filter(b => !b.mine), avg = others.reduce((a, b) => a + adv(b), 0) / others.length;
+  const autoMe = auto.boats.find(b => b.mine), autoAdv = pos0.SEN[1] - autoMe.y;
+  const bad = [];
+  if (!(avg > 40)) bad.push('diğer tekneler ilerlemedi');
+  if (adv(m) > Math.max(autoAdv, avg) * 1.35 + 20) bad.push(`teknen öne fırladı (${adv(m).toFixed(0)} px, otomatikte ${autoAdv.toFixed(0)} px)`);
+  if (Math.abs(s.t - (fr[k].t + 10)) > 0.06) bad.push('zaman ilerlemedi');
+  const rows = S.runHand(fr[k], path);
+  if (rows.length !== 101) bad.push(`tekrar oynatma kare sayısı ${rows.length}`);
+  const hm = rows[rows.length - 1].boats.find(b => b.mine);
+  if (Math.hypot(hm.x - m.x, hm.y - m.y) > 2) bad.push('tekrar oynatmada teknen başka yerde');
+  console.log(`• canlı elle sürme: 10 sim. sn'de teknen ${(adv(m) / 50).toFixed(1)} boy, diğerleri ort. ${(avg / 50).toFixed(1)} boy, otomatikte teknen ${(autoAdv / 50).toFixed(1)} boy`);
+  if (bad.length) { problems++; console.log('  ⚠ canlı elle sürme:', bad.join(', ')); }
+}
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);
