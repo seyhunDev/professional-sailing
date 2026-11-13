@@ -198,6 +198,11 @@
           const dh = seg.driftH != null ? seg.driftH : w + 180 + (norm180(h - w) <= 0 ? 30 : -30), fd = fwd(dh);
           x += fd.x * seg.drift * DT; y += fd.y * seg.drift * DT;
         }
+        // salma kalkık: tekne her segmentte rüzgaraltına kayar (seg.slip px/sn, rüzgaraltı kontraya göre 30° yana)
+        if (seg.slip) {
+          const dh = w + 180 + (norm180(h - w) <= 0 ? 30 : -30), fd = fwd(dh);
+          x += fd.x * seg.slip * DT; y += fd.y * seg.slip * DT;
+        }
         t += DT;
         samples.push(seg.mode === 'back' ? { t, x, y, h: hUsed, v, note: seg.note || '', back: true } : { t, x, y, h: hUsed, v, note: seg.note || '' });
       }

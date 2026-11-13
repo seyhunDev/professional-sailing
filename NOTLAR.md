@@ -215,7 +215,8 @@
 - Kullanıcı: rüzgarüstü şamandıraya yaklaşırken orta-sert havada fazla, hafif havada yalnız boş kalmayacak kadar palangayı alıp pupaya/apaza dönmek; sıra: iskotayı çek, bumbayı aşağı bastır, palangayı eliyle düzelt, iskotayı bırak. Animasyonla göster, nedenini anlat. Sonra: arka yaka ayarı, gırcala ayarı.
 - Yapılan: yeni kategori İleri Teknik, `js/rigview.js` yandan görünüş paneli, İT1 (14 kn, karşılaştırma teknesi B), İT1b (6 kn). KONULAR.md İT bölümü, README `rig` biçimi. Ekran görüntüleri proje dosyaları `ileri-teknik-palanga/`.
 - Kaynaklar: North Sails Optimist hız kılavuzu (güç fazlayken bumbayı sertçe bastırıp palangayı çek), Quantum "Trim to win on the Opti" (hafif: üst çıta bumbaya paralel; sert: pupada kontrol için sıkı), Speed & Smarts "Mechanics of vanging" (palanga twist'i yönetir, tepe açılınca tekne yuvarlanır; Laser gibi orsada palangayla trim eden sınıflarda şamandırada tersine boşaltılır), SailZing şamandıra dönüşü, Sailing World Laser kontrolleri. Optimist'e özel adım adım tarif kaynaklarda bulunmadı; sıra kullanıcının.
-- 2. tur: panel çizimi yelken ayarı sayfasının tekne/yelken modeline geçti (kullanıcı isteği), adım şeridi 2×2.
+- 2. tur: panel çizimi yelken ayarı sayfasının tekne/yelken modeline geçti (kullanıcı isteği), adım şeridi 2×2; yelken numarası yok.
+- 3. tur (kullanıcı): kuvvetli havada iskotayı alıp öne uzanınca tekne yatmasın diye salma biraz kaldırılır; tekne rüzgaraltına kayar, sporcu kaymayı hesaplayıp layline'ın biraz üstünden gelir ve işi hızlı yapar; rahat tutturuyorsa salma kaldırılmaz. İT1'e ilk adım olarak eklendi: panelde salma kalkar (`board`), üstten A `slip` ile layline'a kayar, layline çizgisi var. Motor: her segmentte `slip` (px/sn rüzgaraltına).
 - Yarım: kullanıcı onayı; telefonda panel küçük (küçült düğmesi var); İT2, İT3.
 
 ### 2026-11-13 · Optimist yelken ayarı: 2D taslak (`ayar.html`)

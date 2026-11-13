@@ -29,7 +29,7 @@
     const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)];
     const k = b.t > a.t ? clamp((t - a.t) / (b.t - a.t), 0, 1) : 0;
     const num = f => lerp(a[f] ?? 0, b[f] ?? a[f] ?? 0, k);
-    return { sheet: num('sheet'), vang: num('vang'), push: num('push'), hand: a.hand || null, p: a.p ?? 0 };
+    return { sheet: num('sheet'), vang: num('vang'), push: num('push'), board: num('board'), hand: a.hand || null, p: a.p ?? 0 };
   }
 
   // ---------- fizik yerine şematik model ----------
@@ -109,7 +109,8 @@
     lg('rvMetal', 1, 0, [[0, '#475569'], [.4, '#cbd5e1'], [.6, '#94a3b8'], [1, '#334155']]);
   }
 
-  function drawHull(gH) {
+  const BOARD_UP = 64;                               // salma tam kalkınca kaç px yukarı (şematik)
+  function drawHull(gH, board) {
     el('path', { d: 'M116,394 Q290,401 470,403 L465,444 Q330,463 172,447 Q150,442 140,432 Z', fill: 'url(#rvHull)', stroke: '#0b1724', 'stroke-width': 1.6, 'stroke-linejoin': 'round' }, gH);
     el('path', { d: 'M116,394 L140,432 L150,431 L128,395 Z', fill: '#cbd5e1', stroke: '#0b1724', 'stroke-width': 1 }, gH);
     el('path', { d: 'M142,425 Q300,436 467,430', fill: 'none', stroke: '#94a3b8', 'stroke-width': 1.2 }, gH);
@@ -117,8 +118,11 @@
     el('path', { d: 'M116,394 Q290,401 470,403', fill: 'none', stroke: '#1e293b', 'stroke-width': 5, 'stroke-linecap': 'round' }, gH);
     el('path', { d: 'M118,392.5 Q290,399.5 469,401.5', fill: 'none', stroke: '#64748b', 'stroke-width': 1.2 }, gH);
     el('rect', { x: STEP.x - 12, y: 392, width: 30, height: 4, rx: 1.5, fill: '#475569' }, gH);
-    el('path', { d: 'M282,452 L279,528 Q280,538 290,538 L300,538 Q305,536 304,526 L304,454 Z', fill: 'url(#rvFoil)', stroke: '#0b1724', 'stroke-width': 1.3 }, gH);
-    el('rect', { x: 279, y: 389, width: 26, height: 11, rx: 2, fill: 'url(#rvFoil)', stroke: '#0b1724', 'stroke-width': 1 }, gH);
+    // salma: board (0 aşağıda … 1 tam kalkık) kadar kutudan yukarı çıkar
+    const by = -(board || 0) * BOARD_UP, sg = el('g', { transform: `translate(0 ${by.toFixed(1)})` }, gH);
+    el('path', { d: 'M282,452 L279,528 Q280,538 290,538 L300,538 Q305,536 304,526 L304,454 Z', fill: 'url(#rvFoil)', stroke: '#0b1724', 'stroke-width': 1.3 }, sg);
+    if (board > 0.02) el('rect', { x: 280, y: 389, width: 24, height: 11 - by, fill: 'url(#rvFoil)', stroke: '#0b1724', 'stroke-width': 1 }, sg);
+    el('rect', { x: 279, y: 389, width: 26, height: 11, rx: 2, fill: 'url(#rvFoil)', stroke: '#0b1724', 'stroke-width': 1 }, sg);
     el('path', { d: 'M468,396 L488,396 L490,414 L470,414 Z', fill: '#334155', stroke: '#0b1724', 'stroke-width': 1 }, gH);
     el('path', { d: 'M470,414 L493,414 Q503,468 495,522 Q489,532 478,528 L472,452 Z', fill: 'url(#rvFoil)', stroke: '#0b1724', 'stroke-width': 1.3 }, gH);
     for (const y of [410, 432]) el('rect', { x: 464, y, width: 9, height: 4, rx: 1, fill: '#94a3b8', stroke: '#0b1724', 'stroke-width': .6 }, gH);
@@ -237,6 +241,11 @@
       ring(c, 12);
       el('line', { x1: c.x - 10, y1: c.y + 10, x2: c.x - 34, y2: c.y + 34, stroke: '#fde047', 'stroke-width': 1.6 }, g);
       tag(c.x - 36, c.y + 50, 'palangayı al');
+    } else if (s.hand === 'board') {
+      const c = P(292, 384 - (s.board || 0) * BOARD_UP);
+      ring(c, 12);
+      arrow(g, P(c.x + 26, c.y + 22), P(c.x + 26, c.y - 22), '#fde047');
+      tag(c.x + 26, c.y - 30, 'salmayı biraz kaldır');
     } else if (s.hand === 'tiller') {
       const c = P(410, 390);
       ring(c, 11);
@@ -273,6 +282,7 @@
       <div class="rig-gauges">
         <div class="rg-row"><span class="rg-k">Palanga</span><span class="rg-bar"><i id="rgVang"></i><b id="rgVangMark"></b></span><span class="rg-v" id="rgVangTxt"></span></div>
         <div class="rg-row"><span class="rg-k">Bumba</span><span class="rg-v wide" id="rgBoom"></span></div>
+        <div class="rg-row" id="rgBoardRow" hidden><span class="rg-k">Salma</span><span class="rg-v wide" id="rgBoard"></span></div>
         <div class="rg-row rg-legend" id="rgGhost"></div>
       </div>`;
     svg = panel.querySelector('svg');
@@ -293,6 +303,7 @@
     panel.querySelector('#rigKn').classList.toggle('strong', strong);
     const ol = panel.querySelector('#rigSteps'); ol.innerHTML = '';
     (rig.steps || []).forEach((s, i) => { const li = document.createElement('li'); li.innerHTML = `<b>${i + 1}</b><span>${s}</span>`; ol.appendChild(li); });
+    panel.querySelector('#rgBoardRow').hidden = !rig.board;
     panel.querySelector('#rgGhost').innerHTML = rig.ghost ? `<span class="dash"></span>${rig.ghost.label}` : '';
   }
   function draw(t) {
@@ -305,7 +316,7 @@
     el('rect', { x: 0, y: 420, width: 700, height: 200, fill: 'rgba(56,189,248,.12)' }, g);
     el('line', { x1: 0, y1: 420, x2: 700, y2: 420, stroke: 'rgba(125,211,252,.5)', 'stroke-width': 1 }, g);
     const gRig = el('g', {}, g), gHull = el('g', {}, g), gTop = el('g', {}, g);
-    drawHull(gHull);
+    drawHull(gHull, s.board);
     const r = drawRig(gRig, m, s, false);
     // karşılaştırma yelkeni yalnız gerçekten farklıysa (bumba kalkışı ya da tepe açılması belirgin ayrıysa) üstte çizilir
     if (rig.ghost && t >= (rig.ghost.from || 0)) {
@@ -330,6 +341,7 @@
     const word = s.vang > 0.8 ? 'sıkı' : s.vang > 0.6 ? 'gergin' : s.vang > 0.4 ? 'boşluğu alınmış' : 'gevşek';
     const st = m.load > 0.05 ? ' · bumbayı tutuyor' : ' · halat boşta';
     panel.querySelector('#rgVangTxt').textContent = word + st;
+    if (rig.board) panel.querySelector('#rgBoard').textContent = s.board > 0.05 ? `biraz kalkık · tekne rüzgaraltına kayar` : 'aşağıda';
     const lift = Math.round(m.lift);
     panel.querySelector('#rgBoom').textContent = `${lift > 0 ? '▲ ' + lift + '° kalkık' : lift < 0 ? '▼ bastırıldı' : 'yatay'} · açı ${Math.round(m.out)}° · tepe açılması ${Math.round(m.twist)}°`;
   }

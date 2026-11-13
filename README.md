@@ -112,11 +112,11 @@ S.push({
 Kuvvetli rüzgar: `windKn` (göstergede şiddet, ≥15 "kuvvetli"), `leeway: {from, ramp, rate}` (start öncesi bekleyen filo rüzgaraltına kayar), `hold` segmentinde `drift` / `driftH` (senaryo teknesi beklerken kayar). `spots: [{x, y, r, from, to, label}]` sahnede kesikli halka.
 
 Yandan görünüş paneli (İleri Teknik dersleri, `js/rigview.js`): `rig: { kn, label, steps: ['…'], mark, keys: [{ t, sheet, vang, push, hand, p }], ghost: { label, short, from, keys } }`.
-`sheet` iskota 0 (kaçık) … 1 (sonuna kadar alınmış), `vang` palanga 0 (boş) … 1 (çok sıkı), `push` bumbayı bastırma 0…1, `hand` elin yeri (`sheet` / `release` / `boom` / `vang` / `tiller`), `p` adım şeridinde vurgulanan adım (0'dan; −1 hiçbiri). Sayılar anahtar kareler arasında doğrusal geçer. `mark` palanga çubuğundaki sarı hedef çizgisi, `ghost` aynı anahtar karelerle kesikli kırmızı karşılaştırma yelkeni (`from` sn'den sonra, yalnız belirgin farkta). Model şematiktir (açılar ölçüm değil).
+`sheet` iskota 0 (kaçık) … 1 (sonuna kadar alınmış), `vang` palanga 0 (boş) … 1 (çok sıkı), `push` bumbayı bastırma 0…1, `hand` elin yeri (`sheet` / `release` / `boom` / `vang` / `tiller`), `board` salma 0 (aşağıda) … 1 (kalkık; `rig.board: true` panelde Salma satırını açar), `p` adım şeridinde vurgulanan adım (0'dan; −1 hiçbiri). Sayılar anahtar kareler arasında doğrusal geçer. `mark` palanga çubuğundaki sarı hedef çizgisi, `ghost` aynı anahtar karelerle kesikli kırmızı karşılaştırma yelkeni (`from` sn'den sonra, yalnız belirgin farkta). Model şematiktir (açılar ölçüm değil).
 
 Segment modları: `closehauled` (rüzgara 45°, kontrayı takip eder; rüzgar dönerse rota da döner),
 `run` (pupa 150°), `heading` (sabit pusula), `hold` (orsalayıp bekleme, yelken boş), `back` (yelken ters basılı, tekne rotasını koruyup `speed` × taban hızla geri gider; K22.3).
-`turn` dönüş süresi (s), `speed` hız çarpanı, `v0` başlangıç hızı.
+`turn` dönüş süresi (s), `speed` hız çarpanı, `slip` (her modda: salma kalkık, tekne rüzgaraltına px/sn kayar), `v0` başlangıç hızı.
 
 İsteğe bağlı görsel katmanlar (hepsi `from`/`to` sn aralığında görünür): `sightline` (pin'den hakem botuna transit),
 `sag` (filonun burunlarından geçen hat yayı eğrisi; `label` içinde `{d}` = en derin nokta, boy),
