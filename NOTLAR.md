@@ -4,10 +4,10 @@
 > Kısa ve güncel tut: eskiyen maddeleri sil, tarih ver.
 
 ## Güncel durum (2026-11-13)
-- Uygulamanın görünen adı **Velora Sailing** (2026-11-13), logo kullanıcının `seyhunDev/sesliasistan` deposundaki Velora işareti (`src/img/velora-mark.svg`, lacivert kare + beyaz daire içinde V). Depo adı ve site adresi (`professional-sailing`) değişmedi.
+- Uygulamanın görünen adı **Velora Sailing** (2026-11-13), logo kullanıcının `seyhunDev/sesliasistan` deposundaki Velora işareti (`src/img/velora-mark.svg`, lacivert kare + beyaz daire içinde V). Depo ve site adresi 2026-11-13’te `velora-sailing` oldu (eski `professional-sailing` adresi kırıldı).
 - Senaryo sayfası sade (2026-11-13): seçici kare küçük resimli (`js/thumbs.js`, döngüde ön izleme), üst çubukta marka yok (sahnenin sol alt köşesinde), bilgi kartında "Canlı" anahtarı ve alt düğme satırı yok.
 - Üst çubuk (2026-11-13): solda senaryo, sağda Simülatör · Bilgi · en sağda yuvarlak hesap düğmesi (baş harf, halka rengi rol). Hesap düğmesinin menüsü = hesap + sayfanın ayarları (ana sayfada `#pageSettings`: Görünüm ve Sahnede göster anahtarları, sürüm). Katmanlar ve tam ekran düğmeleri ayrıca yok. Simülatör sayfasında da aynı yuvarlak düğme en sağda.
-- Canlı: https://seyhundev.github.io/professional-sailing/ — main'e push ile otomatik yayın (GitHub Actions, hash'li dosya adları, sağ altta sürüm damgası).
+- Canlı: https://seyhundev.github.io/velora-sailing/ — main'e push ile otomatik yayın (GitHub Actions, hash'li dosya adları, sağ altta sürüm damgası).
 - Start senaryolarında (A1, A2, A3, A4) kalabalık filo var; A3 hattı 600 px (12 boy), rüzgar 335°.
 - Yeni kategori **İleri Taktik** (4. sekme; `category: 'İleri Taktik'`), KONULAR.md → H bölümü. Start senaryoları uca göre üç konuda (2026-11-12): `topic` **'Start · Pin'** (İA1), **'Start · Orta'** (İA2, İA2b, İA2c), **'Start · Hakem botu'** (İA3); uçtan bağımsız yer tutma dersleri **'Start · Yer tutma'** (İA4). Seçici konuları senaryoların dosyadaki ilk geçiş sırasına göre dizer.
 - Senaryo alanları: `clockScale` (sayaç gerçek zaman çarpanı, ör. 4 → 30 s animasyon = 2 dk), `prepFlag` ('P','I','U','Siyah') + `flagDownAt` (1 dk kala bayrak iner).
@@ -38,6 +38,7 @@
 - **Giriş ekranı, roller, ziyaret kaydı (2026-11-12):** `js/track.js` (`SailTrack`) + `js/access.js` (`SailAccess`) her sayfada uygulama betiklerinden önce yüklenir. İlk açılışta giriş ara ekranı: **Kaydol** (ad, isteğe bağlı e-posta, Sporcu/Antrenör/Veli/Diğer, kulüp) / **Misafir olarak devam et** / küçük "Site sahibi girişi"; altında KVKK kısa bildirim + izin kutusu + "Aydınlatma metni". Roller `sahip` / `kayitli` / `misafir`, hesap `localStorage ps.account.v1`. Erişim tablosu `access.js → FEATURES`: misafire kapalı **İleri Taktik senaryoları** (kartlarda sarı "Kaydol"), **simülatörde Elle sür**, **yarış kaydı / Kayıtlar**; **ziyaret kayıtları** yalnız sahip. Kilitli şeye dokununca `SailAccess.guard(f)` kayıt ekranını "X kayıtlı kullanıcılar için" notuyla açar. Üst çubukta hesap düğmesi (rol / ad) → menü: Kaydol, Ziyaret kayıtları (sahip), Gizlilik ve verilerim (izin aç/kapa, kayıtlarımı sil), Çıkış. **Sahip girişi:** anahtar kodda yok, yalnız SHA-256 özeti (`OWNER_HASH`, tuz `ps-owner-v1:`); giriş ekranından ya da `?sahip=ANAHTAR` (adresten silinir). Anahtar yalnız kullanıcıda (sohbette verildi). **Olay kaydı** `localStorage ps.track.v1` (en çok 3000): visit (cihaz, OS, tarayıcı, dil, saat dilimi, ekran, referrer/utm), page, leave (süre), scenario, her id'li düğme tıklaması (click), race_start/race_end/race_save, drive, gate, signup, owner, consent, locked, logout; ziyaretçi kimliği `ps.vid` (rastgele), oturum `sessionStorage ps.sid`. İzin verilmeden olay yazılmaz. **`ziyaret.html`** (yalnız sahip, noindex): özet sayılar, en çok açılan senaryolar, nereden, cihaz, düğmeler, ziyaretçi tablosu (dokun → o kişinin olayları), olay listesi (tür/arama filtresi), JSON/CSV indir, dosyadan ekle (başka cihazın kayıtlarını birleştir), temizle. **Sınır:** GitHub Pages sunucusuz; her ziyaretçinin kaydı kendi tarayıcısında kalır, sahip başkalarınınkini ancak Firebase ile görür; IP tarayıcıdan alınamaz. İstemci kilitleri gerçek güvenlik değil. Firebase'e bağlama: `SailTrack.setSink(async events => …)` (gönderilmemişleri teslim eder, `sent` işaretler), `access.js` → `doSignup`/`ownerLogin` Firebase Auth'a, rol sunucudan.
 
 ## Sıradaki işler (öncelik sırasıyla, her biri bir sohbete uygun)
+- [ ] **Velora hesabıyla giriş (2026-11-13, başladı):** kullanıcıdan Firebase web ayarları (apiKey, authDomain, projectId, appId) bekleniyor; Velora'daki düğme + `/api/sailing-giris` (sesliasistan deposu) nerede yapılacak sorusu açık. Ayrıntı: Kararlar 2026-11-13.
 > Karar (2026-11-12): **Önce Taktik → Start (A) bitirilecek, sonra Kurallar, sonra Teknik.** Liste: KONULAR.md → A1–A15.
 - [ ] **Firebase bağlantısı (kullanıcı isteği 2026-11-12):** Firebase Auth (kayıt/giriş, sahip rolü sunucuda), Firestore'a olay akışı (`SailTrack.setSink`), IP/ülke için Cloud Function, Firestore güvenlik kuralları (gerçek erişim kısıtı), yarış kayıtları ve simülatör kurulumu da taşınacak. Aydınlatma metni o zaman güncellenip izin yeniden sorulmalı.
 - [x] **Start paketi 1** (2026-11-12): A1b ölçüm yöntemleri · A3 pin ucu avantajlı · A4 hakem botu avantajlı (barging).
@@ -68,6 +69,8 @@
 - [ ] **Kullanıcı senaryoları (sonraki aşama):** Firebase Auth + Firestore, link ile paylaşım, Firebase Hosting. Simülatör yarış kayıtları için biçim hazır: `SailRecords` girdisi (`setup` + `ops` + `summary`) aynen Firestore belgesi olabilir.
 
 ## Kararlar
+- 2026-11-13 · **Depo/adres `velora-sailing`** (kullanıcı onayı): site https://seyhundev.github.io/velora-sailing/. Eski adres yönlendirilmez. Dosya biçimlerindeki `app:'professional-sailing'` ve localStorage `ps.*` anahtarları eski kayıtlarla uyum için aynı kalır.
+- 2026-11-13 · **Velora ile ortak giriş (onaylandı, Firebase kütüphanesi eklenebilir):** Velora (`seyhunDev/sesliasistan`, Firebase `sesliasistan-3e95a`) Velora Sanal için kullandığı yöntemle: Velora sunucusu `createCustomToken(uid)` üretir, `…/velora-sailing/#t=<anahtar>` açılır, burada `signInWithCustomToken` + `#` silinir. Doğrudan gelen için Velora e-posta/şifre girişi, misafir kalır.
 - 2026-11-13 · **Hesap düğmesi = ayarlar.** Kullanıcı: "giriş yapan kişinin ikonu en sağda, yuvarlak, diğerleriyle uyumlu; ayarlara basınca kişiyi göster, ayarların içine konabilenleri orada göster, diğerleri dışarıda." access.js düğmeyi `.tool-group`un sonuna ekler; sayfa `#pageSettings` (gizli) verirse menünün altına taşır. Yeni sayfa ayarı eklenecekse ayrı düğme değil `#pageSettings` içine.
 - 2026-11-13 · **Ad "Velora Sailing", logo Velora işareti, marka sahnenin sol alt köşesinde.** Kullanıcı: "Uygulama başlığı artık Velora Sailing… logosunu kullanacağız… sol alt köşede olsun." Logo `sesliasistan` deposundaki `public/brand/velora-mark.svg`'den kopyalandı (`src/img/`, favicon da). Ana sayfada `.brand-corner` (tıklanmaz); telefonda alttaki bilgi çekmecesinin hemen üstünde (`--sheet`, app.js → setInfoOpen). Giriş ekranı logosu da aynı.
 - 2026-11-13 · **Senaryo seçici kare küçük resimli; bilgi kartı "Canlı" anahtarsız.** Kullanıcı: çok buton, çok yazı. Küçük resim senaryoyu `SailRules.buildScene` ile (uygulamayla aynı) hesaplar, ilk görünüşte ve kare başına bir tane (~25 ms); yalnız ekranda görünenler oynar, "hareketi azalt"ta durağan. Çerçeve anlatılan tekneler + şamandıralar (hat dahil değil, uzun hat tekneleri küçültüyordu). Kart her zaman animasyonu izler; elle gezince "Bu ana git" çıkar.
@@ -100,7 +103,6 @@
 
 ## Açık sorular (kullanıcıya)
 - Misafire hangi bölümler kapalı olsun? Şimdilik İleri Taktik + Elle sür + yarış kaydı. Kayıt izni kutusu varsayılan işaretli; KVKK/GDPR'ye sıkı uyum için işaretsiz (açık rıza) olması daha doğru, kullanıcı karar verecek.
-- Depo adı ve site adresi de "velora-sailing" olsun mu? (adres değişirse eski bağlantılar kırılır)
 - Hedef sınıf: simülatörde artık seçilebiliyor (Optimist / ILCA 4-6-7). Senaryolar hâlâ Optimist ölçeğinde; tekne boyu her sınıfta 50 px.
 - Sınıf hız tablosu (`sim-core.js` → `CLASSES`) yaklaşık ortalamalar; kullanıcı kendi sporcularının ölçtüğü hızları verirse güncellenir.
 - Senaryolarda İngilizce terimlerin parantez içinde verilmesi devam etsin mi, yoksa yalnızca Türkçe mi?
@@ -138,6 +140,7 @@
 6. **Avantaj vs kalabalık:** avantajlı uç dolu (barging riski, A4), az avantajlı tarafta geniş boşluk; hangisi daha çok kazandırır? (5° bias ≈ 600 px hatta 1 boy hesabıyla.)
 
 ## Sohbetler arası mesajlar
+- 2026-11-13 · Site adresi değişti: https://seyhundev.github.io/velora-sailing/ (eski professional-sailing adresi çalışmaz). Yerel klonlarda `git remote set-url origin https://github.com/seyhunDev/velora-sailing`.
 - 2026-11-12 · (Yarış kaydı sohbeti → simülatörde çalışan herkes) `sim.js` → `applyChange` artık bir işlem nesnesi alıyor (`applyChange({ k: 'cmd', c: 'tack' })`), işlemler `OPS` tablosunda; kayıtlı yarışlar bunları tekrar oynatır. Yeni yarış içi komut eklerken `OPS`'a ekleyin; `sim-core.js`'de `Math.random` / zamana bağlı hesap kullanmayın (tekrar oynatma birebir aynı çıkmalı, `check-sim` denetler).
 - 2026-11-12 · Sağanak sohbetinden **seçim vurgusu sohbetine:** sağanak seçimi artık `gustSelect(i)` ile; seçiliyken `body.gust-editing` sınıfı var (alt çubuktaki Sağanak grubu mavi), kart `#gustBar` sağ altta. Seçim stillerini birleştirirsen bu mavi dili koru ya da tek yerde topla.
 - 2026-11-12 · Pis rüzgar sohbetinden **simülatör sohbetine:** `sim-core.shadowAt` ve `sim.drawShadows` artık `engine.SHADOW`/`shadowK`/`shadowPolygon` kullanıyor; gölge ~1 boy (eskiden 4), yelkeni boş tekne zayıf gölge yapar. `SHADOW_LEN` dışa aktarımı duruyor. Simülatör 2b/2c ile birlikte fuzz 60'ta 1 TAKILDI (#23, start öncesi kalabalıkta dönen tekne); 150/300 yarışta oran öncekiyle aynı (2/150; 300'de 4, önce 7), yani yeni hata değil, sabit tohumlu sete denk gelen eski takılma sınıfı. check-scenarios ve check-sim temiz.
@@ -161,6 +164,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Velora Sailing adresine ve Velora girişine geçiş
+- Kullanıcı: ad Velora Sailing, adres de değişsin; Velora hesabıyla girmiş biri Velora'dan gelince kendi hesabıyla açılsın.
+- Yapılan: sesliasistan'ın giriş yöntemi incelendi (Velora Sanal'daki tek dokunuşla giriş). CLAUDE.md, README, NOTLAR, KONULAR, package.json yeni adrese/ada güncellendi. Depo adını kullanıcı GitHub ayarlarından değiştirecek (araçta ad değiştirme yok).
+- Yarım: Firebase ayarları bekleniyor; Velora tarafı düğme.
 ### 2026-11-13 · Üst çubuk: yuvarlak hesap/ayarlar düğmesi
 - Kullanıcı: üstteki giriş, Simülatör, Bilgi, Katman, büyütme düğmeleri karışık; kişi simgesi en sağda, yuvarlak; ayarlar içinde kişi ve ayarlar, diğerleri dışarıda.
 - Düzeltme (v1.68): ayarlar bölümü sayfa açılınca sahnede açık görünüyordu (`.page-settings { display:flex }` `hidden` özniteliğini eziyordu) → `.page-settings[hidden] { display:none }`.

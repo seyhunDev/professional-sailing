@@ -1,4 +1,4 @@
-# Professional Sailing – Yarış Hazırlığı Müfredatı (Aşama 2)
+# Velora Sailing – Yarış Hazırlığı Müfredatı (Aşama 2)
 
 Bu doküman, yarışa hazırlanan genç yelkencilerin (Optimist / ILCA 4 / 420 seviyesi) bilmesi gereken
 taktik ve kural konularını, **animasyonla anlatılacak sahneler** hâline getirilmiş biçimde listeler.

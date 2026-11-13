@@ -6,7 +6,7 @@ değişimleri basit ama doğru bir modelle canlandırılır; her senaryo zamanl�
 
 ## Canlı görüntüleme (GitHub Pages)
 
-Site: **https://seyhundev.github.io/professional-sailing/**
+Site: **https://seyhundev.github.io/velora-sailing/**
 
 Yayın otomatiktir: `main` dalına her push'ta GitHub Actions (`.github/workflows/deploy.yml`)
 `scripts/build.mjs` ile `src/` klasörünü derleyip Pages'e yükler. Tek seferlik ayar:

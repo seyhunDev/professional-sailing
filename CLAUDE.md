@@ -1,4 +1,4 @@
-# Velora Sailing (depo: professional-sailing) – Çalışma Kuralları
+# Velora Sailing (depo: velora-sailing) – Çalışma Kuralları
 
 Bu dosya her Claude Code oturumunda otomatik yüklenir. Proje birden çok sohbete bölünerek
 yürütülür; sohbetler arasındaki ortak hafıza **`NOTLAR.md`** dosyasıdır.
@@ -19,7 +19,7 @@ yürütülür; sohbetler arasındaki ortak hafıza **`NOTLAR.md`** dosyasıdır.
 
 ## Proje özeti
 Genç yarış yelkencileri için etkileşimli taktik/kural animasyonları. Üstten görünüş, SVG, vanilla JS.
-Canlı site: https://seyhundev.github.io/professional-sailing/ (main'e push → GitHub Actions → otomatik yayın).
+Canlı site: https://seyhundev.github.io/velora-sailing/ (main'e push → GitHub Actions → otomatik yayın).
 
 ## Teknik kurallar
 - Dil: arayüz ve açıklamalar **Türkçe**; yelken terimleri yerleşik Türkçe (sancak/iskele kontra, orsa,
@@ -38,7 +38,7 @@ Canlı site: https://seyhundev.github.io/professional-sailing/ (main'e push → 
 - Kullanıcının isteği farklı bir çalışma alanına giriyorsa (motor / senaryo içeriği / arayüz / yayın altyapısı) bunu söyle ve büyükse yeni sohbet öner; küçükse yap ve NOTLAR'a yaz.
 - Commit mesajları Türkçe, kısa başlık + madde listesi. Doğrudan `main`'e push edilir.
 - **Sürüm numarası (zorunlu):** her sayfanın sağ alt köşesinde `v1.N` görünür; N = `main`'deki commit sayısı, `scripts/build.mjs` otomatik hesaplar (elle artırma yok, çakışma olmaz). `main`'e her gönderimden sonra `git fetch origin main && git rev-list --count origin/main` ile yeni numarayı bul ve kullanıcıya cevabında "Sürüm v1.N" diye söyle; kullanıcı sitenin güncellenip güncellenmediğini bu numaradan anlar. (Yayın birkaç dakika sürer.)
-- Eski depo `seyhunDev/python_deneme` kullanılmaz.
+- Eski depo `seyhunDev/python_deneme` kullanılmaz. Depo 2026-11-13’te `professional-sailing` → `velora-sailing` oldu; dosya biçimlerindeki `app:'professional-sailing'` kimliği eski kayıtlar uyumlu kalsın diye değişmez.
 
 ## Dosya haritası
 - `src/index.html` arayüz · `src/css/style.css` · `src/js/engine.js` motor · `src/js/rules.js` kural motoru (ek tekneler) · `src/js/scenarios.js` senaryolar · `src/js/app.js` arayüz mantığı · `src/js/thumbs.js` seçici küçük resimleri · `src/img/velora-mark.svg` logo
