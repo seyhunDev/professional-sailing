@@ -6,6 +6,7 @@
 //  - BİTMEDİ: 150 s içinde bitiremedi · TAKILDI: yarışta 8 s boyunca neredeyse hiç ilerlemedi
 //  - ALAN_DIŞI: yarışırken alanın dışına çıktı
 //  - HAT_DIŞI: start hattını uçların arasından geçmeden bitirdi
+//  - ERKEN_GECTI: manuel olmayan tekne start'tan önce hattı geçti (yalnız manuel / elle sürülen geçebilir)
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 require('../src/js/engine.js'); require('../src/js/rules.js'); require('../src/js/sim-core.js');
@@ -67,6 +68,8 @@ for (let k = 0; k < N; k++) {
         if (-(rel.x * left.x + rel.y * left.y) < -4) T.wrong++;      // şamandıra sağda (sancakta)
       }
       if (before.get(b.id) !== 'done' && b.phase === 'done' && T.maxAbove < -8 && !T.flagged.alt) { T.flagged.alt = 1; hit('ALTINDAN', `${tag} ${b.id}${b.mine ? '(sen)' : ''} en yüksek ${T.maxAbove.toFixed(0)} px`); }
+      // start'tan önce hattı yalnız manuel / elle sürülen tekne geçebilir
+      if (before.get(b.id) === 'wait' && b.phase === 'ocs' && s.t < s.startAt && !b.manual) hit('ERKEN_GECTI', `${tag} ${b.id}${b.mine ? '(sen)' : ''} t=${s.t.toFixed(1)} (${b.x.toFixed(0)},${b.y.toFixed(0)})`);
       if (before.get(b.id) !== 'penalty' && b.phase === 'penalty') { stat.penalty++; T.penStart = s.t; }
       if (before.get(b.id) === 'penalty' && b.phase !== 'penalty') stat.done++;
       if (b.phase === 'penalty' && s.t - T.penStart > 20 && !T.flagged.pen) { T.flagged.pen = 1; hit('CEZA_TAKILDI', `${tag} ${b.id} (${b.x.toFixed(0)},${b.y.toFixed(0)}) t=${s.t.toFixed(1)}`); }

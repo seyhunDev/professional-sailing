@@ -76,6 +76,37 @@ for (const wind of [-12, 0, 12]) {
   console.log(`• K11 rüzgarüstü/rüzgaraltı ayrımı: ${bad ? bad + ' hatalı durum' : 'doğru'}`);
   if (bad) { problems++; console.log('  ⚠ K11: rüzgaraltı tekne rüzgarüstü sayıldı'); }
 }
+// Start'tan önce hat: manuel olmayan teknenin burnu hiç hattı geçmez (yalnız manuel / elle sürülen geçebilir)
+{
+  const E = globalThis.SailEngine;
+  let over = 0, worst = 0;
+  for (const wind of [-15, 0, 12]) for (const boat of [null, { cls: 'ilca7', windKn: 18, accelAt: 10 }]) {
+    S.setCourse(S.COURSE_DEFAULT);
+    const f = S.defaultFleet(12); f.forEach((b, i) => { if (i % 2) b.y = S.LINE.pin.y + 14; });   // yarısı hattın dibinde
+    const s = S.newRace(f, { wind, boat }); const P = S.LINE.pin, Q = S.LINE.boat, L = Math.hypot(Q.x - P.x, Q.y - P.y);
+    while (s.t < s.startAt - 0.05) {
+      S.step(s);
+      for (const b of s.boats) { const fw = E.fwd(b.h), bx = b.x + fw.x * 24, by = b.y + fw.y * 24;
+        const sd = ((Q.x - P.x) * (by - P.y) - (Q.y - P.y) * (bx - P.x)) / L; if (sd < -1) { over++; worst = Math.min(worst, sd); } }
+    }
+  }
+  console.log(`• start'tan önce hat: burnu hattı geçen kare ${over}${over ? ` (en çok ${(-worst).toFixed(0)} px)` : ''}`);
+  if (over) { problems++; console.log('  ⚠ start\'tan önce tekne burnu hattı geçti'); }
+}
+// Elle sürme: kalabalık ön sırada (varsayılan filo) teknen orsaya dönüp iskotayı çekince komşusuna takılmadan çıkabilmeli
+{
+  S.setCourse(S.COURSE_DEFAULT);
+  const f = S.defaultFleet(12), me = f.find(b => b.mine), x0 = me.x, y0 = me.y;
+  f.forEach(b => { b.h = b.tack === 'starboard' ? -25 : 25; });
+  Object.assign(me, { h: -45, v: 0, sheetOff: S.SHEET_OFF_MAX, manual: true });
+  const ctx = { t: 0, wind: 0, gusts: [], boats: f };
+  for (let i = 0; i < 20; i++) S.drive(ctx, me, {}, 0.05);
+  const slow = me.v; me.sheetOff = 0;
+  for (let i = 0; i < 60; i++) S.drive(ctx, me, {}, 0.05);
+  const moved = Math.hypot(me.x - x0, me.y - y0);
+  console.log(`• elle sürme kalabalıkta: yelken boşken ${S.knots(slow).toFixed(1)} kn, çekince ${S.knots(me.v).toFixed(1)} kn, ${(moved / 50).toFixed(1)} boy ilerledi`);
+  if (moved < 50 || me.v < 30 || slow > 15) { problems++; console.log('  ⚠ elle sürme: kalabalıkta iskota çekince ilerlemedi'); }
+}
 // Elle sürme: zaman durur, yalnız senin teknen hareket eder. Kafa aç → pupa → kavança → orsa → tramola;
 // fazla çekik iskota yavaşlatır; sonra Otomatik (manuel) yarış biter, iskota salıkken hız düşük kalır.
 {

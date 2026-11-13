@@ -166,6 +166,14 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Elle sürme ve start hattı düzeltmeleri
+- Kullanıcı: start'tan önce tekneler hattı geçmesin (yalnız manuel / elle sürülen geçebilsin); elle sürme düzgün çalışmıyor; iskota Çek/Sal çalışmıyor; tekne yan yan gidiyor.
+- Bulunanlar ve yapılanlar (`sim-core.js`, `sim.js`):
+  - **Hat:** bekleyen teknenin hız sınırı merkezi hatta 6 px'e getiriyordu, burun 17 px'e kadar hattın üstündeydi. Artık burun (`BOW` 24 px) hattın altında durur; ayrıca start'a kadar manuel olmayan bekleyen teknenin burnu/kıçı itmeyle de hattı geçemez (`keepBehindLine`; kurulumda hattın üstüne konmuş tekne OCS kalır). check-sim yeni denetim (eski kodda 5530 kare), fuzz'a `ERKEN_GECTI`.
+  - **İskota / elle sürme:** bekleyen tekne başı rüzgarda (rüzgara 25°) elle sürmeye başlıyordu: rüzgarın içinde iskota işe yaramıyor, tekne hiç kımıldamıyordu; ayrıca varsayılan filoda yanındaki tekneye (38 px) 28 px'lik daire çarpışmasıyla takılıyordu. Artık orsa rotasında, yelken boş başlar (Çek ile doldurup hızlanırsın); çarpışma gövde biçimiyle (`hullGap`, 13 px), değince tekne durur (eskiden kenar boyunca yana itiliyordu). Oto iskotada Çek ideali geçmez (eskiden fazla çekip yavaşlatıyordu); sınırda ve başı rüzgardayken ne olduğu bildirilir; yarıştaki hız kutusunda düğmeler hiç pasif olmaz. Salınca yavaşlama daha çabuk.
+  - **Yan yan gitme:** temas itmesi tekneyi tamamen yana kaydırıyordu (kalabalıkta, pin dibinde). İtmenin yan bileşeni yarıya indi (`nudge`); tamamen kaldırınca pin dibinde takılma arttı (fuzz). Akıntıdaki yana kayma fiziksel, değişmedi.
+- `npm run check` temiz; fuzz 300: 12 sorun (önceki 11, aynı sınıf). Ekran görüntüleri: proje dosyaları `elle-surme-duzeltme/`.
+
 ### 2026-11-13 · Pin ve hakem botunda titreme + start layline anahtarı
 - Kullanıcı: tekneler hakem botuna/şamandıraya yaklaşınca titriyor, temiz geçmeli (senaryo + simülatör); ayarlara pin ve hakem botu layline anahtarı (özellikle pin).
 - Neden: engel kaçınma aç-kapa (`avoidDir` → +160°/s sapma, rota hedefi hemen geri çekiyor → testere dişi). Ölçüm (engel yakınında yön dönüşü sayısı): senaryolarda 449 → 3, simülatörde 30 yarışta 6575 → ~1400 (kalanlar kural manevraları).

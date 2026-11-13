@@ -638,7 +638,8 @@
     if (st.drawMode) endDraw(true);
     if (st.mode === 'setup') {
       const m = st.fleet.find(b => b.mine); if (!m) return;
-      if (!m.drv) { m.h = st.wind + (m.tack === 'starboard' ? -25 : 25); m.v = 0; m.sheet = null; }
+      // bekleyen tekne başı rüzgarda durur: elle sürmeye orsa rotasında, yelken boş başlar (Çek ile doldurup hızlanırsın)
+      if (!m.drv) { m.h = st.wind + (m.tack === 'starboard' ? -45 : 45); m.v = 0; m.sheet = null; m.sheetOff = S.SHEET_OFF_MAX; }
       m.manual = true; m.route = null;
       st.drive = { s: null };
     } else {
@@ -646,6 +647,7 @@
       const i = frameIndexAt(st.playT), s = S.clone(st.frames[i]), m = s.boats.find(b => b.mine);
       if (!m || !['wait', 'race', 'ocs'].includes(m.phase)) { toast(m && m.phase === 'penalty' ? 'Ceza turundayken elle sürülemez' : 'Teknen şamandırayı döndü: elle sürülemez'); return; }
       m.manual = true; m.route = null; m.man = null; m.escH = null; m.sheet = null;
+      if (m.phase === 'wait' && Math.abs(E.norm180(m.h - s.wind)) < 40) { m.h = s.wind + (m.tack === 'starboard' ? -45 : 45); m.sheetOff = S.SHEET_OFF_MAX; }   // beklerken yelken boştu
       st.drive = { s, i };
       st.mode = 'pause'; st.sim = s;
     }
@@ -712,13 +714,19 @@
     const m = st.drive ? driveBoat() : (st.mode !== 'setup' && view().boats.find(b => b.mine));
     if (!m) return;
     if (st.drive) {
-      if (st.drive.autoTrim) m.sheetOff = Math.max(-18, Math.min(S.SHEET_OFF_MAX, (m.sheetOff || 0) + dir * SHEET_STEP));
-      else m.sheet = Math.max(0, Math.min(S.SHEET_MAX, (m.sheet || 0) + dir * SHEET_STEP));
+      const abs = Math.abs(E.norm180(m.h - driveCtx().wind));
+      if (st.drive.autoTrim) {                           // oto iskotada en çekik hal = ideal (tam hız); daha fazla çekmek yavaşlatırdı
+        const was = m.sheetOff || 0; m.sheetOff = Math.max(0, Math.min(S.SHEET_OFF_MAX, was + dir * SHEET_STEP));
+        if (m.sheetOff === was) toast(dir < 0 ? 'İskota tam çekili: tekne bu rotada en hızlı' : 'İskota tamamen boş: yelken pırpırlıyor');
+      } else m.sheet = Math.max(0, Math.min(S.SHEET_MAX, (m.sheet != null ? m.sheet : S.idealSheet(abs)) + dir * SHEET_STEP));
+      if (abs < 30 && Date.now() - (sheetBy.hint || 0) > 4000) { sheetBy.hint = Date.now(); toast('Burnun rüzgarda: iskota işe yaramaz. Önce kafa aç (◀ ▶), yelken dolsun'); }
+      lastHelmKey = '';
       return;
     }
     if (!['wait', 'race', 'ocs', 'round'].includes(m.phase)) return;
     const nv = Math.max(0, Math.min(S.SHEET_OFF_MAX, (m.sheetOff || 0) + dir * SHEET_STEP * 1.5));
     if (nv !== (m.sheetOff || 0)) applyChange({ k: 'cmd', c: 'sheet', v: nv });
+    else toast(dir < 0 ? 'İskota tam çekili: teknen tam hızda' : 'İskota tamamen boş: daha fazla yavaşlayamaz');
   }
   function toggleAutoTrim() {
     if (!st.drive) return;
@@ -757,7 +765,7 @@
     tg.className = 'trim-gauge ' + (abs < 30 ? 'off' : Math.abs(dlt) <= 8 ? 'ok' : Math.abs(dlt) <= 20 ? 'meh' : 'bad');
     $('hpTrimTxt').textContent = drv ? `${trimTxt} · güç %${Math.round(eff * 100)}` : (m.sheetOff ? `İskota salık · hız %${Math.round(eff * 100)}` : 'Tam hız · iskota trimli');
     $('hpAuto').classList.toggle('on', !!(st.drive && st.drive.autoTrim));
-    $('hpEase').disabled = !drv && !(m.sheetOff < S.SHEET_OFF_MAX); $('hpTrim').disabled = !drv && !m.sheetOff;
+    $('hpEase').disabled = false; $('hpTrim').disabled = false;   // sınırda da basılabilir: neden olmadığı söylenir
     $('hpJibe').disabled = drv && abs < 100;
     $('hpEase').title = drv ? 'İskotayı sal (↓)' : 'İskotayı sal, yavaşla (↓)'; $('hpTrim').title = drv ? 'İskotayı çek (↑)' : 'İskotayı çek, hızlan (↑)';
   }

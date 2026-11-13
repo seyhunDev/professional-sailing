@@ -382,6 +382,7 @@
     if (b.sheet == null) b.sheet = idealSheet(Math.abs(E.norm180(b.h - w)));
     const n = Math.max(1, Math.ceil(dt / DT - 1e-9)), H = dt / n;   // ekran karesi kadar (kesirli) adımlar
     for (let i = 0; i < n; i++) {
+      const h0 = b.h;
       // dümen: tekne hızlandıkça daha çabuk döner (dururken dümen az tutar)
       const rate = (30 + 55 * clamp(b.v / BASE, 0, 1)) * H;
       if (inp.rudder) { b.h = E.norm360(b.h + clamp(inp.rudder, -1, 1) * rate); b.helm = null; b.v *= 1 - 0.12 * H * Math.abs(inp.rudder); }
@@ -401,22 +402,33 @@
       const sea = s.sea || SEA_DEFAULT, upw = abs < 75 ? 1 : 0.4;
       const vt = E.speedFor(abs, BASE) * eff * (1 + GUST_GAIN * b.inGust) * (1 - SHADOW_LOSS * b.shadow) * (b.speedK || 1) *
         (1 - upw * ((SEA.waveLoss[sea.waves] || 0) + (SEA.boatLoss[b.drift || 0] || 0)));
-      b.v += (vt - b.v) * Math.min(1, H / (vt > b.v ? TAU : TAU * 2.2));   // yelkeni boşaltınca tekne bir süre süzülür
-      const f = E.fwd(b.h), dw = E.fwd(w + 180), dr = driftOf(s, b);
+      b.v += (vt - b.v) * Math.min(1, H / (vt > b.v ? TAU : TAU * 1.4));   // yelkeni boşaltınca tekne kısa süre süzülür
+      const f = E.fwd(b.h), dw = E.fwd(w + 180), dr = driftOf(s, b), x0 = b.x, y0 = b.y;
       b.x += (f.x * b.v + dw.x * dr) * H; b.y += (f.y * b.v + dw.y * dr) * H;
-      // şamandıra, pin, hakem botu ve duran teknelerin içinden geçemez
-      for (const o of OBSTACLES) {
-        const dx = b.x - o.x, dy = b.y - o.y, d = Math.hypot(dx, dy) || 0.01, R0 = o.r + 16;
-        if (d < R0) { b.x = o.x + dx / d * R0; b.y = o.y + dy / d * R0; b.v *= 0.6; if (!out.includes('hit')) out.push('hit'); }
-      }
+      // şamandıra, pin, hakem botu ve duran teknelerin içine giremez: yaklaşan adım geri alınır, tekne durur
+      // (eskiden dışarı itiliyordu: tekne öbürünün kenarı boyunca yan yan kayıyordu)
+      const blocked = (o, R0) => { const d1 = Math.hypot(b.x - o.x, b.y - o.y); return d1 < R0 && d1 < Math.hypot(x0 - o.x, y0 - o.y); };
+      for (const o of OBSTACLES) if (blocked(o, o.r + 16)) { b.x = x0; b.y = y0; b.v *= 0.3; if (!out.includes('hit')) out.push('hit'); }
+      // teknelerde gövde biçimi (uzun, dar): yan yana ya da kıç kıça yakın geçilebilir, gövdeler değince durur
       for (const o of others) {
-        const dx = b.x - o.x, dy = b.y - o.y, d = Math.hypot(dx, dy) || 0.01;
-        if (d < 28) { b.x = o.x + dx / d * 28; b.y = o.y + dy / d * 28; b.v *= 0.6; if (!out.includes('contact:' + o.id)) out.push('contact:' + o.id); }
+        const g1 = hullGap(b, o);
+        if (g1 < HULL_GAP && g1 < hullGap({ x: x0, y: y0, h: h0 }, o)) { b.x = x0; b.y = y0; b.h = h0; b.v *= 0.3; if (!out.includes('contact:' + o.id)) out.push('contact:' + o.id); }
       }
       b.x = clamp(b.x, -MAN_MARGIN + 20, WORLD.w + MAN_MARGIN - 20); b.y = clamp(b.y, 15, WORLD.h - 10);
     }
     b.drv = true;
     return out;
+  }
+  // İki teknenin gövdeleri (baş-kıç doğrusu, ±19 px) arasındaki en kısa uzaklık; HULL_GAP altı = temas (gövde genişliği ~14 px)
+  const HULL_GAP = 13;
+  function hullGap(a, c) {
+    const A = E.fwd(a.h), C = E.fwd(c.h), L = 19;
+    const p1 = { x: a.x - A.x * L, y: a.y - A.y * L }, d1 = { x: A.x * 2 * L, y: A.y * 2 * L };
+    const p2 = { x: c.x - C.x * L, y: c.y - C.y * L }, d2 = { x: C.x * 2 * L, y: C.y * 2 * L };
+    const r = { x: p1.x - p2.x, y: p1.y - p2.y }, aa = dot(d1, d1), ee = dot(d2, d2), f = dot(d2, r), cc = dot(d1, r), bb = dot(d1, d2), den = aa * ee - bb * bb;
+    let sP = den > 1e-9 ? clamp((bb * f - cc * ee) / den, 0, 1) : 0, tP = (bb * sP + f) / ee;
+    if (tP < 0) { tP = 0; sP = clamp(-cc / aa, 0, 1); } else if (tP > 1) { tP = 1; sP = clamp((bb - cc) / aa, 0, 1); }
+    return Math.hypot(p1.x + d1.x * sP - p2.x - d2.x * tP, p1.y + d1.y * sP - p2.y - d2.y * tP);
   }
   // Tramola / kavança düğmesi: rüzgarın içinden (tramola) ya da pupadan (kavança) öbür kontraya dön
   function helmTurn(b, w, kind) {
@@ -651,7 +663,7 @@
       // yaklaşırken kalan sürede alınan yol hattaki mesafeyi aşmasın
       if (b.phase === 'wait' && b.go && remain > 0) {
         const k = 1 - Math.exp(-remain / tau), den = remain - tau * k;
-        if (den > 0.01) vt = Math.min(vt, Math.max(0, (distToLine(b, b.h) - 6 - b.v * tau * k) / den + driftOf(s, b) * 0.9));
+        if (den > 0.01) vt = Math.min(vt, Math.max(0, (distToLine(b, b.h) - BOW - 2 - b.v * tau * k) / den + driftOf(s, b) * 0.9));   // burun (merkezden BOW px önde) hatta
       }
       // start öncesi (kurallar henüz yok): öndeki teknenin kıçına girme, arkasında kal (K12 bilinci)
       if (b.phase === 'wait' && !holding) {
@@ -683,7 +695,7 @@
       const a = live[i], c = live[j], dx = c.x - a.x, dy = c.y - a.y, d = Math.hypot(dx, dy);
       if (d < 26 && d > 0.01) {
         const push = (26 - d) / 2, ux = dx / d, uy = dy / d;
-        a.x -= ux * push; a.y -= uy * push; c.x += ux * push; c.y += uy * push;
+        nudge(a, -ux * push, -uy * push); nudge(c, ux * push, uy * push);
         if (rulesOn && d < 22) {
           const fresh = s.pairLog['temas' + a.id + c.id] == null || s.t - s.pairLog['temas' + a.id + c.id] >= 5;
           log(s, `Temas: ${a.id} – ${c.id}`, 'bad', 'temas' + a.id + c.id); note(a, s, 'Temas!', 'bad', 1.5); note(c, s, 'Temas!', 'bad', 1.5);
@@ -697,6 +709,8 @@
         }
       }
     }
+    // start'tan önce hattı yalnız manuel (ya da elle sürülen) tekne geçebilir: diğerlerinin burnu hattın altında kalır
+    if (t < s.startAt) for (const b of active) if (b.phase === 'wait' && !b.manual) keepBehindLine(b);
     // start hattı geçişleri (temas itmesi dahil, tüm hareketten sonra)
     for (const b of active) {
       const side = lineSide(b), was = b.prevSide == null ? side : b.prevSide;
@@ -714,6 +728,21 @@
       }
     }
     s.t = +(t + DT).toFixed(4);
+  }
+  // Temas itmesi: üst üste binen tekneler ayrılır. Yan yana ise itme çoğunlukla teknenin kendi rotası boyunca
+  // (geri tutulur) uygulanır, yana kayma yarıya iner: tekne yan yan (yengeç gibi) gitmesin.
+  function nudge(b, px, py) {
+    const f = E.fwd(b.h), al = px * f.x + py * f.y, lx = px - al * f.x, ly = py - al * f.y;
+    b.x += al * f.x + lx * 0.5; b.y += al * f.y + ly * 0.5;   // yana yarısı (tamamen kaldırınca uçlarda kalabalık takılıyor: fuzz)
+  }
+  // Burnu (ve kıçı) hattın start tarafında tut: hat çizgisine dik uzaklık en az 2 px
+  const BOW = 24;
+  function keepBehindLine(b) {
+    const p = LINE.pin, q = LINE.boat, lx = q.x - p.x, ly = q.y - p.y, L = Math.hypot(lx, ly), nx = -ly / L, ny = lx / L;   // n: start tarafı
+    const f = E.fwd(b.h), sd = Math.min(...[BOW, -BOW].map(k => ((b.x + f.x * k - p.x) * nx + (b.y + f.y * k - p.y) * ny)));
+    if (sd >= 2) return;
+    if ((b.x - p.x) * nx + (b.y - p.y) * ny < -BOW) return;     // kurulumda hattın üstüne konmuş: OCS kalır
+    b.x += nx * (2 - sd); b.y += ny * (2 - sd); b.v *= 0.5;
   }
   function ocs(b, s) {
     b.phase = 'ocs'; b.go = true;
