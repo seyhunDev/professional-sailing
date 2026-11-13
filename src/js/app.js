@@ -276,8 +276,9 @@
       cbNode = E.drawCommitteeBoat(el, g);
       cbNode.setAttribute('transform', E.committeeBoatTransform(boat.x, boat.y, E.windAt(scn.wind, state.t)));
       // committeeLabel: 'right' → yazı hakem botunun sağına (sol tarafta bekleyen tekneyle çakışmasın)
-      const cbRight = scn.committeeLabel === 'right';
-      el('text', { x: boat.x + (cbRight ? 30 : 14), y: boat.y + (cbRight ? 52 : 60), 'text-anchor': cbRight ? 'start' : 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
+      // 'upright' → sağ üstte (botun sağında, hat hizasında bekleyen tekne varsa)
+      const cbRight = scn.committeeLabel === 'right' || scn.committeeLabel === 'upright', cbUp = scn.committeeLabel === 'upright';
+      el('text', { x: boat.x + (cbRight ? 30 : 14), y: boat.y + (cbUp ? -26 : cbRight ? 52 : 60), 'text-anchor': cbRight ? 'start' : 'middle', fill: '#ffd166', 'font-size': 12, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.45)', 'stroke-width': 3 }, g).textContent = 'Hakem botu';
     }
     for (const m of scn.marks || []) {
       if (m.zone) {
@@ -439,6 +440,16 @@
         if (it.label) el('text', { x: (a.x + b.x) / 2 + nx * 8, y: (a.y + b.y) / 2 + ny * 8, 'text-anchor': 'middle', fill: col, 'font-size': 12, 'font-weight': 700, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.7)', 'stroke-width': 3 }, g).textContent = it.label;
       }
     }
+    // yer işareti (spots): sahnede bir noktayı kesikli halkayla gösterir (ör. hakem botu dibinde açılan boşluk);
+    // aralığın ilk ve son saniyesinde yumuşakça belirir / kaybolur
+    for (const sp of scn.spots || []) {
+      if (!inWin(sp)) continue;
+      const fade = Math.max(0, Math.min(1, (state.t - (sp.from || 0)) / 1, sp.to == null ? 1 : (sp.to - state.t) / 1));
+      const col = sp.color || '#fbbf24', r = sp.r || 26;
+      const sg = el('g', { opacity: fade.toFixed(2) }, g);
+      el('circle', { cx: sp.x, cy: sp.y, r, fill: 'rgba(251,191,36,.10)', stroke: col, 'stroke-width': 2, 'stroke-dasharray': '6 5' }, sg);
+      if (sp.label) el('text', { x: sp.x + (sp.dx || 0), y: sp.y + (sp.dy != null ? sp.dy : r + 15), 'text-anchor': 'middle', fill: col, 'font-size': 12, 'font-weight': 700, 'paint-order': 'stroke', stroke: 'rgba(0,0,0,.7)', 'stroke-width': 3 }, sg).textContent = sp.label;
+    }
     // hat yayı (line sag): filonun burunlarından geçen eğri, hat ile arası taralı
     if (scn.sag && scn.line && inWin(scn.sag)) {
       const { pin, boat } = scn.line; const lx0 = boat.x - pin.x, ly0 = boat.y - pin.y, L = Math.hypot(lx0, ly0), ux = lx0 / L, uy = ly0 / L;
@@ -513,7 +524,8 @@
     const big = on ? fmt(rem) : 'Start verildi', small = on ? "START'A" : 'YARIŞ';
     const fs = on ? 30 : 20;
     const minBig = textW(fmt(scn.startAt * cs), 30, 800);         // geri sayarken kart daralıp genişlemesin
-    const W = Math.ceil(100 + 16 + Math.max(textW(big, fs, 800), minBig, textW(small, 10, 700, 1) + 14) + 18);
+    const kn = scn.windKn ? textW(`${scn.windKn} KN${scn.windKn >= 15 ? ' · KUVVETLİ' : ''}`, 10, 700, .6) : 0;   // rüzgar şiddeti satırı
+    const W = Math.ceil(100 + 16 + Math.max(textW(big, fs, 800), minBig, textW(small, 10, 700, 1) + 14, kn) + 18);
     return { W, clock: { big, small, col, fs } };
   }
   function hudBox() {
@@ -545,6 +557,11 @@
       el('circle', { cx: RX + 20, cy: Y + 33, r: 3.5, fill: col }, hg);
       el('text', { x: RX + 30, y: Y + 37, fill: 'rgba(255,255,255,.62)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': 1 }, hg).textContent = small;
       el('text', { x: RX + 16, y: Y + 72, fill: col, 'font-size': L.clock.fs, 'font-weight': 800, 'font-variant-numeric': 'tabular-nums', 'letter-spacing': -.5 }, hg).textContent = big;
+      // rüzgar şiddeti (senaryoda windKn varsa): saatin altında; 15 knot ve üstü "kuvvetli" diye vurgulanır
+      if (scn.windKn) {
+        const strong = scn.windKn >= 15;
+        el('text', { x: RX + 16, y: Y + H - 10, fill: strong ? '#fbbf24' : 'rgba(255,255,255,.62)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': .6 }, hg).textContent = `${scn.windKn} KN${strong ? ' · KUVVETLİ' : ''}`;
+      }
       // hazırlık bayrağı: son 1 dakikada indirilir
       if (scn.prepFlag && scn.line) {
         const up = state.t < (scn.flagDownAt != null ? scn.flagDownAt : scn.startAt);

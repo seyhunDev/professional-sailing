@@ -259,6 +259,12 @@
       t += DT;
       for (const b of boats) {
         const f = E.fwd(b.h); b.x += f.x * b.v * DT; b.y += f.y * b.v * DT;
+        // kuvvetli rüzgar (scn.leeway {from, rate}): start öncesi bekleyen filo rüzgaraltına kayar (sancakta sola-aşağı)
+        if (scn.leeway && t < goAt && t >= (scn.leeway.from || 0)) {
+          const lw = scn.leeway, k = lw.ramp ? Math.min(1, (t - (lw.from || 0)) / lw.ramp) : 1;
+          const fd = E.fwd(E.windAt(scn.wind, t) + 180 + (b.tack === 'starboard' ? 30 : -30));
+          b.x += fd.x * lw.rate * k * DT; b.y += fd.y * lw.rate * k * DT;
+        }
         // start hattı geçiş kontrolü
         if (scn.line && !b.crossed) {
           const side = lineSide(scn.line, b);

@@ -775,5 +775,63 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.8] }
   });
 
+  // ---------- İA6: kuvvetli rüzgar, hakem botu ucunda açılan boşluk ----------
+  S.push({
+    id: 'ia6-committee-gap',
+    category: 'İleri Taktik', topic: 'Start · Hakem botu',
+    title: 'İA6 · Kuvvetli rüzgar: hakem botunda açılan boşluğa gir',
+    summary: 'Kuvvetli rüzgarda (18 knot) hakem botunun yanı yine kalabalık ama orada durmak zordur: yelkeni boş bekleyen tekneler rüzgaraltına, aşağı kayar ve son 30-40 saniyede botun dibinde boşluk açılır. Turuncu Y erkenden bayrağın dibine park eder, yerini tutamaz, kayar. Yeşil D hakem botunun sancak tarafında, start hattı hizasında bekler; boşluğun açılacağını bildiği için yavaş yavaş botun kıçından dolaşıp açılan boşluğa girer ve hakem botu ucundan, temiz havada start eder.',
+    duration: 40,
+    baseSpeed: 40, goBefore: 2.5,
+    clockScale: 4,
+    windKn: 18,
+    wind: 5,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 32,
+    rungs: { boat: 'D', from: 32.5 },
+    committeeLabel: 'upright',
+    leeway: { from: 18, ramp: 3, rate: 4 },   // kuvvetli rüzgar: bekleyen filo son 1 dk rüzgaraltına kayar (rules.simulate)
+    laylines: [{ x: 770, y: 452, tack: 'starboard', len: 260, from: 0, to: 6, label: 'Hakem botu layline\'ı' }],
+    boats: [
+      { id: 'D', name: 'Dışarıda bekleyip boşluğa giren', role: 'dogru', color: '#2a9d8f',
+        start: { x: 905, y: 455, h: 5 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 5, dur: 21.6, speed: 0.008, turn: 0, drift: 0.4, note: 'Hat hizasında, botun sancağında' },
+          { mode: 'heading', h: 212, dur: 3.4, turn: 1.4, speed: 0.5, note: 'Boşluk açılacak: yavaşça botun kıçına' },
+          { mode: 'heading', h: 285, dur: 2.7, turn: 1.0, speed: 0.55, note: 'Açılan boşluğa giriyor' },
+          { mode: 'heading', h: 335, dur: 1.1, turn: 0.8, speed: 0.4, note: 'Açılan boşluğa giriyor' },
+          { mode: 'hold', h: 325, dur: 1.0, speed: 0.01, turn: 0.8, note: 'Botun dibinde: yer benim' },
+          { mode: 'closehauled', tack: 'starboard', dur: 11, turn: 0.8 }
+        ] },
+      { id: 'Y', name: 'Erken park edip kayan', role: 'hata', color: '#e76f51',
+        start: { x: 893, y: 660, h: 320 }, v0: 30,
+        segs: [
+          { mode: 'closehauled', tack: 'starboard', dur: 4.6, turn: 0, note: 'Erken: bayrağın dibine' },
+          { mode: 'hold', h: 5, dur: 13.4, speed: 0.008, turn: 1.4, drift: 0.6, note: 'Bayrağın dibinde, zorlukla' },
+          { mode: 'hold', h: 348, dur: 11.5, speed: 0.008, turn: 2.5, drift: 5.5, note: 'Tutamıyor: aşağı kayıyor' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10.5, turn: 1.0 }
+        ] }
+    ],
+    crowd: [
+      { slot: 0.41, back: -22 }, { slot: 0.50, back: -22 }, { slot: 0.59, back: -22 }, { slot: 0.68, back: -22 }, { slot: 0.77, back: -22 }, { slot: 0.55, row: 1, back: -22 }, { slot: 0.73, row: 1, back: -22 }
+    ],
+    spots: [{ x: 772, y: 482, r: 27, from: 23.5, to: 30, label: 'Boşluk', dx: -48, dy: 4 }],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dk: kuvvetli rüzgar, hakem botu ucu kalabalık', text: 'Rüzgar 18 knot, kuvvetli (sol üstteki gösterge) ve 5° sağa dönmüş: hakem botu ucu avantajlı, filo oraya yığılıyor, herkes botun yanını kapatmak istiyor. Ama kuvvetli rüzgarda yelkeni boş bir Optimist yerinde durmakta zorlanır.' },
+      { t: 1.5, title: 'Y erken gelip bayrağın dibine park ediyor', text: 'Turuncu Y, İA5\'teki gibi erken ve layline\'dan gelip turuncu bayrağın hemen yanına yerleşiyor. Orta ve hafif havada bu doğru plandır. Kuvvetli rüzgarda ise orada 2 dakika beklemek gerekiyor ve bu çok zor.' },
+      { t: 6, title: 'D dışarıda, hat hizasında bekliyor', text: 'Yeşil D kalabalığa girmiyor. Hakem botunun sancak tarafında (dışında), start hattının uzantısında, hatla aynı hizada bekliyor. Buradan botun dibini ve kalabalığı görüyor, kimse onu sıkıştıramıyor ve hattan geride de değil.' },
+      { t: 11, title: 'Kuvvetli rüzgarda durmak zor', text: 'Yelken boşken rüzgar teknenin gövdesini ve direğini iter; tekne yana ve geriye, rüzgaraltına doğru kayar. Y sık sık yelkeni bir an doldurup burnunu rüzgara veriyor ama her düzeltmede biraz daha aşağı iniyor. Filo da aynı sorunu yaşıyor.' },
+      { t: 18, title: 'Son 1 dakika: tekneler aşağı kayıyor', text: 'Beklemek uzadıkça kayma artıyor. Y ve yanındaki tekneler hem aşağı hem rüzgaraltına, pin tarafına doğru kayıyor. Hakem botunun dibi yavaş yavaş boşalıyor. Kuvvetli rüzgarda bu hemen her start\'ta olur: son 30-40 saniyede hakem botunun yanında boşluk açılır.' },
+      { t: 21.6, title: 'D boşluğu önceden görüp yavaşça geliyor', text: 'D boşluğun açılacağını biliyor, açılmasını beklemeden yola çıkıyor: yelkeni yarım doldurup yavaşça hakem botunun kıçına doğru düşüyor. Hızlı gelirse erken varıp beklemek zorunda kalır; yavaş gelirse boşluk açıldığı anda oradadır. Hakem botuna değmek Kural 31: ceza turu.' },
+      { t: 24.5, title: 'Boşluk açıldı: D botun kıçından dolaşıp giriyor', text: 'Y ve filo 1-1,5 boy aşağı kaydı; hakem botunun dibinde bir tekne sığacak boşluk var (sarı halka). D botun kıçından dolaşıp oraya giriyor. Rüzgarüstü olduğu için Y\'den uzak durur (Kural 11); boşluk yoksa zorlamak barging olur.' },
+      { t: 28.5, title: 'Hızı var, yeri var', text: 'D boşluğa yavaşça ama hareket halinde girdi. Bekleyen tekneler sıfır hızdan hızlanacak; D\'nin ise zaten biraz hızı var. Kayan Y, kendi yerinden 1,5 boy geride ve filonun arasında sıkışık.' },
+      { t: 30.2, title: '7 sn kala doldur', text: 'D yelkeni dolduruyor ve orsa rotasına dönüyor. Kuvvetli rüzgarda Optimist hızlı hızlanır; geç doldurmak hızlanma yolu boyunca geride kalmak demektir. Y de dolduruyor ama hattın çok gerisinden başlıyor.' },
+      { t: 32, title: 'START: hakem botu ucundan, temiz havada', text: 'D filonun en sağından, hakem botunun yanından, avantajlı uçtan, temiz havada ve hızla çıkıyor. Bayrağın dibine erken park eden Y ise kaydığı için hattın yaklaşık 1,5 boy gerisinde, D\'nin rüzgaraltında-arkasında.' },
+      { t: 36, title: 'Özet', text: 'Kuvvetli rüzgarda hakem botu ucu: bayrağın dibine erken park etme, orada duramaz, kayarsın. Hakem botunun sancak tarafında, hat hizasında bekle. Son 30-40 saniyede açılan boşluğu öngör, botun kıçından yavaş yavaş gel ve boşluğa hızı olan tekne olarak gir. Boşluk açılmazsa zorlama: 2-3 boy aşağıda temiz bir yer seç.' }
+    ],
+    addBoat: { pin: { x: 290, y: 580 }, middle: { x: 500, y: 580 }, committee: { x: 720, y: 610 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.8] }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -191,6 +191,11 @@
         const hUsed = h + avoid;
         const f = fwd(hUsed);
         x += f.x * v * DT; y += f.y * v * DT;
+        // kuvvetli rüzgarda bekleyen tekne kayar: hold.drift px/sn, driftH yönüne (varsayılan rüzgaraltı, kontraya göre 30° yana)
+        if (seg.mode === 'hold' && seg.drift) {
+          const dh = seg.driftH != null ? seg.driftH : w + 180 + (norm180(h - w) <= 0 ? 30 : -30), fd = fwd(dh);
+          x += fd.x * seg.drift * DT; y += fd.y * seg.drift * DT;
+        }
         t += DT;
         samples.push({ t, x, y, h: hUsed, v, note: seg.note || '' });
       }
