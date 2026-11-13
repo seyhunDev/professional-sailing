@@ -63,6 +63,10 @@ async function start() {
       }
     },
     signOut: () => au.signOut(auth).catch(() => {}),
+    // Sayfaların kendi verisi için (ör. yelken ayarı: sailingTrim). Kurallar sesliasistan Firestore'unda.
+    onUser: cb => au.onAuthStateChanged(auth, cb),
+    async getDoc(col, id) { const d = await fs.getDoc(fs.doc(fs.getFirestore(app), col, id)); return d.exists() ? d.data() : null; },
+    setDoc: (col, id, data) => fs.setDoc(fs.doc(fs.getFirestore(app), col, id), data),
   };
   document.dispatchEvent(new CustomEvent('velora-ready'));
 

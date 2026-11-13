@@ -53,9 +53,9 @@
       sert: { rake: 281.5, ties: [0, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 0], vang: 0.9, luff: 0.3,
         note: { rake: 'Dümen ağırsa önce salmayı geri al, olmazsa direği 1-2 cm öne.', ties: 'En üst ve en alt bağ direğe yapışık (0 mm). 44 kg üstü, orsa yakasından köşeye kırışık varsa orta bağları gevşet.', vang: 'Çok daha sıkı; orsa yakasından köşeye kırışık çıkınca dur.', luff: 'Gevşet: kambur öne gelir, arka yaka açılır.' } },
     },
-    jsails: { name: 'J-Sails', missing: true },
-    olimpic: { name: 'Olimpic', missing: true },
-    cd: { name: 'CD Sails', missing: true },
+    jsails: { name: 'J-Sails', missing: true, about: 'Bu markanın kılavuzu bulunamadı. Değerler taslak varsayılanı; sahip hesabı "Orijinali düzenle" ile kılavuz değerlerini elle girebilir.' },
+    olimpic: { name: 'Olimpic', missing: true, about: 'Bu markanın kılavuzu bulunamadı. Değerler taslak varsayılanı; sahip hesabı "Orijinali düzenle" ile kılavuz değerlerini elle girebilir.' },
+    cd: { name: 'CD Sails', missing: true, about: 'Bu markanın kılavuzu bulunamadı. Değerler taslak varsayılanı; sahip hesabı "Orijinali düzenle" ile kılavuz değerlerini elle girebilir.' },
   };
 
   // Direk eğimi tablosu (metre, kılavuzun yazdığı gibi). * = kılavuz göreli veriyor.
@@ -85,30 +85,88 @@
     dalgali: 'Dalgada güçte kalmak için biraz daha derin yelken ve biraz daha açık üst (köşe ve palanga bir tık gevşek).',
   };
 
+  // ---------- bulut kaydı (Velora hesabı → Firebase / Firestore) ----------
+  // sailingTrim/originals : { manual, updatedAt, by }  → herkes okur, yalnız sahip yazar (elle girilmiş orijinaller)
+  // sailingTrim/u_<uid>   : { custom, updatedAt }      → her kullanıcı kendi özel ayarı (cihazlar arası)
+  // Velora ile girilmemişse ya da Firebase kuralı izin vermiyorsa her şey bu cihazda kalır (localStorage).
+  const Cloud = {
+    uid: null, state: 'yerel', err: '', at: 0, timers: {},
+    api: () => window.VeloraAuth && window.VeloraAuth.getDoc ? window.VeloraAuth : null,
+    show() {
+      const e = $('syncText'); if (!e) return;
+      const t = this.at ? new Date(this.at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '';
+      const txt = {
+        yerel: 'Bu cihazda saklanıyor. Velora hesabıyla girersen telefonda ve iPad\'de de aynı ayarlar görünür.',
+        bulut: `Velora hesabında saklanıyor${t ? ' · ' + t : ''}. Telefon ve iPad'de aynı.`,
+        yaziliyor: 'Kaydediliyor…',
+        hata: `Buluta yazılamadı (${this.err}). Ayarlar şimdilik bu cihazda.`,
+      }[this.state];
+      e.textContent = txt + (this.uid ? ` (hesap kimliği: ${this.uid})` : ''); e.className = 'sync ' + this.state;
+    },
+    async start() {
+      const A = this.api(); if (!A) return;
+      A.onUser(async user => {
+        try {
+          const o = await A.getDoc('sailingTrim', 'originals');
+          if (o && o.manual && (o.updatedAt || 0) >= st.manualAt) { st.manual = o.manual; st.manualAt = o.updatedAt || 0; }
+        } catch (e) { /* okuma kuralı yoksa yerel kalır */ }
+        this.uid = user ? user.uid : null;
+        if (!user) { this.state = 'yerel'; persist(); this.show(); choose(); return; }
+        try {
+          const u = await A.getDoc('sailingTrim', 'u_' + user.uid);
+          if (u && u.custom && (u.updatedAt || 0) >= st.customAt) { st.custom = u.custom; st.customAt = u.updatedAt || 0; }
+          else if (st.customAt) this.save('custom');
+          this.state = 'bulut'; this.at = Math.max(st.customAt, (u && u.updatedAt) || 0);
+        } catch (e) { this.state = 'hata'; this.err = (e && e.code) || 'bağlantı'; }
+        persist(); this.show(); choose();
+      });
+    },
+    save(what) {
+      const A = this.api(); if (!A || !this.uid) { this.show(); return; }
+      clearTimeout(this.timers[what]);
+      this.timers[what] = setTimeout(async () => {
+        this.state = 'yaziliyor'; this.show();
+        try {
+          if (what === 'custom') await A.setDoc('sailingTrim', 'u_' + this.uid, { custom: st.custom, updatedAt: st.customAt });
+          else await A.setDoc('sailingTrim', 'originals', { manual: st.manual, updatedAt: st.manualAt, by: this.uid });
+          this.state = 'bulut'; this.at = Date.now();
+        } catch (e) { this.state = 'hata'; this.err = (e && e.code) || 'bağlantı'; }
+        this.show();
+      }, 900);
+    },
+  };
+
   // ---------- durum ----------
   const KEY = 'ps.trim.v1';
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { saved = {}; }
   const st = {
     wind: WIND[saved.wind] != null ? saved.wind : 'orta', sea: SEA_TXT[saved.sea] ? saved.sea : 'duz',
-    brand: (BRANDS[saved.brand] && !BRANDS[saved.brand].missing) ? saved.brand : 'onesails',
+    brand: BRANDS[saved.brand] ? saved.brand : 'onesails',
     mode: saved.mode === 'ozel' ? 'ozel' : 'orijinal',
-    custom: (saved.custom && typeof saved.custom === 'object') ? saved.custom : {},
+    custom: (saved.custom && typeof saved.custom === 'object') ? saved.custom : {},   // custom['marka|hava|deniz'] = tüm değerler (kişisel)
+    manual: (saved.manual && typeof saved.manual === 'object') ? saved.manual : {},   // manual[marka][hava][alan] = elle girilmiş orijinal (ortak)
+    customAt: saved.customAt || 0, manualAt: saved.manualAt || 0,
+    editOrig: false,
     val: null, target: null, active: null, focusTie: -1,
   };
-  function persist() {
-    try { localStorage.setItem(KEY, JSON.stringify({ wind: st.wind, sea: st.sea, brand: st.brand, mode: st.mode, custom: st.custom })); } catch (e) { /* yok */ }
+  function persist(what) {
+    if (what === 'custom') st.customAt = Date.now();
+    if (what === 'manual') st.manualAt = Date.now();
+    try { localStorage.setItem(KEY, JSON.stringify({ wind: st.wind, sea: st.sea, brand: st.brand, mode: st.mode, custom: st.custom, manual: st.manual, customAt: st.customAt, manualAt: st.manualAt })); } catch (e) { /* yok */ }
+    if (what) Cloud.save(what);
   }
   const ckey = () => `${st.brand}|${st.wind}|${st.sea}`;
 
   function original(brand, wind, sea) {
     const b = BRANDS[brand], w = b[wind] || {}, d = DEF[wind];
     const v = {}, src = {};
+    const m = (st.manual[brand] || {})[wind] || {};
     for (const k of ['rake', 'ties', 'sprit', 'vang', 'out', 'luff']) {
-      const has = w[k] != null;
-      const x = has ? w[k] : d[k];
+      // kaynak: 'elle' (sahibin girdiği orijinal) > 'kilavuz' (yayımlanmış kılavuz) > 'yok' (taslak varsayılanı)
+      const x = m[k] != null ? m[k] : w[k] != null ? w[k] : d[k];
       v[k] = Array.isArray(x) ? x.slice() : x;
-      src[k] = has;
+      src[k] = m[k] != null ? 'elle' : w[k] != null ? 'kilavuz' : 'yok';
     }
     if (sea === 'dalgali') { v.out = clamp(v.out - 0.1, 0, 1); v.vang = clamp(v.vang - 0.1, 0, 1); }
     return { v, src, note: w.note || {} };
@@ -142,14 +200,14 @@
       <button class="tie-b" data-d="-0.5" aria-label="${i + 1}. bağ boşluğunu azalt">−</button>`;
     c.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
-      const v = ensureCustom();
-      v.ties[i] = clamp(Math.round((v.ties[i] + Number(b.dataset.d)) * 2) / 2, 0, 10);
-      st.active = 'ties'; st.focusTie = i; changed();
+      const t = st.val.ties.slice();
+      t[i] = clamp(Math.round((t[i] + Number(b.dataset.d)) * 2) / 2, 0, 10);
+      st.active = 'ties'; st.focusTie = i; setVal('ties', t);
     });
     tiesGrid.appendChild(c);
     tieCells.push(c);
   }
-  $('rakeIn').addEventListener('input', e => { const v = ensureCustom(); v.rake = Number(e.target.value); st.active = 'rake'; changed(); });
+  $('rakeIn').addEventListener('input', e => { st.active = 'rake'; setVal('rake', Number(e.target.value)); });
 
   const rows = {};
   for (const c of CTRL) {
@@ -162,7 +220,7 @@
       <p class="ctl-why"></p>`;
     panel.appendChild(row);
     const inp = row.querySelector('input');
-    inp.addEventListener('input', () => { const v = ensureCustom(); v[c.k] = inp.value / 100; st.active = c.k; changed(); });
+    inp.addEventListener('input', () => { st.active = c.k; setVal(c.k, inp.value / 100); });
     rows[c.k] = { row, inp, val: row.querySelector('.ctl-val'), why: row.querySelector('.ctl-why'), c };
   }
   for (const r of panel.querySelectorAll('.ctl')) {
@@ -170,13 +228,26 @@
     r.addEventListener('pointerenter', f); r.addEventListener('focusin', f);
   }
 
+  // Bir ayar değişti: "Orijinali düzenle" açıksa elle girilmiş orijinal katmanına (ortak), değilse Özel'e (kişisel)
+  function setVal(k, x) {
+    if (st.editOrig && st.mode === 'orijinal') {
+      if (st.sea === 'dalgali' && (k === 'out' || k === 'vang')) x = clamp(x + 0.1, 0, 1);   // dalga düzeltmesi geri alınır
+      const b = st.manual[st.brand] || (st.manual[st.brand] = {});
+      const w = b[st.wind] || (b[st.wind] = {});
+      w[k] = Array.isArray(x) ? x.slice() : x;
+      st.target = null; st.val = copy(current()); persist('manual'); syncTop(); refresh();
+      return;
+    }
+    const v = ensureCustom();
+    v[k] = Array.isArray(x) ? x.slice() : x;
+    st.target = null; st.val = copy(current()); persist('custom'); syncTop(); refresh();
+  }
   // Orijinal modda bir ayara dokunulursa: o kılavuzun kopyasıyla Özel'e geç
   function ensureCustom() {
     if (!st.custom[ckey()]) st.custom[ckey()] = copy(original(st.brand, st.wind, st.sea).v);
     st.mode = 'ozel';
     return st.custom[ckey()];
   }
-  function changed() { st.target = null; st.val = copy(current()); persist(); syncTop(); refresh(); }
 
   function word(k, v) {
     const words = k === 'out' ? ['Derin', 'Orta-derin', 'Orta', 'Orta-düz', 'Düz'] : ['Gevşek', 'Biraz gevşek', 'Orta', 'Biraz sıkı', 'Sıkı'];
@@ -185,15 +256,25 @@
 
   // ---------- üst seçimler ----------
   const brandSel = $('brandSel');
-  brandSel.innerHTML = Object.entries(BRANDS).map(([k, b]) => `<option value="${k}"${b.missing ? ' disabled' : ''}>${esc(b.name)}${b.missing ? ' (kılavuz bekleniyor)' : ''}</option>`).join('');
+  brandSel.innerHTML = Object.entries(BRANDS).map(([k, b]) => `<option value="${k}">${esc(b.name)}${b.missing ? ' (kılavuz yok)' : ''}</option>`).join('');
   function setSeg(id, v) { for (const b of $(id).querySelectorAll('button')) b.classList.toggle('on', b.dataset.v === v); }
   function syncTop() {
     setSeg('segWind', st.wind); setSeg('segSea', st.sea); setSeg('segMode', st.mode);
     brandSel.value = st.brand;
     $('btnResetCustom').hidden = st.mode !== 'ozel';
+    const owner = document.documentElement.dataset.role === 'sahip';
+    const eb = $('btnEditOrig');
+    eb.hidden = !(owner && st.mode === 'orijinal');
+    if (st.mode !== 'orijinal' || !owner) st.editOrig = false;
+    eb.classList.toggle('on', st.editOrig);
+    eb.textContent = st.editOrig ? 'Düzenleme açık' : 'Orijinali düzenle';
+    document.body.classList.toggle('edit-orig', st.editOrig);
+    const man = (st.manual[st.brand] || {})[st.wind] || {};
+    $('btnClearManual').hidden = !(st.editOrig && Object.keys(man).length);
     const b = BRANDS[st.brand];
     $('condText').textContent = `${WIND_TXT[st.wind]}, ${SEA_TXT[st.sea]}. ${SEA_WHY[st.sea]}`;
-    $('srcText').innerHTML = `${esc(b.about || '')} <a href="${b.url}" target="_blank" rel="noopener">Kılavuz ↗</a>`;
+    $('srcText').innerHTML = `${esc(b.about || '')}${b.url ? ` <a href="${b.url}" target="_blank" rel="noopener">Kılavuz ↗</a>` : ''}` +
+      (st.editOrig ? '<br><b class="edit-note">Orijinali düzenliyorsun: değiştirdiğin her değer bu marka ve hava için "Elle girildi" diye herkese gösterilir.</b>' : '');
   }
   function choose() { syncTop(); st.target = copy(current()); persist(); refresh(); }
   $('segWind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.wind = b.dataset.v; choose(); });
@@ -205,13 +286,21 @@
     choose();
   });
   brandSel.addEventListener('change', () => { st.brand = brandSel.value; choose(); });
-  $('btnResetCustom').addEventListener('click', () => { st.custom[ckey()] = copy(original(st.brand, st.wind, st.sea).v); choose(); });
+  $('btnResetCustom').addEventListener('click', () => { st.custom[ckey()] = copy(original(st.brand, st.wind, st.sea).v); persist('custom'); choose(); });
+  $('btnEditOrig').addEventListener('click', () => { st.editOrig = !st.editOrig; syncTop(); refresh(); });
+  $('btnClearManual').addEventListener('click', () => {
+    if (st.manual[st.brand]) delete st.manual[st.brand][st.wind];
+    persist('manual'); choose();
+  });
+  document.addEventListener('sail-access', () => { syncTop(); refresh(); });
 
   function refresh() {
     const o = original(st.brand, st.wind, st.sea);
     const v = st.val;
     const diff = (a, b) => Math.abs(a - b) > 0.02;
-    const srcTag = k => o.src[k] ? '' : ' <b class="q" title="Bu kılavuzda yok: taslak varsayılanı">?</b>';
+    const srcTag = k => o.src[k] === 'kilavuz' ? ' <span class="src-tag ok" title="Yayımlanmış kılavuzdan">Orijinal · kılavuz</span>'
+      : o.src[k] === 'elle' ? ' <span class="src-tag man" title="Kılavuz değeri, elle girildi">Orijinal · elle girildi</span>'
+        : ' <span class="src-tag no" title="Kılavuzda yok: taslak varsayılanı">Kılavuzda yok</span>';
     const origTxt = (ov, cur, f) => st.mode === 'ozel' && diff(ov, cur) ? `<span class="orig">orijinal ${f(ov)}</span>` : '';
     tieCells.forEach((c, i) => {
       c.querySelector('.tie-v').textContent = fmt(v.ties[i]);
@@ -219,7 +308,7 @@
       c.classList.toggle('focus', st.focusTie === i);
       c.title = `Orijinal: ${fmt(o.v.ties[i])} mm`;
     });
-    $('whyTies').innerHTML = (o.note.ties ? `Kılavuz: ${esc(o.note.ties)}.` : 'Bu kılavuzda bağ ölçüsü yok; taslak varsayılanı.') +
+    $('whyTies').innerHTML = (o.note.ties && o.src.ties === 'kilavuz' ? `Kılavuz: ${esc(o.note.ties)}.` : o.src.ties === 'elle' ? 'Değerler elle girildi.' : 'Bu kılavuzda bağ ölçüsü yok; taslak varsayılanı.') +
       ' 0 mm = yelken direğe bitişik. Çizimde boşluk büyütülmüş.' + srcTag('ties');
     const ri = $('rakeIn');
     if (document.activeElement !== ri) ri.value = v.rake;
@@ -227,16 +316,16 @@
     $('rakeVal').innerHTML = `${origTxt(o.v.rake, v.rake, x => fmtM(x) + ' m')}${fmtM(v.rake)} m`;
     const winds = ['hafif', 'orta', 'sert'];
     $('rakeTab').innerHTML = `<tr><th>Kılavuz</th>${winds.map(w => `<th class="${w === st.wind ? 'cur' : ''}">${w[0].toUpperCase() + w.slice(1)}</th>`).join('')}</tr>` +
-      Object.keys(RAKE_TAB).map(b => `<tr class="${b === st.brand ? 'cur' : ''}"><td>${esc(BRANDS[b].name)}</td>${winds.map(w => `<td class="${b === st.brand && w === st.wind ? 'hit' : ''}">${RAKE_TAB[b][w] || '—'}</td>`).join('')}</tr>`).join('');
-    $('whyRake').innerHTML = (o.note.rake ? `Kılavuz: ${esc(o.note.rake.replace(/\.?$/, '.'))}` : 'Kılavuzda bu hava için ölçü yok.') +
-      ' Ölçü direk tepesinden kıç aynanın üst kenarına (metre); sayı küçüldükçe direk geriye yatar. * North yalnız taban ayara göre fark veriyor; Quantum havaya göre değil kiloya göre (40-45 kg).' + srcTag('rake');
+      Object.keys(RAKE_TAB).map(b => `<tr class="${b === st.brand ? 'cur' : ''}"><td>${esc(BRANDS[b].name)}</td>${winds.map(w => { const ob = original(b, w, 'duz'); const t = ob.src.rake === 'elle' ? fmtM(ob.v.rake) + ' ✎' : ob.src.rake === 'kilavuz' ? (RAKE_TAB[b][w] || fmtM(ob.v.rake)) : '—'; return `<td class="${b === st.brand && w === st.wind ? 'hit' : ''}">${t}</td>`; }).join('')}</tr>`).join('');
+    $('whyRake').innerHTML = (o.src.rake === 'elle' ? 'Değer elle girildi.' : o.note.rake && o.src.rake === 'kilavuz' ? `Kılavuz: ${esc(o.note.rake.replace(/\.?$/, '.'))}` : 'Kılavuzda bu hava için ölçü yok.') +
+      ' Ölçü direk tepesinden kıç aynanın üst kenarına (metre); sayı küçüldükçe direk geriye yatar. * North yalnız taban ayara göre fark veriyor; Quantum havaya göre değil kiloya göre (40-45 kg). ✎ elle girildi, — kılavuzda yok.' + srcTag('rake');
     for (const k in rows) {
       const r = rows[k], x = v[k];
       if (document.activeElement !== r.inp) r.inp.value = Math.round(x * 100);
       r.inp.style.setProperty('--p', Math.round(x * 100) + '%');
       r.val.innerHTML = origTxt(o.v[k], x, y => word(k, y).toLowerCase()) + word(k, x);
       const n = o.note[k];
-      r.why.innerHTML = (n ? `Kılavuz: ${esc(n)}` : esc(r.c.tip)) + srcTag(k);
+      r.why.innerHTML = (n && o.src[k] === 'kilavuz' ? `Kılavuz: ${esc(n)}` : o.src[k] === 'elle' ? `Değer elle girildi. ${esc(r.c.tip)}` : esc(r.c.tip)) + srcTag(k);
     }
     for (const r of panel.querySelectorAll('.ctl')) r.classList.toggle('active', st.active === r.dataset.k);
   }
@@ -633,7 +722,9 @@
   }
 
   drawHull();
+  if (window.VeloraAuth && window.VeloraAuth.getDoc) Cloud.start(); else document.addEventListener('velora-ready', () => Cloud.start(), { once: true });
   syncTop();
+  Cloud.show();
   st.val = copy(current());
   refresh();
   if (window.SailReport && window.SailReport.source) window.SailReport.source('ayar', () => ({ ozet: `${st.brand} ${st.wind}/${st.sea} ${st.mode}`, brand: st.brand, wind: st.wind, sea: st.sea, mode: st.mode, val: st.val }));

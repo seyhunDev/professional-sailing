@@ -140,3 +140,15 @@
 .rake-tab td:first-child, .rake-tab th:first-child { text-align: left; color: var(--text2); }
 .rake-tab tr.cur td { background: rgba(56,189,248,.07); }
 .rake-tab tr.cur td.hit, .rake-tab td.hit { color: var(--accent-ink); background: var(--accent); font-weight: 700; border-radius: 4px; }
+.src-tag { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 17px; white-space: nowrap; vertical-align: 1px; }
+.src-tag.ok { color: #34d399; background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.4); }
+.src-tag.man { color: #fbbf24; background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.45); }
+.src-tag.no { color: #94a3b8; background: rgba(148,163,184,.1); border: 1px dashed rgba(148,163,184,.5); }
+.reset-c.on { background: #fbbf24; color: #1c1917; border-color: #fbbf24; }
+.edit-row:has(> [hidden]:only-child) { display: none; }
+body.edit-orig .ctl { border-color: rgba(251,191,36,.45); }
+.edit-note { color: #fbbf24; font-weight: 600; }
+.sync { margin: -4px 0 10px; font-size: 12px; line-height: 1.4; color: var(--muted); padding-left: 16px; position: relative; }
+.sync::before { content: ''; position: absolute; left: 2px; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+.sync.bulut::before { background: #34d399; } .sync.hata::before { background: #f87171; } .sync.yaziliyor::before { background: #fbbf24; }
+.sync.hata { color: #fca5a5; }
