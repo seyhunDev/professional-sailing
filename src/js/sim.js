@@ -183,6 +183,11 @@
     });
   }
 
+  // elle sürmede çıkılamayan alanın sınırı: ince, soluk kesik çizgi (göze batmasın)
+  function drawBounds() {
+    const Bd = S.bounds(), g = $('courseLayer');
+    el('rect', { x: Bd.x0, y: Bd.y0, width: Bd.x1 - Bd.x0, height: Bd.y1 - Bd.y0, rx: 18, fill: 'none', stroke: 'rgba(186,230,253,.22)', 'stroke-width': 1.2, 'stroke-dasharray': '10 10', 'vector-effect': 'non-scaling-stroke', 'pointer-events': 'none' }, g);
+  }
   let cbNode = null;
   // ---------- Start bayrakları (5-4-1) ve hazırlık bayrağının yasaklı bölgesi ----------
   const FLAGS = ['P', 'I', 'Z', 'U', 'Siyah'];
@@ -477,7 +482,7 @@
     if (st.cam.follow || st.tween) applyCam();
     const v = view(), w = v.wind;
     drawWind(w, st.mode === 'setup' ? performance.now() / 1000 : v.t);
-    drawGusts(v); drawCourse(v);
+    drawGusts(v); drawCourse(v); drawBounds();
     const bl = $('boatLayer'); bl.innerHTML = '';
     const order = v.boats.filter(b => !b.gone).sort((a, b) => (a.mine ? 1 : 0) - (b.mine ? 1 : 0));
     if (st.show.shadow && st.mode !== 'setup') drawShadows(bl, order, w);
@@ -859,7 +864,7 @@
         if (d.s) d.s.events.push({ t: d.s.t, text: `${m.id}: ${e === 'tack' ? 'tramola' : 'kavança'} (elle)`, kind: '' });
       } else if (now - (d.lastEv[e] || 0) > 1500) {
         d.lastEv[e] = now;
-        driveNote(m, e === 'hit' ? 'Dikkat: çarpıyorsun!' : `Temas! (${e.slice(8)})`, 'bad');
+        driveNote(m, e === 'hit' ? 'Dikkat: çarpıyorsun!' : e === 'edge' ? 'Alan sınırı: geri dön' : `Temas! (${e.slice(8)})`, 'bad');
       }
     }
   }

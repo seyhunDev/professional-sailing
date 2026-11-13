@@ -21,7 +21,10 @@
   // aynı 5 dakikalık geri sayımda iki kat yol alır. Böylece kural/kaçış/şamandıra ayarları her sınıfta aynı çalışır.
   const CLOCK_REF = 300 / 8.4;    // Optimist 8 knot (3.5 kn orsa): 1 sim. sn = 35.7 gerçek sn
   let CLOCK_SCALE = CLOCK_REF, START_AT = 300 / CLOCK_SCALE;   // geri sayım varsayılan 5:00 (gerçek), BOAT.pre ile 2-5 dk
-  const MAN_MARGIN = 320;         // manuel tekne parkur kenarını bu kadar aşabilir (deniz parkurla bitmez); ötesinde zorunlu tramola
+  const MAN_MARGIN = 440;         // manuel tekne parkur kenarını bu kadar aşabilir (deniz parkurla bitmez); ötesinde zorunlu tramola
+  const MAN_Y = 260;              // elle sürmede parkurun üstüne / altına da bu kadar çıkılabilir
+  // elle sürülen teknenin çıkamayacağı alan (ekranda soluk kesik çizgi)
+  const bounds = () => ({ x0: -MAN_MARGIN + 20, x1: WORLD.w + MAN_MARGIN - 20, y0: -MAN_Y, y1: WORLD.h + MAN_Y });
   const TURN_RATE = 110;          // derece/sn
   let GUST_GAIN = 0.25;           // sağanakta hız artışı (setBoat: rüzgar +5 knot olunca sınıfın hızı ne kadar artıyor; en fazla eski sabit %25)
   let SPD = 1;                    // tekne hızı / Optimist 8 knot hızı (setBoat)
@@ -421,9 +424,12 @@
       // teknelerde gövde biçimi (uzun, dar): yan yana ya da kıç kıça yakın geçilebilir, gövdeler değince durur
       for (const o of others) {
         const g1 = hullGap(b, o);
-        if (g1 < HULL_GAP && g1 < hullGap({ x: x0, y: y0, h: h0 }, o)) { b.x = x0; b.y = y0; b.h = h0; b.v *= 0.3; if (!out.includes('contact:' + o.id)) out.push('contact:' + o.id); }
+        // zaten iç içeyse (öbür tekne senin üstüne geldiyse) engelleme: yoksa her yön gövdeyi 'yaklaştırır', tekne sonsuza dek takılır
+        const g0 = hullGap({ x: x0, y: y0, h: h0 }, o);
+        if (g1 < HULL_GAP && g1 < g0 && g0 >= HULL_GAP - 0.5) { b.x = x0; b.y = y0; b.h = h0; b.v *= 0.3; if (!out.includes('contact:' + o.id)) out.push('contact:' + o.id); }
       }
-      b.x = clamp(b.x, -MAN_MARGIN + 20, WORLD.w + MAN_MARGIN - 20); b.y = clamp(b.y, 15, WORLD.h - 10);
+      const Bd = bounds(), bx = clamp(b.x, Bd.x0, Bd.x1), by = clamp(b.y, Bd.y0, Bd.y1);
+      if (bx !== b.x || by !== b.y) { b.x = bx; b.y = by; b.v *= 0.5; if (!out.includes('edge')) out.push('edge'); }
     }
     b.drv = true;
     return out;
@@ -933,7 +939,7 @@
   global.SailSim = {
     runToEnd,
     DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, PRE_SEC, setBoat, upwindKn, BOAT,
-    get START_AT() { return START_AT; }, get CLOCK_SCALE() { return CLOCK_SCALE; }, MAN_MARGIN, PERSONAS, MINE_COLOR, OBSTACLES,
+    get START_AT() { return START_AT; }, get CLOCK_SCALE() { return CLOCK_SCALE; }, MAN_MARGIN, bounds, PERSONAS, MINE_COLOR, OBSTACLES,
     FLAG_RULE, signalState, inTriangle, zPoints, SHADOW_LEN, SEA, SEA_DEFAULT, knots, drive, steer, helmTurn, idealSheet, trimEff, SHEET_MAX, SHEET_OFF_MAX, defaultFleet, handStep, runHand, handRow, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
 })(typeof window !== 'undefined' ? window : globalThis);

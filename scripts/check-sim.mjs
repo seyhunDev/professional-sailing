@@ -179,6 +179,23 @@ for (const wind of [-12, 0, 12]) {
   console.log(`• canlı elle sürme: 10 sim. sn'de teknen ${(adv(m) / 50).toFixed(1)} boy, diğerleri ort. ${(avg / 50).toFixed(1)} boy, otomatikte teknen ${(autoAdv / 50).toFixed(1)} boy`);
   if (bad.length) { problems++; console.log('  ⚠ canlı elle sürme:', bad.join(', ')); }
 }
+// Üstüne gelen tekneye takılma: iç içe başlayan teknen öbürünün içinden çıkabilmeli; normal temasta durur; alan sınırını aşamaz
+{
+  S.setCourse(S.COURSE_DEFAULT);
+  const f = S.defaultFleet(2), me = f.find(b => b.mine), o = f.find(b => !b.mine), bad = [];
+  Object.assign(me, { x: 500, y: 450, h: 45, v: 40, manual: true, phase: 'race' }); Object.assign(o, { x: 505, y: 445, h: 45, v: 0, phase: 'wait' });
+  const ctx = { t: 0, wind: 0, gusts: [], boats: [me, o] };
+  for (let i = 0; i < 100; i++) S.drive(ctx, me, { autoTrim: true }, 0.05);
+  if (Math.hypot(me.x - 500, me.y - 450) < 40) bad.push('iç içe teknede takıldı');
+  Object.assign(me, { x: 500, y: 450, h: 0, v: 40 }); Object.assign(o, { x: 500, y: 380, h: 0 });
+  for (let i = 0; i < 60; i++) S.drive(ctx, me, { autoTrim: true }, 0.05);
+  if (me.y < 380 + 30) bad.push('normal temasta öbür teknenin içinden geçti');
+  Object.assign(me, { x: 500, y: 0, h: 0, v: 60 }); o.y = 2000;
+  for (let i = 0; i < 400; i++) S.drive(ctx, me, { autoTrim: true }, 0.05);
+  const Bd = S.bounds(); if (me.y < Bd.y0 - 0.01) bad.push('alan sınırını aştı');
+  console.log(`• elle sürme temas / alan sınırı: ${bad.length ? 'SORUN' : 'iç içeyken çıkıyor, temasta duruyor, sınırda kalıyor'}`);
+  if (bad.length) { problems++; console.log('  ⚠ temas:', bad.join(', ')); }
+}
 // Orsa (VMG) düğmesi: apazdan ya da pupadan bu kontrada orsa rotasına girer, rüzgar dönünce de orsada kalır
 {
   S.setCourse(S.COURSE_DEFAULT);

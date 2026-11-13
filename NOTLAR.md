@@ -176,9 +176,15 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Elle sürme alanı genişledi, sınır çizgisi, tekneye takılma düzeltildi (v1.87)
+- Kullanıcı: alan ekranda var gibi ama tekne ilerleyemiyor; sınırı soluk ince çizgiyle göster. Bir teknenin üstüne gelince takılıp hiç ilerlemedi.
+- `MAN_MARGIN` 320 → 440, yeni `MAN_Y` 260 (parkurun üstü/altı da; eskiden y 15…H−10 idi). `S.bounds()` tek kaynak; `drawBounds` soluk kesik çizgi (`non-scaling-stroke`). Sınıra gelince tekne yavaşlar, "Alan sınırı: geri dön" notu (`'edge'` olayı).
+- Takılma: gövde teması yalnız *temas yokken* yaklaşmayı engeller (`g0 >= HULL_GAP − 0.5`); öbür tekne senin üstüne geldiyse (iç içe) artık çıkabilirsin. Eskiden iç içeyken her yön gövdeyi "yaklaştırdığı" için tekne sonsuza dek duruyordu. check-sim'e "elle sürme temas / alan sınırı" denetimi.
+
 ### 2026-11-13 · Simülatörde start bayrakları 5-4-1 ve yasaklı bölge
 - Yapılanlar: hazırlık bayrağı seçimi (P/I/Z/U/Siyah) Parkur panelinde, işaret sırası ve kural açıklaması; hakem botunda sinyal direği; sol üstte sinyal kartı; I bandı / üçgen yasaklı bölge (göster/kapat); motor: I uçlardan dolaşma, Z %20, U UFD, siyah BFD; check-sim denetimi. Ekran görüntüleri proje dosyaları `start-bayraklari/`.
 - Yarım kalan / fikir: AI teknelerin kendisi son dakikada hattı geçmez (keepBehindLine); ihlali göstermek için tekneyi kurulumda hattın 2-3 boy üstüne koymak ya da elle sürmek gerekir. İstenirse teknelere "erken çıkar" davranışı eklenebilir. Genel geri çağırma (Birinci Tekrar) ve AP yok. Ses (korna) yok.
+
 ### 2026-11-13 · Tramola/Kavança tek düğme, ayarlanabilir geri sayım, elle sürmede gerçek zaman (v1.85)
 - Kullanıcı: Tramola ve Kavança tek düğme olsun (orsada Tramola, apazdan sonra Kavança); yarış varsayılan gerçek zamanda, 5 dk geri sayım; süre 2 dk'ya çekilebilsin; hızlandırılıp yavaşlatılabilsin.
 - `#hpTack` seyre göre: rüzgar açısı < 100° Tramola (turuncu), ≥ 100° Kavança (mor), `helmTurn('auto')`; T ve K aynı düğme. Ortadaki Kavança kaldırıldı.
