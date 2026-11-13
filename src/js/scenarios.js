@@ -1025,5 +1025,72 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // ---------- İA10: boşluğunu savun ----------
+  S.push({
+    id: 'ia10-defend-gap',
+    category: 'İleri Taktik', topic: 'Start · Yer tutma',
+    title: 'İA10 · Boşluğunu savun: rüzgaraltını kapat, kimse sokulmasın',
+    summary: 'Yer tutmanın ikinci yarısı: hızlanma boşluğunu korumak. Yeşil S, rüzgarüstü komşusu W\'nin hemen altına yerleşmiştir; rüzgaraltında bir tekne sığacak boşluk var. Geç gelen G bu boşluğa sokulmak ister; S burnunu hafif düşürüp yelken boş yanlamasına rüzgaraltına kayar ve boşluğu kapatır: G yer bulamaz, arkadan dolaşır. Turuncu H ise boşluğunun ortasında bekler; geç gelen K onun rüzgaraltına sokulur ve H iki teknenin arasında, hızlanacak yeri olmadan kalır.',
+    duration: 40,
+    baseSpeed: 40,
+    clockScale: 4,
+    wind: 0,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 32,
+    rungs: { boat: 'S', from: 32.5 },
+    boats: [
+      { id: 'S', name: 'Boşluğunu savunan', role: 'dogru', color: '#2a9d8f',
+        start: { x: 590, y: 480, h: 345 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 345, dur: 17, speed: 0.004, turn: 0, note: 'W\'nin altında, rüzgaraltı boş' },
+          { mode: 'hold', h: 325, dur: 3.2, speed: 0.004, turn: 0.8, drift: 7, driftH: 265, note: 'Burnu düşür, yanlamasına kay' },
+          { mode: 'hold', h: 345, dur: 9.4, speed: 0.004, turn: 0.8, note: 'Boşluk benim: kimse sığmaz' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10.4, turn: 0.8 }
+        ] },
+      { id: 'G', name: 'Sokulmak isteyen, yer bulamayan', role: 'hata', color: '#c77dff',
+        start: { x: 650, y: 628, h: 315 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 330, dur: 14, speed: 0.02, turn: 0, note: '"Son dakika sokulurum"' },
+          { mode: 'closehauled', tack: 'starboard', dur: 5.2, turn: 0.8, speed: 0.7, note: 'S\'nin rüzgaraltına sokulmak istiyor' },
+          { mode: 'hold', h: 330, dur: 2.0, speed: 0.02, turn: 0.8, note: 'Yer yok!' },
+          { mode: 'heading', h: 215, dur: 1.8, turn: 1.0, speed: 0.4, note: 'Arkadan dolaşıyor' },
+          { mode: 'hold', h: 345, dur: 7.8, speed: 0.01, turn: 1.0, note: 'İkinci sırada' },
+          { mode: 'closehauled', tack: 'starboard', dur: 9.2, turn: 0.8, note: 'Kirli havada' }
+        ] },
+      { id: 'H', name: 'Boşluğun ortasında bekleyen', role: 'hata', color: '#e76f51',
+        start: { x: 422, y: 478, h: 345 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 345, dur: 29.6, speed: 0.004, turn: 0, note: 'Boşluğun ortasında' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10.4, turn: 0.8, speed: 0.85, note: 'Altı dolu: hızlanamıyor' }
+        ] },
+      { id: 'K', name: 'Geç gelip sokulan', color: '#8d99ae',
+        start: { x: 485, y: 592, h: 315 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 330, dur: 14.5, speed: 0.02, turn: 0 },
+          { mode: 'closehauled', tack: 'starboard', dur: 5.4, turn: 0.8, speed: 0.7, note: 'H\'nin rüzgaraltına sokuluyor' },
+          { mode: 'hold', h: 345, dur: 9.7, speed: 0.004, turn: 0.9, note: 'H\'nin altında' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10.4, turn: 0.8 }
+        ] }
+    ],
+    crowd: [
+      { slot: 0.05 }, { slot: 0.115 }, { slot: 0.175 }, { slot: 0.43 }, { slot: 0.495 },
+      { slot: 0.67, id: 'W', name: 'S\'nin rüzgarüstü komşusu' }, { slot: 0.745 }, { slot: 0.82 },
+      { slot: 0.12, row: 1 }, { slot: 0.80, row: 1 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dk: yer tuttun, şimdi koru', text: 'Yeşil S erken geldi ve rüzgarüstü komşusu W\'nin hemen altına yerleşti (İA4\'teki gibi). Rüzgaraltında bir tekne sığacak açık su var: S\'nin hızlanma yolu. Turuncu H de yerini almış ama boşluğunun tam ortasında duruyor.' },
+      { t: 6, title: 'Boşluk herkesin gözünde', text: 'Son dakikaya doğru geç kalan tekneler bir boşluk arar. Rüzgaraltında açık su gören, oraya sokulur. Sokulan tekne rüzgaraltında olduğu için hak sahibi olur (Kural 11); ancak hakkı yeni kazanıyorsa sana kaçınma yeri vermek zorunda (Kural 15). Yani boşluğu kaptırırsan geri alamazsın.' },
+      { t: 14, title: 'G ve K geliyor', text: 'İki geç kalan tekne, mor G ve gri K, arkadan sancak kontrada geliyor. G, S\'nin rüzgaraltındaki boşluğa; K, H\'nin rüzgaraltındaki boşluğa bakıyor. Arkadan gelen tekne, bindirme (overlap) kurana kadar öndekine yol verir (Kural 12).' },
+      { t: 17, title: 'S boşluğu kapatıyor', text: 'S burnunu hafif düşürüp yelkeni boş bırakıyor ve tekne yanlamasına, rüzgaraltına kayıyor. Hız almıyor, öne gitmiyor: yalnızca boşluğu kapatıyor. Artık S ile soldaki tekne arasında G\'ye yer yok.' },
+      { t: 20.2, title: 'G yer bulamadı', text: 'G boşluğa geldiğinde yer yok. Zorlarsa S\'ye ya da soldaki tekneye çarpar: arkadan gelen olarak yol vermek onun işi (Kural 12). G bordalayıp arkadan dolaşıyor, ikinci sırada kalacak.' },
+      { t: 21, title: 'K, H\'nin altına sokuldu', text: 'H boşluğunun ortasında, iki yanında da yarım boydan fazla boşluk vardı. K rüzgaraltındaki yarıya sokuldu. H şimdi iki teknenin arasında: altında K, üstünde komşusu. Sinyalde düşüp hızlanacak yeri yok.' },
+      { t: 29.6, title: '10 sn kala doldur', text: 'S W\'den biraz uzaklaşmış ama altındaki boşluğu korudu: oraya düşüp dolduruyor ve hızlanıyor.' },
+      { t: 32, title: 'START', text: 'S temiz havada, tam hızda. H, K\'nin rüzgarüstünde ve yarım hızda: K hızlanınca H\'nin önü ve altı kapanıyor. G ikinci sırada.' },
+      { t: 36, title: 'Özet', text: 'Yerini aldıktan sonra rüzgaraltındaki boşluğu sahiplen: geç kalan biri bakıyorsa burnu hafif düşür, yelken boş yanlamasına kay, boşluğu daralt. Boşluğun ortasında beklersen yarısını kaptırırsın. Rüzgarüstündeki boşluğu kapatmak için de komşuna yakın dur.' }
+    ],
+    addBoat: { pin: { x: 290, y: 600 }, middle: { x: 500, y: 600 }, committee: { x: 720, y: 600 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);
