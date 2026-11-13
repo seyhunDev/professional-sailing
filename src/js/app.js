@@ -299,7 +299,7 @@
     el('path', { d: 'M0,-25 C 9,-16 11,2 9,22 L -9,22 C -11,2 -9,-16 0,-25 Z', fill: b.color, stroke: '#fff', 'stroke-width': 1.5 }, g);
     el('path', { d: 'M0,-20 C 6,-13 7,2 6,18 L -6,18 C -7,2 -6,-13 0,-20 Z', fill: 'rgba(255,255,255,0.18)' }, g);
     const my = -6, seed = E.seedOf(b.id);
-    const pose = E.sailPose(s.h, w, { v: s.v, base: state.scn.baseSpeed || 55, t: state.t, seed });
+    const pose = E.sailPose(s.h, w, { v: s.v, base: state.scn.baseSpeed || 55, t: state.t, seed, back: !!s.back });
     const sh = E.sailShape(pose, state.t, seed, 27, my);
     el('path', { d: sh.d, fill: 'rgba(255,255,255,0.85)', stroke: '#fff', 'stroke-width': 1 }, g);
     el('line', { x1: 0, y1: my, x2: sh.tip.x.toFixed(1), y2: sh.tip.y.toFixed(1), stroke: '#222', 'stroke-width': 1.5 }, g);

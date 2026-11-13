@@ -966,5 +966,64 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // ---------- İA9: bekleme teknikleri: orsala, yelkeni ters bas, geri git ----------
+  S.push({
+    id: 'ia9-brake-back',
+    category: 'İleri Taktik', topic: 'Start · Yer tutma',
+    title: 'İA9 · Fren yap: orsala, yelkeni ters bas, geri git',
+    summary: 'Seçtiğin boşluğa hızla geldin ve hat çok yakın: nasıl durursun? Yeşil B önce orsalayıp hızını keser, yetmeyince bumbayı rüzgara doğru itip yelkeni ters basar (backing) ve tekneyi bir boy geri götürür; sonra yelken boş, burun rüzgarda bekler. Geri giden tekne herkese yol verir (Kural 22.3): arkasına bakarak, kısa ve kontrollü. Turuncu E aynı hızla gelir ama yalnızca orsalar: tekne süzülür, hattın üstüne çıkar ve geri dönmek için dolaşırken yerini kaybeder.',
+    duration: 40,
+    baseSpeed: 40,
+    clockScale: 4,
+    wind: 0,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 32,
+    rungs: { boat: 'B', from: 32.5 },
+    expectEarly: ['E'],
+    boats: [
+      { id: 'B', name: 'Orsala, ters bas, geri git', role: 'dogru', color: '#2a9d8f',
+        start: { x: 735, y: 650, h: 315 }, v0: 34,
+        segs: [
+          { mode: 'closehauled', tack: 'starboard', dur: 5.6, turn: 0, note: 'Boşluğa hızla geliyor' },
+          { mode: 'hold', h: 0, dur: 2.0, speed: 0.004, turn: 0.6, note: '1) Orsala: hızını kes' },
+          { mode: 'back', h: 0, dur: 1.9, speed: 0.35, turn: 0, note: '2) Yelkeni ters bas: geri git (K22.3)' },
+          { mode: 'hold', h: 352, dur: 4.7, speed: 0.004, turn: 0.6, note: '3) Yelken boş, burun rüzgarda' },
+          { mode: 'back', h: 352, dur: 0.8, speed: 0.15, turn: 0, note: 'Kısa ters basış: yerini koru' },
+          { mode: 'hold', h: 345, dur: 13.8, speed: 0.004, turn: 0.6, note: 'Hat yarım boy önde, altı boş' },
+          { mode: 'closehauled', tack: 'starboard', dur: 11.0, turn: 0.8 }
+        ] },
+      { id: 'E', name: 'Fren yok: hattı geçen', role: 'hata', color: '#e76f51',
+        start: { x: 575, y: 640, h: 315 }, v0: 34,
+        segs: [
+          { mode: 'closehauled', tack: 'starboard', dur: 5.8, turn: 0, note: 'O da hızla geliyor' },
+          { mode: 'hold', h: 0, dur: 3.4, speed: 0.004, turn: 0.6, note: 'Yalnızca orsaladı: süzülüyor' },
+          { mode: 'hold', h: 0, dur: 1.2, speed: 0.004, turn: 0, note: 'Hattın üstüne çıktı!' },
+          { mode: 'heading', h: 250, dur: 1.4, turn: 0.8, speed: 0.6, note: 'Geri dönmek için dolaşıyor' },
+          { mode: 'heading', h: 175, dur: 3.2, turn: 0.9, speed: 0.6, note: 'Geri dönmek için dolaşıyor' },
+          { mode: 'heading', h: 60, dur: 1.0, turn: 1.0, speed: 0.6, note: 'Tramola, yeniden geliyor' },
+          { mode: 'hold', h: 345, dur: 14.2, speed: 0.01, turn: 1.0, note: 'Yerini kaybetti: geride' },
+          { mode: 'closehauled', tack: 'starboard', dur: 9.8, turn: 0.8, note: 'Kirli havada' }
+        ] }
+    ],
+    crowd: [
+      { slot: 0.06 }, { slot: 0.135 }, { slot: 0.21 }, { slot: 0.39 }, { slot: 0.465 }, { slot: 0.69 }, { slot: 0.765 }, { slot: 0.84 },
+      { slot: 0.10, row: 1 }, { slot: 0.80, row: 1 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dk: boşluğa hızla geliyorsun', text: 'Yeşil B hattın ortasındaki boşluğu seçmiş ve tam hızla geliyor. Hat yakın: bu hızla hiçbir şey yapmazsa hattın üstüne çıkar. Turuncu E de aynı durumda, solundaki boşluğa geliyor.' },
+      { t: 5.6, title: '1) Orsala: hızını kes', text: 'B burnunu rüzgara veriyor; yelken boşalıyor, tekne yavaşlıyor. Ama Optimist hafif bir tekne değil: bir süre daha süzülür. Orsalamak tek başına çoğu zaman yetmez.' },
+      { t: 7.6, title: '2) Yelkeni ters bas: geri git', text: 'B bumbayı rüzgara doğru itip yelkeni ters basıyor (backing). Yelken öbür yüzünden dolar ve tekneyi geri iter. Geri giderken dümen ters çalışır: burnu rüzgarda tutmak için dümeni ileri gidiyormuş gibi değil, ters yöne bas. B bir boy geri gidiyor.' },
+      { t: 8.5, title: 'Kural 22.3: geri giden yol verir', text: 'Yelkenini ters basıp geri giden tekne, ileri giden ya da duran herkese yol verir. B geri gitmeden önce arkasına bakıyor: arkası boş, yer var. Arkada biri varsa kısa bas, az git; ona çarparsan suçlu sensin.' },
+      { t: 9.2, title: 'E: yalnızca orsaladı', text: 'Turuncu E de orsaladı ama ters basmadı. Tekne süzülmeye devam ediyor ve burnu hattın üstüne çıkıyor. Henüz son dakika değil, ceza yok; ama geri dönmek için dolaşmak zorunda.' },
+      { t: 9.5, title: '3) Yelken boş, burun rüzgarda', text: 'B duruyor: yelken boş, burun rüzgarda, hat yarım boy önde. Gerekirse yelkeni bir an ters basıp kayan tekneyi yerinde tutuyor. İskotayı bir an çekmek yükseltir (İA7), ters basmak geri götürür: ikisiyle tekneyi istediğin yerde tutarsın.' },
+      { t: 11.2, title: 'E dolaşırken yerini kaybediyor', text: 'Hattın üstündeki tekne geri dönmek için bordalayıp kavança atar, hattın altına iner ve yeniden gelir. Bu 20-25 saniye sürer: E boşluğuna döndüğünde hattın 1 boydan fazla gerisinde, komşularından geride kalıyor.' },
+      { t: 28.8, title: '13 sn kala doldur', text: 'B burnunu düşürüp yelkeni dolduruyor. Hat yarım boy önde ve altı boş: hızlanırken hafif düşüp hattı tam hızla geçer.' },
+      { t: 32, title: 'START', text: 'B boşluğundan, hızla ve temiz havada çıkıyor. E komşularının gerisinden, onların pis rüzgarında çıkıyor.' },
+      { t: 36, title: 'Özet', text: 'Fren: orsala (hızı kes), yelkeni ters bas (geri git), yelken boş bekle. Geri giderken arkana bak: geri giden tekne yol verir (K22.3). Yalnızca orsalamak yetmez: tekne süzülür ve hattın üstüne çıkarsın.' }
+    ],
+    addBoat: { pin: { x: 290, y: 600 }, middle: { x: 500, y: 600 }, committee: { x: 720, y: 600 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);

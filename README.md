@@ -111,7 +111,7 @@ S.push({
 Kuvvetli rüzgar: `windKn` (göstergede şiddet, ≥15 "kuvvetli"), `leeway: {from, ramp, rate}` (start öncesi bekleyen filo rüzgaraltına kayar), `hold` segmentinde `drift` / `driftH` (senaryo teknesi beklerken kayar). `spots: [{x, y, r, from, to, label}]` sahnede kesikli halka.
 
 Segment modları: `closehauled` (rüzgara 45°, kontrayı takip eder; rüzgar dönerse rota da döner),
-`run` (pupa 150°), `heading` (sabit pusula), `hold` (orsalayıp bekleme, yelken boş).
+`run` (pupa 150°), `heading` (sabit pusula), `hold` (orsalayıp bekleme, yelken boş), `back` (yelken ters basılı, tekne rotasını koruyup `speed` × taban hızla geri gider; K22.3).
 `turn` dönüş süresi (s), `speed` hız çarpanı, `v0` başlangıç hızı.
 
 İsteğe bağlı görsel katmanlar (hepsi `from`/`to` sn aralığında görünür): `sightline` (pin'den hakem botuna transit),

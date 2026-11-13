@@ -173,6 +173,7 @@
         if (seg.mode === 'closehauled') target = tackHeading(w, seg.tack, seg.angle);
         else if (seg.mode === 'run') target = runHeading(w, seg.tack, seg.angle);
         else if (seg.mode === 'hold') target = seg.h != null ? seg.h : w; // rüzgara karşı dur
+        else if (seg.mode === 'back') target = seg.h != null ? seg.h : hStart;   // yelken ters: rota aynı, tekne geri gider
         else target = seg.h;
         const k = turn > 0 ? Math.min(1, (t - tStart) / turn) : 1;
         h = lerpAngle(hStart, target, k);
@@ -181,6 +182,7 @@
         const twa = Math.abs(norm180(h - w));
         let vt = speedFor(twa, base) * (seg.speed == null ? 1 : seg.speed);
         if (seg.mode === 'hold') vt = base * (seg.speed == null ? 0.1 : seg.speed);
+        if (seg.mode === 'back') vt = -base * (seg.speed == null ? 0.2 : seg.speed);   // K22.3: geri giden tekne
         v += (vt - v) * Math.min(1, DT / TAU);
         // engel kaçınma: önümüzde şamandıra/hakem botu varsa yana kaç, sonra rotaya dön
         // istenen rota (h) engele çarpıyorsa teğet rotaya yumuşakça dön, geçince yumuşakça rotaya dön
@@ -197,7 +199,7 @@
           x += fd.x * seg.drift * DT; y += fd.y * seg.drift * DT;
         }
         t += DT;
-        samples.push({ t, x, y, h: hUsed, v, note: seg.note || '' });
+        samples.push(seg.mode === 'back' ? { t, x, y, h: hUsed, v, note: seg.note || '', back: true } : { t, x, y, h: hUsed, v, note: seg.note || '' });
       }
     }
     return samples;
@@ -212,7 +214,7 @@
     while (hi - lo > 1) { const m = (lo + hi) >> 1; if (track[m].t <= t) lo = m; else hi = m; }
     const a = track[lo], b = track[hi];
     const k = (t - a.t) / (b.t - a.t);
-    return { t, x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), h: lerpAngle(a.h, b.h, k), v: a.v != null && b.v != null ? lerp(a.v, b.v, k) : a.v, note: a.note };
+    return { t, x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), h: lerpAngle(a.h, b.h, k), v: a.v != null && b.v != null ? lerp(a.v, b.v, k) : a.v, note: a.note, back: a.back };
   }
 
   // ---------- Yelken geometrisi ----------
