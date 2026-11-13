@@ -377,7 +377,7 @@ body.lay-strip .stage:has(#panel:not(.hidden)) .toast { display: none; }
 
 /* ---------- Elle sürme: en altta dümen paneli ----------
    iPad'i iki elle tutarken: sol başparmakla dümen (◀ ▶ yan yana), sağ başparmakla iskota (tek düğme: çek / sal),
-   ortada durum, zaman (Durdur / Otomatik) ve manevralar (Orsa, Tramola, Kavança, Oto iskota). */
+   yanında Orsa / Tramola; ortada hız, iskota göstergesi, Kavança. Zaman kutusu ayrı (#driveBar). */
 body.driving .main-row, body.driving .strip-host, body.driving.lay-strip .bottombar > .cat-rail { display: none; }
 .helm-pad { display: flex; align-items: stretch; gap: 12px; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; animation: hpIn .2s ease-out; }
 @keyframes hpIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -401,23 +401,34 @@ body.driving .main-row, body.driving .strip-host, body.driving.lay-strip .bottom
 .hp-sheetbtn.over { border-color: #ef4444; }
 .hp-sheetbtn.over .hp-sheeticon { color: #f87171; }
 .hp-mid { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
-.hp-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
 .hp-stat { display: flex; align-items: baseline; gap: 10px; min-width: 0; font-size: 13px; color: var(--text2); white-space: nowrap; }
 .hp-dot { width: 10px; height: 10px; border-radius: 50%; background: #fb923c; flex: 0 0 auto; align-self: center; animation: rbPulse 1.4s ease-in-out infinite; }
 .hp-kn { font-size: 22px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
 .hp-point { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-/* zaman grubu: saat + Durdur/Devam (kurulumda Start) + Otomatik/Bitir; hepsi bir arada, sağ üstte */
-.hp-clock { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; padding: 3px 3px 3px 12px; border-radius: 12px; background: var(--raised); border: 1px solid var(--border); }
-.hp-time { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; color: var(--text); margin-right: 4px; white-space: nowrap; }
+/* sağ başparmak: Orsa + Tramola sütunu, yanında büyük iskota düğmesi */
+.hp-right { display: flex; gap: 8px; flex: 0 0 auto; }
+.hp-col { display: flex; flex-direction: column; gap: 8px; width: 132px; }
+.hp-col .tb { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; padding: 0 10px; font-size: 15px; font-weight: 800; border-radius: 14px; }
+.hp-col .ci { width: 18px; height: 18px; }
+.hp-tack { background: rgba(251,146,60,.16); border-color: rgba(251,146,60,.6); color: #fed7aa; }
+.hp-tack:hover { background: rgba(251,146,60,.26); }
+/* elle sürerken zaman kutusu: sahnenin üstünde ortada */
+.drive-bar { position: absolute; top: 12px; left: 0; right: 0; margin: 0 auto; width: fit-content; z-index: 7; display: flex; align-items: center; gap: 8px; padding: 5px 5px 5px 14px;
+  background: var(--panel-solid); border: 1px solid rgba(251,146,60,.55); border-radius: 14px; box-shadow: var(--shadow); }
+.db-dot { width: 9px; height: 9px; border-radius: 50%; background: #fb923c; animation: rbPulse 1.4s ease-in-out infinite; }
+.db-time { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13.5px; color: var(--text); white-space: nowrap; margin-right: 2px; }
+.drive-bar .tb { display: inline-flex; align-items: center; gap: 6px; height: 38px; min-height: 38px; padding: 0 13px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.db-done { background: #16a34a; border-color: #22c55e; color: #fff; }
+.db-done:hover { background: #15803d; }
+.db-play.paused { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+body.lay-rail .drive-bar { right: calc(var(--rail-w) + 24px); }
+body.driving .mode-strip { display: none; }
+@media (max-width: 640px) { .drive-bar { top: auto; bottom: 10px; padding: 4px 4px 4px 10px; gap: 6px; } .drive-bar .tb { height: 36px; min-height: 36px; padding: 0 10px; font-size: 12.5px; } .db-time { font-size: 12.5px; } }
 .hp-mid .tb { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 44px; min-height: 44px; padding: 0 14px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
-.hp-clock .tb { height: 38px; min-height: 38px; padding: 0 12px; }
-.hp-done { background: #16a34a; border-color: #22c55e; color: #fff; }
-.hp-done:hover { background: #15803d; }
-.hp-play.paused { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .hp-gwrap { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .hp-gwrap .trim-gauge { flex: 1 1 auto; }
 .hp-trimtxt { flex: 0 1 auto; font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55%; }
-.hp-actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.hp-actions { display: grid; grid-template-columns: 1fr; gap: 6px; }
 .hp-actions .tb { padding: 0 8px; }
 .hp-vmg.on { background: #0ea5e9; border-color: #38bdf8; color: #04202f; }
 /* iskota göstergesi: 0° (tam çekik) … 90° (tam salık); yeşil çentik ideal iskota, yuvarlak senin iskotan */
@@ -432,32 +443,26 @@ body.driving .gust-bar { display: none; }
   .hp-sheetbtn { width: 104px; }
   .hp-point { display: none; }
 }
-/* telefon: dümen solda (iki dar düğme), iskota sağda; ortada sıkışık iki satır */
+/* telefon: dümen solda, Orsa/Tramola + iskota sağda; ortada hız ve gösterge */
+@media (max-width: 1100px) { .hp-col { width: 112px; } }
 @media (max-width: 640px), (max-height: 460px) {
-  .helm-pad { gap: 6px; }
-  .hp-steer { gap: 4px; }
-  .hp-rud { width: 50px; min-height: 0; border-radius: 12px; }
-  .hp-sheetbtn { width: 62px; min-height: 0; border-radius: 12px; }
+  .helm-pad { gap: 5px; }
+  .hp-steer, .hp-right { gap: 4px; }
+  .hp-rud { width: 48px; min-height: 0; border-radius: 12px; }
+  .hp-sheetbtn { width: 58px; min-height: 0; border-radius: 12px; }
   .hp-rud .hp-arrow { font-size: 22px; }
   .hp-rud b, .hp-sheetbtn b { font-size: 13px; }
   .hp-rud small, .hp-sheetbtn small { display: none; }
-  .hp-sheeticon { width: 26px; height: 26px; }
+  .hp-sheeticon { width: 24px; height: 24px; }
+  .hp-col { width: 74px; gap: 4px; }
+  .hp-col .tb { font-size: 12px; min-height: 40px; padding: 0 4px; border-radius: 11px; }
+  .hp-col .ci { display: none; }
   .hp-mid { gap: 5px; }
-  .hp-top { gap: 4px; }
   .hp-kn { font-size: 15px; }
-  .hp-stat { gap: 5px; }
-  .hp-clock { padding: 2px; gap: 3px; border-radius: 10px; }
-  .hp-time { display: none; }
-  .hp-clock .tb { height: 34px; min-height: 34px; width: 38px; padding: 0; }
-  .hp-clock .tb span { display: none; }
-  .hp-trimtxt { display: none; }
-  .hp-mid .tb { height: 36px; min-height: 36px; font-size: 12px; }
-  .hp-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
-  .hp-actions .ci { display: none; }
-  #hpAuto { padding: 0 4px; font-size: 11.5px; }
-  #hpAuto::before { display: none; }
+  .hp-point, .hp-trimtxt { display: none; }
+  .hp-mid .tb { height: 36px; min-height: 36px; font-size: 11.5px; padding: 0 4px; }
+  .hp-actions { grid-template-columns: 1fr; gap: 4px; }
 }
-@media (max-height: 460px) { .hp-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 body.driving .bottombar { padding-bottom: calc(14px + var(--sab)); }
 
 /* durum rozetleri (2026-11-13): sağ üstte, simge + tek kelime; animasyonu kapatmaz */

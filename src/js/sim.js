@@ -53,10 +53,19 @@
       const w = B.w / c.z, h = B.h / c.z, vw = w * B.vis;      // görünen genişlik (masaüstünde panel sağı kapatır)
       let cx = c.x == null ? B.x + B.w * B.vis / 2 : c.x, cy = c.y == null ? B.y + B.h / 2 : c.y;
       const cov = sheetCover();                                // alttan kapanan kısım (dikey ekranda açık ayar paneli)
-      if (c.follow) { const m = view().boats.find(b => b.mine && !b.gone); if (m) { cx += (m.x - cx) * 0.18; cy += (m.y + h * (0.5 - (1 - cov) * 0.56) - cy) * 0.18; } }   // tekne açık kalan alanın ortasında
+      const lock = !!(st.drive && c.follow);                  // elle sürerken: tekne hep ekranın ortasında
+      if (c.follow) {
+        const m = view().boats.find(b => b.mine && !b.gone);
+        if (m) {
+          // kare hızından bağımsız yumuşak takip (elle sürerken sıkı: gecikme ~0.1 sn, titreme yok)
+          const now = performance.now(), dt = Math.min(0.1, Math.max(0, (now - (c.ft || now)) / 1000)); c.ft = now;
+          const k = lock ? 1 - Math.exp(-dt * 10) : 0.18, ty = m.y + h * (0.5 - (1 - cov) * (lock ? 0.5 : 0.56));
+          cx += (m.x - cx) * k; cy += (ty - cy) * k;
+        }
+      }
       const ex = cov * h;                              // telefonda alt sayfanın kapattığı kısım: parkur onun üstüne kaydırılabilsin
       const mx = S.MAN_MARGIN + 40;                              // manuel tekne parkur kenarını aşabilir: kamera da gidebilsin
-      cx = clampN(cx, B.x - mx + vw / 2, B.x + B.w * B.vis + mx - vw / 2); cy = clampN(cy, B.y + h / 2, B.y + B.h - h / 2 + ex);
+      if (!lock) { cx = clampN(cx, B.x - mx + vw / 2, B.x + B.w * B.vis + mx - vw / 2); cy = clampN(cy, B.y + h / 2, B.y + B.h - h / 2 + ex); }   // parkur kenarında kamera durmaz: tekne ortada kalır
       c.x = cx; c.y = cy;
       st.vb = { x: cx - vw / 2, y: cy - h / 2, w, h };
     }
@@ -78,6 +87,7 @@
   function zoomTo(z, clientX, clientY, anchorW) {
     const B = st.base, c = st.cam, r = $('course').getBoundingClientRect();
     z = Math.max(1, Math.min(Z_MAX, z));
+    if (st.drive && c.follow) { c.z = Math.max(1.2, z); applyCam(); return; }   // elle sürerken: tekne ortada kalarak yakınlaş / uzaklaş
     const fx = r.width ? (clientX - r.left) / r.width : 0.5, fy = r.height ? (clientY - r.top) / r.height : 0.5;
     const P = anchorW || { x: st.vb.x + fx * st.vb.w, y: st.vb.y + fy * st.vb.h };
     const w = B.w / z, h = B.h / z;
@@ -85,6 +95,7 @@
     applyCam();
   }
   function zoomBy(k) {
+    if (st.drive && st.cam.follow) { zoomTo(st.cam.z * k, 0, 0); return; }
     const r = $('course').getBoundingClientRect(), sx = r.left + r.width * st.base.vis / 2, sy = r.top + r.height / 2;
     // tüm parkur görünürken ilk yakınlaştırma senin teknene (yoksa ekran ortasına)
     const m = st.cam.z <= 1.001 && k > 1 && view().boats.find(b => b.mine && !b.gone);
@@ -98,10 +109,10 @@
   }
   function panBy(dxPx, dyPx) {
     const r = $('course').getBoundingClientRect(), u = st.vb.w / (r.width || 1);
-    st.cam.follow = false; st.cam.x = (st.cam.x == null ? st.base.x + st.base.w * st.base.vis / 2 : st.cam.x) - dxPx * u; st.cam.y = (st.cam.y == null ? st.base.y + st.base.h / 2 : st.cam.y) - dyPx * u;
+    st.cam.follow = false; st.cam.panAt = performance.now(); st.cam.x = (st.cam.x == null ? st.base.x + st.base.w * st.base.vis / 2 : st.cam.x) - dxPx * u; st.cam.y = (st.cam.y == null ? st.base.y + st.base.h / 2 : st.cam.y) - dyPx * u;
     applyCam();
   }
-  function camFit() { st.cam.z = 1; st.cam.follow = false; applyCam(); }
+  function camFit() { st.cam.z = 1; st.cam.follow = false; st.cam.panAt = null; applyCam(); }
   function camFollow() {
     const c = st.cam; c.follow = !c.follow;
     if (c.follow && c.z < 2.2) c.z = 2.2;
@@ -125,7 +136,7 @@
       return { t: 0, wind: st.wind, gusts: st.gusts, startAt: S.START_AT,
         boats: st.fleet.map(b => (b.drv ? { ...b } : { ...b, h: st.wind + (b.tack === 'starboard' ? -25 : 25), v: 0 })), events: [] };
     }
-    if (st.drive && st.drive.s) return st.drive.s;      // yarışta elle sürerken: donmuş an
+    if (st.drive && st.drive.s) return st.drive.view || st.drive.s;   // yarışta elle sürerken: canlı durum (ekranda ara değerli)
     return st.sim;
   }
 
@@ -604,7 +615,12 @@
   }
   function tick(ts) {
     const dt = Math.min(0.1, (ts - st.lastTs) / 1000 || 0); st.lastTs = ts;
-    if (st.drive) driveTick(dt);
+    if (st.drive) {
+      driveTick(dt);
+      // elle sürerken haritayı kaydırdıysan: 2.5 sn dokunulmazsa kamera tekrar teknene döner
+      const c = st.cam;
+      if (st.drive && !c.follow && c.panAt && !st.drag && !st.pinch && performance.now() - c.panAt > 2500) { c.follow = true; c.panAt = null; c.ft = 0; if (c.z < 1.2) c.z = 1.8; }
+    }
     else if (st.mode === 'run') {
       st.playT += dt * st.speed / S.CLOCK_SCALE;   // 1× = gerçek zaman (start → şamandıra ~15 dk)
       if (st.playT >= lastT()) {
@@ -667,7 +683,8 @@
     if (st.cat) openCat(null);                          // ayar paneli kapansın: sahne ve dümen paneli öne çıksın
     st.camPrev = { ...st.cam };                         // kamera tekneni izlesin; çıkınca eski görünüme döner
     if (!st.cam.follow) { st.cam.follow = true; st.cam.z = Math.max(st.cam.z, phoneMq.matches ? 1.6 : 1.8); }
-    Object.assign(st.drive, { keyRud: 0, touchRud: 0, autoTrim: st.autoTrim !== false, noteAt: 0, lastEv: {} });
+    Object.assign(st.drive, { keyRud: 0, touchRud: 0, autoTrim: true,   // iskota hep otomatik: çekikken seyre, salıkken rüzgara göre (kullanıcı 2026-11-13)
+      noteAt: 0, lastEv: {} });
     toast(st.drive.live ? 'Elle sürüyorsun · yarış akıyor, herkes hareket ediyor. ← → dümen, ↑ ↓ iskota' : 'Elle sürüyorsun · start\'tan önce yerini al. ← → dümen, ↑ ↓ iskota, Start ▶ ile yarış başlar');
     updatePanel(true);
   }
@@ -728,6 +745,7 @@
       d.acc = Math.min(d.acc + dt * LIVE_TEMPO, S.DT * 8);
       while (d.acc >= S.DT - 1e-9) {
         d.acc -= S.DT;
+        d.prev = d.s.boats.map(b => ({ x: b.x, y: b.y, h: b.h }));
         driveEvents(m, S.handStep(d.s, m, inp, d.path));
         d.n++;
         if (d.n % 2 === 0) d.frames.push(S.clone(d.s));
@@ -740,6 +758,11 @@
     }
     if (d.noteAt && performance.now() > d.noteAt) { m.note = ''; d.noteAt = 0; }
     if (st.mode !== 'setup') { st.sim = ctx; st.playT = ctx.t; }
+    if (d.live) {
+      // ekranda iki adım arası ara değer: yarış 0.05 sn'lik adımlarla ilerler, tekneler (ve kamera) titremeden kaysın
+      const a = Math.max(0, Math.min(1, d.acc / S.DT)), P = d.prev;
+      d.view = P && P.length === ctx.boats.length ? { ...ctx, boats: ctx.boats.map((b, i) => ({ ...b, x: P[i].x + (b.x - P[i].x) * a, y: P[i].y + (b.y - P[i].y) * a, h: E.lerpAngle(P[i].h, b.h, a) })) } : ctx;
+    }
   }
   function drivePause() {
     const d = st.drive; if (!d) return;
@@ -794,24 +817,18 @@
     if (d.hold) { m.helm = null; if (d.autoTrim) m.sheetOff = 0; else m.sheet = null; toast('Orsa: teknen orsa rotasına giriyor ve orada kalıyor · dümene dokununca bırakır'); }
     lastHelmKey = '';
   }
-  function toggleAutoTrim() {
-    if (!st.drive) return;
-    const m = driveBoat(); st.drive.autoTrim = st.autoTrim = !st.drive.autoTrim;
-    if (m && st.drive.autoTrim) m.sheetOff = 0;
-    toast(st.drive.autoTrim ? 'Oto iskota: dümen kırdıkça iskota kendiliğinden çekilir / salınır' : 'İskota sende: kafa açarken sal (↓), orsalarken çek (↑)');
-  }
   // dümen paneli (en altta, yalnız elle sürerken)
   const POS = a => a < 30 ? 'rüzgara karşı' : a < 60 ? 'orsa' : a < 120 ? 'apaz' : a < 165 ? 'geniş apaz' : 'pupa';
   let lastHelmKey = '';
   function helmUpdate(v) {
     const pad = $('helmPad'), m = v.boats.find(b => b.mine), show = !!(st.drive && m);
-    if (pad.classList.contains('hidden') === show) { pad.classList.toggle('hidden', !show); document.body.classList.toggle('driving', show); }
+    if (pad.classList.contains('hidden') === show) { pad.classList.toggle('hidden', !show); $('driveBar').classList.toggle('hidden', !show); document.body.classList.toggle('driving', show); }
     if (!show) { lastHelmKey = ''; return; }
     const d = st.drive, abs = Math.abs(E.norm180(m.h - v.wind)), ideal = S.idealSheet(abs);
     const sheet = m.sheet != null ? m.sheet : ideal;
     const dlt = sheet - ideal, eff = abs < 30 ? 1 : S.trimEff(dlt), stb = E.norm180(m.h - v.wind) < 0;
     const trimTxt = abs < 30 ? 'Rüzgara karşı: yelken boş' : dlt > 8 ? 'Fazla salık: pırpırlıyor' : dlt < -8 ? 'Fazla çekik: boğuluyor' : 'İskota iyi';
-    const rem = (v.startAt - v.t) * S.CLOCK_SCALE, tTxt = !d.live ? 'Kurulum · start yok' : rem > 0 ? `Start'a ${S.fmt(rem / S.CLOCK_SCALE)}` : `Yarış ${S.fmt(-rem / S.CLOCK_SCALE)}`;
+    const rem = (v.startAt - v.t) * S.CLOCK_SCALE, tTxt = !d.live ? 'Kurulum' : rem > 0 ? `Start'a ${S.fmt(rem / S.CLOCK_SCALE)}` : `Yarış ${S.fmt(-rem / S.CLOCK_SCALE)}`;
     const sk = sheetState(m, v.wind, d.autoTrim);
     const key = [d.live, d.paused, d.hold, sk.st, Math.round(abs), Math.round(sheet), Math.round(eff * 100), stb, m.v.toFixed(1), d.autoTrim, m.phase, tTxt].join('|');
     if (key === lastHelmKey) return; lastHelmKey = key;
@@ -823,7 +840,6 @@
     tg.querySelector('.tg-ideal').style.left = pct(ideal); tg.querySelector('.tg-knob').style.left = pct(sheet);
     tg.className = 'trim-gauge ' + (abs < 30 ? 'off' : Math.abs(dlt) <= 8 ? 'ok' : Math.abs(dlt) <= 20 ? 'meh' : 'bad');
     $('hpTrimTxt').textContent = `${trimTxt} · güç %${Math.round(eff * 100)}`;
-    $('hpAuto').classList.toggle('on', !!d.autoTrim);
     $('hpVmg').classList.toggle('on', d.hold === 'orsa'); $('hpVmg').setAttribute('aria-pressed', d.hold === 'orsa');
     const sb = $('hpSheet');
     sb.className = 'hp-sheetbtn ' + sk.st;
@@ -990,7 +1006,7 @@
   function pinchStart() {
     const [a, b] = [...st.pts.values()];
     st.pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y) || 1, z0: st.cam.z, W: toWorld({ clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 }) };
-    st.drag = null; st.drawPts = null; st.legPrev = null; st.cam.follow = false;
+    st.drag = null; st.drawPts = null; st.legPrev = null; if (!st.drive) st.cam.follow = false;   // elle sürerken iki parmak yalnız yakınlaştırır
   }
   function onDown(ev) {
     st.pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
@@ -1493,7 +1509,6 @@
   holdBtn('hpRight', () => { if (st.drive) st.drive.touchRud = 1; }, () => { if (st.drive) st.drive.touchRud = 0; });
   $('hpSheet').addEventListener('click', sheetToggle);
   $('hpVmg').addEventListener('click', vmgToggle);
-  $('hpAuto').addEventListener('click', toggleAutoTrim);
   $('hpTack').addEventListener('click', () => { helmTurn('tack'); flash('hpTack'); });
   $('hpJibe').addEventListener('click', () => { helmTurn('jibe'); flash('hpJibe'); });
   $('hpGo').addEventListener('click', () => { if (!st.drive) return; const live = st.drive.live, run = live && !st.drive.paused; exitDrive(live ? run : false); });
@@ -1512,7 +1527,6 @@
       if (k === 'ArrowDown' || k === 's' || k === 'S') { e.preventDefault(); sheetBy(1); return; }
       if (k === 't' || k === 'T') { helmTurn('tack'); flash('hpTack'); return; }
       if (k === 'k' || k === 'K') { helmTurn('jibe'); flash('hpJibe'); return; }
-      if (k === 'o' || k === 'O') { toggleAutoTrim(); return; }
       if (k === 'v' || k === 'V') { vmgToggle(); return; }
       if (k === 'i' || k === 'I') { sheetToggle(); return; }
       if (k === 'Escape' || k === 'Enter') { e.preventDefault(); $('hpGo').click(); return; }
