@@ -112,8 +112,9 @@
     st.cam.follow = false; st.cam.panAt = performance.now(); st.cam.x = (st.cam.x == null ? st.base.x + st.base.w * st.base.vis / 2 : st.cam.x) - dxPx * u; st.cam.y = (st.cam.y == null ? st.base.y + st.base.h / 2 : st.cam.y) - dyPx * u;
     applyCam();
   }
-  function camFit() { st.cam.z = 1; st.cam.follow = false; st.cam.panAt = null; applyCam(); }
+  function camFit() { if (st.drive) return; st.cam.z = 1; st.cam.follow = false; st.cam.panAt = null; applyCam(); }
   function camFollow() {
+    if (st.drive) return;                                   // elle sürerken kamera hep teknende
     const c = st.cam; c.follow = !c.follow;
     if (c.follow && c.z < 2.2) c.z = 2.2;
     applyCam(); toast(c.follow ? 'Kamera senin tekneni takip ediyor · kaydırınca bırakır' : 'Takip kapandı');
@@ -121,7 +122,7 @@
   function camUi() {
     const c = st.cam, zb = $('zoomVal'); if (!zb) return;
     zb.textContent = `${Math.round(c.z * 100)}%`;
-    $('btnZoomOut').disabled = c.z <= 1.001; $('btnZoomIn').disabled = c.z >= Z_MAX - 0.001; $('btnZoomFit').disabled = c.z <= 1.001 && !c.follow;
+    $('btnZoomOut').disabled = c.z <= (st.drive ? 1.201 : 1.001); $('btnZoomIn').disabled = c.z >= Z_MAX - 0.001; $('btnZoomFit').disabled = c.z <= 1.001 && !c.follow;
     $('btnFollow').classList.toggle('on', !!c.follow);
   }
   function toWorld(ev) {
@@ -619,7 +620,7 @@
       driveTick(dt);
       // elle sürerken haritayı kaydırdıysan: 2.5 sn dokunulmazsa kamera tekrar teknene döner
       const c = st.cam;
-      if (st.drive && !c.follow && c.panAt && !st.drag && !st.pinch && performance.now() - c.panAt > 2500) { c.follow = true; c.panAt = null; c.ft = 0; if (c.z < 1.2) c.z = 1.8; }
+      if (st.drive && !c.follow) { c.follow = true; c.ft = 0; if (c.z < 1.2) c.z = 1.8; }   // elle sürerken kamera hep teknende
     }
     else if (st.mode === 'run') {
       st.playT += dt * st.speed / S.CLOCK_SCALE;   // 1× = gerçek zaman (start → şamandıra ~15 dk)
@@ -1010,6 +1011,7 @@
   }
   function onDown(ev) {
     st.pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+    if (st.pts.size === 2 && st.drive) { st.drag = null; ev.preventDefault(); return; }   // elle sürerken parmakla yakınlaştırma yok: + / − düğmeleri
     if (st.pts.size === 2) { pinchStart(); capture(ev); ev.preventDefault(); return; }
     if (st.pts.size > 2 || st.pinch) return;
     const p = toWorld(ev);
@@ -1038,7 +1040,7 @@
     if (st.drag && st.drag.kind === 'pan') {
       const d = st.drag;
       if (Math.hypot(ev.clientX - d.x0, ev.clientY - d.y0) > 4) d.moved = true;
-      if (d.moved) { panBy(ev.clientX - d.lx, ev.clientY - d.ly); $('course').style.cursor = 'grabbing'; }
+      if (d.moved && !st.drive) { panBy(ev.clientX - d.lx, ev.clientY - d.ly); $('course').style.cursor = 'grabbing'; }
       d.lx = ev.clientX; d.ly = ev.clientY; return;
     }
     if (st.legPrev) { legAim(toWorld(ev)); return; }

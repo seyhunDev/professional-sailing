@@ -158,9 +158,13 @@ body.sim { position: fixed; inset: 0; overscroll-behavior: none; }
 .zoom-ctl .zc-txt .ci { width: 15px; height: 15px; }
 .zoom-ctl #btnFollow.on { background: rgba(251,146,60,.18); color: #fed7aa; }
 #zoomVal { text-align: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; padding: 1px 0; }
+/* elle sürerken: yalnız + / − (büyük), Tümü ve Takip yok (kamera hep teknende) */
+body.driving .zoom-ctl #btnZoomFit, body.driving .zoom-ctl #btnFollow { display: none; }
+body.driving .zoom-ctl button { min-width: 56px; height: 54px; font-size: 28px; }
 @media (max-width: 640px) { .zoom-ctl { left: auto; right: 10px; bottom: auto; top: 10px; } }
 @media (max-width: 640px) { .stage:has(.route-bar:not(.hidden)) .zoom-ctl { display: none; } }
 @media (max-width: 640px) { .zoom-ctl { padding: 3px; gap: 0; border-radius: 12px; } .zoom-ctl button { min-width: 40px; height: 36px; font-size: 18px; } .zoom-ctl .zc-txt { font-size: 11px; height: 30px; padding: 0 6px; } #zoomVal { display: none; } }
+@media (max-width: 640px) { body.driving .zoom-ctl button { min-width: 48px; height: 46px; font-size: 24px; } }
 .tb.accent.pulse:not(:disabled) { box-shadow: 0 0 0 0 rgba(251,146,60,.5); animation: tackPulse 2s ease-out infinite; }
 @keyframes tackPulse { 0% { box-shadow: 0 0 0 0 rgba(251,146,60,.45); } 70%, 100% { box-shadow: 0 0 0 8px rgba(251,146,60,0); } }
 
