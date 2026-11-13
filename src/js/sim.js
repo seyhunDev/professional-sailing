@@ -419,42 +419,52 @@
     }
   }
 
+  // Yazı genişliği ölçümü (kutulu metinler tahminle değil ölçüyle; NOTLAR → Arayüz kontrol listesi)
+  const measureCtx = document.createElement('canvas').getContext('2d');
+  const textW = (str, size, weight = 600) => { measureCtx.font = `${weight} ${size}px Inter, system-ui, -apple-system, sans-serif`; return measureCtx.measureText(str).width; };
+  // Gösterge kartı (sol üst): pusula + saat + sınıf satırı tek kartta, altında sinyal kartı.
+  // Ekranda hep aynı boyda: 1 birim = 1 ekran pikseli (yatay telefonda 0.85), yakınlaştırmayla büyüyüp küçülmez.
   function drawHud(v) {
     const g = $('hudLayer'); g.innerHTML = '';
-    const vb = st.vb, svg = $('course'), upp = vb.w / (svg.clientWidth || vb.w);
-    const k = Math.max(0.8, Math.min(1.8, upp * 0.95));
-    const hg = el('g', { transform: `translate(${vb.x.toFixed(1)},${vb.y.toFixed(1)}) scale(${k.toFixed(3)})` }, g);
-    const cx = 64, cy = 64, w = v.wind;
-    el('circle', { cx, cy, r: 44, fill: 'rgba(7,18,30,0.72)', stroke: 'rgba(255,255,255,0.18)', 'stroke-width': 1 }, hg);
-    for (let a = 0; a < 360; a += 30) { const f = E.fwd(a), r1 = a % 90 ? 39 : 35;
-      el('line', { x1: cx + f.x * r1, y1: cy + f.y * r1, x2: cx + f.x * 42, y2: cy + f.y * 42, stroke: 'rgba(255,255,255,.35)', 'stroke-width': a % 90 ? 1 : 1.5 }, hg); }
+    const vb = st.vb, svg = $('course'), sw = svg.clientWidth || vb.w, sh = svg.clientHeight || vb.h, upp = vb.w / sw;
+    const k = upp * (sh < 300 ? 0.75 : sh < 420 ? 0.85 : 1);
+    const hg = el('g', { transform: `translate(${vb.x.toFixed(1)},${vb.y.toFixed(1)}) scale(${k.toFixed(4)})`, class: 'hud' }, g);
+    const w = v.wind, X = 12, Y = 12, H = 100;
+    const rem = (v.startAt - v.t) * S.CLOCK_SCALE, on = rem > 0;
+    const col = on ? (rem <= 10 ? '#f87171' : '#fbbf24') : '#34d399';
+    const bc = v.boat || st.boat, acc = on && rem <= bc.accelAt;
+    const sub = acc ? 'Yelken doldur, hızlan!' : `${S.CLASSES[bc.cls].name} · ${bc.windKn} kn` + (on ? ` · hızlan ${bc.accelAt} sn` : '');
+    const subW = textW(sub, 11, 700) + (acc ? 20 : 0);
+    const RX = X + 100, W = Math.max(236, Math.ceil(100 + 16 + subW + 16));
+    el('rect', { x: X, y: Y, width: W, height: H, rx: 16, fill: 'rgba(9,20,33,0.86)', stroke: 'rgba(148,178,208,.22)', 'stroke-width': 1 }, hg);
+    // pusula
+    const cx = X + 50, cy = Y + 44, r = 32;
+    el('circle', { cx, cy, r, fill: 'rgba(255,255,255,.03)', stroke: 'rgba(255,255,255,.16)', 'stroke-width': 1 }, hg);
+    for (let a = 0; a < 360; a += 30) { const f = E.fwd(a), r1 = a % 90 ? r - 4 : r - 7;
+      el('line', { x1: cx + f.x * r1, y1: cy + f.y * r1, x2: cx + f.x * (r - 1), y2: cy + f.y * (r - 1), stroke: a === 0 ? '#7dd3fc' : 'rgba(255,255,255,.32)', 'stroke-width': a % 90 ? 1 : 1.6 }, hg); }
     const d = E.fwd(w + 180);
-    el('line', { x1: cx - d.x * 28, y1: cy - d.y * 28, x2: cx + d.x * 20, y2: cy + d.y * 20, stroke: '#7dd3fc', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'marker-end': 'url(#arrowHead)' }, hg);
-    el('rect', { x: cx - 38, y: cy + 52, width: 76, height: 20, rx: 10, fill: 'rgba(7,18,30,0.72)' }, hg);
-    el('text', { x: cx, y: cy + 66, 'text-anchor': 'middle', fill: '#fff', 'font-size': 11, 'font-weight': 600 }, hg).textContent = `Rüzgar ${Math.round(E.norm360(w))}°`;
+    el('line', { x1: cx - d.x * 21, y1: cy - d.y * 21, x2: cx + d.x * 14, y2: cy + d.y * 14, stroke: '#7dd3fc', 'stroke-width': 3.2, 'stroke-linecap': 'round', 'marker-end': 'url(#arrowHead)' }, hg);
+    el('text', { x: cx, y: Y + H - 10, 'text-anchor': 'middle', fill: 'rgba(255,255,255,.62)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': .6 }, hg).textContent = `RÜZGAR ${Math.round(E.norm360(w))}°`;
+    // ayraç + saat
+    el('line', { x1: RX, y1: Y + 14, x2: RX, y2: Y + H - 14, stroke: 'rgba(148,178,208,.18)' }, hg);
+    el('circle', { cx: RX + 20, cy: Y + 25, r: 3.5, fill: col }, hg);
+    el('text', { x: RX + 30, y: Y + 29, fill: 'rgba(255,255,255,.62)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': 1 }, hg).textContent = on ? "START'A" : 'YARIŞ SÜRESİ';
+    el('text', { x: RX + 16, y: Y + 62, fill: col, 'font-size': 30, 'font-weight': 800, 'font-variant-numeric': 'tabular-nums', 'letter-spacing': -.5 }, hg).textContent = on ? S.fmt(rem / S.CLOCK_SCALE) : S.fmt(-rem / S.CLOCK_SCALE);
+    if (acc) el('rect', { x: RX + 10, y: Y + 72, width: subW, height: 20, rx: 10, fill: 'rgba(251,191,36,.94)' }, hg);
+    el('text', { x: RX + (acc ? 20 : 16), y: Y + 86, fill: acc ? '#1c1300' : 'rgba(255,255,255,.78)', 'font-size': 11, 'font-weight': 700 }, hg).textContent = sub;
+    let y2 = Y + H + 8;
     const sea = v.sea || st.sea;
     if (sea && (sea.current || sea.waves)) {
       const txt = [sea.current ? `Akıntı ${SEA_TXT.current[sea.current]}` : '', sea.waves ? `Dalga ${SEA_TXT.waves[sea.waves]}` : ''].filter(Boolean).join(' · ');
-      const tw = txt.length * 5.9 + 18;
-      el('rect', { x: cx - 44, y: cy + 76, width: tw, height: 18, rx: 9, fill: 'rgba(7,18,30,0.72)', stroke: 'rgba(125,211,252,.4)' }, hg);
-      el('text', { x: cx - 44 + tw / 2, y: cy + 89, 'text-anchor': 'middle', fill: '#bae6fd', 'font-size': 10.5, 'font-weight': 600 }, hg).textContent = txt;
+      const tw = textW(txt, 10.5, 600) + 24;
+      el('rect', { x: X, y: y2, width: tw, height: 22, rx: 11, fill: 'rgba(9,20,33,0.86)', stroke: 'rgba(125,211,252,.4)' }, hg);
+      el('text', { x: X + tw / 2, y: y2 + 15, 'text-anchor': 'middle', fill: '#bae6fd', 'font-size': 10.5, 'font-weight': 600 }, hg).textContent = txt;
+      y2 += 30;
     }
-    const rem = (v.startAt - v.t) * S.CLOCK_SCALE, on = rem > 0;
-    const col = on ? (rem <= 10 ? '#f87171' : '#fbbf24') : '#34d399';
-    const px = cx + 58, py = cy - 26, pw = 150, ph = 52;
-    el('rect', { x: px, y: py, width: pw, height: ph, rx: 14, fill: 'rgba(7,18,30,0.78)', stroke: col, 'stroke-opacity': .55, 'stroke-width': 1.5 }, hg);
-    el('text', { x: px + 14, y: py + 17, fill: 'rgba(255,255,255,.6)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': 1 }, hg).textContent = on ? "START'A" : 'YARIŞ SÜRESİ';
-    el('text', { x: px + 14, y: py + 42, fill: col, 'font-size': 22, 'font-weight': 800, 'font-variant-numeric': 'tabular-nums' }, hg).textContent = on ? S.fmt(rem / S.CLOCK_SCALE) : S.fmt(-rem / S.CLOCK_SCALE);
-    // sınıf · rüzgar hızı · hızlanma anı (geri sayımda); hızlanma anı gelince "Yelken doldur, hızlan!"
-    const bc = v.boat || st.boat, acc = on && rem <= bc.accelAt;
-    const btxt = acc ? 'Yelken doldur, hızlan!' : `${S.CLASSES[bc.cls].name} · ${bc.windKn} kn rüzgar` + (on ? ` · hızlan ${bc.accelAt} sn` : '');
-    const bw = Math.max(pw, btxt.length * 5.9 + 18);
-    el('rect', { x: px, y: py + ph + 5, width: bw, height: 18, rx: 9, fill: acc ? 'rgba(251,191,36,.92)' : 'rgba(7,18,30,0.72)', stroke: acc ? 'none' : 'rgba(255,255,255,.18)' }, hg);
-    el('text', { x: px + bw / 2, y: py + ph + 18, 'text-anchor': 'middle', fill: acc ? '#1c1300' : 'rgba(255,255,255,.82)', 'font-size': 10.5, 'font-weight': 700 }, hg).textContent = btxt;
-    drawSignalCard(hg, v, px, py + ph + 28);
+    drawSignalCard(hg, v, X, y2, W);
   }
   // Sinyal kartı: o an direkte hangi bayraklar var, sıradaki işaret ve kural (eğitici)
-  function drawSignalCard(hg, v, x, y) {
+  function drawSignalCard(hg, v, x, y, minW = 0) {
     const f = flagNow(v), info = FLAG_INFO[f], setup = st.mode === 'setup', rem = setup ? 300 : remReal(v);
     if (!setup && rem < -20) return;                               // start'tan ~20 sn sonra kart kalkar
     const fn = f === 'Siyah' ? 'Siyah bayrak' : `${f} bayrağı`;
@@ -465,17 +475,17 @@
     else if (rem > 0) { t1 = `Son dakika · ${fn} indi`; t2 = S.FLAG_RULE[f] ? info.short : 'Erken çıkan geri dönüp start eder'; tone = S.FLAG_RULE[f] ? 'bad' : 'warn'; }
     else { t1 = 'Start · sınıf bayrağı indi'; t2 = S.FLAG_RULE[f] ? 'Yasaklı bölge kalktı' : 'İyi yarışlar!'; }
     const hz = setup ? { cls: 1, prep: 1 } : flagHoist(rem);
-    const tw = Math.max(t1.length * 6.2, t2.length * 5.7), w = 74 + tw + 14, h = 44;
+    const tw = Math.max(textW(t1, 11.5, 800), textW(t2, 10.5, 600)), w = Math.max(minW, Math.ceil(74 + tw + 16)), h = 46;
     const col = { info: 'rgba(255,255,255,.18)', warn: 'rgba(251,191,36,.7)', bad: 'rgba(248,113,113,.85)' }[tone];
-    el('rect', { x, y, width: w, height: h, rx: 12, fill: 'rgba(7,18,30,0.78)', stroke: col, 'stroke-width': tone === 'info' ? 1 : 1.5 }, hg);
+    el('rect', { x, y, width: w, height: h, rx: 14, fill: 'rgba(9,20,33,0.86)', stroke: tone === 'info' ? 'rgba(148,178,208,.22)' : col, 'stroke-width': tone === 'info' ? 1 : 1.5 }, hg);
     // iki bayrak yuvası: sınıf + hazırlık (inmişse soluk çerçeve)
     [['cls', hz.cls], [f, hz.prep]].forEach(([k, on], i) => {
-      const fx = x + 9 + i * 31, fy = y + 13;
+      const fx = x + 10 + i * 31, fy = y + 14;
       if (on > 0.5) flagG(hg, k, fx, fy, 0.9);
       else el('rect', { x: fx, y: fy, width: 27, height: 18, rx: 2, fill: 'none', stroke: 'rgba(255,255,255,.28)', 'stroke-dasharray': '3 3' }, hg);
     });
-    el('text', { x: x + 74, y: y + 18, fill: tone === 'bad' ? '#fca5a5' : tone === 'warn' ? '#fcd34d' : '#fff', 'font-size': 11.5, 'font-weight': 800 }, hg).textContent = t1;
-    el('text', { x: x + 74, y: y + 34, fill: 'rgba(255,255,255,.82)', 'font-size': 10.5, 'font-weight': 600 }, hg).textContent = t2;
+    el('text', { x: x + 74, y: y + 20, fill: tone === 'bad' ? '#fca5a5' : tone === 'warn' ? '#fcd34d' : '#fff', 'font-size': 11.5, 'font-weight': 800 }, hg).textContent = t1;
+    el('text', { x: x + 74, y: y + 35, fill: 'rgba(255,255,255,.82)', 'font-size': 10.5, 'font-weight': 600 }, hg).textContent = t2;
   }
 
   function render() {

@@ -529,6 +529,24 @@ body.lay-strip .mode-strip { top: 12px !important; right: 12px !important; }
   .cb-seg button { height: 24px; min-width: 24px; }
 }
 
+/* ---------- Simülatör görünümü (2026-11-13 tasarım turu): sahnedeki yüzen parçalar tek dilde ----------
+   Hepsi aynı cam yüzey (koyu, hafif bulanık, ince kenar, 14-16 px köşe); simgeli düğmeler 44 px. */
+:root { --float-bg: rgba(11, 22, 35, .86); --float-bd: rgba(148, 178, 208, .2); }
+.zoom-ctl, body.lay-rail .cr-cats, .count-bar, .drive-bar, .ms-chip {
+  backdrop-filter: blur(10px) saturate(1.2); -webkit-backdrop-filter: blur(10px) saturate(1.2); }
+.zoom-ctl, body.lay-rail .cr-cats, .count-bar { background: var(--float-bg); border-color: var(--float-bd); }
+.zoom-ctl { gap: 2px; padding: 4px; border-radius: 16px; }
+.zoom-ctl button { width: 44px; min-width: 44px; height: 44px; border-radius: 11px; color: var(--text2); transition: background .12s, color .12s, transform .08s; }
+.zoom-ctl button:hover:not(:disabled) { color: var(--text); }
+.zoom-ctl button:active:not(:disabled) { transform: scale(.93); }
+.zoom-ctl .ci { width: 20px; height: 20px; }
+.zoom-ctl #btnFollow.on { background: #fb923c; color: #2a1204; }
+#zoomVal { font-size: 10.5px; font-weight: 700; padding: 0; }
+.zc-sep { display: block; height: 1px; margin: 3px 8px; background: var(--float-bd); }
+body.driving .zoom-ctl .zc-sep { display: none; }
+body.driving .zoom-ctl .ci { width: 26px; height: 26px; }
+@media (max-width: 640px) { .zoom-ctl button { width: 40px; min-width: 40px; height: 38px; } }
+
 /* ---------- Yatay telefon (telefon yalnız yatay kullanılır; js/app-shell.js) ----------
    Ekran yüksekliği ~320-430 px: üst çubuk ve alt çubuk ince, yakınlaştırma sol altta yatay,
    ayar rayı dar; elle sürerken üst çubuk kalkar, dümen ve iskota sahnenin köşelerinde oyun kumandası gibi durur. */
@@ -550,8 +568,9 @@ body.lay-strip .mode-strip { top: 12px !important; right: 12px !important; }
   body.lay-rail .mode-strip { top: 8px !important; right: calc(var(--rail-w) + 18px) !important; }
   /* yakınlaştırma: sol altta yatay, ince */
   .zoom-ctl { left: 8px; bottom: 8px; top: auto; right: auto; flex-direction: row; align-items: center; padding: 3px; gap: 0; border-radius: 12px; }
-  .zoom-ctl button { min-width: 38px; height: 36px; font-size: 19px; }
-  .zoom-ctl .zc-txt { height: 36px; font-size: 11.5px; padding: 0 8px; }
+  .zoom-ctl button { width: 40px; min-width: 40px; height: 38px; }
+  .zc-sep { width: 1px; height: 22px; margin: 0 3px; }
+  body.driving .zoom-ctl button { width: 46px; min-width: 46px; height: 42px; }
   #zoomVal { display: none; }
   .count-bar { height: 32px; }
 
@@ -581,9 +600,8 @@ body.lay-strip .mode-strip { top: 12px !important; right: 12px !important; }
   body.driving .hp-point { display: inline; font-size: 11.5px; }
   /* sürerken ayar rayı kalkar (sağ başparmak alanı), yakınlaştırma solda dümenin üstünde */
   body.driving.lay-rail .cat-rail, body.driving .sim-panel { display: none; }
-  body.driving .zoom-ctl { flex-direction: column; left: calc(8px + env(safe-area-inset-left, 0px)); top: auto; bottom: calc(108px + var(--sab)); }
-  body.driving .zoom-ctl button { min-width: 44px; height: 42px; font-size: 22px; }
-  body.driving.lay-rail .drive-bar { right: 0; top: calc(8px + var(--sat)); }
+  body.driving .zoom-ctl { flex-direction: column; left: calc(8px + env(safe-area-inset-left, 0px)); top: auto; bottom: calc(102px + var(--sab)); }
+  body.driving.lay-rail .drive-bar { left: auto; right: calc(8px + env(safe-area-inset-right, 0px)); margin: 0; top: calc(8px + var(--sat)); }
   body.driving .drive-bar .tb { height: 34px; min-height: 34px; }
-  body.driving .toast { bottom: 110px; }
+  body.driving .toast { top: calc(60px + var(--sat)); bottom: auto; left: auto; right: calc(8px + env(safe-area-inset-right, 0px)); transform: none; max-width: min(420px, calc(100% - 290px)); font-size: 12.5px; }
 }
