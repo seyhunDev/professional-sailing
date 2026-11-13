@@ -121,13 +121,14 @@
     </div>
 
     <!-- elle sürerken zaman: sahnenin üstünde ayrı kutu (dümen panelinden bağımsız) -->
+    <!-- Elle sürerken zaman kutusu: simülatörün kendi çubuklarıyla aynı dil (süre tek yerde: sol üstteki gösterge kartı).
+         Kurulumda geri sayım süresi seçimi (#countBar buraya taşınır), hız seçimi, sıfırla, bitir. -->
     <div id="driveBar" class="drive-bar hidden" role="toolbar" aria-label="Elle sürüş zamanı">
-      <span class="db-dot"></span>
-      <span id="hpTime" class="db-time"></span>
-      <button class="tb db-speed" id="dbSpeed" title="Yarışın hızı · dokun → sıradaki">1×</button>
       <button class="tb db-play" id="hpPlay" title="Zamanı durdur / devam (boşluk)"><svg class="ci"><use href="#i-pause"/></svg><span id="hpPlayLbl">Durdur</span></button>
-      <button class="tb db-done" id="hpGo" title="Elle sürmeyi bitir (Enter)"><svg class="ci"><use href="#i-check"/></svg><span class="hp-go-lbl">Bitir</span></button>
+      <div class="cb-seg db-seg" id="dbSpeedSeg" role="radiogroup" aria-label="Elle sürme hızı"></div>
+      <button class="tb db-speed" id="dbSpeed" title="Elle sürme hızı · dokun → sıradaki">1×</button>
       <button class="tb db-reset" id="hpReset" title="Yarışı sıfırla: kuruluma dön (R)"><svg class="ci"><use href="#i-reset"/></svg><span class="db-lbl">Sıfırla</span></button>
+      <button class="tb db-done" id="hpGo" title="Elle sürmeyi bitir (Enter)"><svg class="ci"><use href="#i-check"/></svg><span class="hp-go-lbl">Bitir</span></button>
     </div>
     <div id="modeStrip" class="mode-strip" aria-live="polite">
       <span id="msPhase" class="ms-chip"></span>

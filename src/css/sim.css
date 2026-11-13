@@ -547,6 +547,20 @@ body.driving .zoom-ctl .zc-sep { display: none; }
 body.driving .zoom-ctl .ci { width: 26px; height: 26px; }
 @media (max-width: 640px) { .zoom-ctl button { width: 40px; min-width: 40px; height: 38px; } }
 
+/* Elle sürerken zaman kutusu (kullanıcı 2026-11-13): simülatörün geri sayım çubuğuyla aynı hap biçimi; süre yalnız gösterge kartında.
+   Sıra: Start/Durdur · (kurulumda) geri sayım süresi · hız seçenekleri · Sıfırla · Bitir */
+.drive-bar { gap: 6px; padding: 4px; border-radius: 22px; background: var(--float-bg); border: 1px solid var(--float-bd); }
+.drive-bar .tb { height: 36px; min-height: 36px; padding: 0 14px; border-radius: 18px; font-size: 13px; }
+.drive-bar .count-bar { height: 36px; padding: 0 2px 0 10px; border: 0; background: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+body.driving .cb-fast, body.driving #cbJump1, body.driving #cbJump0 { display: none !important; }
+.db-seg { display: inline-flex; height: 36px; padding: 3px; border-radius: 18px; }
+.db-seg button { height: 28px; min-width: 34px; border-radius: 14px; font-variant-numeric: tabular-nums; }
+.db-seg button.on { background: var(--accent); color: var(--accent-ink); }
+.drive-bar .db-speed { display: none; }
+/* sol üstteki gösterge kartının yanından başlar (üstüne binmez) */
+body.driving .drive-bar { left: 318px; margin: 0 auto; }
+@media (max-width: 900px) { .drive-bar .cb-lbl, .drive-bar .db-lbl, .drive-bar .db-seg { display: none; } .drive-bar .db-speed { display: inline-flex; min-width: 46px; padding: 0 8px; } }
+
 /* ---------- Yatay telefon (telefon yalnız yatay kullanılır; js/app-shell.js) ----------
    Ekran yüksekliği ~320-430 px: üst çubuk ve alt çubuk ince, yakınlaştırma sol altta yatay,
    ayar rayı dar; elle sürerken üst çubuk kalkar, dümen ve iskota sahnenin köşelerinde oyun kumandası gibi durur. */
@@ -602,6 +616,9 @@ body.driving .zoom-ctl .ci { width: 26px; height: 26px; }
   body.driving.lay-rail .cat-rail, body.driving .sim-panel { display: none; }
   body.driving .zoom-ctl { flex-direction: column; left: calc(8px + env(safe-area-inset-left, 0px)); top: auto; bottom: calc(102px + var(--sab)); }
   body.driving.lay-rail .drive-bar { left: auto; right: calc(8px + env(safe-area-inset-right, 0px)); margin: 0; top: calc(8px + var(--sat)); }
-  body.driving .drive-bar .tb { height: 34px; min-height: 34px; }
+  body.driving .drive-bar .tb { height: 34px; min-height: 34px; padding: 0 11px; }
+  .drive-bar .db-seg, .drive-bar .cb-lbl, .drive-bar .db-lbl { display: none; }
+  .drive-bar .db-speed { display: inline-flex; min-width: 44px; padding: 0 8px; }
+  .drive-bar .count-bar { padding-left: 2px; }
   body.driving .toast { top: calc(60px + var(--sat)); bottom: auto; left: auto; right: calc(8px + env(safe-area-inset-right, 0px)); transform: none; max-width: min(420px, calc(100% - 290px)); font-size: 12.5px; }
 }

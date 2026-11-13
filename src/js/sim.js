@@ -615,7 +615,7 @@
   }
   function countBarUpdate(v) {
     const setup = st.mode === 'setup', rem = (v.startAt - v.t) * S.CLOCK_SCALE;
-    const show = !st.drive && !st.drawMode && (setup || ((st.mode === 'run' || st.mode === 'pause') && rem > 0));
+    const show = st.drive ? setup : !st.drawMode && (setup || ((st.mode === 'run' || st.mode === 'pause') && rem > 0));   // elle sürerken yalnız kurulumda (süre seçimi)
     $('countBar').classList.toggle('hidden', !show); if (!show) return;
     $('countBar').classList.toggle('setup', setup);
     [...$('cbPre').children].forEach(x => x.classList.toggle('on', +x.dataset.v === st.boat.pre));
@@ -997,7 +997,11 @@
   let lastHelmKey = '';
   function helmUpdate(v) {
     const pad = $('helmPad'), m = v.boats.find(b => b.mine), show = !!(st.drive && m);
-    if (pad.classList.contains('hidden') === show) { pad.classList.toggle('hidden', !show); $('driveBar').classList.toggle('hidden', !show); document.body.classList.toggle('driving', show); }
+    if (pad.classList.contains('hidden') === show) {
+      pad.classList.toggle('hidden', !show); $('driveBar').classList.toggle('hidden', !show); document.body.classList.toggle('driving', show);
+      // geri sayım süresi seçimi elle sürerken zaman kutusunun içinde (tek kutu), çıkınca yerine döner
+      if (show) $('driveBar').insertBefore($('countBar'), $('dbSpeedSeg')); else $('modeStrip').appendChild($('countBar'));
+    }
     if (!show) { lastHelmKey = ''; return; }
     const d = st.drive, abs = Math.abs(E.norm180(m.h - v.wind)), ideal = S.idealSheet(abs);
     const sheet = m.sheet != null ? m.sheet : ideal;
@@ -1009,7 +1013,6 @@
     if (key === lastHelmKey) return; lastHelmKey = key;
     $('hpSpeed').textContent = `${S.knots(m.v).toFixed(1).replace('.', ',')} kn`;
     $('hpPoint').textContent = `${POS(abs)} · ${stb ? 'sancak' : 'iskele'} kontra`;
-    $('hpTime').textContent = tTxt;
     $('hpLeftSub').textContent = stb ? 'kafa aç' : 'orsa'; $('hpRightSub').textContent = stb ? 'orsa' : 'kafa aç';
     const tg = $('hpGauge'), pct = x => `${Math.max(0, Math.min(100, x / 90 * 100)).toFixed(1)}%`;
     tg.querySelector('.tg-ideal').style.left = pct(ideal); tg.querySelector('.tg-knob').style.left = pct(sheet);
@@ -1573,10 +1576,14 @@
   function setDriveSpeed(v) {
     st.driveSpeed = v; const x = $('dbSpeed');
     x.textContent = spTxt(v); x.classList.toggle('changed', v !== DRIVE_SPEED0);
+    [...$('dbSpeedSeg').children].forEach(b => b.classList.toggle('on', +b.dataset.v === v));
     x.title = `Elle sürme hızı: ${spTxt(v)}${v === 1 ? ' (gerçek zaman: tekneler çok yavaş görünür)' : v === DRIVE_SPEED0 ? ' (doğal görünen hız)' : ''} · dokun → sıradaki`;
   }
   // elle sürerken: zaman kutusunda tek düğme, dokununca sıradaki hız (½× → 1× → 5× → 15× → 40×)
   $('dbSpeed').addEventListener('click', () => { const v = SPEEDS[(SPEEDS.indexOf(st.driveSpeed) + 1) % SPEEDS.length]; setDriveSpeed(v); toast(`Elle sürme hızı ${spTxt(v)}${v === 1 ? ': gerçek zaman (tekneler çok yavaş)' : v === DRIVE_SPEED0 ? ': doğal görünen hız' : ''}`); });
+  // geniş ekranda hız seçenekleri yan yana (alt çubuktaki gibi); yatay telefonda tek düğme
+  $('dbSpeedSeg').innerHTML = SPEEDS.map(v => `<button data-v="${v}" title="Elle sürme hızı ${spTxt(v)}${v === 1 ? ' (gerçek zaman)' : v === DRIVE_SPEED0 ? ' (doğal görünen hız)' : ''}">${spTxt(v)}</button>`).join('');
+  $('dbSpeedSeg').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setDriveSpeed(+x.dataset.v); });
   setSpeed(st.speed || 1); setDriveSpeed(DRIVE_SPEED0);
   st.fastPre = true;
   try { if (localStorage.getItem('ps.sim.fastPre') === '0') st.fastPre = false; } catch (e) { /* yok */ }
