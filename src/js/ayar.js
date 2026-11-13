@@ -148,7 +148,7 @@
     manual: (saved.manual && typeof saved.manual === 'object') ? saved.manual : {},   // manual[marka][hava][alan] = elle girilmiş orijinal (ortak)
     customAt: saved.customAt || 0, manualAt: saved.manualAt || 0,
     editOrig: false,
-    val: null, target: null, active: null, focusTie: -1,
+    val: null, target: null, active: null, focusTie: -1, trial: null,
   };
   function persist(what) {
     if (what === 'custom') st.customAt = Date.now();
@@ -230,6 +230,7 @@
 
   // Bir ayar değişti: "Orijinali düzenle" açıksa elle girilmiş orijinal katmanına (ortak), değilse Özel'e (kişisel)
   function setVal(k, x) {
+    if (st.trial) { st.trial = null; drawMistakes(); }
     if (st.editOrig && st.mode === 'orijinal') {
       if (st.sea === 'dalgali' && (k === 'out' || k === 'vang')) x = clamp(x + 0.1, 0, 1);   // dalga düzeltmesi geri alınır
       const b = st.manual[st.brand] || (st.manual[st.brand] = {});
@@ -276,7 +277,7 @@
     $('srcText').innerHTML = `${esc(b.about || '')}${b.url ? ` <a href="${b.url}" target="_blank" rel="noopener">Kılavuz ↗</a>` : ''}` +
       (st.editOrig ? '<br><b class="edit-note">Orijinali düzenliyorsun: değiştirdiğin her değer bu marka ve hava için "Elle girildi" diye herkese gösterilir.</b>' : '');
   }
-  function choose() { syncTop(); st.target = copy(current()); persist(); refresh(); }
+  function choose() { st.trial = null; syncTop(); st.target = copy(current()); persist(); refresh(); if ($('mistakes')) drawMistakes(); }
   $('segWind').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.wind = b.dataset.v; choose(); });
   $('segSea').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.sea = b.dataset.v; choose(); });
   $('segMode').addEventListener('click', e => {
@@ -505,10 +506,21 @@
       el('path', { d: `M${pt(tp(a))} Q${pt(tp(m))} ${pt(tp(b))}`, fill: 'none', stroke: '#0ea5e9', 'stroke-width': 2, opacity: 0.8 }, gRig);
     });
     // arka yaka şeritleri (leech telltales)
+    // Hedefe göre: üst kısım fazla kapalıysa (twist az) üstteki şerit, çok kapalıysa ortadaki de döner (arkaya kıvrılır);
+    // fazla açıksa şeritler dümdüz ve hızlı çırpar (yelken boşalıyor).
     [0.3, 0.55, 0.8].forEach((f, i) => {
       const a = mix(C, Pk, f);
-      const fl = Math.sin(performance.now() / 160 + i * 1.7) * 3;
-      el('path', { d: `M${pt(tp(a))} q9,${(fl * .4).toFixed(1)} 16,${fl.toFixed(1)}`, fill: 'none', stroke: '#f472b6', 'stroke-width': 1.8, 'stroke-linecap': 'round' }, gRig);
+      const lvl = 2 - i;                                         // 0 = üst şerit
+      const stall = (RES.dt < -2.5 && lvl === 0) || (RES.dt < -5 && lvl === 1);
+      const fast = RES.dt > 4;
+      const now = performance.now();
+      if (stall) {
+        const wob = Math.sin(now / 420 + i) * 2;
+        el('path', { d: `M${pt(tp(a))} q-3,6 -9,${(9 + wob).toFixed(1)} q-4,3 -2,8`, fill: 'none', stroke: '#f472b6', 'stroke-width': 1.8, 'stroke-linecap': 'round' }, gRig);
+      } else {
+        const fl = Math.sin(now / (fast ? 70 : 160) + i * 1.7) * (fast ? 1.6 : 3);
+        el('path', { d: `M${pt(tp(a))} q9,${(fl * .4).toFixed(1)} ${fast ? 18 : 16},${fl.toFixed(1)}`, fill: 'none', stroke: '#f472b6', 'stroke-width': 1.8, 'stroke-linecap': 'round' }, gRig);
+      }
     });
 
     // kırışıklar: gırcala gevşek → direk tepesinden köşeye; fazla sıkı → tepeden karulaya; orsa yakası gevşek → bağlarda yatay
@@ -771,11 +783,106 @@
     el('text', { x: X0 + 5 * PX + 4, y: 185, class: 'sec-note' }, tieSvg).textContent = '5 mm';
   }
 
+  // ---------- sonuç: doğru ayara (kılavuz) göre ne olur? ----------
+  // Göreli model: hedef = seçili kılavuzun bu hava/deniz ayarı. Değerler YÖN ve BÜYÜKLÜK gösterir, ölçülmüş knot/derece değildir.
+  const RES = { dm: 0, dt: 0, dr: 0, speed: 0, point: 0, heel: 0, helm: 0, heelDeg: 0 };
+  function results(v, sh, w, wave) {
+    const tv = original(st.brand, st.wind, st.sea).v;
+    const tsh = shape(tv, w, wave);
+    const dm = sh.depth[1] - tsh.depth[1];                 // orta kesit derinlik farkı (%-puan)
+    const dfoot = sh.depth[0] - tsh.depth[0];
+    const dtw = sh.twist - tsh.twist;                      // twist farkı (derece)
+    const dr = v.rake - tv.rake;                           // direk eğimi farkı (cm); − = daha geride
+    const cr = clamp((0.42 - v.sprit) / 0.22, 0, 1) + clamp((v.sprit - 0.62) / 0.22, 0, 1);
+    const heavy = w, light = 1 - w;
+    const P = dm * 0.7 + dfoot * 0.3;                      // güç farkı
+    const lossFull = P > 0 ? P * (0.03 + 0.14 * heavy) : 0;
+    const lossFlat = P < 0 ? -P * (0.03 + 0.12 * light + 0.08 * wave) : 0;
+    const speed = -clamp(lossFull + lossFlat + Math.abs(dtw) * 0.025 + cr * 0.25 + Math.max(0, sh.lift - tsh.lift) * 0.03 + Math.abs(dr) * 0.03, 0, 1);
+    const point = clamp(-P * 0.07 - dtw * 0.03 + (v.luff - tv.luff) * 0.25 - Math.max(0, dr) * 0.05, -1, 1);
+    const heel = clamp((P * 0.09 - dtw * 0.035) * (0.25 + heavy), -1, 1);
+    const helm = clamp(-dr * 0.14 + heel * 0.5, -1, 1);
+    Object.assign(RES, { dm, dt: dtw, dr, speed, point, heel, helm, heelDeg: 4 + 14 * w + heel * 14, tm: tsh.depth[1] });
+  }
+  const GAUGES = [
+    ['speed', 'Hız', 'yavaş', 'hızlı'],
+    ['point', 'Orsa açısı', 'düşük', 'yüksek'],
+    ['heel', 'Yatma', 'az', 'fazla'],
+    ['helm', 'Dümen', 'boş', 'ağır'],
+  ];
+  const gEl = $('gauges');
+  gEl.innerHTML = GAUGES.map(([k, n, lo, hi]) => `<div class="gauge" data-k="${k}"><span class="g-n">${n}</span>
+    <span class="g-bar"><i class="g-mid"></i><b class="g-fill"></b><b class="g-dot"></b></span><span class="g-v"></span>
+    <span class="g-ends"><em>${lo}</em><em>${hi}</em></span></div>`).join('');
+  function drawGauges() {
+    for (const [k] of GAUGES) {
+      const g = gEl.querySelector(`[data-k="${k}"]`), x = RES[k];
+      const p = 50 + x * 50;
+      g.querySelector('.g-dot').style.left = p + '%';
+      const f = g.querySelector('.g-fill');
+      f.style.left = Math.min(50, p) + '%'; f.style.width = Math.abs(p - 50) + '%';
+      const bad = k === 'speed' ? x < -0.12 : Math.abs(x) > 0.25;
+      g.classList.toggle('bad', bad);
+      g.classList.toggle('ok', Math.abs(x) < 0.06);
+      g.querySelector('.g-v').textContent = Math.abs(x) < 0.06 ? 'hedefte' : k === 'speed' ? 'kayıp' : x > 0 ? 'artıyor' : 'azalıyor';
+    }
+    // arkadan görünüş: yatma
+    const svg = $('heelView'); svg.innerHTML = '';
+    el('path', { d: 'M0,52 Q20,49 40,52 T80,52 L80,70 L0,70 Z', fill: '#0c3b5e' }, svg);
+    const g = el('g', { transform: `rotate(${RES.heelDeg.toFixed(1)} 40 50)` }, svg);
+    el('path', { d: 'M24,44 L56,44 L52,55 L28,55 Z', fill: '#e2e8f0', stroke: '#0b1724', 'stroke-width': 1 }, g);
+    el('line', { x1: 40, y1: 44, x2: 40, y2: 6, stroke: '#94a3b8', 'stroke-width': 2 }, g);
+    el('path', { d: 'M41,8 Q52,24 41,42 Z', fill: '#f8fafc', opacity: .85 }, g);
+    el('line', { x1: 40, y1: 55, x2: 40, y2: 66, stroke: '#cbd5e1', 'stroke-width': 2.4 }, g);
+    const t = el('text', { x: 78, y: 12, 'text-anchor': 'end', class: 'heel-lbl' + (Math.abs(RES.heel) > 0.25 ? ' bad' : '') }, svg);
+    t.textContent = `≈${Math.round(RES.heelDeg)}°`;
+  }
+
+  // Tipik hatalar: dokununca ayar o hataya kayar, "Düzelt" kılavuz ayarına döndürür (kaydedilmez)
+  const MISTAKES = {
+    hafif: [
+      ['Her şey sıkı', v => { v.vang = 0.8; v.out = 0.9; v.sprit = 0.66; v.ties = v.ties.map(() => 1); }],
+      ['Palanga sıkı', v => { v.vang = 0.85; }],
+      ['Bağlar düz, kavis yok', v => { const m = (v.ties[0] + v.ties[3]) / 2; v.ties = v.ties.map(() => Math.round(m * 2) / 2); }],
+      ['Gırcala fazla sıkı', v => { v.sprit = 0.78; }],
+    ],
+    orta: [
+      ['Köşe çok gevşek', v => { v.out = 0.2; }],
+      ['Gırcala gevşek', v => { v.sprit = 0.3; }],
+      ['Palanga boş', v => { v.vang = 0.1; }],
+      ['Direk çok geride', v => { v.rake -= 4; }],
+    ],
+    sert: [
+      ['Palanga boş', v => { v.vang = 0.15; }],
+      ['Köşe gevşek', v => { v.out = 0.3; }],
+      ['Bağlar hafif hava ayarında', v => { v.ties = [5, 4, 3, 2, 2, 3, 4, 5]; }],
+      ['Direk çok dik', v => { v.rake += 5; }],
+    ],
+  };
+  const SEA_MISTAKE = ['Dalgada fazla düz', v => { v.out = 0.97; v.vang = 0.9; v.ties = v.ties.map((x, i) => (i === 0 || i === NTIES - 1) ? 0 : x + 1); }];
+  function drawMistakes() {
+    const list = MISTAKES[st.wind].concat(st.sea === 'dalgali' ? [SEA_MISTAKE] : []);
+    $('mistakes').innerHTML = list.map(([n], i) => `<button data-i="${i}" class="${st.trial === n ? 'on' : ''}">${esc(n)}</button>`).join('');
+    const b = $('trialBar');
+    b.hidden = !st.trial;
+    $('trialName').textContent = st.trial ? `Hata: ${st.trial}` : '';
+  }
+  $('mistakes').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const list = MISTAKES[st.wind].concat(st.sea === 'dalgali' ? [SEA_MISTAKE] : []);
+    const [n, f] = list[Number(b.dataset.i)];
+    const v = copy(original(st.brand, st.wind, st.sea).v);
+    f(v); v.rake = clamp(v.rake, 274, 288);
+    st.trial = n; st.target = v; st.active = null;
+    drawMistakes();
+  });
+  $('btnFix').addEventListener('click', () => { st.trial = null; st.target = copy(original(st.brand, st.wind, st.sea).v); drawMistakes(); });
+
   // ---------- uyarılar ----------
   function warnings(v, sh) {
     // Kılavuzun istediği bir görüntüyse (ör. hafif havada bilerek gevşek) mavi bilgi, değilse kırmızı uyarı
     const o = original(st.brand, st.wind, st.sea).v;
-    const asGuide = k => Math.abs(v[k] - o[k]) < 0.03;
+    const asGuide = k => k !== 'x' && Math.abs(v[k] - o[k]) < 0.03;
     const out = [];
     if (v.sprit < 0.42) out.push(['sprit', 'Gırcala gevşek: direk tepesinden köşeye kırışık.']);
     if (v.sprit > 0.62) out.push(['sprit', 'Gırcala fazla sıkı: tepeden karulaya kırışık.']);
@@ -783,6 +890,16 @@
     if (sh.lift > 4) out.push(['vang', 'Sert havada palanga gevşek: bumba kalkıyor, üst kısım fazla açık.']);
     if (st.wind === 'hafif' && v.vang > 0.55) out.push(['vang', 'Hafif havada palanga sıkı: yelken düzleşir, güç azalır.']);
     if (st.wind === 'sert' && v.out < 0.45) out.push(['out', 'Sert havada köşe gevşek: alt kısım derin, tekne fazla yatar.']);
+    // kılavuza göre sapma: ne olur, ne yapmalı
+    const W = st.wind;
+    if (RES.dm > 2) out.push(['x', `Yelken hedeften torlu (orta kesit %${Math.round(sh.depth[1])}, hedef %${Math.round(RES.tm)}): ` +
+      (W === 'sert' ? 'güç fazla, tekne yatar, dümen ağırlaşır. Köşeyi sık, orta bağları aç.' : 'orsa açısı düşer. Köşeyi biraz sık ya da orta bağları aç.')]);
+    if (RES.dm < -2) out.push(['x', `Yelken hedeften düz (orta kesit %${Math.round(sh.depth[1])}, hedef %${Math.round(RES.tm)}): ` +
+      (W === 'hafif' || st.sea === 'dalgali' ? 'güç az, tekne yavaşlar ve dalgada durur. Köşeyi aç, orta bağları yaklaştır.' : 'güç azalır. Köşeyi biraz aç.')]);
+    if (RES.dt < -2.5) out.push(['x', 'Üst kısım fazla kapalı: üstteki arka yaka şeridi dönüyor, tekne boğulur. Palangayı ya da iskotayı biraz bırak.']);
+    if (RES.dt > 4) out.push(['x', 'Üst kısım fazla açık: şeritler dümdüz çırpıyor, güç kaçıyor. Palangayı sık.']);
+    if (RES.dr > 1.5) out.push(['x', `Direk hedeften ${fmt(RES.dr)} cm dik: dümen hafifler, orsa açısı kaybolur.`]);
+    if (RES.dr < -1.5) out.push(['x', `Direk hedeften ${fmt(-RES.dr)} cm geride: dümen ağırlaşır, tekne orsaya çeker.`]);
     const w = $('warn');
     w.hidden = !out.length;
     w.classList.toggle('info', out.length > 0 && out.every(([k]) => asGuide(k)));
@@ -806,6 +923,7 @@
     const pitch = waveNow * 1.8 * Math.sin(time * 2.2 - 1.2);
     bob = waveNow * 4 * Math.sin(time * 2.2 - 2.4);
     const sh = shape(st.val, windNow, waveNow);
+    results(st.val, sh, windNow, waveNow);
     const ov = original(st.brand, st.wind, st.sea).v;
     const differs = st.mode === 'ozel' && !!st.custom[ckey()] && JSON.stringify(ov) !== JSON.stringify(st.custom[ckey()]);
     const gsh = differs ? shape(ov, windNow, waveNow) : null;
@@ -815,12 +933,13 @@
     drawCallouts(k);
     $('legend').hidden = !differs;
     const key = JSON.stringify(st.val) + st.active + st.wind + st.sea + st.focusTie + differs + Math.round(windNow * 50) + Math.round(waveNow * 50);
-    if (key !== lastKey) { drawSections(sh, gsh); drawTiesZoom(st.val, differs ? ov : null); warnings(st.val, sh); fullness(sh); lastKey = key; }
+    if (key !== lastKey) { drawSections(sh, gsh); drawTiesZoom(st.val, differs ? ov : null); warnings(st.val, sh); fullness(sh); drawGauges(); lastKey = key; }
     requestAnimationFrame(frame);
   }
 
   drawHull();
   drawPlan();
+  drawMistakes();
   for (const b of document.querySelectorAll('.sec-tabs button')) b.addEventListener('click', () => {
     for (const x of document.querySelectorAll('.sec-tabs button')) x.classList.toggle('on', x === b);
     $('sections').toggleAttribute('hidden', b.dataset.t !== 'kesit'); $('plan').toggleAttribute('hidden', b.dataset.t !== 'plan');

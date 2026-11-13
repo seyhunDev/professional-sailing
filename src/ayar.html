@@ -29,7 +29,7 @@
 
   <main class="trim-main">
     <section class="trim-stage">
-      <svg id="side" viewBox="-40 -64 720 630" preserveAspectRatio="xMidYMid meet" aria-label="Optimist yandan görünüş">
+      <svg id="side" viewBox="-10 -64 720 630" preserveAspectRatio="xMidYMid meet" aria-label="Optimist yandan görünüş">
         <defs>
           <linearGradient id="sailFill" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0" stop-color="#f8fafc" stop-opacity=".96"/>
@@ -63,8 +63,15 @@
         <div class="sec-head">Yakın: direk bağları</div>
         <svg id="tiesZoom" viewBox="0 0 210 192" aria-label="Direk bağları yakın görünüş"></svg>
       </div>
+      <div class="res-card" id="resCard">
+        <div class="sec-head">Ne olur? <span>kılavuz ayarına göre, yaklaşık</span></div>
+        <div class="res-row"><div id="gauges"></div><svg id="heelView" viewBox="0 0 80 70" aria-label="Arkadan görünüş: yatma"></svg></div>
+      </div>
       <div class="legend" id="legend" hidden><i></i> Sarı kesikli: kılavuzun orijinal ayarı</div>
-      <div class="warn" id="warn" hidden></div>
+      <div class="bl-stack">
+        <div class="trial-bar" id="trialBar" hidden><span id="trialName"></span><button id="btnFix">Düzelt</button></div>
+        <div class="warn" id="warn" hidden></div>
+      </div>
     </section>
 
     <aside class="trim-panel">
@@ -96,6 +103,7 @@
       <p class="sync yerel" id="syncText"></p>
       <p class="cond" id="condText"></p>
       <p class="src" id="srcText"></p>
+      <div class="mist-row"><div class="seg-lbl">Hatayı göster</div><div class="mistakes" id="mistakes"></div></div>
 
       <div id="ctrls"></div>
 
