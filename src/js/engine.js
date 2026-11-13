@@ -105,6 +105,44 @@
     }
     return best;
   }
+  /* Yumuşak engel kaçınma: istenen rota (h) engelin güvenlik çemberine çarpıyorsa çembere TEĞET rotayı verir.
+     Teğet, rotanın çembere değdiği sınırda istenen rotayla aynıdır; böylece kaçış ve geri dönüş sürekli,
+     tekne engelin yanından tek ve temiz bir yayla geçer (eski ±1 "aç-kapa" kaçınma titretiyordu).
+     opts: { mem: {} (taraf hafızası: aynı engelde taraf değişmez), side(o, def, hL, hR) → ±1 (taraf seçimi),
+             ok(h, o) → rota gidilebilir mi (değilse öbür taraf), maxTurn (en büyük sapma, derece),
+             pad (güvenlik payı, 16), look (ileri bakış) }
+     Dönen: { h, side, o, k } ya da null (engel yok). side +1 = sağa dön (engel solda kalır). */
+  function steerAround(x, y, h, obstacles, v, opts) {
+    opts = opts || {};
+    const f = fwd(h), r = { x: Math.cos(h * DEG), y: Math.sin(h * DEG) };
+    const look = opts.look != null ? opts.look : 40 + Math.max(0, v || 0) * 1.2;
+    const pad = opts.pad != null ? opts.pad : 16, mem = opts.mem;
+    let best = null;
+    (obstacles || []).forEach((o, i) => {
+      const dx = o.x - x, dy = o.y - y, d = Math.hypot(dx, dy) || 0.01;
+      const along = dx * f.x + dy * f.y, across = dx * r.x + dy * r.y, R = o.r + pad;
+      const gap = d - R;                                       // çembere uzaklık
+      if (along < -R * 0.6 || gap > look || Math.abs(across) >= R) return;
+      if (along < 0 && d > R) return;                          // geride kaldı
+      if (best && gap >= best.gap) return;
+      const brg = Math.atan2(dx, -dy) / DEG, a = d > R ? Math.asin(R / d) / DEG : 90;
+      const hL = brg - a, hR = brg + a;                        // engeli sağda / solda bırakan teğetler
+      let side = across >= 0 ? -1 : 1;                         // engel sağdaysa sola
+      if (mem && mem.i === i && mem.side) side = mem.side;      // aynı engelde taraf değiştirme (karar bir kez)
+      else if (opts.side) side = opts.side(o, side, hL, hR) || side;   // taraf kuralı (ör. rüzgarın içine kaçma)
+      // seçilen teğetle gidilemiyorsa (ör. rüzgarın içi) ve öbürüyle gidilebiliyorsa taraf değişir
+      if (opts.ok && !opts.ok(side < 0 ? hL : hR, o) && opts.ok(side < 0 ? hR : hL, o)) side = -side;
+      // ileri bakışın ucunda yumuşak başla (0 → 1)
+      const k = Math.max(0, Math.min(1, (look - gap) / 25));
+      let dev = norm180((side < 0 ? hL : hR) - h);
+      const mt = typeof opts.maxTurn === 'function' ? opts.maxTurn(o) : opts.maxTurn;
+      if (mt) dev = Math.max(-mt, Math.min(mt, dev));            // çok büyük sapma yok
+      best = { o, i, gap, side, k, hL, hR, h: h + dev * k };
+    });
+    // hafıza yalnız sayı tutar (kopyalanabilir, kayıtta birebir aynı)
+    if (mem) { if (best) { mem.i = best.i; mem.side = best.side; mem.t = 0; } else if (mem.side && ++mem.t > 20) { mem.i = -1; mem.side = 0; } }
+    return best;
+  }
 
   // ---------- Rota üretici ----------
   // segs: [{mode:'closehauled'|'run'|'heading'|'hold', tack, h, dur, turn, speed, angle}]
@@ -119,6 +157,7 @@
     const TAU = opts.tau || scenarioTau(scn);   // hızlanma zaman sabiti (s): sınıf tablosundan (bkz. scenarioTau)
     const obstacles = opts.obstacles || obstaclesOf(scn);
     let avoid = 0;                        // engel kaçınma açısı (derece), zamanla sıfıra döner
+    const mem = {};                       // kaçınma tarafı hafızası
     const t0 = opts.t0 || 0;
     // t0'dan önce yerinde bekle
     samples.push({ t: 0, x, y, h });
@@ -144,9 +183,11 @@
         if (seg.mode === 'hold') vt = base * (seg.speed == null ? 0.1 : seg.speed);
         v += (vt - v) * Math.min(1, DT / TAU);
         // engel kaçınma: önümüzde şamandıra/hakem botu varsa yana kaç, sonra rotaya dön
-        const dir = avoidDir(x, y, h + avoid, obstacles, v);
-        if (dir !== 0) avoid = Math.max(-45, Math.min(45, avoid + dir * 160 * DT));
-        else avoid += (0 - avoid) * Math.min(1, DT / 0.5);
+        // istenen rota (h) engele çarpıyorsa teğet rotaya yumuşakça dön, geçince yumuşakça rotaya dön
+        const st = steerAround(x, y, h, obstacles, v, { mem });
+        const want = st ? Math.max(-100, Math.min(100, norm180(st.h - h))) : 0;
+        const dA = (want - avoid) * Math.min(1, DT / 0.2);
+        avoid += Math.max(-120 * DT, Math.min(120 * DT, dA));
         const hUsed = h + avoid;
         const f = fwd(hUsed);
         x += f.x * v * DT; y += f.y * v * DT;
@@ -321,7 +362,7 @@
     sailPose, sailShape, seedOf, drawCommitteeBoat, committeeBoatTransform,
     SHADOW, shadowStrength, shadowOf, shadowK, shadowPolygon,
     DEG, norm180, norm360, lerp, lerpAngle, fwd,
-    windAt, tackHeading, runHeading, buildTrack, sampleTrack, sailState, speedFor, obstaclesOf, avoidDir,
+    windAt, tackHeading, runHeading, buildTrack, sampleTrack, sailState, speedFor, obstaclesOf, avoidDir, steerAround,
     CLOSE_HAULED, RUN, BOAT_CLASSES, upwindKn, accelTau, scenarioTau, RACE_TAU
   };
 })(typeof window !== 'undefined' ? window : globalThis);

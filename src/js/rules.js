@@ -235,12 +235,15 @@
           if (b.man && b.man !== 'tack' && b.escH != null) { target += b.escH; speedK = b.escSpeed; }
         }
         // dönüş (simülatörle aynı hız)
-        const diff = E.norm180(target - b.h), rate = TURN_RATE * DT;
+        // engel (şamandıra/pin/hakem botu) varsa hedef rota çembere teğet olur: tek, temiz bir yay (titreme yok).
+        // Beklerken (rüzgara baş vermiş) dönmez, engelin dibinde durur.
+        const st = E.steerAround(b.x, b.y, target, obstacles, b.v, holding ? null : { mem: b.avMem || (b.avMem = {}) });
+        const holdStop = holding && st && st.gap < 12;
+        if (st && !holding) target = st.h;
+        const diff = E.norm180(target - b.h), rate = (st && !holding ? 160 : TURN_RATE) * DT;
         b.h = E.norm360(b.h + Math.max(-rate, Math.min(rate, diff)));
-        const dir = E.avoidDir(b.x, b.y, b.h, obstacles, b.v);
-        if (dir !== 0) b.h = E.norm360(b.h + dir * 160 * DT);       // engelden yana kaç (rota hedefi sonra geri çeker)
         const twa = Math.abs(E.norm180(b.h - w));
-        let vt = holding ? HOLD_V : E.speedFor(twa, base) * speedK;
+        let vt = holding ? (holdStop ? 0 : HOLD_V) : E.speedFor(twa, base) * speedK;
         // start öncesi (kurallar henüz yok): öndeki teknenin kıçına girme, arkasında kal (simülatördeki K12 bilinci)
         if (!rulesOn && !holding) {
           const f = E.fwd(b.h);

@@ -549,7 +549,7 @@
     // pin tarafında kalabalık (0.06-0.27); 0.36 ile W (0.56) arası boş: S W'nin hemen rüzgaraltına (~44 px)
     // yanaşır. Sağda L (scripted, 0.75) ve onun hemen rüzgarüstüne yanaşan H.
     crowd: [
-      { slot: 0.03, back: 0 }, { slot: 0.13, back: 5 }, { slot: 0.21, back: 0 }, { slot: 0.30, back: 5 },
+      { slot: 0.02, back: 0 }, { slot: 0.13, back: 5 }, { slot: 0.21, back: 0 }, { slot: 0.30, back: 5 },
       { slot: 0.58, back: 0, id: 'W', name: 'Rüzgarüstü komşu' }
     ],
     steps: [

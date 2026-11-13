@@ -53,6 +53,7 @@
   const OBSTACLES = E.obstaclesOf({ marks: [MARK], line: LINE });
   const LINE_OBS = E.obstaclesOf({ line: LINE });           // pin + hakem botu
   const MARK_OBS = [{ x: MARK.x, y: MARK.y, r: 14 }];
+  const AVOID_OBS = [...LINE_OBS, MARK_OBS[0]];             // kaçınma listesi (sıra sabit: pin, hakem botu, şamandıra)
   let courseKey = '';
   function setCourse(c) {
     const L = Math.round((c && c.lineLen) || COURSE_DEFAULT.lineLen), D = Math.round((c && c.markDist) || COURSE_DEFAULT.markDist);
@@ -65,6 +66,7 @@
     refill(OBSTACLES, E.obstaclesOf({ marks: [MARK], line: LINE }));
     refill(LINE_OBS, E.obstaclesOf({ line: LINE }));
     refill(MARK_OBS, [{ x: MARK.x, y: MARK.y, r: 14 }]);
+    refill(AVOID_OBS, [...LINE_OBS, MARK_OBS[0]]);
   }
   setCourse(COURSE_DEFAULT);
 
@@ -606,26 +608,37 @@
         if (b.man && b.man !== 'tack' && b.escH != null) { target = target + b.escH; speedK = b.escSpeed; }
       } else b.man = null;
 
+      // engel kaçınma (pin, hakem botu, şamandıra): hedef rota engelin güvenlik çemberine çarpıyorsa çembere
+      // teğet rota. Kaçış ve dönüş süreklidir: tekne engelin yanından tek, temiz bir yayla geçer (titreme yok).
+      let avoiding = 0;                                     // kaçarken dönüş hızı (derece/sn)
+      if (b.phase !== 'round' && turnDir >= 0) {
+        const markOn = b.phase !== 'done' && !(b.phase === 'penalty' && b.penFinish && !b.penWait);
+        const into = (hh, lim) => Math.abs(E.norm180(hh - w)) < lim;
+        const st = E.steerAround(b.x, b.y, target, markOn ? AVOID_OBS : LINE_OBS, b.v, { maxTurn: o => o === MARK_OBS[0] ? 0 : 90,   // pin/hakem botunda en çok 90° sapma (eski davranışa yakın)
+
+          ok: b.phase === 'wait' ? null : (hh, o) => o === MARK_OBS[0] || !into(hh, 35),   // rüzgarın içine kaçılmaz (şamandırada tramola kuralı var)
+          side: (o, def, hL, hR) => {
+            if (o === MARK_OBS[0]) return 1;                     // şamandıra hep iskelede (solda) kalsın
+            let sd = def;
+            // kaçış rüzgara doğru (yelken boşa) götürecekse öbür taraftan, bordalayarak dolaş
+            if (b.phase !== 'wait' && into(b.h + sd * 20, 38)) sd = -sd;
+            // start etmemiş tekne pin'i hattın içinden (pin solunda kalacak şekilde) geçmeye çalışır
+            if (o === LINE_OBS[0] && !b.started && Math.hypot(b.x - LINE.pin.x, b.y - LINE.pin.y) < 90 && !into(b.h + 20, 32)) sd = 1;
+            return sd;
+          }
+        });
+        if (st) {
+          // şamandırayı tutamıyor (sağa kaçış rüzgarın içine sokuyor): rüzgarda kalmak yerine hemen tramola
+          if (st.o === MARK_OBS[0] && b.phase === 'race' && b.started && !b.manual && b.tack === 'starboard' && into(b.h + 25, 40) && t - b.lastTack > 2) doTack(b, s, 'Tutmuyor, tramola');
+          else { target = st.h; avoiding = st.o === MARK_OBS[0] ? 320 : 160; }
+        }
+      }
       // dönüş
       let diff = E.norm180(target - b.h);
       if (turnDir < 0 && diff > 0) diff -= 360;          // yalnızca sola dön
-      const rate = (b.phase === 'round' ? 130 : b.phase === 'penalty' ? 150 : TURN_RATE) * DT;
+      const rate = (b.phase === 'round' ? 130 : b.phase === 'penalty' ? 150 : avoiding || TURN_RATE) * DT;
       const dh = clamp(diff, -rate, rate); b.h = E.norm360(b.h + dh);
       if (b.phase === 'penalty' && !b.penWait) b.penTurn += Math.abs(dh);
-      if (b.phase !== 'round') {
-        let dir = E.avoidDir(b.x, b.y, b.h, LINE_OBS, b.v);
-        // kaçış rüzgara doğru (yelken boşa) götürecekse öbür taraftan, bordalayarak dolaş
-        if (dir !== 0 && b.phase !== 'wait' && Math.abs(E.norm180(b.h + dir * 20 - w)) < 38) dir = -dir;
-        // start etmemiş tekne pin'i hattın içinden (pin solunda kalacak şekilde) geçmeye çalışır
-        if (dir !== 0 && !b.started && Math.hypot(b.x - LINE.pin.x, b.y - LINE.pin.y) < 90 && Math.abs(E.norm180(b.h + 20 - w)) >= 32) dir = 1;
-        if (dir !== 0) b.h = E.norm360(b.h + dir * 160 * DT);
-        // şamandıra önündeyse hep sağa kaç: şamandıra teknenin iskelesinde (solunda) kalsın, yanlış taraftan geçilmesin
-        else if (b.phase !== 'done' && !(b.phase === 'penalty' && b.penFinish && !b.penWait) && E.avoidDir(b.x, b.y, b.h, MARK_OBS, b.v) !== 0) {
-          // şamandırayı tutamıyor (sağa kaçış rüzgarın içine sokuyor): rüzgarda kalmak yerine hemen tramola
-          if (b.phase === 'race' && b.started && !b.manual && b.tack === 'starboard' && Math.abs(E.norm180(b.h + 25 - w)) < 40 && t - b.lastTack > 2) doTack(b, s, 'Tutmuyor, tramola');
-          else b.h = E.norm360(b.h + 320 * DT);
-        }
-      }
       // rüzgarın içinde kaldı (şamandıranın altında, akıntı itiyor): tramola atıp çık
       if (b.phase === 'race' && b.started && !b.manual && Math.abs(E.norm180(b.h - w)) < 30 && b.v < 15 && t - b.lastTack > 4) {
         if (!b.stallAt) b.stallAt = t; else if (t - b.stallAt > 1.5) { doTack(b, s, 'Rüzgarda kaldı, tramola'); b.stallAt = 0; }
