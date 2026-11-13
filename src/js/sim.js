@@ -834,7 +834,8 @@
       m.manual = true; m.route = null; m.man = null; m.escH = null; m.sheet = null; m.hand = true;
       if (m.phase === 'wait' && Math.abs(E.norm180(m.h - s.wind)) < 40) { m.h = s.wind + (m.tack === 'starboard' ? -45 : 45); m.sheetOff = S.SHEET_OFF_MAX; }   // beklerken yelken boştu
       // canlı: bu kareden itibaren yarış adım adım ilerler; kareler ve teknenin yolu (kayıt için) tutulur
-      st.drive = { s, i, live: true, paused: st.mode !== 'run', acc: 0, n: 0, frames: [S.clone(s)], path: [] };
+      st.drive = { s, i, live: true, paused: false, acc: 0,   // Elle sür'e basınca zaman hep akar (durmuş oynatmadan geçince kilitli sanılıyordu)
+        n: 0, frames: [S.clone(s)], path: [] };
       st.mode = 'pause'; st.sim = s;
     }
     if (st.cat) openCat(null);                          // ayar paneli kapansın: sahne ve dümen paneli öne çıksın
@@ -899,7 +900,7 @@
     if (!d.live) driveEvents(m, S.drive(ctx, m, inp, dt * DRIVE_TEMPO));
     else if (!d.paused) {
       // canlı yarış: sabit adımlarla (DT) herkes birlikte ilerler; ekran karesi başına en çok 8 adım
-      const tempo = st.speed / S.CLOCK_SCALE;
+      const tempo = st.driveSpeed / S.CLOCK_SCALE;
       S.steer(ctx.wind, m, inp, dt * Math.max(tempo, LIVE_TEMPO));   // dümen hemen tepki versin
       const sinp = { ...inp, noTurn: true };
       d.acc = Math.min(d.acc + dt * tempo, S.DT * 8);
@@ -1551,14 +1552,20 @@
     if (b.classList.contains('on') && phoneMq.matches) b = b.nextElementSibling || $('speedSeg').firstElementChild;   // telefonda yalnız seçili görünür: dokununca sıradaki hız
     setSpeed(+b.dataset.v); });
   const SPEEDS = [0.5, 1, 5, 15, 40], spTxt = v => (v === 0.5 ? '½' : v) + '×';
-  function setSpeed(v) {
+  function setSpeed(v) {   // izleme (oynatma) hızı: varsayılan 1× = gerçek zaman
     st.speed = v; [...$('speedSeg').children].forEach(x => x.classList.toggle('on', +x.dataset.v === v));
-    $('dbSpeed').textContent = spTxt(v); $('dbSpeed').classList.toggle('changed', v !== 1);
-    $('dbSpeed').title = `Yarışın hızı: ${spTxt(v)}${v === 1 ? ' (gerçek zaman)' : v < 1 ? ' (yavaş)' : ' (hızlı)'} · dokun → sıradaki`;
+  }
+  // Elle sürme hızı ayrı: parkur çizimde sıkıştırılmış (tekneler parkura göre büyük), 1×'te tekne yerinde duruyor gibi görünür
+  // ve "kilitlendi" sanılıyordu (kullanıcı 2026-11-13). Varsayılan 15× (tekne gözle doğal hızda), zaman kutusundan değişir.
+  const DRIVE_SPEED0 = 15;
+  function setDriveSpeed(v) {
+    st.driveSpeed = v; const x = $('dbSpeed');
+    x.textContent = spTxt(v); x.classList.toggle('changed', v !== DRIVE_SPEED0);
+    x.title = `Elle sürme hızı: ${spTxt(v)}${v === 1 ? ' (gerçek zaman: tekneler çok yavaş görünür)' : v === DRIVE_SPEED0 ? ' (doğal görünen hız)' : ''} · dokun → sıradaki`;
   }
   // elle sürerken: zaman kutusunda tek düğme, dokununca sıradaki hız (½× → 1× → 5× → 15× → 40×)
-  $('dbSpeed').addEventListener('click', () => { const v = SPEEDS[(SPEEDS.indexOf(st.speed) + 1) % SPEEDS.length]; setSpeed(v); toast(`Yarışın hızı ${spTxt(v)}${v === 1 ? ': gerçek zaman' : v < 1 ? ': yavaş' : ''}`); });
-  setSpeed(st.speed || 1);
+  $('dbSpeed').addEventListener('click', () => { const v = SPEEDS[(SPEEDS.indexOf(st.driveSpeed) + 1) % SPEEDS.length]; setDriveSpeed(v); toast(`Elle sürme hızı ${spTxt(v)}${v === 1 ? ': gerçek zaman (tekneler çok yavaş)' : v === DRIVE_SPEED0 ? ': doğal görünen hız' : ''}`); });
+  setSpeed(st.speed || 1); setDriveSpeed(DRIVE_SPEED0);
   st.fastPre = true;
   try { if (localStorage.getItem('ps.sim.fastPre') === '0') st.fastPre = false; } catch (e) { /* yok */ }
   $('cbPre').innerHTML = S.PRE_SEC.map(v => `<button data-v="${v}" title="Start'a ${v / 60} dakika">${v / 60}</button>`).join('') + '<i>dk</i>';

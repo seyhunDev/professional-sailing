@@ -75,7 +75,8 @@
 
 ## Kararlar
 - 2026-11-13 · **Hazırlık bayrağı parkurun parçası:** `course.flag` ('P' varsayılan; 'I','Z','U','Siyah'). Ayrı alan yerine `course` içinde, böylece kurulum kaydı / yarış kaydı / tekrar oynatma ek iş olmadan taşır. Parkur "Varsayılan" düğmesi bayrağı korur. Kural mantığı yalnız sim-core'da (deterministik, tekrar oynatma aynı).
-- 2026-11-13 · **Elle sürmede zaman seçili hızla akar (1× gerçek zaman), dümen her karede.** Kullanıcı varsayılanın standart süre olmasını istedi; dümen gecikmesin diye dönüş kare başına uygulanır.
+- 2026-11-13 · **Elle sürme hızı oynatmadan ayrı, varsayılan 15×** (v1.89): 1×'te sıkıştırılmış parkurda tekne duruyor görünüp kilitli sanıldı. Oynatma 1× kalır.
+- 2026-11-13 · ~~**Elle sürmede zaman seçili hızla akar (1× gerçek zaman), dümen her karede.**~~ (v1.89'da değişti) Kullanıcı varsayılanın standart süre olmasını istedi; dümen gecikmesin diye dönüş kare başına uygulanır.
 - 2026-11-13 · **Elle sürmede iskota hep otomatik.** Oto iskota düğmesi kaldırıldı (kullanıcı: elle iskota için bir çalışma yok, seçilebilir olmasın).
 - 2026-11-13 · **Depo/adres `velora-sailing`** (kullanıcı onayı): site https://seyhundev.github.io/velora-sailing/. Eski adres yönlendirilmez. Dosya biçimlerindeki `app:'professional-sailing'` ve localStorage `ps.*` anahtarları eski kayıtlarla uyum için aynı kalır.
 - 2026-11-13 · **Velora ile ortak giriş (onaylandı, Firebase kütüphanesi eklenebilir):** Velora (`seyhunDev/sesliasistan`, Firebase `sesliasistan-3e95a`) Velora Sanal için kullandığı yöntemle: Velora sunucusu `createCustomToken(uid)` üretir, `…/velora-sailing/#t=<anahtar>` açılır, burada `signInWithCustomToken` + `#` silinir. Doğrudan gelen için Velora e-posta/şifre girişi, misafir kalır.
@@ -177,8 +178,16 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Elle sürmede "kilitlenme", ayrı sürüş hızı, daha az ceza (v1.89)
+- Kullanıcı: animasyonu başlatıp elle sürüşe geçince teknesi duruyor, dümen/iskota tepki vermiyor; diğer tekneler sürekli ceza turu atıyor; hesaplar profesyonel uygulamalardaki gibi mi?
+- Neden 1: oynatma duraklatılmışken (ör. zaman çubuğu sarıldıktan sonra) Elle sür'e basılınca sürüş `paused` başlıyordu: zaman ve dümen donuk. Artık sürüş hep akarak başlar.
+- Neden 2: v1.85'te elle sürme oynatma hızına bağlandı; 1×'te (gerçek zaman) parkur sıkıştırılmış olduğu için tekne 3 sn'de ~1 px gidiyor, kilitli sanılıyor. Elle sürme hızı ayrı: `st.driveSpeed` varsayılan 15× (`DRIVE_SPEED0`), zaman kutusundaki düğmeyle ½×…40×. Oynatma varsayılanı 1× kaldı.
+- Cezalar: AI tramola kararında (K13 bilinci) eskiden 9 sn beklemeden sonra açıklık bakmadan atıyordu. Start'tan sonra açıklık eşiği 26→34 (zorunluda 22→28), uzun beklemede en az 24, 25 sn'de koşulsuz. Varsayılan yarışlarda protesto 60→40 (15 yarış), fuzz 142→112. `closest` yavaş hız tahmini ve give-way 5 sn bakış denendi: temas arttı, geri alındı.
+- Kullanıcıya dürüst cevap: hızlar sınıf polar tablosundan, pis rüzgar konisi, RRS 10-18 sadeleştirilmiş; fizik/VPP yok, geometri ~10× sıkıştırılmış (tekneler parkura göre büyük), saat ölçekli.
+
 ### 2026-11-13 · Geri sayımda "durdu" görünümü ve geri sayım çubuğu
 - Neden: 1× gerçek zaman + 5 dk bekleme = tekneler neredeyse hareketsiz (hata yok, ölçüldü). Çözüm: hızlı geri sayım (son dakikaya kadar 10×), 1:00'a / start'a atla, süre seçimi sahnenin üstünde. Ekran görüntüleri `start-bayraklari/geri-sayim-*`.
+
 ### 2026-11-13 · Elle sürme alanı genişledi, sınır çizgisi, tekneye takılma düzeltildi (v1.87)
 - Kullanıcı: alan ekranda var gibi ama tekne ilerleyemiyor; sınırı soluk ince çizgiyle göster. Bir teknenin üstüne gelince takılıp hiç ilerlemedi.
 - `MAN_MARGIN` 320 → 440, yeni `MAN_Y` 260 (parkurun üstü/altı da; eskiden y 15…H−10 idi). `S.bounds()` tek kaynak; `drawBounds` soluk kesik çizgi (`non-scaling-stroke`). Sınıra gelince tekne yavaşlar, "Alan sınırı: geri dön" notu (`'edge'` olayı).

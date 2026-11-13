@@ -605,7 +605,10 @@
           const LA = layAngle(s, b), must = (b.tack === 'starboard' && relWp >= LA + 1) || (b.tack === 'port' && relWp <= -LA - 1) || b.x < 70 || b.x > WORLD.w - 70;
           let m = 1e9;
           for (const o of others) { const c = closest(b, nh, 30, o, 4); if (c.d < 220) m = Math.min(m, c.dmin); }
-          if (m > (must ? 22 : 26) || edge || t - Math.max(b.lastTack, s.startAt) > 9) doTack(b, s, '');
+          // eskiden 9 sn bekleyince her koşulda atıyordu: K13 cezalarının çoğu buradan geliyordu. Artık uzun beklemede de en az ~1.5 boy açıklık ister
+          const waited = t - Math.max(b.lastTack, s.startAt);
+          const need = b.started ? (must ? 28 : 34) : (must ? 22 : 26);   // start'a dönen / hattı arayan tekne eskisi gibi
+          if (m > need || edge || (waited > 9 && (m > 24 || !b.started)) || waited > 25) doTack(b, s, '');
         }
         const wp = waypoint(w), dWp = Math.hypot(wp.x - b.x, wp.y - b.y);
         const brg = bearing(b, wp), rel = E.norm180(brg - w);
