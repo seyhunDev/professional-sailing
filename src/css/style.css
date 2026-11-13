@@ -228,7 +228,7 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
 .speed { display: flex; padding: 3px; gap: 2px; background: var(--raised); border: 1px solid var(--border); border-radius: 10px; flex: 0 0 auto; }
 .speed button { height: 32px; min-width: 40px; padding: 0 8px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .speed button:hover { color: var(--text); }
-.speed button.on { background: var(--raised2); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.speed button.on { background: var(--accent); color: var(--accent-ink); font-weight: 800; box-shadow: 0 1px 4px rgba(56,189,248,.35); }   /* simülatörle aynı: seçili hız dolu mavi */
 .add-row { flex-wrap: wrap; }
 .add-row .tb { min-height: var(--tap); }
 .add-row button.tb { max-width: 240px; }

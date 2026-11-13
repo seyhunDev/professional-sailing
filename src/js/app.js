@@ -503,9 +503,22 @@
     const ph = camOn() && phoneMq.matches;                  // telefonda gösterge biraz küçük (sahneye yer kalsın)
     return Math.max(ph ? 0.55 : 0.8, Math.min(1.6, upp * (ph ? 0.68 : 0.95)));
   }
+  // gösterge kartının ölçüleri (gösterge birimiyle): saat yoksa yalnız pusula (100), varsa saat sütunu eklenir
+  function hudLayout() {
+    const scn = state.scn;
+    if (!(scn.startAt != null && scn.startAt > 0)) return { W: 100, clock: null };
+    const cs = scn.clockScale || 1, rem = (scn.startAt - state.t) * cs;
+    const fmt = r => scn.clockScale ? fmtClock(r) : `${r.toFixed(1)} sn`;
+    const on = rem > 0, col = on ? (rem <= 5 * cs ? '#f87171' : '#fbbf24') : '#34d399';
+    const big = on ? fmt(rem) : 'Start verildi', small = on ? "START'A" : 'YARIŞ';
+    const fs = on ? 30 : 20;
+    const minBig = textW(fmt(scn.startAt * cs), 30, 800);         // geri sayarken kart daralıp genişlemesin
+    const W = Math.ceil(100 + 16 + Math.max(textW(big, fs, 800), minBig, textW(small, 10, 700, 1) + 14) + 18);
+    return { W, clock: { big, small, col, fs } };
+  }
   function hudBox() {
-    const k = hudScale(), wide = state.scn.startAt != null && state.scn.startAt > 0;
-    return { x: state.vb.x, y: state.vb.y, w: (wide ? 270 : 120) * k, h: 146 * k };
+    const k = hudScale();
+    return { x: state.vb.x, y: state.vb.y, w: (12 + hudLayout().W + 6) * k, h: (12 + 100 + 6) * k };
   }
   function drawHud(w) {
     const g = $('hudLayer'); g.innerHTML = '';
@@ -514,27 +527,24 @@
     const svg = $('course'), upp = vb.w / (svg.clientWidth || vb.w);       // ekran pikseli başına SVG birimi
     const k = hudScale();
     const hg = el('g', { transform: `translate(${vb.x.toFixed(1)},${vb.y.toFixed(1)}) scale(${k.toFixed(3)})`, style: '--ls: 1' }, g);
-    const cx = 64, cy = 64;
-    el('circle', { cx, cy, r: 44, fill: 'rgba(7,18,30,0.72)', stroke: 'rgba(255,255,255,0.18)', 'stroke-width': 1 }, hg);
+    // tek gösterge kartı (simülatörle aynı dil): solda pusula, start senaryosunda sağda saat
+    const L = hudLayout(), X = 12, Y = 12, H = 100;
+    el('rect', { x: X, y: Y, width: L.W, height: H, rx: 16, fill: 'rgba(9,20,33,0.86)', stroke: 'rgba(148,178,208,.22)', 'stroke-width': 1 }, hg);
+    const cx = X + 50, cy = Y + 44, r = 32;
+    el('circle', { cx, cy, r, fill: 'rgba(255,255,255,.03)', stroke: 'rgba(255,255,255,.16)', 'stroke-width': 1 }, hg);
     for (let a = 0; a < 360; a += 30) {                           // pusula çentikleri
-      const f = E.fwd(a), r1 = a % 90 ? 39 : 35;
-      el('line', { x1: cx + f.x * r1, y1: cy + f.y * r1, x2: cx + f.x * 42, y2: cy + f.y * 42, stroke: 'rgba(255,255,255,.35)', 'stroke-width': a % 90 ? 1 : 1.5 }, hg);
+      const f = E.fwd(a), r1 = a % 90 ? r - 4 : r - 7;
+      el('line', { x1: cx + f.x * r1, y1: cy + f.y * r1, x2: cx + f.x * (r - 1), y2: cy + f.y * (r - 1), stroke: a === 0 ? '#7dd3fc' : 'rgba(255,255,255,.32)', 'stroke-width': a % 90 ? 1 : 1.6 }, hg);
     }
     const d = E.fwd(w + 180);
-    el('line', { x1: cx - d.x * 28, y1: cy - d.y * 28, x2: cx + d.x * 20, y2: cy + d.y * 20, stroke: '#7dd3fc', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'marker-end': 'url(#arrowHead)' }, hg);
-    el('rect', { x: cx - 38, y: cy + 52, width: 76, height: 20, rx: 10, fill: 'rgba(7,18,30,0.72)' }, hg);
-    el('text', { x: cx, y: cy + 66, 'text-anchor': 'middle', fill: '#fff', 'font-size': 11, 'font-weight': 600 }, hg).textContent = `Rüzgar ${Math.round(E.norm360(w))}°`;
-    if (scn.startAt != null && scn.startAt > 0) {
-      const rem = (scn.startAt - state.t) * (scn.clockScale || 1);
-      const fmt = r => scn.clockScale ? fmtClock(r) : `${r.toFixed(1)} sn`;
-      const on = rem > 0, col = on ? (rem <= 5 * (scn.clockScale || 1) ? '#f87171' : '#fbbf24') : '#34d399';
-      const big = on ? fmt(rem) : '✔ Yarış başladı', small = on ? "START'A" : 'START VERİLDİ';
-      const minBig = on ? textW(fmt(scn.startAt * (scn.clockScale || 1)), 22, 800) : 0;   // geri sayarken kutu daralıp genişlemesin
-      const px = cx + 58, py = cy - 26, ph = 52;
-      const pw = Math.ceil(Math.max(textW(big, 22, 800), minBig, textW(small, 10, 700, 1), on ? 104 : 0)) + 30;
-      el('rect', { x: px, y: py, width: pw, height: ph, rx: 14, fill: 'rgba(7,18,30,0.78)', stroke: col, 'stroke-opacity': .55, 'stroke-width': 1.5 }, hg);
-      el('text', { x: px + 14, y: py + 17, fill: 'rgba(255,255,255,.6)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': 1 }, hg).textContent = small;
-      el('text', { x: px + 14, y: py + 42, fill: col, 'font-size': 22, 'font-weight': 800, 'font-variant-numeric': 'tabular-nums' }, hg).textContent = big;
+    el('line', { x1: cx - d.x * 21, y1: cy - d.y * 21, x2: cx + d.x * 14, y2: cy + d.y * 14, stroke: '#7dd3fc', 'stroke-width': 3.2, 'stroke-linecap': 'round', 'marker-end': 'url(#arrowHead)' }, hg);
+    el('text', { x: cx, y: Y + H - 10, 'text-anchor': 'middle', fill: 'rgba(255,255,255,.62)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': .6 }, hg).textContent = `RÜZGAR ${Math.round(E.norm360(w))}°`;
+    if (L.clock) {
+      const { big, small, col } = L.clock, RX = X + 100;
+      el('line', { x1: RX, y1: Y + 14, x2: RX, y2: Y + H - 14, stroke: 'rgba(148,178,208,.18)' }, hg);
+      el('circle', { cx: RX + 20, cy: Y + 33, r: 3.5, fill: col }, hg);
+      el('text', { x: RX + 30, y: Y + 37, fill: 'rgba(255,255,255,.62)', 'font-size': 10, 'font-weight': 700, 'letter-spacing': 1 }, hg).textContent = small;
+      el('text', { x: RX + 16, y: Y + 72, fill: col, 'font-size': L.clock.fs, 'font-weight': 800, 'font-variant-numeric': 'tabular-nums', 'letter-spacing': -.5 }, hg).textContent = big;
       // hazırlık bayrağı: son 1 dakikada indirilir
       if (scn.prepFlag && scn.line) {
         const up = state.t < (scn.flagDownAt != null ? scn.flagDownAt : scn.startAt);
