@@ -1571,18 +1571,19 @@
     st.speed = v; [...$('speedSeg').children].forEach(x => x.classList.toggle('on', +x.dataset.v === v));
   }
   // Elle sürme hızı ayrı: parkur çizimde sıkıştırılmış (tekneler parkura göre büyük), 1×'te tekne yerinde duruyor gibi görünür
-  // ve "kilitlendi" sanılıyordu (kullanıcı 2026-11-13). Varsayılan 15× (tekne gözle doğal hızda), zaman kutusundan değişir.
-  const DRIVE_SPEED0 = 15;
+  // ve "kilitlendi" sanılıyordu (kullanıcı 2026-11-13, iki kez). Bu yüzden elle sürmede ½× / 1× yok: Yavaş (5×), Normal (15×, varsayılan), Hızlı (40×).
+  const DRIVE_SPEED0 = 15, DRIVE_SPEEDS = [5, 15, 40], DRV_TXT = { 5: 'Yavaş', 15: 'Normal', 40: 'Hızlı' };
   function setDriveSpeed(v) {
+    if (!DRIVE_SPEEDS.includes(v)) v = DRIVE_SPEED0;
     st.driveSpeed = v; const x = $('dbSpeed');
-    x.textContent = spTxt(v); x.classList.toggle('changed', v !== DRIVE_SPEED0);
+    x.textContent = DRV_TXT[v]; x.classList.toggle('changed', v !== DRIVE_SPEED0);
     [...$('dbSpeedSeg').children].forEach(b => b.classList.toggle('on', +b.dataset.v === v));
-    x.title = `Elle sürme hızı: ${spTxt(v)}${v === 1 ? ' (gerçek zaman: tekneler çok yavaş görünür)' : v === DRIVE_SPEED0 ? ' (doğal görünen hız)' : ''} · dokun → sıradaki`;
+    x.title = `Elle sürme hızı: ${DRV_TXT[v]} (saat ${spTxt(v)}) · dokun → sıradaki`;
   }
-  // elle sürerken: zaman kutusunda tek düğme, dokununca sıradaki hız (½× → 1× → 5× → 15× → 40×)
-  $('dbSpeed').addEventListener('click', () => { const v = SPEEDS[(SPEEDS.indexOf(st.driveSpeed) + 1) % SPEEDS.length]; setDriveSpeed(v); toast(`Elle sürme hızı ${spTxt(v)}${v === 1 ? ': gerçek zaman (tekneler çok yavaş)' : v === DRIVE_SPEED0 ? ': doğal görünen hız' : ''}`); });
-  // geniş ekranda hız seçenekleri yan yana (alt çubuktaki gibi); yatay telefonda tek düğme
-  $('dbSpeedSeg').innerHTML = SPEEDS.map(v => `<button data-v="${v}" title="Elle sürme hızı ${spTxt(v)}${v === 1 ? ' (gerçek zaman)' : v === DRIVE_SPEED0 ? ' (doğal görünen hız)' : ''}">${spTxt(v)}</button>`).join('');
+  // elle sürerken: dar ekranda tek düğme, dokununca sıradaki hız (Yavaş → Normal → Hızlı)
+  $('dbSpeed').addEventListener('click', () => { const v = DRIVE_SPEEDS[(DRIVE_SPEEDS.indexOf(st.driveSpeed) + 1) % DRIVE_SPEEDS.length]; setDriveSpeed(v); toast(`Elle sürme: ${DRV_TXT[v]} (saat ${spTxt(v)})`); });
+  // geniş ekranda hız seçenekleri yan yana
+  $('dbSpeedSeg').innerHTML = DRIVE_SPEEDS.map(v => `<button data-v="${v}" title="Elle sürme: ${DRV_TXT[v]} · saat ${spTxt(v)} akar">${DRV_TXT[v]}</button>`).join('');
   $('dbSpeedSeg').addEventListener('click', e => { const x = e.target.closest('button'); if (x) setDriveSpeed(+x.dataset.v); });
   setSpeed(st.speed || 1); setDriveSpeed(DRIVE_SPEED0);
   st.fastPre = true;

@@ -183,6 +183,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Elle sürmede 1× kaldırıldı: Yavaş / Normal / Hızlı
+- Kullanıcı (v1.94 ekran görüntüsü): elle sürüp Start'a basınca tekne "kaldı". Elle sürme hızı 1× seçiliydi; 3,7 kn'de bile sıkıştırılmış parkurda tekne saniyede ~0,1 px gidiyor, durmuş görünüyor. Kod hatası değil, ölçek sorunu.
+- Elle sürme hızları artık yalnız `DRIVE_SPEEDS` = 5× / 15× / 40×, düğmede "Yavaş / Normal / Hızlı" (`DRV_TXT`), varsayılan Normal. Oynatma hızları (½×…40×, varsayılan 1×) değişmedi. Yardım metni güncellendi.
+
 ### 2026-11-13 · Uygulama gibi tasarım, 1. adım: kabuk, telefon yatay, yatay telefon düzeni
 - Kullanıcı: iPad'de sayfa yukarı-aşağı oynuyor; profesyonel uygulama gibi olsun; telefonda yatay zorunlu, iPad'de iki yön; elle sürme, animasyon (simülatör) ve senaryolar ekranlarının tasarımı ayrı ayrı ele alınsın.
 - Yapılanlar: `app-shell.js` (esneme/kayma/büyütme kapalı, döndür ekranı), manifest + simgeler, yatay telefonda senaryo seçici (önceden kart alanı 30 px kalıyordu) ve simülatör sıkı düzeni, yatay telefonda elle sürme tam ekran kumanda. Ekran görüntüleri proje dosyaları `uygulama-tasarimi/`.
