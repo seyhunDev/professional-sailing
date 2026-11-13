@@ -493,9 +493,6 @@
     [[0, 0], [sh.draftPos * 0.6, 0.05 * k], [sh.draftPos + 0.12, 0.34 * k], [0.88, 0.12 * k], [1, 0]].forEach(([o, a]) =>
       el('stop', { offset: o, 'stop-color': '#1e3a5f', 'stop-opacity': a.toFixed(3) }, lg));
     el('path', { d: sp, fill: `url(#${gid})` }, cl);
-    // yelken numarası (üst balen cebinin altında, orsa yakasından içeride)
-    const nP = tp(add(mix(H, T, 0.42), P(70, 0)));
-    el('text', { x: nP.x, y: nP.y, transform: `rotate(${rot.toFixed(2)} ${nP.x.toFixed(1)} ${nP.y.toFixed(1)})`, class: 'sail-no', 'text-anchor': 'start' }, cl).textContent = 'TUR 123';
     D(sp, { fill: 'none', stroke: '#0b1724', 'stroke-width': 1.5, 'stroke-linejoin': 'round' });
     // orsa yakası şeridi (luff tape) ve arka yaka şeridi
     D(`M${luff.map(q => pt(tp(q))).join(' L')}`, { fill: 'none', stroke: '#e2e8f0', 'stroke-width': 3.2, 'stroke-linejoin': 'round' });

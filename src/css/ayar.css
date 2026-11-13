@@ -127,7 +127,6 @@
   .legend { bottom: auto; top: 8px; }
 }
 .warn.info { background: rgba(12,74,110,.85); border-color: rgba(56,189,248,.55); color: #e0f2fe; }
-.sail-no { font: 800 22px system-ui, -apple-system, sans-serif; fill: rgba(30,58,138,.55); letter-spacing: 2px; }
 .rake-lbl { font: 700 12px system-ui, -apple-system, sans-serif; fill: #fde68a; font-variant-numeric: tabular-nums; }
 .rake-lbl.on { fill: #1c1917; }
 .callout.plain { cursor: default; }
