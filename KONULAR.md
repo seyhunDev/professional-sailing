@@ -108,6 +108,7 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | H8 | Sıkıştıysan çık: boş yerde rüzgarüstü teknenin altına yanaş | Kalabalıkta ikinci sırada kalınca vakit varken çıkıp daha boş yere geçme; rüzgarüstü komşunun ~1 boy rüzgaraltında bekleme (K11 seni korur, altındaki boşluk senin); HATA: rüzgaraltındakinin üstüne yanaşmak (altı dolu, hızlanamaz, orsalanır). | ✅ (İA4) |
 | H9 | Hakem botu ucu kalabalık: erken gir, yerini tut | Kalabalık hakem botu ucunda erken ve layline'dan (rüzgaraltından) girip turuncu bayrağın dibinde start'a kadar bekleme; HATA: dışarıda, açıkta bekleyip 1 dk kala gelen tekne ön sıra dolduğu için giremez, yer tutan teknenin altında (arkasında) ikinci sırada kalır ve pis rüzgarda çıkar (K12). | ✅ (İA5) |
 | H10 | Kuvvetli rüzgarda hakem botu: açılan boşluğa gir | Kuvvetli rüzgarda (18 kn) hakem botu dibinde bekleyen tekneler rüzgaraltına kayar, son 30-40 sn'de botun dibinde boşluk açılır; hakem botunun sancak tarafında, hat hizasında bekleyip boşluğu öngörerek yavaşça botun kıçından dolaşıp girme ve bot ucundan start; HATA: bayrağın dibine erken park edip kayan tekne (K11, K31, barging). | ✅ (İA6) |
+| H11 | Kaydıkça yüksel: hatta yer tutma | Bekleyen tekne rüzgar ve akıntıyla aşağı/rüzgaraltına kayar; dört düzeltme: iskotayı bir an çekip orsalama, ikili tramola (tramola + tramola + dur, rüzgarüstündeki teknenin altına geçme), durduğun yerde tramola, burnu açıp doldurup orsalama. HATA: tam dolu yelkenle ikili tramola, tekne öne fırlar. | ✅ (İA7) |
 
 # III. TEKNİK
 

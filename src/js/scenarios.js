@@ -837,5 +837,71 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.8] }
   });
 
+  // ---------- İA7: hatta yer tut, kayınca yüksel ----------
+  S.push({
+    id: 'ia7-hold-climb',
+    category: 'İleri Taktik', topic: 'Start · Yer tutma',
+    title: 'İA7 · Kaydıkça yüksel: iskota, ikili tramola, yerinde tramola',
+    summary: 'Start\'ı beklerken rüzgar ve akıntı tekneyi aşağı ve rüzgaraltına kaydırır. Yeşil S iki grup teknenin arasında bekliyor ve rüzgaraltındaki gruba doğru kayıyor; oysa yeri rüzgarüstü grubun en alttaki teknesinin hemen rüzgaraltı. S kaybettiği yüksekliği dört yolla geri alır: iskotayı bir an çekip orsalamak, ikili tramola (tramola + tramola + hemen dur), durduğu yerde tramola ve burnu açıp doldurup orsalamak. Hepsinde ölçü aynı: hareket çabuk biter, tekne kendini öne atmaz. Turuncu H aynı hamleyi fazla hızla yapar, hattın üstüne fırlar.',
+    duration: 40,
+    baseSpeed: 40,
+    clockScale: 4,
+    windKn: 12,
+    wind: 0,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 32,
+    rungs: { boat: 'S', from: 32.5 },
+    leeway: { from: 0, ramp: 2, rate: 0.5 },
+    boats: [
+      { id: 'S', name: 'Kaydıkça yükselen', role: 'dogru', color: '#2a9d8f',
+        start: { x: 565, y: 482, h: 345 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 345, dur: 5.5, speed: 0.004, turn: 0, drift: 6, driftH: 235, note: 'Rüzgar ve akıntı aşağı kaydırıyor' },
+          { mode: 'heading', h: 330, dur: 1.3, speed: 0.55, turn: 0.4, note: '1) İskotayı çek: bir an doldur' },
+          { mode: 'hold', h: 355, dur: 5.2, speed: 0.004, turn: 0.7, drift: 6, driftH: 235, note: 'Orsala, dur: biraz yükseldi' },
+          { mode: 'heading', h: 62, dur: 3.0, speed: 0.55, turn: 0.7, note: '2) Tramola: rüzgarüstüne, W\'ye doğru' },
+          { mode: 'heading', h: 345, dur: 1.3, speed: 0.12, turn: 0.7, note: 'İkinci tramola, hemen dur' },
+          { mode: 'hold', h: 345, dur: 3.3, speed: 0.004, turn: 0.4, drift: 3, note: 'W\'nin altında bekliyor' },
+          { mode: 'heading', h: 25, dur: 1.4, speed: 0.12, turn: 0.9, note: '3) Durduğu yerde tramola' },
+          { mode: 'hold', h: 345, dur: 3.6, speed: 0.004, turn: 1.1, drift: 3, note: 'Yerinde tramola: öne atılmadan' },
+          { mode: 'heading', h: 330, dur: 1.0, speed: 0.6, turn: 0.4, note: '4) Burnu aç, doldur' },
+          { mode: 'hold', h: 358, dur: 4.3, speed: 0.004, turn: 0.6, drift: 3, note: 'Orsala: hız tekneyi yukarı taşır' },
+          { mode: 'closehauled', tack: 'starboard', dur: 10, turn: 0.8 }
+        ] },
+      { id: 'H', name: 'Fazla hızla, öne fırlayan', role: 'hata', color: '#e76f51',
+        start: { x: 440, y: 480, h: 345 }, v0: 0,
+        segs: [
+          { mode: 'hold', h: 345, dur: 10.5, speed: 0.004, turn: 0, drift: 3, note: 'O da kayıyor' },
+          { mode: 'heading', h: 45, dur: 2.0, speed: 1, turn: 0.6, note: 'Tramola: yelken tam dolu' },
+          { mode: 'heading', h: 340, dur: 1.6, speed: 0.9, turn: 0.6, note: 'Çok hızlı: kendini öne attı!' },
+          { mode: 'hold', h: 350, dur: 2.0, speed: 0.01, turn: 0.6, note: 'Burnu hatta: rüzgarüstü kapandı' },
+          { mode: 'hold', h: 345, dur: 15.5, speed: 0.004, turn: 0.8, drift: 3, note: 'Önde, korumasız bekliyor' },
+          { mode: 'closehauled', tack: 'starboard', dur: 8.4, turn: 0.8 }
+        ] }
+    ],
+    // iki grup: rüzgaraltı (pin tarafı) ve rüzgarüstü (hakem botu tarafı); aradaki boşlukta S ve H
+    crowd: [
+      { slot: 0.10 }, { slot: 0.175 }, { slot: 0.25 }, { slot: 0.18, row: 1 },
+      { slot: 0.62, id: 'W', name: 'Rüzgarüstü grubun en alttakisi' }, { slot: 0.695 }, { slot: 0.77 }, { slot: 0.845 }, { slot: 0.72, row: 1 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dk: iki grubun arasında', text: 'Rüzgar 12 knot, akıntı da rüzgaraltına doğru. Yeşil S iki grup teknenin arasında bekliyor. Yeri belli: sağdaki (rüzgarüstü) grubun en alttaki teknesi W\'nin hemen rüzgaraltı. Orada W\'nin altındaki boşluk S\'nin hızlanma yolu olur.' },
+      { t: 2.5, title: 'Beklerken kayıyorsun', text: 'Yelken boşken tekneyi rüzgar ve akıntı aşağıya ve rüzgaraltına (pin tarafına) iter. S yavaş yavaş soldaki gruba yaklaşıyor ve hattan uzaklaşıyor. Hiçbir şey yapmazsan 2 dakikada 2-3 boy kaybedersin.' },
+      { t: 5.5, title: '1) İskotayı çek: bir an doldur', text: 'En küçük düzeltme: burnu biraz açıp iskotayı bir an çek. Tekne bir iki metre ileri ve yukarı gider; hemen orsalayıp yelkeni boşalt. Yükseklik geri geldi ama tekne hızlanmadı. Çok çekersen hızlanır ve hattın dibine fırlarsın.' },
+      { t: 8, title: 'Ama yine kayıyor', text: 'Bu düzeltme yer değiştirmez, yalnızca yükseltir. S hâlâ soldaki gruba yakın; istediği yer sağda, W\'nin altında. Yana gitmek için tramola gerekir.' },
+      { t: 12, title: '2) İkili tramola: tramola + tramola + dur', text: 'S tramola atıp iskele kontrada yukarı ve rüzgarüstüne, W\'ye doğru gidiyor; hemen ikinci tramolayı atıp sancağa dönüyor ve yelkeni boşaltıp duruyor. Hem yükseldi hem W\'ye yaklaştı. İskele kontradayken herkese yol verir (Kural 10, 13): bu yüzden hamle kısa ve kimsenin önünden geçmeden yapılır.' },
+      { t: 12.6, title: 'H: aynı hamle, fazla hız', text: 'Turuncu H de ikili tramola atıyor ama yelkeni tam dolduruyor. Tekne hızlanıyor, ikinci tramoladan sonra duramıyor ve kendini öne atıyor: burnu hattın üstünde. Son dakikada bu fodepar riski (I, U, siyah bayrak) ve öndeki tekne rüzgarüstüne kapı bırakır.' },
+      { t: 15.5, title: 'W\'nin altında yer', text: 'S artık W\'nin hemen rüzgaraltında, ona yakın. Altında soldaki gruba kadar açık su var. Ama rüzgar ve akıntı kaydırmaya devam ediyor; yerini tutmak sürekli küçük düzeltme ister.' },
+      { t: 20, title: '3) Durduğun yerde tramola', text: 'Neredeyse duran tekne de tramola atabilir: dümeni basıp burnu rüzgardan geçir, yelken öbür tarafa geçince tekrar başla. Burun rüzgara girerken tekne biraz yukarı çıkar. Önemli olan hız: hareket çabuk bitsin ama tekne öne atılmasın. Ne çok hızlı (fırlarsın) ne çok yavaş (burun rüzgarda takılır, geri kayarsın).' },
+      { t: 25.2, title: '4) Burnu aç, doldur, orsala', text: 'Son düzeltme: burnu biraz açıp yelkeni doldur, tekne bir boy kadar hız alsın; sonra orsalayıp burnu rüzgara ver. Hız tekneyi yukarı taşır ve tekne W\'nin hizasında yeniden durur. Kaydıysan ya da iki tekne arasında sıkıştıysan en çabuk yükselme budur.' },
+      { t: 29.9, title: '8 sn kala doldur', text: 'S, W\'nin hemen rüzgaraltında, hat hizasında. Altındaki boşluğa biraz düşüp dolduruyor ve hızlanıyor.' },
+      { t: 32, title: 'START', text: 'S W ile yan yana, temiz havada ve tam hızda çıkıyor. H öne fırladığı için uzun süre korumasız bekledi; komşuları onun rüzgarüstünde ve hızlanma yolu kısa.' },
+      { t: 36, title: 'Özet', text: 'Beklerken kayarsın: iskotayı bir an çek (yüksel), ikili tramola at (yüksel ve rüzgarüstüne git), durduğun yerde tramola at, ya da burnu açıp doldur ve orsala. Her birinde hareket çabuk biter, tekne öne atılmaz. Yerin: rüzgarüstündeki teknenin hemen altı.' }
+    ],
+    expectFaults: [],
+    addBoat: { pin: { x: 290, y: 600 }, middle: { x: 500, y: 600 }, committee: { x: 720, y: 600 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);
