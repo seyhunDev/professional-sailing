@@ -163,6 +163,7 @@
 ## Oturum günlüğü (en yeni üstte)
 ### 2026-11-13 · Üst çubuk: yuvarlak hesap/ayarlar düğmesi
 - Kullanıcı: üstteki giriş, Simülatör, Bilgi, Katman, büyütme düğmeleri karışık; kişi simgesi en sağda, yuvarlak; ayarlar içinde kişi ve ayarlar, diğerleri dışarıda.
+- Düzeltme (v1.68): ayarlar bölümü sayfa açılınca sahnede açık görünüyordu (`.page-settings { display:flex }` `hidden` özniteliğini eziyordu) → `.page-settings[hidden] { display:none }`.
 - Yapılan: yuvarlak hesap düğmesi en sağda (her iki sayfada); menüsü kişi (avatar, ad, rol, e-posta), hesap işleri, Görünüm (yakın görünüm, tam ekran), Sahnede göster (rüzgar, merdiven, etiketler, gölge, izler), sürüm. Katmanlar düğmesi kalktı. Ölçüm: üst çubuktaki tüm düğmelerin dikey merkezi aynı (5 ekran boyu + simülatör 3 boy).
 
 ### 2026-11-13 · Senaryo sayfası sadeleştirildi + Velora Sailing adı/logosu
