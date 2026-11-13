@@ -155,6 +155,11 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Giriş ekranı sadeleştirildi
+- Kullanıcı: giriş/kaydol ekranı daha sade olsun; yazı ve düğme hizalarına dikkat (iki satıra düşen yazı yanındaki düğmeyi kaydırmasın).
+- Yapılan: ortalanmış tek kart (logo, ad, tek satır tanıtım), ana düğme **Misafir olarak devam et**, ikincil **Kaydol · ücretsiz**, altta tek satır izin + "Ayrıntılar". Kilit ekranı aynı düzende (kilit simgesi, Kaydol / Şimdi değil). Kayıt formu: ad, rol çipleri (Sporcu/Antrenör/Veli/Diğer), kulüp, e-posta; "Geri" sol üstte. Gizlilik penceresi: izin anahtarı etiketli satır, iki eşit genişlikte düğme. Uzun metinlerde `text-wrap: balance`.
+- Playwright: masaüstü 1400×800, iPad Pro 11, iPhone 13; yan yana düğmeler/çipler aynı üst hizada, taşma yok. Ekran görüntüleri proje dosyaları `giris-ziyaret/sade-*`.
+
 ### 2026-11-12 · Misafir girişi, roller ve ziyaret takibi
 - Kullanıcı: sayfayı paylaşacak; kimin ne zaman, nereden ziyaret ettiğini, ne yaptığını görmek; "misafir olarak devam et / kaydol" ara ekranı; kendi hesabı sınırsız, diğerleri sınırlı; veriler şimdilik yerelde, sonra Firebase.
 - Yapılan: `js/track.js`, `js/access.js`, `ziyaret.html` + `js/visits.js` + `css/visits.css`; `app.js` (kilitli kartlar, senaryo olayı), `sim.js` (Elle sür / kayıt kilidi, yarış olayları). Playwright: masaüstü ve iPhone 13'te giriş, kilit, kaydol, sahip girişi, ziyaret sayfası; taşma yok. `npm run check` temiz. Ekran görüntüleri proje dosyaları `giris-ziyaret/`.

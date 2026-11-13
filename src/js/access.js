@@ -65,19 +65,21 @@
   let gate = null, gateMode = 'home', lockedFeature = null;
   function el(html) { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
 
+  const LOGO = '<svg viewBox="0 0 24 24"><path d="M12 2.5 L12 17 L4.5 17 Z" fill="currentColor"/><path d="M13.5 5 C17 8 18.5 12 18.5 17 L13.5 17 Z" fill="currentColor" opacity=".6"/><path d="M3 19 C 7 21.5 17 21.5 21 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+  const BACK = '<svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  // Sade giriş kartı: tek ana düğme (misafir), ikincil "Kaydol", altta tek satır gizlilik.
   function buildGate() {
     gate = el(`<div class="gate hidden" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
       <div class="gate-card">
-        <div class="gate-brand"><span class="brand-mark"><svg viewBox="0 0 24 24"><path d="M12 2.5 L12 17 L4.5 17 Z" fill="currentColor"/><path d="M13.5 5 C17 8 18.5 12 18.5 17 L13.5 17 Z" fill="currentColor" opacity=".6"/><path d="M3 19 C 7 21.5 17 21.5 21 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-          <div><div class="gate-name">Professional <em>Sailing</em></div><div class="gate-tag">Genç yarış yelkencileri için taktik ve kural animasyonları</div></div>
-          <button class="icon gate-x" id="gateClose" title="Kapat" aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-        </div>
+        <button class="icon gate-x" id="gateClose" title="Kapat" aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
         <div class="gate-body" id="gateBody"></div>
-        <div class="gate-privacy">
-          <label class="gate-consent"><input type="checkbox" id="gateConsent" checked><span>${esc(NOTICE_SHORT)}
-            <button type="button" class="gate-link" id="gateMore">Aydınlatma metni</button></span></label>
-          <div class="gate-notice hidden" id="gateNotice">${NOTICE_LONG}</div>
+        <div class="gate-foot">
+          <label class="gate-consent"><input type="checkbox" id="gateConsent" checked>
+            <span>Siteyi geliştirmek için kullanımın bu cihazda kaydedilir. <button type="button" class="gate-link" id="gateMore">Ayrıntılar</button></span></label>
         </div>
+        <div class="gate-notice hidden" id="gateNotice"><p>${esc(NOTICE_SHORT)}</p>${NOTICE_LONG}</div>
       </div></div>`);
     document.body.appendChild(gate);
     gate.querySelector('#gateMore').onclick = e => { e.preventDefault(); gate.querySelector('#gateNotice').classList.toggle('hidden'); };
@@ -89,48 +91,60 @@
     const body = gate.querySelector('#gateBody');
     gate.querySelector('#gateClose').style.display = acc ? '' : 'none';   // ilk girişte seçim zorunlu
     const f = lockedFeature && FEATURES[lockedFeature];
-    if (gateMode === 'home' || gateMode === 'locked') {
+    const back = () => { gateMode = lockedFeature ? 'locked' : 'home'; renderGate(); };
+    if (gateMode === 'home') {
       body.innerHTML = `
-        ${f ? `<div class="gate-locked"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-          <div><b>${esc(f.name)}</b> kayıtlı kullanıcılar için. Kaydolmak ücretsiz, bir dakika sürer.</div></div>`
-          : '<h2 id="gateTitle">Hoş geldin</h2><p class="gate-sub">Nasıl devam etmek istersin?</p>'}
-        <div class="gate-choices">
-          <button class="gate-choice primary" id="gateSignup"><b>Kaydol</b><small>Tüm animasyonlar, simülatörde elle sürme, yarış kaydı · ücretsiz</small></button>
-          ${f ? '<button class="gate-choice" id="gateBack"><b>Vazgeç</b><small>Misafir olarak devam et</small></button>'
-              : '<button class="gate-choice" id="gateGuest"><b>Misafir olarak devam et</b><small>Temel animasyonlar ve simülatör</small></button>'}
+        <div class="gate-hero"><span class="gate-logo">${LOGO}</span>
+          <h2 id="gateTitle">Professional <em>Sailing</em></h2>
+          <p>Yarış yelkencileri için taktik ve kural animasyonları</p></div>
+        <div class="gate-btns">
+          <button class="gate-btn primary" id="gateGuest">Misafir olarak devam et</button>
+          <button class="gate-btn" id="gateSignup">Kaydol <span>ücretsiz</span></button>
         </div>
+        <p class="gate-hint">Kaydolunca İleri Taktik, elle sürme ve yarış kaydı açılır.</p>
         <button class="gate-link gate-owner" id="gateOwner">Site sahibi girişi</button>`;
-      const g = body.querySelector('#gateGuest'); if (g) g.onclick = () => chooseGuest();
-      const b = body.querySelector('#gateBack'); if (b) b.onclick = () => { T.log('locked', { feature: lockedFeature, answer: 'vazgeç' }); closeGate('vazgeç'); };
+      body.querySelector('#gateGuest').onclick = () => chooseGuest();
       body.querySelector('#gateSignup').onclick = () => { gateMode = 'signup'; renderGate(); };
       body.querySelector('#gateOwner').onclick = () => { gateMode = 'owner'; renderGate(); };
+    } else if (gateMode === 'locked') {
+      body.innerHTML = `
+        <div class="gate-hero"><span class="gate-logo lock">${LOCK}</span>
+          <h2 id="gateTitle">${esc(f ? f.name : 'Bu bölüm')}</h2>
+          <p>Kayıtlı kullanıcılar için. Kaydolmak ücretsiz, bir dakika sürer.</p></div>
+        <div class="gate-btns">
+          <button class="gate-btn primary" id="gateSignup">Kaydol</button>
+          <button class="gate-btn ghost" id="gateBack">Şimdi değil</button>
+        </div>`;
+      body.querySelector('#gateSignup').onclick = () => { gateMode = 'signup'; renderGate(); };
+      body.querySelector('#gateBack').onclick = () => { T.log('locked', { feature: lockedFeature, answer: 'vazgeç' }); closeGate('vazgeç'); };
     } else if (gateMode === 'signup') {
       body.innerHTML = `
-        <h2 id="gateTitle">Kaydol</h2>
-        <p class="gate-sub">Şimdilik hesabın bu cihazda tutulur; çevrimiçi hesaplar geldiğinde aynı bilgilerle taşınır.</p>
+        <button class="gate-back" id="gfBack">${BACK}Geri</button>
+        <h2 id="gateTitle" class="gate-h">Kaydol</h2>
         <form class="gate-form" id="gateForm" novalidate>
-          <label>Ad soyad<input id="gfName" autocomplete="name" required maxlength="60" placeholder="Ör. Deniz Yılmaz"></label>
-          <label>E-posta <small>(isteğe bağlı)</small><input id="gfMail" type="email" autocomplete="email" maxlength="80" placeholder="ornek@eposta.com"></label>
-          <div class="gate-row">
-            <label>Ben bir<select id="gfKind"><option>Sporcu</option><option>Antrenör</option><option>Veli</option><option>Diğer</option></select></label>
-            <label>Kulüp <small>(isteğe bağlı)</small><input id="gfClub" maxlength="60" placeholder="Kulübün"></label>
+          <input id="gfName" autocomplete="name" required maxlength="60" placeholder="Adın soyadın" aria-label="Ad soyad">
+          <div class="gate-chips" role="radiogroup" aria-label="Ben bir">
+            ${['Sporcu', 'Antrenör', 'Veli', 'Diğer'].map((k, i) => `<button type="button" role="radio" class="gate-chip${i ? '' : ' on'}" aria-checked="${!i}" data-k="${k}">${k}</button>`).join('')}
           </div>
+          <input id="gfClub" maxlength="60" placeholder="Kulüp (isteğe bağlı)" aria-label="Kulüp">
+          <input id="gfMail" type="email" autocomplete="email" maxlength="80" placeholder="E-posta (isteğe bağlı)" aria-label="E-posta">
           <div class="gate-err" id="gfErr"></div>
-          <div class="gate-actions"><button type="button" class="tb" id="gfBack">Geri</button><button class="tb primary" id="gfGo">Kaydol ve devam et</button></div>
+          <button class="gate-btn primary" id="gfGo">Kaydol ve başla</button>
         </form>`;
-      body.querySelector('#gfBack').onclick = () => { gateMode = lockedFeature ? 'locked' : 'home'; renderGate(); };
+      body.querySelectorAll('.gate-chip').forEach(c => c.onclick = () => body.querySelectorAll('.gate-chip').forEach(x => { x.classList.toggle('on', x === c); x.setAttribute('aria-checked', x === c); }));
+      body.querySelector('#gfBack').onclick = back;
       body.querySelector('#gateForm').onsubmit = e => { e.preventDefault(); doSignup(); };
       setTimeout(() => body.querySelector('#gfName').focus(), 30);
     } else if (gateMode === 'owner') {
       body.innerHTML = `
-        <h2 id="gateTitle">Site sahibi girişi</h2>
-        <p class="gate-sub">Sahip anahtarını gir. Bu cihaz bundan sonra sınırsız erişimle açılır.</p>
+        <button class="gate-back" id="goBack">${BACK}Geri</button>
+        <h2 id="gateTitle" class="gate-h">Site sahibi girişi</h2>
         <form class="gate-form" id="gateOwnerForm">
-          <label>Sahip anahtarı<input id="goKey" type="password" autocomplete="current-password" required></label>
+          <input id="goKey" type="password" autocomplete="current-password" required placeholder="Sahip anahtarı" aria-label="Sahip anahtarı">
           <div class="gate-err" id="goErr"></div>
-          <div class="gate-actions"><button type="button" class="tb" id="goBack">Geri</button><button class="tb primary" id="goGo">Giriş</button></div>
+          <button class="gate-btn primary" id="goGo">Giriş</button>
         </form>`;
-      body.querySelector('#goBack').onclick = () => { gateMode = lockedFeature ? 'locked' : 'home'; renderGate(); };
+      body.querySelector('#goBack').onclick = back;
       body.querySelector('#gateOwnerForm').onsubmit = async e => {
         e.preventDefault();
         const ok = await ownerLogin(body.querySelector('#goKey').value);
@@ -164,7 +178,8 @@
   }
   function doSignup() {
     const v = id => gate.querySelector(id).value.trim();
-    const name = v('#gfName'), email = v('#gfMail'), kind = v('#gfKind'), club = v('#gfClub');
+    const name = v('#gfName'), email = v('#gfMail'), club = v('#gfClub');
+    const kind = (gate.querySelector('.gate-chip.on') || {}).dataset?.k || 'Diğer';
     const err = gate.querySelector('#gfErr');
     if (name.length < 2) { err.textContent = 'Adını yaz.'; return; }
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = 'E-posta adresi geçerli görünmüyor.'; return; }
@@ -239,7 +254,7 @@
       <div class="gate-brand"><div><div class="gate-name">Gizlilik ve verilerim</div><div class="gate-tag">Bu tarayıcıda senin hakkında ${n} kayıt var</div></div>
         <button class="icon gate-x" data-x title="Kapat" aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
       <div class="gate-body">
-        <label class="switch"><input type="checkbox" id="pvOn" ${c ? 'checked' : ''}><span class="track"><span class="knob"></span></span><span class="sw-lbl">Kullanım kayıtlarına izin veriyorum</span></label>
+        <label class="gate-toggle"><span>Kullanım kaydına izin veriyorum</span><span class="switch"><input type="checkbox" id="pvOn" ${c ? 'checked' : ''}><span class="track"><span class="knob"></span></span></span></label>
         <div class="gate-notice">${NOTICE_LONG}</div>
         <div class="gate-actions"><button class="tb" id="pvDel">Kayıtlarımı sil</button><button class="tb primary" data-x>Tamam</button></div>
       </div></div></div>`);
