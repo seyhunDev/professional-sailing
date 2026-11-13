@@ -7,6 +7,13 @@
 //   { id, t (ISO zaman), ts (ms), type, page, vid (ziyaretçi), sid (oturum), role, uid?, data {…}, sent? }
 // Türler: visit (oturum başı + bağlam), page, leave (süre), scenario, play, click, race_start,
 //   race_end, race_save, drive, route, gate (giriş ekranı seçimi), signup, owner, consent, locked
+// Velora'dan gelen giriş anahtarı (#t=…) adresten hemen silinir: kayıtlara, geçmişe girmez (js/velora-auth.js kullanır)
+(function () {
+  const m = /^#t=([^&]+)/.exec(location.hash);
+  if (!m) return;
+  try { window.__veloraToken = decodeURIComponent(m[1]); } catch (e) { /* bozuk */ }
+  history.replaceState(null, '', location.pathname + location.search);
+})();
 (function () {
   const KEY = 'ps.track.v1', VID = 'ps.vid', SID = 'ps.sid', CONSENT = 'ps.consent.v1';
   const MAX = 3000;                       // en fazla bu kadar olay tutulur (eskiler silinir)

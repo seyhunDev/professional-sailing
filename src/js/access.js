@@ -29,6 +29,7 @@
   const rid = () => (crypto.randomUUID ? crypto.randomUUID() : 'u' + Math.random().toString(36).slice(2) + Date.now().toString(36));
 
   let acc = get();
+  let veloraWait = false;
   const role = () => (acc && acc.role) || 'misafir';
   const can = f => { const x = FEATURES[f]; return !x || x.roles.includes(role()); };
   function syncWho() { T.setWho({ role: acc ? acc.role : null, uid: acc && acc.uid }); document.documentElement.dataset.role = role(); }
@@ -100,12 +101,40 @@
         <div class="gate-btns">
           <button class="gate-btn primary" id="gateGuest">Misafir olarak devam et</button>
           <button class="gate-btn" id="gateSignup">Kaydol <span>ücretsiz</span></button>
+          ${window.VeloraAuth ? '<button class="gate-btn velora" id="gateVelora"><i class="gate-vmark">' + LOGO + '</i>Velora hesabıyla gir</button>' : ''}
         </div>
         <p class="gate-hint">Kaydolunca İleri Taktik, elle sürme ve yarış kaydı açılır.</p>
         <button class="gate-link gate-owner" id="gateOwner">Site sahibi girişi</button>`;
       body.querySelector('#gateGuest').onclick = () => chooseGuest();
       body.querySelector('#gateSignup').onclick = () => { gateMode = 'signup'; renderGate(); };
       body.querySelector('#gateOwner').onclick = () => { gateMode = 'owner'; renderGate(); };
+      const gv = body.querySelector('#gateVelora');
+      if (gv) gv.onclick = () => { gateMode = 'velora'; renderGate(); };
+    } else if (gateMode === 'velora') {
+      body.innerHTML = `
+        <button class="gate-back" id="gvBack">${BACK}Geri</button>
+        <h2 id="gateTitle" class="gate-h">Velora hesabıyla gir</h2>
+        <p class="gate-sub">Velora'da kullandığın e-posta ve şifre.</p>
+        <form class="gate-form" id="gateVForm" novalidate>
+          <input id="gvMail" type="email" autocomplete="username" required maxlength="80" placeholder="E-posta" aria-label="E-posta">
+          <input id="gvPass" type="password" autocomplete="current-password" required placeholder="Şifre" aria-label="Şifre">
+          <div class="gate-err" id="gvErr">${esc(veloraMsg)}</div>
+          <button class="gate-btn primary" id="gvGo">Giriş</button>
+        </form>`;
+      veloraMsg = '';
+      body.querySelector('#gvBack').onclick = back;
+      body.querySelector('#gateVForm').onsubmit = async e => {
+        e.preventDefault();
+        const err = body.querySelector('#gvErr'), go = body.querySelector('#gvGo');
+        const mail = body.querySelector('#gvMail').value, pass = body.querySelector('#gvPass').value;
+        if (!mail.trim() || !pass) { err.textContent = 'E-posta ve şifreyi yaz.'; return; }
+        if (!window.VeloraAuth) { err.textContent = 'Velora girişi şu an kullanılamıyor.'; return; }
+        go.disabled = true; err.textContent = '';
+        const msg = await window.VeloraAuth.signIn(mail, pass);
+        go.disabled = false;
+        if (msg) { err.textContent = msg; T.log('velora', { ok: false }); }
+      };
+      setTimeout(() => body.querySelector('#gvMail').focus(), 30);
     } else if (gateMode === 'locked') {
       body.innerHTML = `
         <div class="gate-hero"><span class="gate-logo lock">${LOCK}</span>
@@ -201,6 +230,28 @@
     return true;
   }
 
+  // Velora hesabıyla giriş (js/velora-auth.js çağırır): rol Velora'dan gelir, hesap bu cihazda da saklanır
+  let veloraMsg = '';
+  function veloraLogin(u, how) {
+    applyConsent();
+    const prev = acc || {};
+    const role = u.role === 'sahip' || prev.role === 'sahip' ? 'sahip' : 'kayitli';
+    const same = prev.via === 'velora' && prev.uid === u.uid;
+    setAccount({ role, uid: u.uid, name: u.name, email: u.email, via: 'velora', since: same && prev.since ? prev.since : new Date().toISOString() }, how);
+    T.log('velora', { ok: true, how, role });
+    if (gate) { gate.classList.add('hidden'); document.documentElement.classList.remove('gate-open'); }
+    if (!same) toast(`Velora hesabınla girdin${u.name ? ': ' + u.name.split(' ')[0] : ''}.`);
+  }
+  function veloraFail(msg) {
+    veloraWait = false;
+    T.log('velora', { ok: false, how: 'anahtar' });
+    if (acc) { toast(msg); return; }
+    veloraMsg = window.VeloraAuth ? msg : '';
+    openGate(window.VeloraAuth ? 'velora' : 'home');
+    if (!window.VeloraAuth) toast(msg);
+  }
+  document.addEventListener('velora-ready', () => { if (gate && !gate.classList.contains('hidden') && gateMode === 'home') renderGate(); });
+
   // ---------- hesap düğmesi ve menü (üst çubuk) ----------
   let chip = null, menu = null, extra = null;
   function buildChip() {
@@ -251,7 +302,7 @@
       if (a === 'signup') openGate('signup');
       else if (a === 'owner') openGate('owner');
       else if (a === 'privacy') openPrivacy();
-      else if (a === 'logout') { T.log('logout', {}); setAccount(null, 'çıkış'); openGate('home'); }
+      else if (a === 'logout') { T.log('logout', {}); if (acc && acc.via === 'velora' && window.VeloraAuth) window.VeloraAuth.signOut(); setAccount(null, 'çıkış'); openGate('home'); }
     });
     menu.classList.remove('hidden'); chip.classList.add('on');
   }
@@ -291,7 +342,7 @@
     return false;
   }
 
-  window.SailAccess = { FEATURES, role, can, guard, account: () => acc, open: openGate, ownerLogin, ROLE_NAMES, closeMenu: () => menu && toggleMenu(false) };
+  window.SailAccess = { FEATURES, role, can, guard, account: () => acc, open: openGate, ownerLogin, veloraLogin, veloraFail, ROLE_NAMES, closeMenu: () => menu && toggleMenu(false) };
 
   // ---------- açılış ----------
   if (T.newSession) T.log('visit', T.context());
@@ -303,5 +354,9 @@
     const key = q.get('sahip'); q.delete('sahip');
     history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash);
     ownerLogin(key).then(ok => { if (!ok && !acc) openGate('owner'); });
+  } else if (window.__veloraToken) {
+    // Velora'dan anahtarla gelindi: giriş ekranı gösterilmeden velora-auth.js oturumu açar; 12 sn'de olmazsa ekran açılır
+    veloraWait = true;
+    setTimeout(() => { if (veloraWait && !acc) openGate('home'); veloraWait = false; }, 12000);
   } else if (!acc) openGate('home');
 })();
