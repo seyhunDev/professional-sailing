@@ -171,8 +171,6 @@
     };
     patch(Pk, H, C, 46); patch(C, Pk, T, 44); patch(T, H, C, 30); patch(H, Pk, T, 28);
     for (const f of [0.3, 0.62]) { const a = mix(Pk, C, f), b = add(a, mul(inw, 58)); el('line', { x1: tp(a).x, y1: tp(a).y, x2: tp(b).x, y2: tp(b).y, stroke: '#cbd5e1', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: .9 }, cl); el('line', { x1: tp(a).x, y1: tp(a).y, x2: tp(b).x, y2: tp(b).y, stroke: '#64748b', 'stroke-width': 1.2, 'stroke-linecap': 'round' }, cl); }
-    const nP = tp(add(mix(H, T, 0.42), P(70, 0)));
-    el('text', { x: nP.x, y: nP.y, transform: `rotate(${ROT} ${nP.x.toFixed(1)} ${nP.y.toFixed(1)})`, class: 'rig-no' }, cl).textContent = 'TUR 123';
     D(sp, { fill: 'none', stroke: '#0b1724', 'stroke-width': 1.5, 'stroke-linejoin': 'round' });
     D(`M${luff.map(q => pt(tp(q))).join(' L')}`, { fill: 'none', stroke: '#e2e8f0', 'stroke-width': 3.2, 'stroke-linejoin': 'round' });
     // arka yakanın üst yarısı: tepe açıldıkça turuncu
