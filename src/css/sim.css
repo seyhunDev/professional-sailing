@@ -528,3 +528,62 @@ body.lay-strip .mode-strip { top: 12px !important; right: 12px !important; }
   .cb-btn { height: 26px; padding: 0 8px; font-size: 11.5px; }
   .cb-seg button { height: 24px; min-width: 24px; }
 }
+
+/* ---------- Yatay telefon (telefon yalnız yatay kullanılır; js/app-shell.js) ----------
+   Ekran yüksekliği ~320-430 px: üst çubuk ve alt çubuk ince, yakınlaştırma sol altta yatay,
+   ayar rayı dar; elle sürerken üst çubuk kalkar, dümen ve iskota sahnenin köşelerinde oyun kumandası gibi durur. */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --rail-w: 60px; }
+  .sim-top { gap: 8px; padding-top: calc(4px + var(--sat)); padding-bottom: 4px; }
+  .sim-top .tool { height: 36px; min-width: 36px; }
+  .sim-h1 { font-size: 15px; }
+  .acc-chip { width: 36px; height: 36px; }
+  .bottombar { padding-top: 6px; padding-bottom: calc(8px + var(--sab)); }
+  .bottombar .play { width: 40px; height: 40px; }
+  body.lay-rail .quick .tb { height: 40px; min-height: 40px; padding: 0 12px; font-size: 13px; }
+  .speed button { min-width: 34px; }
+  body.lay-rail .cat-rail { top: 8px; right: 8px; bottom: 8px; }
+  body.lay-rail .cat-rail button { min-height: 46px; gap: 2px; font-size: 9.5px; padding: 0 2px; }
+  body.lay-rail .cat-rail .ci { width: 18px; height: 18px; }
+  body.lay-rail .sim-panel { top: 8px; right: calc(var(--rail-w) + 16px); width: 300px; max-height: calc(100% - 16px); }
+  body.lay-rail .stage:has(#panel:not(.hidden)) .mode-strip, body.lay-rail .stage:has(#panel:not(.hidden)) .gust-bar { right: calc(var(--rail-w) + 326px) !important; }
+  body.lay-rail .mode-strip { top: 8px !important; right: calc(var(--rail-w) + 18px) !important; }
+  /* yakınlaştırma: sol altta yatay, ince */
+  .zoom-ctl { left: 8px; bottom: 8px; top: auto; right: auto; flex-direction: row; align-items: center; padding: 3px; gap: 0; border-radius: 12px; }
+  .zoom-ctl button { min-width: 38px; height: 36px; font-size: 19px; }
+  .zoom-ctl .zc-txt { height: 36px; font-size: 11.5px; padding: 0 8px; }
+  #zoomVal { display: none; }
+  .count-bar { height: 32px; }
+
+  /* --- elle sürme: tam ekran, kumanda sahnenin üstünde --- */
+  body.driving .sim-top { display: none; }
+  body.driving .stage { padding-top: var(--sat); }
+  body.driving .bottombar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: none; border: 0; pointer-events: none;
+    padding: 0 calc(10px + env(safe-area-inset-right, 0px)) calc(10px + var(--sab)) calc(10px + env(safe-area-inset-left, 0px)); }
+  body.driving .helm-pad { pointer-events: none; align-items: flex-end; gap: 10px; }
+  body.driving .helm-pad > * { pointer-events: auto; }
+  body.driving .hp-steer, body.driving .hp-right { gap: 8px; }
+  body.driving .hp-rud, body.driving .hp-sheetbtn, body.driving .hp-col .tb {
+    background: rgba(11, 23, 36, .62); border-color: rgba(148, 178, 208, .35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  body.driving .hp-rud { width: 74px; height: 86px; min-height: 86px; border-radius: 18px; }
+  body.driving .hp-rud .hp-arrow { font-size: 28px; }
+  body.driving .hp-rud.held { background: #fb923c; border-color: #fb923c; }
+  body.driving .hp-sheetbtn { width: 80px; height: 86px; min-height: 86px; border-radius: 18px; }
+  body.driving .hp-sheetbtn.eased { border-color: #fb923c; } body.driving .hp-sheetbtn.trim { border-color: #22c55e; } body.driving .hp-sheetbtn.over { border-color: #ef4444; }
+  body.driving .hp-col { width: 84px; height: 86px; gap: 6px; }
+  body.driving .hp-col .tb { min-height: 0; border-radius: 13px; font-size: 12.5px; }
+  body.driving .hp-tack { background: rgba(120, 53, 15, .62); }
+  body.driving .hp-tack.jibe { background: rgba(76, 29, 149, .55); }
+  /* orta: hız ve iskota göstergesi küçük cam şerit */
+  body.driving .hp-mid { align-self: flex-end; max-width: 300px; margin: 0 auto; padding: 8px 12px; gap: 6px; border-radius: 14px;
+    background: rgba(11, 23, 36, .62); border: 1px solid rgba(148, 178, 208, .25); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  body.driving .hp-kn { font-size: 17px; }
+  body.driving .hp-point { display: inline; font-size: 11.5px; }
+  /* sürerken ayar rayı kalkar (sağ başparmak alanı), yakınlaştırma solda dümenin üstünde */
+  body.driving.lay-rail .cat-rail, body.driving .sim-panel { display: none; }
+  body.driving .zoom-ctl { flex-direction: column; left: calc(8px + env(safe-area-inset-left, 0px)); top: auto; bottom: calc(108px + var(--sab)); }
+  body.driving .zoom-ctl button { min-width: 44px; height: 42px; font-size: 22px; }
+  body.driving.lay-rail .drive-bar { right: 0; top: calc(8px + var(--sat)); }
+  body.driving .drive-bar .tb { height: 34px; min-height: 34px; }
+  body.driving .toast { bottom: 110px; }
+}

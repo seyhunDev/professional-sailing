@@ -1534,7 +1534,7 @@
   }
   // Düzen: yatay ekranda sağda dikey ray, dikey ekranda (ve telefonda) alt çubukta şerit
   function applyLayout() {
-    const rail = innerWidth > innerHeight && innerWidth >= 700;
+    const rail = innerWidth > innerHeight && (innerWidth >= 700 || innerHeight <= 500);   // yatay telefon da ray düzeninde
     const b = document.body, was = b.classList.contains('lay-rail') ? 'rail' : b.classList.contains('lay-strip') ? 'strip' : '';
     if (was !== (rail ? 'rail' : 'strip')) {
       b.classList.toggle('lay-rail', rail); b.classList.toggle('lay-strip', !rail);

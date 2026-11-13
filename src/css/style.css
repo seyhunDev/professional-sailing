@@ -351,7 +351,26 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .row-sw .sw-lbl { display: inline; }
   .bottombar { padding-top: 6px; padding-bottom: calc(6px + var(--sab)); }
   .play { width: 42px; height: 42px; }
-  .picker { padding: 8px; }
+}
+
+@media (max-height: 460px) {
+  /* yatay telefon: seçici tüm ekranı kaplar, başlık + arama + sekmeler + kapat tek satırda, kartlar kalan yüksekliği doldurur */
+  .picker { position: fixed; inset: 0; z-index: 60; padding: 0; background: var(--panel-solid); }
+  .picker-panel { width: 100%; height: 100%; max-height: none; border: 0; border-radius: 0; box-shadow: none;
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr); }
+  .picker-head { display: contents; }
+  .picker-head h2 { grid-column: 1; grid-row: 1; align-self: center; font-size: 17px;
+    padding: calc(8px + var(--sat)) 4px 8px calc(16px + env(safe-area-inset-left, 0px)); }
+  .picker-head .icon { grid-column: 3; grid-row: 1; align-self: center; width: var(--tap); height: var(--tap);
+    margin: var(--sat) calc(6px + env(safe-area-inset-right, 0px)) 0 0; }
+  .picker-tools { grid-column: 2; grid-row: 1; flex-wrap: nowrap; gap: 8px; padding: calc(8px + var(--sat)) 6px 8px 10px; border-bottom: 0; }
+  .search { flex: 1 1 140px; height: 38px; }
+  .picker-tabs { flex: 0 0 auto; }
+  .picker-tabs button { height: 32px; padding: 0 10px; }
+  .picker-list { grid-column: 1 / -1; grid-row: 2; border-top: 1px solid var(--border);
+    padding: 2px calc(16px + env(safe-area-inset-right, 0px)) calc(16px + var(--sab)) calc(16px + env(safe-area-inset-left, 0px)); }
+  .picker-topic { margin: 12px 2px 8px; }
+  .picker-grid { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 12px 10px; }
 }
 
 /* simülatör bağlantısı (üst çubuk) */
@@ -486,3 +505,30 @@ html.gate-open .ver-badge { z-index: 210; }
 .card.locked .ttl { color: var(--text2); }
 .card .thumb .lock { color: var(--yol); }
 @media (max-width: 420px) { .gate-card { padding: 28px 20px 18px; } }
+
+/* --- Uygulama kabuğu (js/app-shell.js) ---
+   Sayfa uygulama gibi: esnemez, kaymaz, büyümez; yazılar ve simgeler seçilmez; yalnız kendi kaydırma alanları kayar. */
+html:not(:has(body[data-shell="page"])) { position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; }
+html:not(:has(body[data-shell="page"])) body { position: fixed; inset: 0; width: 100%; height: 100%; overscroll-behavior: none;
+  /* yatay telefonda çentik / yuvarlak köşe payı (sol ve sağ) */
+  padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+body:not([data-shell="page"]) { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+body:not([data-shell="page"]) :is(input, textarea, [contenteditable]) { -webkit-user-select: text; user-select: text; }
+body:not([data-shell="page"]) :is(.info-scroll, .step-text, .gate-notice, .gate-body p) { -webkit-user-select: text; user-select: text; }
+img, svg { -webkit-user-drag: none; }
+button, a, [role="button"], label { -webkit-touch-callout: none; }
+
+/* Telefon dikey tutulunca: "Telefonu yan çevir" ekranı (yalnız telefonda; iPad iki yönde de çalışır) */
+.rotate-gate { display: none; }
+html.is-phone.is-portrait .rotate-gate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 32px;
+  padding-top: calc(32px + var(--sat)); padding-bottom: calc(32px + var(--sab));
+  background: radial-gradient(120% 80% at 50% 30%, #12304d 0%, var(--bg) 70%); color: var(--text); text-align: center; }
+html.is-phone.is-portrait .ver-badge { z-index: 1001; }
+.rg-in { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 300px; }
+.rg-in b { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.rg-in span { font-size: 15px; line-height: 1.5; color: var(--text2); }
+.rg-phone { width: 120px; height: 120px; color: var(--accent); margin-bottom: 8px; }
+.rg-dev { transform-origin: 60px 60px; animation: rgTurn 2.4s ease-in-out infinite; }
+.rg-arrow { opacity: .55; }
+@keyframes rgTurn { 0%, 25% { transform: rotate(0); } 55%, 80% { transform: rotate(-90deg); } 100% { transform: rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .rg-dev { animation: none; transform: rotate(-90deg); } }
