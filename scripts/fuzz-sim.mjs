@@ -51,7 +51,7 @@ for (let k = 0; k < N; k++) {
   const tr = {};
   for (const b of s.boats) tr[b.id] = { maxAbove: -1e9, wrong: 0, minMark: 1e9, prog: [], out: false, flagged: {} };
   const tag = `#${k} n=${n}${boat ? ` ${boat.cls} ${boat.windKn}kn hızlan ${boat.accelAt}sn` : ''} rüzgar=${wind}${shiftAt > 0 ? '→' + shiftTo : ''}${gusts.length ? ' sağanak' : ''}`;
-  while (s.t < 150 && s.boats.some(b => !b.finish)) {
+  while (s.t < s.startAt + 142 && s.boats.some(b => !b.finish)) {
     if (shiftAt > 0 && Math.abs(s.t - shiftAt) < 0.026) s.wind = shiftTo;
     const before = new Map(s.boats.map(b => [b.id, b.phase]));
     S.step(s);

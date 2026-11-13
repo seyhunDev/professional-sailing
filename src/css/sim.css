@@ -633,3 +633,9 @@ body.lay-strip .cr-sep { width: 1px; margin: 6px 2px; }
 .cat-rail .cr-reset span { white-space: normal; text-align: center; line-height: 1.1; }
 body.lay-strip .cat-rail .cr-reset { min-width: 64px; }
 @media (max-width: 900px) { body.lay-strip .cat-rail button { min-width: 56px; } body.lay-strip .quick .tb { min-width: 60px; } }
+
+/* Kurulumda Start: yazılı, geniş, birincil düğme (kullanıcı 2026-11-13: start vermek zordu) */
+.play .play-lbl:empty { display: none; }
+.bottombar .play.start { width: auto; height: 48px; padding: 0 22px 0 16px; border-radius: 24px; display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; letter-spacing: .02em; box-shadow: 0 0 0 0 rgba(56,189,248,.5); animation: startPulse 2.2s ease-out infinite; }
+@keyframes startPulse { 0% { box-shadow: 0 0 0 0 rgba(56,189,248,.45); } 70%, 100% { box-shadow: 0 0 0 10px rgba(56,189,248,0); } }
+@media (max-width: 900px) { .bottombar .play.start { height: 42px; padding: 0 16px 0 12px; font-size: 14px; } }

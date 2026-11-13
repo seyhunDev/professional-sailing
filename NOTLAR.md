@@ -79,6 +79,7 @@
 - [ ] **Kullanıcı senaryoları (sonraki aşama):** Firebase Auth + Firestore, link ile paylaşım, Firebase Hosting. Simülatör yarış kayıtları için biçim hazır: `SailRecords` girdisi (`setup` + `ops` + `summary`) aynen Firestore belgesi olabilir.
 
 ## Kararlar
+- 2026-11-13 · **Saat gerçek zaman, teknelerin ekrandaki hızı ayrı ayar** (`BOAT.vis`, Filo → Ekranda hız). Kullanıcı seçti (karar kartı). Saati hızlandırmak tekneleri de aynı oranda hızlandırır. Eski kayıtlar `vis:'eski'` ile eski ölçekte.
 - 2026-11-13 · **Uygulama gibi davranış, telefonda yalnız yatay** (kullanıcı): sayfa kaymaz/esnemez; telefon dikeyde "çevir" ekranı, iPad iki yön. Telefon ayrımı ekranın kısa kenarı (< 600 px) + dokunmatik, `js/app-shell.js` → `html.is-phone`. Bundan sonra telefon dikey düzenine (`max-width: 640px` kuralları) yatırım yapılmaz; yeni arayüz işleri yatay telefonda (yükseklik 320-430) denenir.
 - 2026-11-13 · **Hazırlık bayrağı parkurun parçası:** `course.flag` ('P' varsayılan; 'I','Z','U','Siyah'). Ayrı alan yerine `course` içinde, böylece kurulum kaydı / yarış kaydı / tekrar oynatma ek iş olmadan taşır. Parkur "Varsayılan" düğmesi bayrağı korur. Kural mantığı yalnız sim-core'da (deterministik, tekrar oynatma aynı).
 - 2026-11-13 · **Elle sürme hızı oynatmadan ayrı, varsayılan 15×** (v1.89): 1×'te sıkıştırılmış parkurda tekne duruyor görünüp kilitli sanıldı. Oynatma 1× kalır.
@@ -184,6 +185,14 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Saat gerçek zaman, tekne hızı ayrı ayar ("Ekranda hız"), yazılı Start düğmesi
+- Kullanıcı: zaman hızıyla teknenin hızı niye aynı? Rüzgar fazlaysa tekne hızlı olmalı; saat hep normal aksın, hızlandırma ayrı; teknenin hızı da ayrı ayarlanabilsin; saati hızlandırmak tekneyi de aynı oranda hızlandırsın. Start vermek zor.
+- Kök neden: eskiden `CLOCK_SCALE = 35.7 / SPD` idi: rüzgar/sınıf farkı ekrandaki hızı değil saatin hızını değiştiriyordu, 1×'te tekneler neredeyse duruyordu.
+- Yeni model: `BOAT.vis` (`VIS` yavas/normal/hizli = 7.14 / 2.38 / 0.89 saat-sn / sim-sn, Optimist 8 kn'de) → `CLOCK_SCALE = VIS[vis] / SPD`. Saat 1× = gerçek zaman; teknelerin ekrandaki hızı vis × SPD × saat çarpanı. Start → şamandıra Normal'de ~1,5 dk (saat). Eski kayıtlar (`vis` alanı yok) `'eski'` (35.7) ölçekte birebir oynar.
+- Oynatma hızları ½× / 1× / 2× / 5× / 10×; elle sürme aynı `st.speed` (en çok 5×). v1.95'teki ayrı elle sürme hızı (Yavaş/Normal/Hızlı) kaldırıldı; o seçenek artık Filo → Ekranda hız.
+- Uzun gerçek geri sayım (Normal'de ~126 sim-sn) için AI start öncesi: beklerken akıntı yok sayılır (alan dışına sürükleniyorlardı), hızlanma koşusu en çok ~3 boy (`timeToCover(160)`), bu kontrada hattı tutmayan bekleyen tekne öbür kontraya geçer. check-sim / fuzz süre sınırları `s.startAt + …` oldu.
+- Kurulumda alt çubuktaki ▶ yazılı, geniş, nabızlı **Start** düğmesi.
+
 ### 2026-11-13 · Elle sürmede 1× kaldırıldı: Yavaş / Normal / Hızlı
 - Kullanıcı (v1.94 ekran görüntüsü): elle sürüp Start'a basınca tekne "kaldı". Elle sürme hızı 1× seçiliydi; 3,7 kn'de bile sıkıştırılmış parkurda tekne saniyede ~0,1 px gidiyor, durmuş görünüyor. Kod hatası değil, ölçek sorunu.
 - Elle sürme hızları artık yalnız `DRIVE_SPEEDS` = 5× / 15× / 40×, düğmede "Yavaş / Normal / Hızlı" (`DRV_TXT`), varsayılan Normal. Oynatma hızları (½×…40×, varsayılan 1×) değişmedi. Yardım metni güncellendi.

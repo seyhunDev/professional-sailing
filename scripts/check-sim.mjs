@@ -27,7 +27,7 @@ for (const c of cases) {
   if (c.drift) fleet.find(b => b.id === c.drift).drift = 2;
   const s = S.newRace(fleet, { wind: c.wind, gusts: c.gusts, course: c.course, sea: c.sea, boat: c.boat });
   let out = 0; const near = c.route ? c.route.map(() => 1e9) : [];
-  while (s.t < 150 && s.boats.some(b => !b.finish)) {
+  while (s.t < s.startAt + 142 && s.boats.some(b => !b.finish)) {
     if (c.shift && Math.abs(s.t - c.shift.at) < 1e-6) s.wind = c.shift.to;
     S.step(s);
     const me = s.boats.find(b => b.mine);
@@ -53,7 +53,7 @@ for (const wind of [-12, 0, 12]) {
   S.setCourse(S.COURSE_DEFAULT);
   const fleet = S.defaultFleet(12); fleet.forEach((b, i) => { if (b.mine || i % 3 === 0) b.manual = true; });
   const s = S.newRace(fleet, { wind }); const prev = new Map(s.boats.map(b => [b.id, b.tack])); let self = 0, n0;
-  while (s.t < 120 && s.boats.some(b => !b.finish)) {
+  while (s.t < s.startAt + 112 && s.boats.some(b => !b.finish)) {
     n0 = s.events.length; S.step(s);
     for (const b of s.boats) {
       if (b.manual && b.started && b.phase === 'race' && prev.get(b.id) !== b.tack && !s.events.slice(n0).some(e => e.text.startsWith(`${b.id}: parkurdan çok uzaklaştı`))) self++;
@@ -127,7 +127,7 @@ for (const wind of [-12, 0, 12]) {
   const bad = ok.filter(([, v]) => !v).map(([k]) => k);
   // otomatik: yarış biter; iskota salık teknen daha geç biter
   const race = off => { const f = S.defaultFleet(12); const m = f.find(b => b.mine); m.manual = true; m.sheetOff = off; const s = S.newRace(f, { wind: 0 });
-    while (s.t < 160 && s.boats.some(b => !b.finish)) S.step(s); return s.boats.find(b => b.mine); };
+    while (s.t < s.startAt + 152 && s.boats.some(b => !b.finish)) S.step(s); return s.boats.find(b => b.mine); };
   const a = race(0), b2 = race(16);
   if (!a.finish || !b2.finish) bad.push('otomatikte bitirmedi');
   else if (!(b2.finishT > a.finishT)) bad.push('iskota salıkken yavaşlamadı');
@@ -216,7 +216,7 @@ for (const wind of [-12, 0, 12]) {
     S.setCourse(S.COURSE_DEFAULT);
     const fleet = S.defaultFleet(12), b3 = fleet.find(b => b.id === '3'); b3.x = 430; b3.y = S.LINE.pin.y - 120;
     const s = S.newRace(fleet, { wind: 0, course: { ...S.COURSE_DEFAULT, flag } });
-    while (s.t < 160 && s.boats.some(b => !b.finish)) S.step(s);
+    while (s.t < s.startAt + 152 && s.boats.some(b => !b.finish)) S.step(s);
     const b = s.boats.find(o => o.id === '3');
     if (!want[flag](b)) bad.push(`${flag}: 3 numara beklenen sonucu almadı`);
     if (s.boats.some(o => o.id !== '3' && (o.dsq || o.zPen || o.iDone))) bad.push(`${flag}: başka tekne cezalandı`);

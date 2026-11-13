@@ -19,7 +19,12 @@
   // Tekne sınıfı ve rüzgar hızı (setBoat) tekne hızını değiştirir: hız px/s olarak sabit kalır (orsada 55 px/s), değişen
   // zaman ölçeğidir. 2 kat hızlı tekne için 1 sim. saniyesi yarı kadar gerçek zamandır: ekranda (1×) iki kat hızlı gider,
   // aynı 5 dakikalık geri sayımda iki kat yol alır. Böylece kural/kaçış/şamandıra ayarları her sınıfta aynı çalışır.
-  const CLOCK_REF = 300 / 8.4;    // Optimist 8 knot (3.5 kn orsa): 1 sim. sn = 35.7 gerçek sn
+  // Ekranda tekne hızı (vis): saat hep gerçek zamanda akar (1×); bu ayar teknelerin ekranda ne kadar hızlı gittiğini seçer.
+  // Parkur çizimde sıkıştırılmış olduğundan (tekneler parkura göre ~10× büyük) gerçek ölçekte tekne yerinde duruyor gibi görünürdü.
+  // Değer: Optimist 8 knot'ta 1 sim. sn = kaç saat sn. Rüzgar / sınıf hızı ekrandaki hızı değiştirir (SPD), saati değil.
+  // 'eski': v1.95 ve öncesi kayıtlar (start → şamandıra ~15 dk, tekneler 1×'te neredeyse durur) birebir tekrar oynasın.
+  const VIS = { yavas: 300 / 8.4 / 5, normal: 300 / 8.4 / 15, hizli: 300 / 8.4 / 40, eski: 300 / 8.4 };
+  let CLOCK_REF = VIS.normal;
   let CLOCK_SCALE = CLOCK_REF, START_AT = 300 / CLOCK_SCALE;   // geri sayım varsayılan 5:00 (gerçek), BOAT.pre ile 2-5 dk
   const MAN_MARGIN = 440;         // manuel tekne parkur kenarını bu kadar aşabilir (deniz parkurla bitmez); ötesinde zorunlu tramola
   const MAN_Y = 260;              // elle sürmede parkurun üstüne / altına da bu kadar çıkılabilir
@@ -99,7 +104,7 @@
   // (Optimist: hafif havada ~2.5, orta havada ~3.5-4, kuvvetlide fazla güçlenir, artmaz; ILCA: 10 knot üstünde ~5-5.5).
   // acc: hızlanma süresi sabiti (gerçek sn) – yelkeni doldurduktan sonra tam hıza ~3×acc sn'de çıkar.
   const CLASSES = E.BOAT_CLASSES;   // sınıf hız tablosu engine.js'te (senaryolarla ortak)
-  const BOAT_DEFAULT = { cls: 'optimist', windKn: 8, accelAt: 30, pre: 300 };   // pre: start geri sayımı (gerçek sn)
+  const BOAT_DEFAULT = { cls: 'optimist', windKn: 8, accelAt: 30, pre: 300, vis: 'normal' };   // pre: start geri sayımı (gerçek sn)
   const PRE_SEC = [120, 180, 240, 300];   // accelAt: start'a kaç gerçek sn kala yelken doldurulur
   const WIND_KN = [4, 6, 8, 10, 12, 15, 18];
   const ACCEL_AT = [60, 45, 30, 20, 15, 10];
@@ -110,8 +115,9 @@
     const cls = CLASSES[c && c.cls] ? c.cls : BOAT_DEFAULT.cls;
     const windKn = clamp(+(c && c.windKn) || BOAT_DEFAULT.windKn, 2, 30), accelAt = clamp(+(c && c.accelAt) || BOAT_DEFAULT.accelAt, 5, 120);
     const pre = clamp(+(c && c.pre) || BOAT_DEFAULT.pre, 60, 600);
-    const key = cls + '|' + windKn + '|' + accelAt + '|' + pre; if (key === boatKey) return; boatKey = key;
-    Object.assign(BOAT, { cls, windKn, accelAt, pre });
+    const vis = VIS[c && c.vis] ? c.vis : 'eski';   // alanı olmayan (eski) kayıt eski ölçekte
+    const key = cls + '|' + windKn + '|' + accelAt + '|' + pre + '|' + vis; if (key === boatKey) return; boatKey = key;
+    Object.assign(BOAT, { cls, windKn, accelAt, pre, vis }); CLOCK_REF = VIS[vis];
     SPD = upwindKn(cls, windKn) / 3.5; CLOCK_SCALE = CLOCK_REF / SPD; START_AT = pre / CLOCK_SCALE;
     CREEP_T = Math.min(240, pre - 20) / CLOCK_SCALE;     // hızlanmadan önceki son 4 dk: yelken yarı boş, hızlanma noktasına yavaşça sokulur
     GUST_GAIN = clamp(upwindKn(cls, windKn + 5) / upwindKn(cls, windKn) - 1, 0.06, 0.25);
@@ -555,7 +561,10 @@
         // Hızlanma anı (kullanıcı seçer, ör. 30 sn kala): o ana kadar yelken boş bekler, son 4 dk.da hızlanma
         // noktasına (o sürede alınacak yol kadar geride) yavaşça sokulur; anı gelince yelkeni doldurup hızlanır.
         // Çok gerideki tekne (2. sıra) yetişmek için daha erken doldurmak zorunda kalır.
-        const hA = approachHeading(b, w), tGo = BOAT.accelAt / CLOCK_SCALE, dr = driftOf(s, b);
+        // bu kontrada hattı tutmuyorsa (ör. hattın çok yanında / altında) ve öbür kontra tutuyorsa kontra değiştir:
+        // gerçek zamanlı uzun geri sayımda yelkeni boş bekleyip start'ı kaçırmasın
+        if (!b.go && !b.manual && approachHeading(b, w) == null) { const ot = b.tack === 'starboard' ? 'port' : 'starboard'; if (approachHeading({ ...b, tack: ot }, w) != null && t - b.lastTack > 3) { b.tack = ot; b.lastTack = t; } }
+        const hA = approachHeading(b, w), tGo = Math.min(BOAT.accelAt / CLOCK_SCALE, timeToCover(160)), dr = driftOf(s, b);   // en çok ~3 boy geriden hızlanır (sıkıştırılmış parkurda tekneler alanın altına kaçmasın)
         const d0 = hA == null ? 0 : distToLine(b, hA), dGo = Math.max(4, accelDist(tGo) - dr * tGo);
         const outside = hA == null || (b.x < 60 && E.fwd(hA).x < 0) || (b.x > WORLD.w - 60 && E.fwd(hA).x > 0);
         if (!b.go && !outside) {
@@ -567,7 +576,7 @@
         if (b.go) target = hA;
         else if (!outside && remain - tGo <= CREEP_T) {
           target = hA;                                    // yelken yarı boş, hızlanma noktasına sokul; varınca rotada bekle
-          creepV = clamp((d0 - dGo) / Math.max(0.15, remain - tGo), 0, BASE * 0.3) + dr * 0.9;
+          creepV = clamp((d0 - dGo) / Math.max(0.15, remain - tGo), 0, BASE * 0.3) + dr;   // akıntıyı tam karşıla (uzun geri sayımda geriye kaymasın)
         } else { target = w + (b.tack === 'starboard' ? -25 : 25); holding = true; }
         if (remain <= 0) startPhase(b, s);
       }
@@ -757,7 +766,7 @@
       } else b.stallAt = 0;
       // hız
       const twa = Math.abs(E.norm180(b.h - w));
-      let vt = holding ? driftOf(s, b) * 0.85 : creepV != null ? creepV : E.speedFor(twa, BASE) * speedK;   // beklerken yerinde durmaya çalışır (akıntıya karşı az yelken)
+      let vt = holding ? 0 : creepV != null ? creepV : E.speedFor(twa, BASE) * speedK;   // beklerken yerinde durmaya çalışır (akıntıya karşı az yelken)
       const tau = b.phase === 'wait' ? TAU_START : TAU;
       // sinyalden önce hatta varacaksa yavaşla (burnu hattın altında kalsın): şu anki hızdan tau ile vt'ye
       // yaklaşırken kalan sürede alınan yol hattaki mesafeyi aşmasın
@@ -787,7 +796,8 @@
     const dw = E.fwd(w + 180);                                    // rüzgaraltı yönü
     for (const b of active) {
       if (b.hand) continue;                                       // elle sürülen tekne drive() ile zaten ilerledi
-      const f = E.fwd(b.h), dr = b.phase === 'done' ? 0 : driftOf(s, b) * (b.phase === 'round' ? 0.3 : 1);   // dönüşte kısa süre: az kayar
+      const f = E.fwd(b.h), dr = b.phase === 'done' || b.phase === 'wait' ? 0 :   // start'tan önce akıntıyı tekne kendisi karşılar (uzun geri sayımda alan dışına sürüklenmesin)
+        driftOf(s, b) * (b.phase === 'round' ? 0.3 : 1);   // dönüşte kısa süre: az kayar
       b.x += (f.x * b.v + dw.x * dr) * DT; b.y += (f.y * b.v + dw.y * dr) * DT;
     }
     // temas: üst üste binmeyi engelle, kaydet
@@ -941,7 +951,7 @@
 
   global.SailSim = {
     runToEnd,
-    DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, PRE_SEC, setBoat, upwindKn, BOAT,
+    DT, HULL, WORLD, LINE, MARK, BASE, CLASSES, BOAT_DEFAULT, WIND_KN, ACCEL_AT, PRE_SEC, VIS, setBoat, upwindKn, BOAT,
     get START_AT() { return START_AT; }, get CLOCK_SCALE() { return CLOCK_SCALE; }, MAN_MARGIN, bounds, PERSONAS, MINE_COLOR, OBSTACLES,
     FLAG_RULE, signalState, inTriangle, zPoints, SHADOW_LEN, SEA, SEA_DEFAULT, knots, drive, steer, helmTurn, idealSheet, trimEff, SHEET_MAX, SHEET_OFF_MAX, defaultFleet, handStep, runHand, handRow, setCourse, COURSE_DEFAULT, makeBoat, newRace, step, command, standings, clone, waypoint, gustAt, fmt, lineSide
   };
