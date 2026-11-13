@@ -1159,5 +1159,71 @@
     startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
   });
 
+  // ---------- İA12: son saniyede iskele kontradan boşluğa tramola ----------
+  S.push({
+    id: 'ia12-late-port-tack',
+    category: 'İleri Taktik', topic: 'Start · Orta',
+    title: 'İA12 · Son saniyede iskele kontradan tramola: boşluk yeterli mi?',
+    summary: 'Son 30-40 saniyede filonun altından iskele kontrada gelip bir boşluğa tramola atmak hızlı ve etkili bir start olabilir; ama boşluk tramolayı bitirip hızlanacak kadar geniş olmalı. Yeşil X geniş boşluğu seçer, tramolasını komşularından 1,5 boy uzakta bitirir ve hızlanarak çıkar. Turuncu P dar boşluğa, bir sancak teknenin dibine tramola atar: tramola atarken yol vermesi gerekir (Kural 13), sancağa geçince de karşı tarafa kaçınma yeri vermelidir (Kural 15). Sancak tekne kaçmak zorunda kalır, P protesto edilir ve iki tur ceza döner.',
+    duration: 42,
+    baseSpeed: 40,
+    clockScale: 4,
+    wind: 0,
+    line: { pin: { x: 200, y: 440 }, boat: { x: 800, y: 440 } },
+    startAt: 32,
+    rungs: { boat: 'X', from: 32.5 },
+    gaps: { from: 14, to: 29.5, items: [
+      { a: 3, b: 4, label: 'Geniş: tramola + hızlanma yeri', color: '#34d399' },
+      { a: 6, b: 7, label: 'Dar', color: '#f87171' }
+    ] },
+    boats: [
+      { id: 'X', name: 'Geniş boşluğa tramola', role: 'dogru', color: '#2a9d8f',
+        start: { x: 100, y: 545, h: 90 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 90, dur: 14.6, speed: 0.03, turn: 0, note: 'İskele kontrada, filonun altında' },
+          { mode: 'heading', h: 92, dur: 8.6, turn: 1.0, speed: 0.8, note: 'Son 70 sn: filonun altından' },
+          { mode: 'heading', h: 40, dur: 2.2, turn: 0.8, speed: 0.8, note: 'Geniş boşluğa yöneliyor' },
+          { mode: 'heading', h: 340, dur: 2.0, turn: 1.0, speed: 0.25, note: 'Tramola: komşulardan 1,5 boy uzakta' },
+          { mode: 'hold', h: 345, dur: 2.4, speed: 0.01, turn: 0.6, note: 'Tramola bitti, yer benim' },
+          { mode: 'closehauled', tack: 'starboard', dur: 14.2, turn: 0.8 }
+        ] },
+      { id: 'P', name: 'Dar boşluğa, dibine tramola', role: 'hata', color: '#e76f51',
+        start: { x: 222, y: 580, h: 90 }, v0: 2,
+        segs: [
+          { mode: 'hold', h: 90, dur: 17, speed: 0.03, turn: 0 },
+          { mode: 'heading', h: 90, dur: 8.2, turn: 1.0, speed: 0.85, note: 'Son 60 sn: filonun altından' },
+          { mode: 'heading', h: 50, dur: 3.3, turn: 0.8, speed: 0.85, note: 'Dar boşluğa' },
+          { mode: 'heading', h: 330, dur: 1.4, turn: 0.8, speed: 0.5, note: 'HATA: sancak teknenin dibine tramola (K13, K15)' },
+          { mode: 'hold', h: 335, dur: 1.6, turn: 0.6, speed: 0.04, note: 'Protesto!' },
+          { mode: 'heading', h: 90, dur: 0.9, turn: 0.9, speed: 0.4, note: 'İki tur ceza (720°)' },
+          { mode: 'heading', h: 180, dur: 0.9, turn: 0.9, speed: 0.4, note: 'İki tur ceza (720°)' },
+          { mode: 'heading', h: 270, dur: 0.9, turn: 0.9, speed: 0.4, note: 'İki tur ceza (720°)' },
+          { mode: 'heading', h: 360, dur: 0.9, turn: 0.9, speed: 0.4, note: 'İki tur ceza (720°)' },
+          { mode: 'heading', h: 450, dur: 0.9, turn: 0.9, speed: 0.4, note: 'İki tur ceza (720°)' },
+          { mode: 'heading', h: 540, dur: 0.9, turn: 0.9, speed: 0.4, note: 'İki tur ceza (720°)' },
+          { mode: 'heading', h: 630, dur: 0.9, turn: 0.9, speed: 0.4, note: 'İki tur ceza (720°)' },
+          { mode: 'closehauled', tack: 'starboard', dur: 3.0, turn: 0.9, note: 'Herkesin arkasında' }
+        ] }
+    ],
+    crowd: [
+      { slot: 0.06 }, { slot: 0.13 }, { slot: 0.20 }, { slot: 0.27 }, { slot: 0.48 }, { slot: 0.55 }, { slot: 0.62 },
+      { slot: 0.715 }, { slot: 0.785 }, { slot: 0.855 }
+    ],
+    steps: [
+      { t: 0, title: 'Start\'a 2 dk: filo hattın dibinde', text: 'Filo hattın dibinde, rüzgara baş vermiş bekliyor. İki boşluk var: ortada geniş bir boşluk (yeşil) ve hakem botu tarafında dar bir boşluk (kırmızı). Yeşil X ve turuncu P kalabalığın dışında, pin tarafında, iskele kontrada bekliyor.' },
+      { t: 6, title: 'Neden iskele kontradan gelinir?', text: 'İskele kontrada filonun altından gelen tekne bütün boşlukları önden görür ve en iyisini seçer. Tramolayı boşluğun altında atar ve hemen hızlanır: beklemekle yer kaybetmez. Ama iskele kontrada herkese yol verir (Kural 10) ve tramola atarken de herkese yol verir (Kural 13).' },
+      { t: 14.6, title: 'Son 70 sn: X geliyor', text: 'X filonun altından apaz ile geliyor. Hedefi geniş boşluk: komşularıyla arasında 2 boydan fazla açık su var.' },
+      { t: 23.1, title: 'Boşluk yeterli mi?', text: 'Kural: boşluk en az 3 boy olmalı. 1 boy tramola için, 1 boy rüzgarüstündeki komşudan uzak durmak için (Kural 15: yeni hak kazanan, karşısındakine kaçınma yeri verir), 1 boy da altında hızlanmak için.' },
+      { t: 25.2, title: 'P dar boşluğa', text: 'Turuncu P daha geç geldi ve dar boşluğa yöneldi. Boşluk bir tekne genişliğinden biraz fazla.' },
+      { t: 25.4, title: 'X tramola atıyor', text: 'X boşluğun ortasında, komşularından 1,5 boy uzakta tramola atıyor ve sancağa geçiyor. Kimse kaçmak zorunda kalmıyor. Yelken boş bir an bekliyor, sonra doldurup hızlanacak.' },
+      { t: 28.5, title: 'P sancak teknenin dibine tramola atıyor', text: 'P tramolayı rüzgarüstündeki sancak teknenin hemen altında atıyor. Tramola sırasında herkese yol vermeliydi (Kural 13); sancağa geçince de karşı tarafa kaçınma yeri vermeliydi (Kural 15). 7 ve 8 numara doldurup hızlanamıyor: P\'ye çarpmamak için beklemek zorunda kalıyorlar. Bu bir ihlal.' },
+      { t: 29.9, title: 'Protesto ve iki tur ceza', text: 'Sancak tekne "Protesto!" diye bağırıyor. P ya iki tur ceza döner (Kural 44.2: iki tramola + iki kavança) ya da protesto heyetinde diskalifiye riskini alır. P ceza turunu atıyor: start\'ta herkesin arkasında kalacak.' },
+      { t: 32, title: 'START', text: 'X geniş boşluktan, hızla ve temiz havada çıkıyor. P ceza turlarını dönüyor.' },
+      { t: 38, title: 'Özet', text: 'Son saniyede iskele kontradan gelip tramola atacaksan: boşluk en az 3 boy olsun, tramolayı komşularından 1-1,5 boy uzakta bitir, hiçbir sancak tekneyi kaçmaya zorlama. Dar boşluğa, birinin dibine atılan tramola ceza turuyla biter.' }
+    ],
+    addBoat: { pin: { x: 290, y: 600 }, middle: { x: 500, y: 600 }, committee: { x: 720, y: 600 } },
+    startSlots: { pin: [0.1], middle: [0.5], committee: [0.9] }
+  });
+
   global.SCENARIOS = S;
 })(typeof window !== 'undefined' ? window : globalThis);

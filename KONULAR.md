@@ -113,6 +113,7 @@ Durum sütunu: ✅ animasyon hazır · 🔜 sırada · ⬜ planlandı
 | H13 | Fren yap: orsala, yelkeni ters bas, geri git | Hızla gelinen boşlukta durma: orsalayıp hızı kesme, yelkeni ters basıp (backing) bir boy geri gitme (K22.3: geri giden yol verir, arkana bak), yelken boş bekleme, kısa ters basışla yer tutma. HATA: yalnızca orsalayan tekne süzülüp hattın üstüne çıkar, dolaşırken yerini kaybeder. Motor: `mode: 'back'` segmenti (yelken ters çizilir). | ✅ (İA9) |
 | H14 | Boşluğunu savun | Rüzgarüstü komşunun altına yerleşen tekne, geç gelen biri rüzgaraltındaki boşluğa bakınca burnu hafif düşürüp yelken boş yanlamasına kayarak boşluğu kapatır (K12, K11, K15). HATA: boşluğun ortasında bekleyen tekne yarısını kaptırır, iki teknenin arasında hızlanamaz. | ✅ (İA10) |
 | H15 | B planı: seçtiğin boşluk dolarsa | 2 dk kala iki boşluk seç (A: avantajlı, B: yolda kalan). Filonun altından A'ya giderken A dolunca hemen B'ye gir. HATA: yedek planı olmayan dolan boşluğa gider, ikinci sırada kalır (K12). | ✅ (İA11) |
+| H16 | Son saniyede iskele kontradan boşluğa tramola | Filonun altından iskele kontrada gelip boşluğa tramola: boşluk en az 3 boy (tramola + K15 kaçınma yeri + hızlanma), tramolayı komşulardan 1-1,5 boy uzakta bitir. HATA: dar boşluğa, sancak teknenin dibine tramola (K13, K15) → protesto, iki tur ceza (K44.2). | ✅ (İA12) |
 
 # III. TEKNİK
 
