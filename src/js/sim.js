@@ -790,7 +790,19 @@
     }
     return frames;
   }
+  // Animasyon döngüsü hiçbir hatada durmaz: hata yakalanır, döngü sürer, kullanıcıya bir kez söylenir
+  // (eskiden tek bir çizim hatası requestAnimationFrame zincirini koparıp sayfayı donuk bırakırdı).
+  let tickErr = 0;
   function tick(ts) {
+    try { tickBody(ts); }
+    catch (e) {
+      console.error('[sim] kare hatası', e);
+      if (Date.now() - tickErr > 15000) { tickErr = Date.now(); try { toast('Bir sorun oldu, animasyon sürüyor. Takılırsa Sıfırla (R).'); } catch (e2) { /* yok */ } }
+      if (window.SailTrack) try { SailTrack.log('error', { where: 'sim.tick', msg: String(e && e.message || e).slice(0, 120) }); } catch (e3) { /* yok */ }
+    }
+    requestAnimationFrame(tick);
+  }
+  function tickBody(ts) {
     const dt = Math.min(0.1, (ts - st.lastTs) / 1000 || 0); st.lastTs = ts;
     if (st.drive) {
       driveTick(dt);
@@ -808,7 +820,6 @@
       st.sim = viewAt(st.playT);
     }
     render();
-    requestAnimationFrame(tick);
   }
   function togglePlay() {
     if (st.drive) { drivePause(); return; }              // elle sürerken: zamanı durdur / devam (kurulumda Start)
@@ -850,16 +861,18 @@
       const m = st.fleet.find(b => b.mine); if (!m) return;
       // bekleyen tekne başı rüzgarda durur: elle sürmeye orsa rotasında, yelken boş başlar (Çek ile doldurup hızlanırsın)
       if (!m.drv) { m.h = st.wind + (m.tack === 'starboard' ? -45 : 45); m.v = 0; m.sheet = null; m.sheetOff = S.SHEET_OFF_MAX; }
+      const prev = { manual: !!m.manual, route: m.route };   // çıkınca geri gelir (eskiden Manuel kalıcı oluyordu)
       m.manual = true; m.route = null;
-      st.drive = { s: null };
+      st.drive = { s: null, prev };
     } else {
       if (!st.frames.length) return;
       const i = frameIndexAt(st.playT), s = S.clone(st.frames[i]), m = s.boats.find(b => b.mine);
       if (!m || !['wait', 'race', 'ocs'].includes(m.phase)) { toast(m && m.phase === 'penalty' ? 'Ceza turundayken elle sürülemez' : 'Teknen şamandırayı döndü: elle sürülemez'); return; }
+      const prev = { manual: !!m.manual, route: null };   // yarışta rota geri gelmez (tekne yolundan çıktı); Manuel eski haline döner
       m.manual = true; m.route = null; m.man = null; m.escH = null; m.sheet = null; m.hand = true;
       if (m.phase === 'wait' && Math.abs(E.norm180(m.h - s.wind)) < 40) { m.h = s.wind + (m.tack === 'starboard' ? -45 : 45); m.sheetOff = S.SHEET_OFF_MAX; }   // beklerken yelken boştu
       // canlı: bu kareden itibaren yarış adım adım ilerler; kareler ve teknenin yolu (kayıt için) tutulur
-      st.drive = { s, i, live: true, paused: false, acc: 0,   // Elle sür'e basınca zaman hep akar (durmuş oynatmadan geçince kilitli sanılıyordu)
+      st.drive = { s, i, live: true, paused: false, acc: 0, prev,   // Elle sür'e basınca zaman hep akar (durmuş oynatmadan geçince kilitli sanılıyordu)
         n: 0, frames: [S.clone(s)], path: [] };
       st.mode = 'pause'; st.sim = s;
     }
@@ -880,19 +893,19 @@
     st.camPrev = null;
     if (m) {
       m.helm = null; m.note = ''; m.hand = false;
-      // iskotayı elle bıraktıysan: yarışta ideale göre o kadar salık kalır (hız düşük); fazla çekik yarışta yok
-      const ideal = S.idealSheet(Math.abs(E.norm180(m.h - ctx.wind)));
-      m.sheetOff = Math.max(0, Math.min(S.SHEET_OFF_MAX, Math.round(d.autoTrim ? (m.sheetOff || 0) : m.sheet - ideal)));
+      // otomatiğe dönünce iskota tam trim (eskiden elle salık bırakılan iskota yarışın sonuna kadar kalıyor, tekne yavaş gidiyordu)
+      if (!keep) m.sheetOff = 0;
+      // Manuel ve rota elle sürmeden önceki haline döner: otomatikte teknen yine kendi tramolasını atar
+      if (d.prev) { m.manual = d.prev.manual; if (!d.s) m.route = d.prev.route || null; }
     }
     if (!d.s) {                                          // kurulum: teknen burada bekler, start'ta otomatik devam eder (tam trimle hızlanır)
-      if (m && !keep) m.sheetOff = 0;
       if (m && S.lineSide(m) === -1) toast('Teknen hattın üstünde: start\'ta erken (OCS) sayılır, geri dönmek zorunda kalır');
       updatePanel(true);
       if (play) { togglePlay(); if (keep && st.mode === 'run') enterDrive(); }
       return;
     }
     const s = d.s;
-    if (m && m.phase !== 'round' && m.phase !== 'penalty') s.events.push({ t: s.t, text: `${m.id}: elle sürdün, otomatiğe döndü (tramolalar yine senin)`, kind: '' });
+    if (m && m.phase !== 'round' && m.phase !== 'penalty') s.events.push({ t: s.t, text: `${m.id}: elle sürdün, otomatiğe döndü${m.manual ? ' (Manuel: tramolalar yine senin)' : ''}`, kind: '' });
     // kayıt: elle sürülen bölümde teknenin yolu + bitişteki durum (tekrar oynatınca aynı yarış)
     Rec.note(st.rec, d.i, { k: 'hand', path: d.path, end: jcopy(s) });
     st.frames = spliceHand(st.frames, d.i, d.frames, s);

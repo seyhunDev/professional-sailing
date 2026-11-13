@@ -582,12 +582,19 @@
   }
 
   // ---------- Zaman döngüsü ----------
+  // Döngü hiçbir hatada durmaz (tek bir çizim hatası zinciri koparıp sayfayı donuk bırakmasın); hata konsola yazılır.
+  let tickErr = 0;
   function tick(ts) {
-    if (state.playing) {
-      const dt = Math.min(0.1, (ts - state.lastTs) / 1000);
-      state.t += dt * state.speed;
-      if (state.t >= state.scn.duration) { state.t = state.scn.duration; state.playing = false; updatePlayButton(); }
-      render({ dt });
+    try {
+      if (state.playing) {
+        const dt = Math.min(0.1, (ts - state.lastTs) / 1000);
+        state.t += dt * state.speed;
+        if (state.t >= state.scn.duration) { state.t = state.scn.duration; state.playing = false; updatePlayButton(); }
+        render({ dt });
+      }
+    } catch (e) {
+      if (Date.now() - tickErr > 15000) { tickErr = Date.now(); console.error('[senaryo] kare hatası', e);
+        if (window.SailTrack) try { SailTrack.log('error', { where: 'app.tick', msg: String(e && e.message || e).slice(0, 120) }); } catch (e2) { /* yok */ } }
     }
     state.lastTs = ts; requestAnimationFrame(tick);
   }

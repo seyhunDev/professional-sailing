@@ -24,6 +24,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      # Testler kırılırsa yayın yapılmaz, site eski haliyle kalır (senaryo + simülatör + 60 rastgele yarış)
+      - run: npm run check
       - run: node scripts/build.mjs
       - uses: actions/upload-pages-artifact@v3
         with:

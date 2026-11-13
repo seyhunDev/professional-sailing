@@ -245,6 +245,7 @@
     if (b.x < 70 && b.tack === 'starboard') return 'port';           // parkur kenarı
     if (b.x > WORLD.w - 70 && b.tack === 'port') return 'starboard';
     if (along < 110) return b.tack;
+    if (b.tackHold != null && s.t < b.tackHold) return b.tack;   // senin tramolan: bir süre bu kontrada kalır, sonra taktiğine döner
     let p = b.persona;
     if (p === 'saganak') {
       const g = s.gusts.length ? nearestGust(s.gusts, b, w) : null;
@@ -278,6 +279,9 @@
     if (key) { if (s.pairLog[key] != null && s.t - s.pairLog[key] < 5) return; s.pairLog[key] = s.t; }
     s.events.push({ t: s.t, text, kind: kind || '' });
   }
+  // Otomatik teknede Tramola düğmesi: tekne bu kadar sim. sn yeni kontrada kalır, sonra taktiğine döner.
+  // (Eskiden taktik kalıcı olarak 'manuel'e dönüyordu; seçim kutusu sessizce değişiyordu.)
+  const TACK_HOLD = 8;
   function doTack(b, s, why) {
     b.tack = b.tack === 'starboard' ? 'port' : 'starboard'; b.lastTack = s.t;
     if (why) note(b, s, why, '', 1.6);
@@ -287,7 +291,7 @@
   function command(s, cmd, arg, id) {           // id verilmezse senin teknen
     const b = s.boats.find(x => (id ? x.id === id : x.mine)); if (!b) return;
     if (cmd === 'tack') {
-      if (b.phase === 'race' && s.t - b.lastTack > 1) { doTack(b, s, 'Tramola!'); if (!b.manual) b.persona = 'manuel'; log(s, `${b.id}: tramola (senin kararın)`); }
+      if (b.phase === 'race' && s.t - b.lastTack > 1) { doTack(b, s, 'Tramola!'); if (!b.manual) b.tackHold = s.t + TACK_HOLD; log(s, `${b.id}: tramola (senin kararın)`); }
       else if (b.phase === 'wait') { b.tack = b.tack === 'starboard' ? 'port' : 'starboard'; }
     } else if (cmd === 'rules') { b.ignoresRules = !!arg; log(s, `${b.id}: ${arg ? 'artık yol vermiyor (kural bilmeyen)' : 'kurallara uyuyor'}`);
     } else if (cmd === 'speed') { b.speedK = +arg || 1; log(s, `${b.id}: hız ${b.speedK === 1 ? 'normal' : (b.speedK > 1 ? '+' : '−') + Math.round(Math.abs(b.speedK - 1) * 100) + '%'}`);

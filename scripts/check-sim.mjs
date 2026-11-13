@@ -227,5 +227,21 @@ for (const wind of [-12, 0, 12]) {
   console.log(`• Start bayrakları (P/I/Z/U/Siyah): ${bad.length ? 'SORUN' : 'işaretler ve cezalar doğru'}`);
   if (bad.length) { problems++; console.log('  ⚠ Bayrak:', bad.join(', ')); }
 }
+// Tramola düğmesi (otomatik teknede): taktik kalıcı olarak değişmez, tekne bir süre sonra yine kendi kararını verir
+{
+  S.setCourse(S.COURSE_DEFAULT);
+  const fleet = S.defaultFleet(12), s = S.newRace(fleet, { wind: 0 }), bad = [];
+  while (s.t < s.startAt + 6) S.step(s);
+  const me = s.boats.find(b => b.mine), p0 = me.persona, t0 = me.tack;
+  S.command(s, 'tack');
+  if (me.tack === t0) bad.push('tramola atmadı');
+  if (me.persona !== p0) bad.push(`taktik değişti (${p0} → ${me.persona})`);
+  const hold = s.t; let own = 0;
+  while (s.t < hold + 40 && !me.finish) { const k = me.tack; S.step(s); if (me.tack !== k) own++; }
+  if (me.persona !== p0) bad.push('taktik sonradan değişti');
+  if (!own && !me.finish) bad.push('40 sn boyunca hiç kendi tramolasını atmadı');
+  console.log(`• Tramola düğmesi (otomatik): ${bad.length ? 'SORUN' : `taktik korunuyor (${p0}), sonra kendi ${own} tramola`}`);
+  if (bad.length) { problems++; console.log('  ⚠ Tramola:', bad.join(', ')); }
+}
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);
