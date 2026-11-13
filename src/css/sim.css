@@ -503,3 +503,28 @@ body.lay-strip .mode-strip { top: 12px !important; right: 12px !important; }
 .flag-seq li.past { opacity: .5; }
 .flag-box .box-head small { margin-left: auto; }
 .events li.flag { border-color: #fbbf24; color: #fde68a; }
+
+/* Geri sayım çubuğu (sahnenin üstünde ortada): süre 2-5 dk, hızlı geri sayım, 1:00'a / start'a atla */
+.count-bar { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 5px 0 12px; border-radius: 19px;
+  background: var(--panel-solid); border: 1px solid var(--border-strong); box-shadow: var(--shadow); font-size: 12.5px; white-space: nowrap; }
+.count-bar.hidden { display: none; }
+.cb-lbl { color: #fbbf24; font-weight: 700; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; }
+.cb-seg { display: none; align-items: center; gap: 2px; padding: 2px; border-radius: 14px; background: var(--raised); border: 1px solid var(--border); }
+.count-bar.setup .cb-seg { display: inline-flex; }
+.cb-seg button { height: 26px; min-width: 28px; padding: 0 6px; border: 0; border-radius: 12px; background: transparent; color: var(--muted); font-weight: 700; font-size: 12.5px; }
+.cb-seg button.on { background: var(--accent); color: var(--accent-ink); }
+.cb-seg i { font-style: normal; color: var(--muted); font-size: 11.5px; padding: 0 6px 0 2px; }
+.cb-btn { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 14px; border: 1px solid var(--border-strong); background: var(--raised);
+  color: var(--text2); font-weight: 700; font-size: 12px; font-family: inherit; cursor: pointer; }
+.cb-btn .ci { width: 12px; height: 12px; }
+.cb-btn.hidden { display: none; }
+.cb-fast .ci { display: none; }
+.cb-fast.on { border-color: rgba(251,191,36,.6); color: #fcd34d; }
+.cb-fast.live { background: rgba(251,191,36,.16); }
+.cb-fast.live .ci { display: block; }
+@media (max-width: 640px) {
+  .count-bar { height: 32px; gap: 4px; padding: 0 3px 0 9px; }
+  .cb-lbl { display: none; }
+  .cb-btn { height: 26px; padding: 0 8px; font-size: 11.5px; }
+  .cb-seg button { height: 24px; min-width: 24px; }
+}

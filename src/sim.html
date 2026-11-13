@@ -123,6 +123,14 @@
       <span id="msMine" class="ms-chip"></span>
       <span id="msRules" class="ms-chip ms-warn hidden">Yol vermez</span>
       <button id="msSel" class="ms-chip ms-sel hidden" title="Seçimi kaldır"></button>
+      <!-- Geri sayım yönetimi: kurulumda süre seçimi, geri sayımda hızlı geçiş ve atlama -->
+      <div id="countBar" class="count-bar hidden" role="group" aria-label="Start geri sayımı">
+        <span class="cb-lbl">Geri sayım</span>
+        <div class="cb-seg" id="cbPre"></div>
+        <button class="cb-btn cb-fast" id="cbFast" title="Son dakikaya kadar geri sayım 10× akar (tekneler bekliyor); son dakika seçili hızla"><svg class="ci"><use href="#i-play"/></svg><span>Hızlı 10×</span></button>
+        <button class="cb-btn" id="cbJump1" title="Son 1 dakikaya atla (hazırlık bayrağı iner)"><span>1:00'a atla</span></button>
+        <button class="cb-btn" id="cbJump0" title="Start'a 10 sn kalaya atla"><span>Start'a atla</span></button>
+      </div>
     </div>
 
     <div id="saveDlg" class="picker dlg hidden" role="dialog" aria-modal="true" aria-labelledby="saveDlgTitle">

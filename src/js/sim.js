@@ -593,7 +593,31 @@
     fitViewBox(); updatePanel(true); toast('Kayıt silindi: isimler, taktikler ve parkur varsayılana döndü');
   }
 
+  // ---------- Geri sayım: tekneler start öncesi neredeyse durur; son dakikaya kadar hızlı geç (varsayılan açık) ----------
+  const PRE_FAST = 10;
+  const preRem = () => { const v = st.sim; return v ? (v.startAt - v.t) * S.CLOCK_SCALE : 0; };
+  const playSpeed = () => (st.fastPre && preRem() > 60 ? Math.max(st.speed, PRE_FAST) : st.speed);
+  function jumpTo(realRem) {
+    if (!st.frames.length || st.drive) return;
+    const t = Math.min(lastT(), Math.max(0, st.sim.startAt - realRem / S.CLOCK_SCALE));
+    if (t <= st.playT) return;
+    st.playT = t; st.sim = viewAt(t); updatePanel(true);
+  }
+  function countBarUpdate(v) {
+    const setup = st.mode === 'setup', rem = (v.startAt - v.t) * S.CLOCK_SCALE;
+    const show = !st.drive && !st.drawMode && (setup || ((st.mode === 'run' || st.mode === 'pause') && rem > 0));
+    $('countBar').classList.toggle('hidden', !show); if (!show) return;
+    $('countBar').classList.toggle('setup', setup);
+    [...$('cbPre').children].forEach(x => x.classList.toggle('on', +x.dataset.v === st.boat.pre));
+    const fastNow = st.fastPre && rem > 60 && st.speed < PRE_FAST;
+    $('cbFast').classList.toggle('on', !!st.fastPre); $('cbFast').classList.toggle('live', fastNow);
+    $('cbFast').setAttribute('aria-pressed', !!st.fastPre);
+    $('cbFast').querySelector('span').textContent = setup ? (st.fastPre ? 'Hızlı 10×' : 'Gerçek zaman') : fastNow ? 'Hızlı 10× · son dk normal' : st.fastPre && rem <= 60 ? 'Son dakika · ' + spTxt(st.speed) : 'Gerçek zaman';
+    $('cbJump1').classList.toggle('hidden', setup || rem <= 62);
+    $('cbJump0').classList.toggle('hidden', setup || rem <= 12);
+  }
   function updateBar(v) {
+    countBarUpdate(v);
     const playing = st.mode === 'run';
     $('btnPlay').querySelector('use').setAttribute('href', playing ? '#i-pause' : '#i-play');
     $('btnPlay').title = st.mode === 'setup' ? 'Start ver' : playing ? 'Duraklat' : 'Devam';
@@ -750,7 +774,7 @@
       if (st.drive && !c.follow) { c.follow = true; c.ft = 0; if (c.z < 1.2) c.z = 1.8; }   // elle sürerken kamera hep teknende
     }
     else if (st.mode === 'run') {
-      st.playT += dt * st.speed / S.CLOCK_SCALE;   // 1× = gerçek zaman (start → şamandıra ~15 dk)
+      st.playT += dt * playSpeed() / S.CLOCK_SCALE;   // 1× = gerçek zaman (start → şamandıra ~15 dk); geri sayım hızlı geçebilir
       if (st.playT >= lastT()) {
         st.playT = lastT(); st.mode = 'end';
         const mine = st.frames[st.frames.length - 1].boats.find(b => b.mine);
@@ -1535,6 +1559,16 @@
   // elle sürerken: zaman kutusunda tek düğme, dokununca sıradaki hız (½× → 1× → 5× → 15× → 40×)
   $('dbSpeed').addEventListener('click', () => { const v = SPEEDS[(SPEEDS.indexOf(st.speed) + 1) % SPEEDS.length]; setSpeed(v); toast(`Yarışın hızı ${spTxt(v)}${v === 1 ? ': gerçek zaman' : v < 1 ? ': yavaş' : ''}`); });
   setSpeed(st.speed || 1);
+  st.fastPre = true;
+  try { if (localStorage.getItem('ps.sim.fastPre') === '0') st.fastPre = false; } catch (e) { /* yok */ }
+  $('cbPre').innerHTML = S.PRE_SEC.map(v => `<button data-v="${v}" title="Start'a ${v / 60} dakika">${v / 60}</button>`).join('') + '<i>dk</i>';
+  $('cbPre').addEventListener('click', e => { const x = e.target.closest('button'); if (x) changeBoat('pre', +x.dataset.v); });
+  $('cbFast').addEventListener('click', () => {
+    st.fastPre = !st.fastPre; try { localStorage.setItem('ps.sim.fastPre', st.fastPre ? '1' : '0'); } catch (e) { /* yok */ }
+    toast(st.fastPre ? 'Geri sayım son dakikaya kadar 10× akar' : 'Geri sayım seçili hızla akar (1× = gerçek zaman)');
+  });
+  $('cbJump1').addEventListener('click', () => jumpTo(60));
+  $('cbJump0').addEventListener('click', () => jumpTo(10));
   $('scrub').addEventListener('input', e => {
     if (!st.frames.length || st.drive) return;
     st.playT = +e.target.value; st.sim = viewAt(st.playT);

@@ -4,6 +4,7 @@
 > Kısa ve güncel tut: eskiyen maddeleri sil, tarih ver.
 
 ## Güncel durum (2026-11-13)
+- **Geri sayım çubuğu (2026-11-13):** kullanıcı "start verince tekneler durdu" dedi: hata değil, 1× gerçek zamanda 5 dk boyunca tekneler beklediği için animasyon donmuş görünüyordu. Sahnenin üstünde `#countBar` (mode-strip içinde): kurulumda süre 2/3/4/5 dk (Filo'daki ayarla aynı `boat.pre`) + "Hızlı 10×"; geri sayımda "Hızlı 10× · son dk normal", "1:00'a atla", "Start'a atla" (10 sn kala). Hızlı geri sayım varsayılan açık (`st.fastPre`, localStorage `ps.sim.fastPre`): son dakikaya kadar hız en az 10×, son dakika ve yarış seçili hızla (`playSpeed()`). Elle sürerken çubuk gizli.
 - **Simülatörde start bayrakları 5-4-1 (2026-11-13):** Ayarlar → Parkur → "Start bayrakları": hazırlık bayrağı P / I / Z / U / Siyah (`course.flag`, kurulumda seçilir, kayıtlara girer). Gerçek saniyeyle: 5:00 sınıf bayrağı (uyarı), 4:00 hazırlık bayrağı, 1:00 iner (uzun ses), 0:00 start (sınıf bayrağı iner); geri sayım 2-4 dk seçiliyse açılışta uygun bayraklar zaten yukarıda. Hakem botunun yanında sinyal direği (bayraklar çekilip iner), sol üstte sinyal kartı (bayraklar + kural kısa metni; son dakikada kırmızı, start'tan ~20 sn sonra kalkar), olaylarda işaretler `kind:'flag'` ve start öncesi "−m:ss". **Yasaklı bölge** (Göster → "Yasaklı bölge", varsayılan açık): 4:00-1:00 soluk ("son dakikada yasak"), son dakikada kırmızı nabız, start'ta kalkar; kurulumda Parkur paneli açıkken önizleme. I → hattın ve uzantılarının üstü + uçlardan dolaşma okları; Z/U/Siyah → pin–hakem botu–orsa şamandırası üçgeni. **Kurallar (sim-core `zoneCheck`, `startPhase`, `roundEndsTarget`):** I → `b.iFlag`, start'ta `ocs`, bir ucun uzantısını aşağı geçince (`iDone`) hattın içinden start; Z → `b.zPen`, sıralamada "+%20 puan" (`zPoints` = tekne sayısının %20'si); U/Siyah → `b.dsq` 'UFD'/'BFD', geri dönmez, bitirse de sıraya girmez (`finishNo`: 900+). check-sim: "Start bayrakları" denetimi.
 - Uygulamanın görünen adı **Velora Sailing** (2026-11-13), logo kullanıcının `seyhunDev/sesliasistan` deposundaki Velora işareti (`src/img/velora-mark.svg`, lacivert kare + beyaz daire içinde V). Depo ve site adresi 2026-11-13’te `velora-sailing` oldu (eski `professional-sailing` adresi kırıldı).
 - Senaryo sayfası sade (2026-11-13): seçici kare küçük resimli (`js/thumbs.js`, döngüde ön izleme), üst çubukta marka yok (sahnenin sol alt köşesinde), bilgi kartında "Canlı" anahtarı ve alt düğme satırı yok.
@@ -176,6 +177,8 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-13 · Geri sayımda "durdu" görünümü ve geri sayım çubuğu
+- Neden: 1× gerçek zaman + 5 dk bekleme = tekneler neredeyse hareketsiz (hata yok, ölçüldü). Çözüm: hızlı geri sayım (son dakikaya kadar 10×), 1:00'a / start'a atla, süre seçimi sahnenin üstünde. Ekran görüntüleri `start-bayraklari/geri-sayim-*`.
 ### 2026-11-13 · Elle sürme alanı genişledi, sınır çizgisi, tekneye takılma düzeltildi (v1.87)
 - Kullanıcı: alan ekranda var gibi ama tekne ilerleyemiyor; sınırı soluk ince çizgiyle göster. Bir teknenin üstüne gelince takılıp hiç ilerlemedi.
 - `MAN_MARGIN` 320 → 440, yeni `MAN_Y` 260 (parkurun üstü/altı da; eskiden y 15…H−10 idi). `S.bounds()` tek kaynak; `drawBounds` soluk kesik çizgi (`non-scaling-stroke`). Sınıra gelince tekne yavaşlar, "Alan sınırı: geri dön" notu (`'edge'` olayı).
