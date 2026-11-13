@@ -194,6 +194,7 @@
         <button data-cat="rank" title="Sıralama ve olaylar"><svg><use href="#i-list"/></svg><span>Sıralama</span></button>
         <button data-cat="help" title="Nasıl kullanılır"><svg><use href="#i-help"/></svg><span>Yardım</span></button>
         <i class="cr-sep" aria-hidden="true"></i>
+        <button id="btnResetSet" class="cr-changed hidden" title="Ayarları varsayılana döndür: varsayılandan farklı ayarları geri al (turuncu noktalı bölümler). Tekne yerleri, isimler ve taktikler kalır"><svg><use href="#i-undo"/></svg><span id="resetSetLbl">Varsayılan</span></button>
         <button id="btnResetAll" class="cr-reset" title="Her şeyi varsayılana döndür: rüzgar, sağanaklar, akıntı/dalga, filo, parkur, isimler, taktikler (iki kez dokun)"><svg><use href="#i-reset"/></svg><span>Tümünü sıfırla</span></button>
       </div>
     </nav>
@@ -389,7 +390,7 @@
           </ol>
         </section>
         <section id="saveBox" class="save-box" data-cat="help">
-          <span id="saveTxt">Kurulum bu cihazda saklanır · rayın en altındaki <b>Tümünü sıfırla</b> her şeyi varsayılana döndürür</span>
+          <span id="saveTxt">Yerleşim (yerler, isimler, taktikler) bu cihazda saklanır; rüzgar, sağanak, akıntı ve sınıf her açılışta varsayılandır · <b>Tümünü sıfırla</b> yerleşimi de siler</span>
           <button class="tb sm" id="btnClearSaved" title="Her şeyi varsayılana döndür (iki kez dokun)">Tümünü sıfırla</button>
         </section>
       </div>

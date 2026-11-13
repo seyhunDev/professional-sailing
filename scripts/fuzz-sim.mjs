@@ -3,7 +3,7 @@
 //  - YANLIŞ_TARAF: şamandırayı dönerken şamandıra teknenin sancağında (iskeleden dönülmeli)
 //  - ALTINDAN: şamandıranın seviyesine (rüzgar ekseninde) hiç çıkmadan "döndü" sayıldı
 //  - ÇARPTI: şamandıraya 12 px'den fazla yaklaştı
-//  - BİTMEDİ: 150 s içinde bitiremedi · TAKILDI: yarışta 8 s boyunca neredeyse hiç ilerlemedi
+//  - BİTMEDİ: start'tan sonra 150 s içinde bitiremedi · TAKILDI: yarışta 8 s boyunca neredeyse hiç ilerlemedi
 //  - ALAN_DIŞI: yarışırken alanın dışına çıktı
 //  - HAT_DIŞI: start hattını uçların arasından geçmeden bitirdi
 //  - ERKEN_GECTI: manuel olmayan tekne start'tan önce hattı geçti (yalnız manuel / elle sürülen geçebilir)

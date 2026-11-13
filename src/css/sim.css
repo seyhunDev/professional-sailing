@@ -627,6 +627,13 @@ body.driving .drive-bar { left: 318px; margin: 0 auto; }
 .cr-sep { display: block; flex: 0 0 auto; background: var(--float-bd); }
 body.lay-rail .cr-sep { height: 1px; margin: 4px 8px; }
 body.lay-strip .cr-sep { width: 1px; margin: 6px 2px; }
+.cat-rail .cr-changed { color: #fdba74; position: relative; }
+.cat-rail .cr-changed:hover { background: rgba(251,146,60,.14); color: #fed7aa; }
+.cat-rail .cr-changed span { white-space: normal; text-align: center; line-height: 1.1; }
+.cat-rail .cr-changed b { position: absolute; top: 4px; right: 8px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #fb923c; color: #1c1917; font-size: 10.5px; line-height: 16px; font-weight: 700; }
+.cat-rail .cr-changed.hidden { display: none; }
+body.lay-strip .cat-rail .cr-changed { min-width: 64px; }
+body.lay-rail .cat-rail .cr-changed:not(.hidden) ~ .cr-reset, body.lay-rail .cat-rail .cr-changed { min-height: 48px; gap: 3px; }
 .cat-rail .cr-reset { color: #fca5a5; }
 .cat-rail .cr-reset:hover { background: rgba(248,113,113,.14); color: #fecaca; }
 .cat-rail .cr-reset.warn { background: #ef4444; color: #fff; }
@@ -639,3 +646,5 @@ body.lay-strip .cat-rail .cr-reset { min-width: 64px; }
 .bottombar .play.start { width: auto; height: 48px; padding: 0 22px 0 16px; border-radius: 24px; display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 16px; letter-spacing: .02em; box-shadow: 0 0 0 0 rgba(56,189,248,.5); animation: startPulse 2.2s ease-out infinite; }
 @keyframes startPulse { 0% { box-shadow: 0 0 0 0 rgba(56,189,248,.45); } 70%, 100% { box-shadow: 0 0 0 10px rgba(56,189,248,0); } }
 @media (max-width: 900px) { .bottombar .play.start { height: 42px; padding: 0 16px 0 12px; font-size: 14px; } }
+/* alçak yatay ekran (ör. iPad 1024×768): "Varsayılan" rozeti görünürken ray taşmasın */
+@media (max-height: 790px) and (min-height: 501px) { body.lay-rail .cat-rail button { min-height: 51px; gap: 3px; } }

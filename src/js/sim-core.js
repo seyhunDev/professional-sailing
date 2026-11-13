@@ -942,9 +942,12 @@
   }
 
   // Yarışı bitene kadar ileri hesapla; her 0.1 s'de bir kare (durumun kopyası) döndürür
+  const RACE_MAX = 300;   // start'tan sonra en çok bu kadar sim. sn hesaplanır (uzun parkur + güçlü akıntıda ~200)
   function runToEnd(s0, maxT) {
     const s = clone(s0), frames = [clone(s)];
-    maxT = maxT || 200;
+    // sınır start'a göre: gerçek zamanlı 5 dk geri sayımda (ILCA, sert rüzgar) start ~200 sim. sn'ye düşer; eski sabit 200
+    // sınırı yarışı start'ta / ortasında kesiyordu (ayar kombinasyonu testi buldu, 2026-11-13)
+    maxT = maxT || (s.startAt || 0) + RACE_MAX;
     while (s.t < maxT && !s.boats.every(b => b.finish || b.gone)) {
       step(s);
       if (Math.round(s.t / DT) % 2 === 0) frames.push(clone(s));

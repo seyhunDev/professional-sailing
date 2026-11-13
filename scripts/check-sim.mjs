@@ -243,5 +243,38 @@ for (const wind of [-12, 0, 12]) {
   console.log(`• Tramola düğmesi (otomatik): ${bad.length ? 'SORUN' : `taktik korunuyor (${p0}), sonra kendi ${own} tramola`}`);
   if (bad.length) { problems++; console.log('  ⚠ Tramola:', bad.join(', ')); }
 }
+// Ayar kombinasyonları: arayüzde seçilebilen uç değerler birlikte (16 tekne, en hızlı / en yavaş sınıf, en kısa / en uzun
+// parkur, en güçlü akıntı ve dalga, iki sağanak, ±40° rüzgar, her bayrak, yol vermez tekne). Hiçbiri takılmamalı:
+// herkes bitirmeli (ya da diskalifiye), konum sayı kalmalı, hesap bir yarış için makul sürede bitmeli.
+{
+  const bad = [], CLS = Object.keys(S.CLASSES), FLAGS = ['P', 'I', 'Z', 'U', 'Siyah'];
+  const COURSES = [{ lineLen: 200, markDist: 400 }, { lineLen: 1000, markDist: 1500 }, { lineLen: 1000, markDist: 400 }, { lineLen: 200, markDist: 1500 }];
+  let q = 777; const r = () => (q = (q * 48271) % 2147483647) / 2147483647;
+  let worst = 0, n = 0;
+  for (let k = 0; k < 24; k++) {
+    const course = { ...COURSES[k % 4], flag: FLAGS[k % 5] };
+    S.setCourse(course);
+    const size = k % 3 === 0 ? 16 : 2 + Math.floor(r() * 14), fleet = S.defaultFleet(size);
+    if (k % 2) fleet[1].ignoresRules = true;
+    if (k % 4 === 3) fleet.find(b => b.mine).manual = true;
+    fleet.forEach((b, i) => { if (i % 5 === 2) b.speedK = 0.9; if (i % 5 === 4) b.speedK = 1.1; if (i % 7 === 3) b.drift = 2; });
+    const boat = { cls: CLS[k % CLS.length], windKn: S.WIND_KN[(k * 3) % S.WIND_KN.length], accelAt: S.ACCEL_AT[k % S.ACCEL_AT.length], pre: S.PRE_SEC[k % S.PRE_SEC.length] };
+    const wind = [-40, 40, 0, -20, 25][k % 5];
+    const gusts = k % 2 ? [{ x: S.WORLD.w * 0.25, y: S.WORLD.h * 0.45, rx: 300, ry: 470 }, { x: S.WORLD.w * 0.75, y: S.WORLD.h * 0.35, rx: 48, ry: 76 }] : [];
+    const sea = { current: k % 4, waves: k % 3 };
+    const t0 = Date.now();
+    const frames = S.runToEnd(S.newRace(fleet, { wind, gusts, course, sea, boat }));
+    const ms = Date.now() - t0; worst = Math.max(worst, ms); n++;
+    const last = frames[frames.length - 1];
+    const tag = `#${k} ${size} tekne ${boat.cls} ${boat.windKn} kn rüzgar ${wind}° parkur ${course.lineLen}/${course.markDist} bayrak ${course.flag} akıntı ${sea.current} dalga ${sea.waves}`;
+    const left = last.boats.filter(b => !b.finish && !b.dsq);
+    if (left.length) bad.push(`${tag}: ${left.length} tekne bitirmedi (${left.map(b => b.id + ':' + b.phase).join(' ')})`);
+    if (last.boats.some(b => !Number.isFinite(b.x) || !Number.isFinite(b.y) || !Number.isFinite(b.h))) bad.push(`${tag}: konum sayı değil`);
+    if (ms > 4000) bad.push(`${tag}: hesap ${ms} ms`);
+  }
+  S.setCourse(S.COURSE_DEFAULT);
+  console.log(`• Ayar kombinasyonları (${n} uç kurulum): ${bad.length ? 'SORUN' : `hepsi bitti, en uzun hesap ${worst} ms`}`);
+  if (bad.length) { problems++; bad.slice(0, 5).forEach(x => console.log('  ⚠', x)); }
+}
 console.log(problems ? `\n${problems} uyarı` : '\nSimülatör temiz ✔');
 process.exit(problems ? 1 : 0);
