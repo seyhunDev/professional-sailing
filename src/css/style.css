@@ -390,6 +390,9 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
 a.sim-link { text-decoration: none; color: #fed7aa; background: rgba(251,146,60,.16); border-color: rgba(251,146,60,.6); font-weight: 600; }
 a.sim-link svg { color: #fb923c; }
 a.sim-link:hover { background: rgba(251,146,60,.26); border-color: #fb923c; color: #fff; }
+a.trim-link { color: #a7f3d0; background: rgba(52,211,153,.14); border-color: rgba(52,211,153,.55); }
+a.trim-link svg { color: #34d399; }
+a.trim-link:hover { background: rgba(52,211,153,.24); border-color: #34d399; color: #fff; }
 @media (max-width: 1100px) { a.sim-link.tool { width: auto; padding: 0 12px 0 10px; } a.sim-link .lbl { display: inline; } }
 @media (max-width: 640px) { a.sim-link.tool { width: var(--tap); padding: 0; } a.sim-link .lbl { display: none; } }
 /* Tam ekranda (iPad Safari) sol üstte sistemin kapatma (X) düğmesi çıkar: üst çubuğun solunu boş bırak */
@@ -641,3 +644,4 @@ html:not([data-role="sahip"]) .report-btn { display: none; }
   .rig-svg { aspect-ratio: auto; height: clamp(90px, calc(100vh - 290px), 150px); }
   .rig-panel { max-height: calc(100% - 52px); }
 }
+@media (max-height: 500px) { a.trim-link.tool { width: var(--tap); padding: 0; } a.trim-link .lbl { display: none; } }
