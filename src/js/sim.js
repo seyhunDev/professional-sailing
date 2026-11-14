@@ -1795,10 +1795,7 @@
   $('btnSheetEase').addEventListener('click', () => sheetBy(1));
   $('btnSheetTrim').addEventListener('click', () => sheetBy(-1));
   $('btnPanelClose').addEventListener('click', () => setPanelOpen(false));
-  // tam ekran: iPad'de sistemin X düğmesi sol üste biner → üst çubukta yer aç
-  const fsSync = () => document.documentElement.classList.toggle('is-fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
-  document.addEventListener('fullscreenchange', fsSync); document.addEventListener('webkitfullscreenchange', fsSync);
-  $('btnFull').addEventListener('click', () => { const d = document.documentElement; if (!(document.fullscreenElement || document.webkitFullscreenElement)) (d.requestFullscreen || d.webkitRequestFullscreen || (() => {})).call(d); else (document.exitFullscreen || document.webkitExitFullscreen).call(document); });
+  // tam ekran: js/fullscreen.js #btnFull'u üstlenir (ikon ↔ ✕, ilk giriş sorusu)
   const svg = $('course');
   svg.addEventListener('pointerdown', onDown);
   svg.addEventListener('pointermove', onMove);

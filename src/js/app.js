@@ -643,19 +643,7 @@
   $('chkShadows').onchange = e => { state.show.shadows = e.target.checked; render(); };
   $('chkTrails').onchange = e => { state.show.trails = e.target.checked; render(); };
   $('chkZoom').onchange = e => { state.zoom = e.target.checked; camCur = null; updateView(true); render({ snap: true }); };
-  // tam ekran: iPad'de sistemin X düğmesi sol üste biner → üst çubukta yer aç
-  const fsSync = () => document.documentElement.classList.toggle('is-fs', !!(document.fullscreenElement || document.webkitFullscreenElement));
-  document.addEventListener('fullscreenchange', fsSync); document.addEventListener('webkitfullscreenchange', fsSync);
-  // tam ekran: Katmanlar menüsünde anahtar (desteklemeyen tarayıcıda, ör. iPhone Safari, gizli)
-  const fsOk = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
-  if (!fsOk) $('rowFull').style.display = 'none';
-  const fsSyncChk = () => { $('chkFull').checked = !!(document.fullscreenElement || document.webkitFullscreenElement); };
-  document.addEventListener('fullscreenchange', fsSyncChk); document.addEventListener('webkitfullscreenchange', fsSyncChk);
-  $('chkFull').onchange = e => {
-    const de = document.documentElement;
-    if (!e.target.checked) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-    else (de.requestFullscreen || de.webkitRequestFullscreen).call(de);
-  };
+  // tam ekran: js/fullscreen.js (üst çubuk düğmesi, ilk giriş sorusu)
   $('btnInfo').onclick = () => setInfoOpen(!state.infoOpen);
   $('btnInfoClose').onclick = () => setInfoOpen(false);
   // Kart normalde animasyonu izler. Önceki/Sonraki ile gezince izleme durur ve "Bu ana git" belirir;

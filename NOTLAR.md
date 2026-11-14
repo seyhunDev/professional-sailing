@@ -4,6 +4,7 @@
 > Kısa ve güncel tut: eskiyen maddeleri sil, tarih ver.
 
 ## Güncel durum (2026-11-14)
+- **Tam ekran (2026-11-14):** `js/fullscreen.js` (index, sim, ayar, ziyaret; access.js'ten sonra). Üst çubukta hesap düğmesinin solunda `#btnFull`: dört köşe ↔ tam ekranda ✕. Dokunmatik cihazda ilk girişte (giriş ekranı kapandıktan sonra) bir kez "Tam ekran yapmak ister misin?" sorulur; cevap `localStorage 'velora.fs.v1'` ('on'/'off'/'ios'). 'on' iken her yeni sayfada ilk dokunuşta yeniden tam ekran (tarayıcı sayfa değişince çıkar, girmek için dokunuş ister); ✕, Esc ya da sistem hareketiyle çıkınca 'off'. iPhone Safari'de API yok: düğme ve ilk giriş "Ana Ekrana Ekle" rehberini açar; ana ekrandan açılınca (standalone) düğme gizli. iPad Safari tam ekranda kendi ✕'ini sol üstte gösterir: bizimki gizlenir, üst çubuğun solu yalnız `is-ios`'ta boşaltılır. Ana sayfadaki eski "Tam ekran" anahtarı kaldırıldı. `ayar.html` üst çubuğuna boş `.tool-group` eklendi (hesap düğmesi artık sağda). `window.VeloraFS` = {enter, exit, toggle, isFs, openGuide}.
 - **Önceki / sonraki senaryo (2026-11-14):** üst çubukta senaryo düğmesi tek parça `‹ | A4 Başlık ⌄ | ›` (`.scn-group`, `#btnScnPrev/#btnScnNext`). Sıra seçicidekiyle aynı: kategori sekmesi (CATS) → konu başlığı → kart; kilitli senaryolar atlanır, uçlarda ok pasif, ipucunda hedef senaryonun adı. Klavye: Shift+← / Shift+→ (← / → adım gezintisi olarak kaldı).
 - **İleri Teknik kategorisi (5. sekme, kullanıcı 2026-11-13):** `category: 'İleri Teknik'` (pembe, `--c-ileri-teknik`), konu 'Şamandıra · Palanga'. İT1 `it1-vang-strong` (14 kn: iskotayı sonuna kadar al → bumbayı bastır → palangayı elle al → iskotayı kaçır, kafa aç; palangayı almayan B yuvarlanır) ve İT1b `it1b-vang-light` (6 kn: yalnız boşluğu al). Sahnenin sol altında **Yandan görünüş paneli** (`js/rigview.js`, senaryoda `rig` alanı, README'de): Optimist yandan, iskota/bumba/palanga/el işareti, adım şeridi, palanga çubuğu + hedef çizgi, üstten tepe açılması dairesi, kesikli kırmızı karşılaştırma yelkeni; panel küçültülebilir (`ps.rigPanel.min`). Misafire açık (kilit yok).
 - **Yelken ayarı sayfası `ayar.html` (TASLAK, 2026-11-13):** Optimist yandan görünüş (direk, gırcala, bumba, palanga, Cunningham, 8 direk bağı, rüzgar gülü) + üstten 3 kesit (kambur/twist) + direk bağları yakın görünüşü (mm). Hava (hafif/orta/sert) × deniz (düz/dalgalı) × kaynak (OneSails / North / Quantum kılavuzu; J-Sails, Olimpic, CD bekleniyor) × Orijinal/Özel. Ana sayfa üst çubuğunda Simülatör'ün yanında yeşil **Ayarlar** düğmesi (`#lnkTrim`, 2026-11-14; telefonda yalnız simge); kullanıcı onayından sonra 3D (three.js) aşaması.
@@ -212,6 +213,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-14 · Telefonda tam ekran seçeneği
+- Kullanıcı: telefonda tarayıcıda açınca üst çubuk kaybolsun; ilk girişte "tam ekran ister misin" sorulsun, çıkmak için uygun yerde X olsun. Yapılanlar Güncel durum → Tam ekran. Ekran görüntüleri: proje dosyaları `tam-ekran/`. `npm run check` ve `npm run smoke` temiz.
+- Sonraki sohbete: gerçek cihazda (Android Chrome, iPad Safari, iPhone) denenmedi; iPad'de sistem ✕'i ile bizim düğmenin gizlenmesi varsayıma dayanıyor, kullanıcı denerse geri bildirim al.
+
 ### 2026-11-14 · Senaryolarda önceki / sonraki geçişi
 - Kullanıcı: senaryoda sıradaki/önceki düğmeleri, tasarıma zarar vermeden. Yapılan: seçici düğmesinin iki yanına birleşik oklar (`app.js` → `scnOrder/goScn/updateScnNav`), Shift+ok kısayolu. Masaüstü, iPad yatay/dikey, telefon yatay denendi (proje dosyaları `senaryo-gecis/`).
 - Sonraki sohbete: bir kategorinin sonundan diğerinin başına geçiş var (ör. Taktik → İleri Taktik); istenmezse `scnOrder` kategoriyle sınırlanabilir.
