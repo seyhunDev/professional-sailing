@@ -39,11 +39,16 @@
 
   <!-- ÜST ÇUBUK -->
   <header class="topbar">
-    <button id="btnScenarios" class="scn-btn" title="Senaryo seç" aria-haspopup="dialog">
-      <span class="code-badge" id="curCode"></span>
-      <span class="scn-title" id="curTitle">Senaryo seç</span>
-      <svg class="chev"><use href="#i-chev-down"/></svg>
-    </button>
+    <!-- senaryo seçici + önceki/sonraki senaryo (seçicideki sırayla) tek parça -->
+    <div class="scn-group">
+      <button id="btnScnPrev" class="scn-step" title="Önceki senaryo" aria-label="Önceki senaryo"><svg><use href="#i-prev"/></svg></button>
+      <button id="btnScenarios" class="scn-btn" title="Senaryo seç" aria-haspopup="dialog">
+        <span class="code-badge" id="curCode"></span>
+        <span class="scn-title" id="curTitle">Senaryo seç</span>
+        <svg class="chev"><use href="#i-chev-down"/></svg>
+      </button>
+      <button id="btnScnNext" class="scn-step" title="Sonraki senaryo" aria-label="Sonraki senaryo"><svg><use href="#i-next"/></svg></button>
+    </div>
     <div class="spacer"></div>
     <div class="tool-group">
       <a id="lnkSim" class="tool sim-link" href="sim.html" title="Yarış simülatörü: tekneleri kendin yerleştir, rüzgarı değiştir"><svg><use href="#i-boat"/></svg><span class="lbl">Simülatör</span></a>

@@ -67,6 +67,16 @@ button.icon:hover { color: var(--text); background: var(--hover); }
 .scn-btn { display: flex; align-items: center; gap: 10px; min-width: 0; max-width: min(620px, 52vw); height: 48px; padding: 0 12px 0 10px;
   background: var(--raised); border: 1px solid var(--border); border-radius: 12px; text-align: left; transition: border-color .15s, background .15s; }
 .scn-btn:hover { border-color: var(--border-strong); background: var(--raised2); }
+/* önceki/sonraki senaryo: seçici düğmesiyle birleşik tek parça (‹ | A4 Başlık ⌄ | ›) */
+.scn-group { display: flex; align-items: stretch; min-width: 0; max-width: min(720px, 60vw); }
+.scn-group .scn-btn { max-width: none; flex: 1 1 auto; border-radius: 0; }
+.scn-step { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 40px; height: 48px; padding: 0;
+  background: var(--raised); border: 1px solid var(--border); color: var(--text2); transition: border-color .15s, background .15s, color .15s; }
+.scn-step svg { width: 20px; height: 20px; }
+#btnScnPrev { border-radius: 12px 0 0 12px; border-right: 0; }
+#btnScnNext { border-radius: 0 12px 12px 0; border-left: 0; }
+.scn-step:hover:not(:disabled) { background: var(--raised2); color: var(--text); }
+.scn-step:disabled { color: var(--muted); opacity: .4; cursor: default; }
 /* başlık: tek satıra sığmazsa iki satır (kesilmeden), düğme yüksekliği sabit */
 .scn-title { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; line-height: 1.25; overflow: hidden;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
@@ -239,6 +249,7 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
 @media (max-width: 1100px) {
   .brand-text { display: none; }
   .scn-btn { max-width: 60vw; }
+  .scn-group { max-width: 70vw; }
   .tool .lbl { display: none; }
   .tool { width: var(--tap); height: var(--tap); padding: 0; }
   .info-card { width: min(350px, calc(100vw - 28px)); }
@@ -257,6 +268,7 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .pg-index .topbar .spacer { display: none; }
   #btnFull { display: none; }
   .scn-btn { max-width: none; flex: 1; height: 48px; padding: 0 8px; gap: 8px; }
+  .scn-group { max-width: none; flex: 1; }
   .scn-title { font-size: 13px; }
   .tool-group { gap: 6px; }
   .acc-chip { margin-left: 0; }
@@ -333,7 +345,7 @@ svg#course { position: absolute; inset: 0; width: 100%; height: 100%; display: b
   .add-row { display: none; }
   .add-btn { display: inline-flex; align-items: center; }
   .topbar { padding-top: calc(4px + var(--sat)); padding-bottom: 4px; }
-  .scn-btn { height: 40px; }
+  .scn-btn, .scn-step { height: 40px; }
   .scn-cat { display: none; }
   .info-card { width: 300px; top: 8px; right: 8px; max-height: calc(100% - 16px); }
   .info-head { padding-top: 6px; }

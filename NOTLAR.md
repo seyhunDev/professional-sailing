@@ -3,7 +3,8 @@
 > Her sohbet başında okunur, sonunda güncellenir (protokol: `CLAUDE.md`).
 > Kısa ve güncel tut: eskiyen maddeleri sil, tarih ver.
 
-## Güncel durum (2026-11-13)
+## Güncel durum (2026-11-14)
+- **Önceki / sonraki senaryo (2026-11-14):** üst çubukta senaryo düğmesi tek parça `‹ | A4 Başlık ⌄ | ›` (`.scn-group`, `#btnScnPrev/#btnScnNext`). Sıra seçicidekiyle aynı: kategori sekmesi (CATS) → konu başlığı → kart; kilitli senaryolar atlanır, uçlarda ok pasif, ipucunda hedef senaryonun adı. Klavye: Shift+← / Shift+→ (← / → adım gezintisi olarak kaldı).
 - **İleri Teknik kategorisi (5. sekme, kullanıcı 2026-11-13):** `category: 'İleri Teknik'` (pembe, `--c-ileri-teknik`), konu 'Şamandıra · Palanga'. İT1 `it1-vang-strong` (14 kn: iskotayı sonuna kadar al → bumbayı bastır → palangayı elle al → iskotayı kaçır, kafa aç; palangayı almayan B yuvarlanır) ve İT1b `it1b-vang-light` (6 kn: yalnız boşluğu al). Sahnenin sol altında **Yandan görünüş paneli** (`js/rigview.js`, senaryoda `rig` alanı, README'de): Optimist yandan, iskota/bumba/palanga/el işareti, adım şeridi, palanga çubuğu + hedef çizgi, üstten tepe açılması dairesi, kesikli kırmızı karşılaştırma yelkeni; panel küçültülebilir (`ps.rigPanel.min`). Misafire açık (kilit yok).
 - **Yelken ayarı sayfası `ayar.html` (TASLAK, 2026-11-13):** Optimist yandan görünüş (direk, gırcala, bumba, palanga, Cunningham, 8 direk bağı, rüzgar gülü) + üstten 3 kesit (kambur/twist) + direk bağları yakın görünüşü (mm). Hava (hafif/orta/sert) × deniz (düz/dalgalı) × kaynak (OneSails / North / Quantum kılavuzu; J-Sails, Olimpic, CD bekleniyor) × Orijinal/Özel. Henüz menüden bağlı değil; kullanıcı onayından sonra 3D (three.js) aşaması.
 - **İleri start paketi İA7-İA13 (kullanıcı 2026-11-13, v1.104-v1.110):** hepsi `category: 'İleri Taktik'`, filo hattın dibinde (`CROWD`), `clockScale: 4`. İA7 `ia7-hold-climb` kaydıkça yüksel (iskota çek, ikili tramola + dur, yerinde tramola, kafayı açıp orsala; iki grup arasında rüzgarüstü W'nin altına geçiş; H tam dolu yelkenle öne fırlar) · İA8 `ia8-pin-chaos` pin'de karmaşa (layline üstünde kal; altına düşen K13/K10; geç gelen 2. sırada) · İA9 `ia9-brake-back` fren: orsala, yelkeni ters bas, geri git (K22.3) · İA10 `ia10-defend-gap` boşluğunu savun · İA11 `ia11-plan-b` B planı · İA12 `ia12-late-port-tack` son saniyede iskele kontradan boşluğa tramola (HATA: dar boşluk → K13/K15, protesto) · İA13 `ia13-black-flag` genel geri çağırma sonrası siyah bayrak (B BFD, C son dakikadan önce üstte: ceza yok, S transitle yarım boy altta). KONULAR H11-H16 ve H6 ✅.
@@ -211,6 +212,10 @@
 5. `KONULAR.md` durumunu ✅ yap.
 
 ## Oturum günlüğü (en yeni üstte)
+### 2026-11-14 · Senaryolarda önceki / sonraki geçişi
+- Kullanıcı: senaryoda sıradaki/önceki düğmeleri, tasarıma zarar vermeden. Yapılan: seçici düğmesinin iki yanına birleşik oklar (`app.js` → `scnOrder/goScn/updateScnNav`), Shift+ok kısayolu. Masaüstü, iPad yatay/dikey, telefon yatay denendi (proje dosyaları `senaryo-gecis/`).
+- Sonraki sohbete: bir kategorinin sonundan diğerinin başına geçiş var (ör. Taktik → İleri Taktik); istenmezse `scnOrder` kategoriyle sınırlanabilir.
+
 ### 2026-11-13 · İleri Teknik: pupaya dönmeden palanga (İT1, İT1b)
 - Kullanıcı: rüzgarüstü şamandıraya yaklaşırken orta-sert havada fazla, hafif havada yalnız boş kalmayacak kadar palangayı alıp pupaya/apaza dönmek; sıra: iskotayı çek, bumbayı aşağı bastır, palangayı eliyle düzelt, iskotayı bırak. Animasyonla göster, nedenini anlat. Sonra: arka yaka ayarı, gırcala ayarı.
 - Yapılan: yeni kategori İleri Teknik, `js/rigview.js` yandan görünüş paneli, İT1 (14 kn, karşılaştırma teknesi B), İT1b (6 kn). KONULAR.md İT bölümü, README `rig` biçimi. Ekran görüntüleri proje dosyaları `ileri-teknik-palanga/`.

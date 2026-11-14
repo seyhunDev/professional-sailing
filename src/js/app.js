@@ -161,6 +161,7 @@
     $('btnScenarios').style.setProperty('--cat', CAT_COLORS[scn.category] || 'var(--accent)');
     document.title = `${scn.title} · Velora Sailing`;
     document.querySelectorAll('.card').forEach(c => c.classList.toggle('active', c.dataset.id === scn.id));
+    updateScnNav();
     setFollow(true);
     buildLegend(); buildTimeline(); buildSideOptions(); drawCourse(); updatePlayButton();
     if (window.SailRigView) { SailRigView.show(scn.rig); document.body.classList.toggle('has-rig', !!scn.rig); }
@@ -675,6 +676,8 @@
     if (e.key === 'Escape') { openPicker(false); if (window.SailAccess && SailAccess.closeMenu) SailAccess.closeMenu(); return; }
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+    else if (e.shiftKey && e.code === 'ArrowRight') goScn(1);
+    else if (e.shiftKey && e.code === 'ArrowLeft') goScn(-1);
     else if (e.code === 'ArrowRight') browse(state.stepIdx + 1);
     else if (e.code === 'ArrowLeft') browse(state.stepIdx - 1);
     else if (e.key === 'i' || e.key === 'ı') setInfoOpen(!state.infoOpen);
@@ -747,6 +750,30 @@
       for (const x of items.filter(i => (q ? i.category : (i.topic || 'Genel')) === gname)) grid.appendChild(scenarioCard(x));
     }
   }
+  // ---------- Önceki / sonraki senaryo: seçicideki sıra (kategori sekmesi → konu başlığı → kart) ----------
+  // kilitli (misafire kapalı) senaryolar atlanır; ilk ve son senaryoda ilgili ok pasif
+  function scnOrder() {
+    const out = [];
+    for (const c of CATS) {
+      const items = SCENARIOS.filter(x => x.category === c), groups = [];
+      for (const x of items) { const k = x.topic || 'Genel'; if (!groups.includes(k)) groups.push(k); }
+      for (const g of groups) out.push(...items.filter(x => (x.topic || 'Genel') === g));
+    }
+    return out.filter(x => !lockedScn(x));
+  }
+  function scnNeighbor(dir) {
+    const order = scnOrder(), i = order.indexOf(state.scn);
+    return i < 0 ? null : order[i + dir] || null;
+  }
+  function updateScnNav() {
+    for (const [id, dir, lbl] of [['btnScnPrev', -1, 'Önceki senaryo'], ['btnScnNext', 1, 'Sonraki senaryo']]) {
+      const n = state.scn && scnNeighbor(dir), b = $(id);
+      b.disabled = !n; b.title = n ? `${lbl}: ${n.title}${n.category !== state.scn.category ? ' (' + n.category + ')' : ''}` : lbl;
+    }
+  }
+  function goScn(dir) { const n = scnNeighbor(dir); if (n) location.hash = n.id; }
+  $('btnScnPrev').onclick = () => goScn(-1);
+  $('btnScnNext').onclick = () => goScn(1);
   $('pickerSearch').addEventListener('input', e => { query = e.target.value; buildPicker(); });
   $('btnScenarios').onclick = () => openPicker(true);
   $('btnPickerClose').onclick = () => openPicker(false);
@@ -793,6 +820,7 @@
   // giriş/kayıt sonrası kilitler değişir: seçici açıksa yenile, adresteki kilitli senaryoyu aç
   document.addEventListener('sail-access', () => {
     if (!$('picker').classList.contains('hidden')) buildPicker();
+    updateScnNav();
     const s = SCENARIOS.find(s => s.id === location.hash.slice(1));
     if (s && s !== state.scn && !lockedScn(s)) loadScenario(s);
   });
